@@ -1,0 +1,386 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Plan Presupuesto Ingreso</ui:define>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <comp:titleTask task="#{proformaIngresoVista.tarea}" tramite="#{proformaIngresoVista.tramite}" />    
+                </div>
+
+                <div class="ui-g-6">
+                    <p:fieldset id="fieldset" legend="Proforma" >
+                        <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Período de Catálogo" escape="false"/>
+                                <p:selectOneMenu id="periodoLast" value="#{proformaIngresoVista.catalogoProforma.periodoCatalogo}"
+                                                 converter="#{utilConverter}" styleClass="custom-filter">
+                                    <p:ajax  listener="#{proformaIngresoVista.actualizarTable()}" update="opciones,dataTable,descripcion,periodoLast"/>
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{proformaIngresoVista.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="descripcion" value="Descripción" />
+                                <p:inputText id="descripcion" value="#{proformaIngresoVista.catalogoProforma.descripcion}"
+                                             style="width: 18vw;text-transform: uppercase" onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value=""/>
+                                <p:commandLink title="Guardar" id="buscar-btn" update="cuentas, fieldset" style="width: auto; float: right; "
+                                               actionListener="#{proformaIngresoVista.generarProforma()}"
+                                               styleClass="Fs16">
+                                    <p:graphicImage value="/resources/icons/disquet.png"
+                                                    width="40" height="50" 
+                                                    style="margin:auto;  width: auto; "/>
+                                </p:commandLink>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </div>
+
+                <div class="ui-g-6" >
+                    <p:fieldset legend="Datos" >
+                        <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:panelGrid columns="1"  styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel style="font-size: larger" value="Estado:"/>
+                                <h:outputText id="estadoPresupuesto" value="#{proformaIngresoVista.aprobado}" style="font-size: larger;font-weight: bolder;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1"  styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel style="font-size: larger" value="Total de Presupuesto:"/>
+                                <h:outputText id="total" value="#{proformaIngresoVista.total}" style="font-size: larger;font-weight: bolder;" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value=""/>
+
+                                <p:graphicImage value="/resources/icons/dinero.png"
+                                                width="40" height="50" 
+                                                style="margin:auto;  width: auto; float: right; "/>
+ 
+                            </p:panelGrid>
+    
+                            
+                            
+                        </p:panelGrid>
+                    </p:fieldset>
+                </div>
+
+                <div class="ui-g-12" >
+                    <p:fieldset legend="Opciones" id="opciones">
+
+                        <p:panelGrid columns="7" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+<!--
+                            <h:panelGroup layout="block">
+
+                                <p:commandButton  disabled="#{!proformaIngresoVista.disabled}" id="commman" value="Adicionar Título" process="@this"
+                                                  icon="ui-icon-plus" actionListener="#{proformaIngresoVista.formAdd()}"
+                                                  styleClass="Fs16" style="width: 150px; " />
+                            </h:panelGroup>-->
+
+                            <h:panelGroup layout="block">
+                                <p:commandButton value="Limpiar Filtros" process="@this" style="width: 150px; " icon="fa fa-eraser"
+                                                 onclick="PF('cuentas').clearFilters()" update="cuentas" actionListener="#{proformaIngresoVista.clearAllFilters}">
+                                    <p:resetInput target="cuentas" />
+                                </p:commandButton>
+                            </h:panelGroup>
+
+                            <h:panelGroup layout="block">
+                                <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" 
+                                                 style="width: 150px;" icon="fa fa-align-justify" />
+                            </h:panelGroup>
+
+                            <h:panelGroup layout="block">
+                                <p:commandButton value="Proforma Ingresos PDF"
+                                                 icon="fa fa-file-pdf-o"
+                                                 process="@this" class="red-btn"
+                                                 actionListener="#{proformaIngresoVista.imprimirRep(false)}"
+                                                 styleClass="Fs16" style="width: 150px;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block">
+                                <p:commandButton value="Proforma Ingresos Excel"
+                                                 icon="fa fa-file-excel-o"
+                                                 process="@this" 
+                                                 actionListener="#{proformaIngresoVista.imprimirRep(true)}"
+                                                 styleClass="Fs16" style="width: 150px;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block">
+                                <p:commandButton value="Resumen Grupos PDF"
+                                                 icon="fa fa-file-pdf-o"
+                                                 process="@this" class="red-btn"
+                                                 actionListener="#{proformaIngresoVista.imprimirResumenIngresos(false)}"
+                                                 styleClass="Fs16" style="width: 150px;">
+                                </p:commandButton>
+                            </h:panelGroup>       
+                            <h:panelGroup layout="block">
+                                <p:commandButton value="Resumen Grupos Excel"
+                                                 icon="fa fa-file-excel-o"
+                                                 process="@this"
+                                                 actionListener="#{proformaIngresoVista.imprimirResumenIngresos(true)}"
+                                                 styleClass="Fs16" style="width: 150px;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block">
+                                <p:commandButton disabled="#{proformaIngresoVista.disabled==true?false:true}"    icon="fa fa-check-square-o" 
+                                                 value="Completar Tarea" actionListener="#{proformaIngresoVista.dlgoObservaciones()}" 
+                                                 style="width: 150px;background: #0081cb"/>
+                            </h:panelGroup>
+
+
+
+
+                        </p:panelGrid>
+
+                    </p:fieldset>
+                </div>
+
+
+                <h:panelGroup id="dataTable" layout="block">
+                    <p:columnToggler datasource="cuentas" trigger="mostrarColumnas"/>
+                    <p:remoteCommand name="update" update="cuentas" />
+
+                    <p:dataTable id="cuentas" widgetVar="cuentas" var="prof" value="#{proformaIngresoVista.lazyProforma}" paginator="true" rows="15"
+                                 style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="15,20,30,40,50,100" editable="true" editMode="cell" lazy="true"
+
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" >
+                        <f:facet name="header">
+                            Item Presupuestario
+                        </f:facet>
+
+                        <!--<p:ajax event="cellEdit" listener="# {proformaIngresoVista.guardarPresupuestoIngreso(pl)}" oncomplete="update()"/>-->
+                        <p:ajax event="cellEdit" listener="#{proformaIngresoVista.guardarPresupuestoIngreso(prof)}" update="cuentas,total" />
+                        <p:column headerText="Código" style="width: 5%; font-weight: bold; " filterBy="#{prof.item.codigo}">
+                            <h:outputText value="#{prof.item.codigo}"/>
+                        </p:column>
+                        <p:column headerText="Fuente" style="width: 10%;" filterBy="#{prof.fuente.nombre}">
+                            <p:cellEditor disabled="#{proformaIngresoVista.disabledCellEdit(prof)}">
+                                <f:facet name="output"><h:outputText value="#{prof.fuente.nombre}" /></f:facet>
+                                <f:facet name="input">
+                                    <p:selectOneMenu value="#{prof.fuente}" converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{proformaIngresoVista.listaFuenteNew}" var="ft" itemLabel="#{ft.codFuente} - #{ft.nombre}" itemValue="#{ft}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                            </p:cellEditor>
+                            <f:facet  name="filter">
+                                <p:selectOneMenu onchange="PF('cuentas').filter()" filter="true" filterMatchMode="contains" style="width: 250px !important;"
+                                                 styleClass="custom-filter">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                    <f:selectItems value="#{proformaIngresoVista.listaFuenteNew}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.nombre}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 150px; text-align: justify;" >
+                            <h:outputText value="#{prof.item.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Nivel" filterBy="#{prof.item.confId.nivel}" style="width: 6%; text-align: center">
+<!--                            <f:facet  name="filter">
+                                <p:selectOneMenu onchange="PF('cuentas').filter()" filter="true" filterMatchMode="startsWith"  style="width: 250px !important;"
+                                                 styleClass="custom-filter" >
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                    <f:selectItems value="#{proformaIngresoVista.listNivel}" var="c" itemLabel="#{c.orden}" itemValue="#{c.orden}"/>
+                                </p:selectOneMenu>
+                            </f:facet>-->
+                            <h:outputText value="#{prof.item.confId.nivel}" />
+                        </p:column>
+                        <p:column headerText="Clasificación" style="width: 10%;" filterBy="#{prof.item.clasificacion.texto}">
+<!--                            <f:facet  name="filter">
+                                <p:selectOneMenu onchange="PF('cuentas').filter()" filter="true" filterMatchMode="startsWith" style="width: 250px !important;"
+                                                 styleClass="custom-filter" >
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                    <f:selectItems value="#{proformaIngresoVista.listClasificacion}" var="c" itemLabel="#{c.texto}" itemValue="#{c.texto}"/>
+                                </p:selectOneMenu>  
+                            </f:facet>-->
+                            <h:outputText value="#{prof.item.clasificacion.texto}" />
+                        </p:column>
+                        <p:column headerText="Tipo Item" filterBy="#{prof.item.movimiento}" style="width: 6%; text-align: center;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="A" itemValue="false" />
+                                    <f:selectItem itemLabel="M" itemValue="true" />
+                                </p:selectOneMenu>
+                            </f:facet> 
+                            <h:outputText value="#{prof.item.movimiento ? 'M':'A' }" />
+                        </p:column>
+                        <p:column headerText="Presupuesto Inicial" style="width: 10%;">
+                            <p:cellEditor disabled="#{proformaIngresoVista.disabledCellEdit(prof)}"  >
+                                <f:facet name="input" >
+                                    <p:inputNumber id="presInicial"
+                                                   value="#{prof.presupuestoInicial}" style="width:100%;">
+                                        <p:ajax event="valueChange" oncomplete="update()"/>
+                                    </p:inputNumber>
+                                </f:facet>
+                                <f:facet name="output">
+                                    <h:outputText value="#{prof.presupuestoInicial}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </f:facet>
+                            </p:cellEditor>
+
+
+                        </p:column>
+                        <p:column headerText="periodo" style="width: 5%;text-align: center;">
+                            <p:outputLabel value="#{prof.periodo}"/>
+                        </p:column>
+
+<!--                        <p:column headerText="Acciones" style="text-align: center; width: 8%" rendered="false">
+                            <p:commandLink disabled="#{proformaIngresoVista.disableAcciones() or pl.nivel.orden==4?true:false}" 
+                                           actionListener="#{proformaIngresoVista.form(item, false)}" title="Registrar Cuenta"  process="@this">
+                                <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink disabled="#{proformaIngresoVista.disableAcciones()}" actionListener="#{proformaIngresoVista.form(item, true)}" title="Editar plan" process="@this">
+                                <p:graphicImage value="/resources/icons/editar.png"
+                                                width="17" height="17" 
+                                                style="margin-right: 8px;"/>    
+                            </p:commandLink>
+                            <p:commandLink disabled="#{proformaIngresoVista.disableAcciones()}" title="Eliminar"  actionListener="#{proformaIngresoVista.eliminar(item)}" process="@this" update="cuentas">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar la cuenta #{item.codigo}?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>-->
+
+                    </p:dataTable>
+
+                </h:panelGroup>
+                <!--                            <p:outputPanel id="siguiente" style="width: 100%; height: 40px ">
+                                                <p:commandLink title="Ir a Catálogo Proforma" immediate="true" action="CatalogoProformaPresupuesto.xhtml?faces-redirect=true" style="float: right">
+                                                    <p:graphicImage value="/resources/icons/siguiente.png"
+                                                                    width="37" height="37"
+                                                                    style="margin-left:5px !important; margin-top: 8px; "/>
+                                                </p:commandLink>
+                                            </p:outputPanel>-->
+
+
+            </div>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog>
+        </h:form>
+
+        <p:dialog header="Formulario De impresión Proforma de Ingreso"
+                  widgetVar="dlgImp"
+                  modal="true"
+                  height="433px" width="500px"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgImps">
+            <h:form prependId="false" id="frmImp">
+                <p:growl id="msgsss" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outPanelImp" style="width: 100%"> 
+                                <center>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Codigo:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" id="nuw"
+                                                             value="#{proformaIngresoVista.codigoC.codigo}" style="width: 250px !important;"
+                                                             styleClass="custom-filter">
+                                                <f:selectItem itemLabel="Todas" itemValue=""/>
+                                                <f:selectItems value="#{proformaIngresoVista.listaCodigos}" var="c" itemLabel="#{c}" itemValue="#{c}"/>
+                                                <p:ajax update="nuw"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Nivel:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaIngresoVista.nivelN.nivel}" converter="entityConverter" style="width: 250px !important;"
+                                                             styleClass="custom-filter" >
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                                <f:selectItems value="#{proformaIngresoVista.listNivel}" var="c" itemLabel="#{c.orden}" itemValue="#{c}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" >
+                                            <p:outputLabel value="Fuente:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaIngresoVista.fuenteF.fuente}" converter="entityConverter" style="width: 250px !important;"
+                                                             styleClass="custom-filter">
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                                <f:selectItems value="#{proformaIngresoVista.listFuenteF}" var="c" itemLabel="#{c.nombre}" itemValue="#{c}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Clasificación:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaIngresoVista.catItem.clasificacion}" converter="entityConverter" style="width: 250px !important;"
+                                                             styleClass="custom-filter" >
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                                <f:selectItems value="#{proformaIngresoVista.listClasificacion}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Tipo Item:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu styleClass="custom-filter"  filter="true" style="width: 250px !important;"
+                                                             filterMatchMode="startsWith" value="#{proformaIngresoVista.adicionalString}"> 
+                                                <f:selectItem itemLabel="Todos" itemValue="#{null}"/>
+                                                <f:selectItem itemLabel="A" itemValue="A" />
+                                                <f:selectItem itemLabel="M" itemValue="M" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Imprimir PDF"
+                                                     icon="ui-icon-print"
+                                                     process="frmImp"
+                                                     actionListener="#{proformaIngresoVista.imprimirRep(false)}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Exportar Excel"
+                                                     icon="ui-icon-save"
+                                                     process="frmImp"
+                                                     actionListener="#{proformaIngresoVista.imprimirRep(true)}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <ui:include src="/common/Dialog/dlogoProformaIngreso.xhtml" />
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{proformaIngresoVista.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{proformaIngresoVista.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

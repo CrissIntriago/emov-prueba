@@ -1,0 +1,125 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Listado Citaciones
+    </ui:define>
+    <ui:param name="tittle" value="LISTADO CITACIONES"/>
+    <ui:define name="content">
+        <h:form prependId="false">
+            <p:fieldset legend="Generar Reporte" style=" margin-bottom: 5px " toggleable="true" rendered="false">
+                <h:panelGrid  columns="2"  cellpadding="5" class="ui-g-2">
+                    <h:outputText value="Desde:"/>
+                    <p:calendar id="fechaDesde" value="#{listadoCitacionesBeans.desde}" 
+                                locale="es" readonlyInput="true" pattern="dd/MM/yyyy"                                             
+                                maxdate="#{listadoCitacionesBeans.hasta}" navigator="true">
+                        <p:ajax event="dateSelect" update="fechaHasta"/>
+                    </p:calendar>
+                </h:panelGrid>
+                <h:panelGrid columns="2" cellpadding="5" class="ui-g-2">
+                    <h:outputText value="Hasta:"/>
+                    <p:calendar id="fechaHasta" value="#{listadoCitacionesBeans.hasta}" mindate="#{listadoCitacionesBeans.desde}"
+                                locale="es" readonlyInput="true" pattern="dd/MM/yyyy" navigator="true">
+                    </p:calendar>
+                </h:panelGrid>
+                <h:panelGrid columns="4" class="ui-g-5">
+                    <h:outputLabel value="Estado:" style="padding-left: 20px"/>   
+                    <p:selectOneRadio  id="selectEstados" value="#{listadoCitacionesBeans.tipoEstado}">
+                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                        <f:selectItem itemLabel="CON COMPARECENCIA" itemValue="1"/>
+                        <f:selectItem itemLabel="SIN COMPARECENCIA" itemValue="2"/>
+                    </p:selectOneRadio >
+                </h:panelGrid>     
+                <h:panelGrid columns="1">
+                    <center>
+                        <p:commandButton value="Generar Pdf" icon="fa fa-file-pdf-o" style="background: red; width: 100px" actionListener="#{listadoCitacionesBeans.generarReporte(true)}"/>
+                        <p:commandButton value="Generar Excel" icon="fa fa-file-excel-o" style="background: green; width: 100px" actionListener="#{listadoCitacionesBeans.generarReporte(false)}"/>
+                    </center>
+                </h:panelGrid>
+
+
+            </p:fieldset>
+            <p:dataTable id="dataTableCitaciones" lazy="true" value="#{listadoCitacionesBeans.lazyCitaciones}" var="x"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowIndexVar="index"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         rowsPerPageTemplate="10,15,20,30,50,100,150" 
+                         paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                         emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                <p:column headerText="Comisaria" filterBy="#{x.comisaria.texto}" filterMatchMode="contains">
+                    <h:outputText value="#{x.comisaria.texto}" />
+                </p:column>
+                <p:column headerText="Motivo" filterBy="#{x.motivo}"  filterMatchMode="contains">
+                    <h:outputText value="#{x.motivo}" />
+                </p:column>
+                <p:column headerText="Veces Citadas" filterBy="#{x.motivoCitaciones}"  filterMatchMode="contains">
+                    <h:outputText value="#{x.motivoCitaciones}" />
+                </p:column>
+                <p:column headerText="N° Citación Denunciante" filterBy="#{x.numCitacionDenunciante}"  filterMatchMode="contains">
+                    <h:outputText value="#{x.numCitacionDenunciante}" />
+                </p:column>
+                <p:column headerText="Denunciante" filterBy="#{x.denuciante.nombreCompleto}" filterMatchMode="contains">
+                    <h:outputText value="#{x.denuciante.nombreCompleto}" />
+                </p:column>
+                <p:column headerText="Dirección Denunciante" filterBy="#{x.direccion}" filterMatchMode="contains">
+                    <h:outputText value="#{x.direccion}" />
+                </p:column>
+                <p:column headerText="N° Citación Denunciado" filterBy="#{x.numCitacionDenunciado}"  filterMatchMode="contains">
+                    <h:outputText value="#{x.numCitacionDenunciado}" />
+                </p:column>
+                <p:column headerText="Denunciado" filterBy="#{x.denunciado.nombreCompleto}" filterMatchMode="contains">
+                    <h:outputText value="#{x.denunciado.nombreCompleto}" />
+                </p:column>
+                <p:column headerText="Dirección Denunciado" filterBy="#{x.direccionDenunciado}" filterMatchMode="contains">
+                    <h:outputText value="#{x.direccionDenunciado}" />
+                </p:column>
+                <p:column headerText="Fecha Emisión"  filterMatchMode="contains">
+                    <h:outputText value="#{x.fecha}" >
+                        <f:convertDateTime type="date" timeZone="CST" pattern="dd-MM-yyyy HH:mm" />
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Fecha Presentación"  filterMatchMode="contains">
+                    <h:outputText value="#{x.fechaPresentacion}" >
+                        <f:convertDateTime type="date" timeZone="CST" pattern="dd-MM-yyyy HH:mm" />
+                    </h:outputText>
+                </p:column>
+                <p:column headerText="Acciones" width="5%" >
+                    <center>
+                        <p:commandLink title="Comparecer" disabled="#{x.acuerdo ne null}" actionListener="#{listadoCitacionesBeans.dialogCitacionesComparecencia(x)}">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                        </p:commandLink>
+                        <p:commandLink title="Volver a Comparecer" rendered="#{x.acuerdo ne null}" actionListener="#{listadoCitacionesBeans.dialogCitacionesComparecencia(x)}">
+                            <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px;"></i>
+                        </p:commandLink>
+                    </center>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog id="dialogCompadecencia" widgetVar="dialogCompadecencia"  position="center" 
+                  draggable="false" header="Comparecencia" width="40%" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false" height="30%" >
+            <h:form id="idFormCompadecencia" prependId="false">
+                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                    <p:outputLabel value="ACUERDO:" />
+                    <p:inputTextarea value="#{listadoCitacionesBeans.citacionComparecencia.acuerdo}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                </h:panelGroup> 
+                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                    <p:outputLabel value="OBSERVACIÓN:" />
+                    <p:inputTextarea value="#{listadoCitacionesBeans.citacionComparecencia.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                </h:panelGroup> 
+                <br/>
+                <center>
+                    <p:commandButton icon="fa fa-check" value="Compadecer" actionListener="#{listadoCitacionesBeans.saveCompadecencia()}"  
+                                     oncomplete="PF('dialogCompadecencia').hide()" update="dataTableCitaciones"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

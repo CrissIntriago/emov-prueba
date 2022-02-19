@@ -1,0 +1,372 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Revisión de Solicitud de Reforma
+    </ui:define>
+
+    <ui:define name="content">
+        <style>
+            .condicion1{
+                background-color: #E7C402 !important;
+            }
+            .condicion2{
+
+                background-color: white !important;
+            }
+            .condicion3{
+                background-color: #E7C402 !important;
+                color:white;
+            }
+            #comboItem{
+                width: 20px;
+
+            }
+
+        </style>
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <u:titleTask task="#{planificacionReformaT1View.tarea}" tramite="#{planificacionReformaT1View.tramite}" />
+            </div>
+
+
+            <div class="ui-g-12">
+                <h:form prependId="false">
+                    <p:dataTable id="dataplanificacion" widgetVar="dataplanificacion" var="item" value="#{planificacionReformaT1View.lazyReformaTraspaso}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen reformas con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width:4%;">
+                            <p:outputLabel value="#{item.numeracion}" />
+                        </p:column>
+                        <p:column headerText="Fecha Traspaso" style="width: 7%; text-align: center">
+                            <p:outputLabel value="#{item.fechaTraspasoReforma}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Período" style="width: 7%; text-align: center">
+                            <p:outputLabel value="#{item.periodo}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 15%; text-align: center">
+                            <p:outputLabel value="#{item.estadoReformaTramite}"/>
+                        </p:column>
+                        <p:column headerText="Tipo de Reforma" style="width: 10%;text-align: center">
+                            <p:outputLabel value="#{item.tipo == true ? 'TRASPASO TIPO 1':'TRASPASO TIPO 2'}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Administrativa" style="width: 20%; text-align: center;">
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Total Incremento" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{planificacionReformaT1View.getTotalIncrementoOrReduccionByReforma(item, true)}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Total Reducción" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{planificacionReformaT1View.getTotalIncrementoOrReduccionByReforma(item, false)}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 10%; text-align: center;">
+                            <p:commandLink  title="Enviar" process="@this" actionListener="#{planificacionReformaT1View.aprobarSolicitud(true, item)}" update="dataplanificacion">
+                                <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink  title="OBSERVAR" process="@this"  actionListener="#{planificacionReformaT1View.aprobarSolicitud(false, item)}" 
+                                            rendered="#{item.estadoReformaTramite.codigo == 'OBS-REF' ? false:true}" update="dataplanificacion">
+                                <i class="fa fa-level-down" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink  title="Visualizar" process="@this"  actionListener="#{planificacionReformaT1View.consultarPapp(item)}" update="formReforma">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>   
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgPapp" header="Formulario de PAPP" 
+                  widgetVar="dlgPapp" width="85%" height="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <h:form id="formReforma" style="width:98%;">
+                        <div class="ui-g-12">
+                            <div class="ui-g-12">
+                                <p:fieldset id="fsetBusqueda" legend="Información" toggleable="true" toggleSpeed="500" collapsed="false" style="width:99%; margin-left: 5px">
+                                    <p:panelGrid columns="7" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="Código Reforma:" style="font-weight: bold"/>
+                                            <p:inputText value="#{planificacionReformaT1View.reformaTraspaso.codigo}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{planificacionReformaT1View.reformaTraspaso.tipo}">
+                                            <p:outputLabel value="Unidad Administrativa:" style="font-weight: bold"/>
+                                            <p:inputText value="#{planificacionReformaT1View.reformaTraspaso.unidadRequiriente.nombre}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="Fecha Reforma:" style="font-weight: bold"/>
+                                            <p:calendar value="#{planificacionReformaT1View.reformaTraspaso.fechaTraspasoReforma}" pattern="dd-MM-yyyy" navigator="true" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="Estado:" style="font-weight: bold"/>
+                                            <p:inputText value="#{planificacionReformaT1View.reformaTraspaso.estadoReformaTramite.texto}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="Período:" style="margin-right: 10px; font-weight: bold" />
+                                            <p:inputText value="#{planificacionReformaT1View.reformaTraspaso.periodo}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <div class="ui-g-12">
+                                            <p:panelGrid columns="2" style="float: right; text-align: right; font-size: 13px; font-weight: bold;" >
+                                                <f:facet name="header">
+                                                    Totales Traspaso
+                                                </f:facet>
+                                                <h:outputText value="Total Traspaso Incremento" />
+                                                <h:outputText value="#{planificacionReformaT1View.totalTraspasoIncremento}" >
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                                <h:outputText value="Total Traspaso Reducción"  />
+                                                <h:outputText value="#{planificacionReformaT1View.totalTraspasoReduccion}" >
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:panelGrid>
+                                        </div>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-12">
+                                <h:panelGroup id="tabRegistroDeSolicitud">
+                                    <p:tabView id="tabladimnamica" prependId="false" >
+                                        <p:tab title="Plan Anual Políticas Públicas" titleStyle="border-right: 2px solid #eaeaea" rendered="#{planificacionReformaT1View.renderTabPAPP}">
+                                            <p:dataTable id="dataTReformaT1" widgetVar="dataTReformaT1" var="item" value="#{planificacionReformaT1View.listaProducto}" 
+                                                         paginator="true" rows="15" paginatorPosition="bottom" 
+                                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                         rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="false"
+                                                         editable="true" editMode="cell" rowIndexVar="can"
+                                                         filterEvent="keyup" rowExpandMode="single"
+                                                         scrollable="true" scrollWidth="100%" rowStyleClass="#{item.codigoPresupuestario.isEmpty()||item.codigoPresupuestario==null? 'condicion1':'condicion2'}"
+                                                         emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                                                <f:facet name="header">
+                                                    <center>TABLA REFORMA DE LOS PLANES ANUALES - #{planificacionReformaT1View.busqueda.anio == 0 ? '20XX':planificacionReformaT1View.busqueda.anio}</center>
+                                                </f:facet>
+                                                <p:column style="width:16px">
+                                                    <p:rowToggler />
+                                                </p:column>
+                                                <p:column headerText="#" style="width:10px; font-weight: bold; text-align: center" >
+                                                    <h:outputText value="#{can +1 }"/>
+                                                </p:column>
+                                                <p:column headerText="Producto" style="width: 200px;" filterBy="#{item.descripcion}">
+                                                    <h:outputText value="#{item.descripcion}"/>
+                                                </p:column>
+                                                <p:column headerText="Monto Producto" style="width: 100px;">
+                                                    <h:outputText value="#{item.monto}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Unidad Responsable" style="width: 200px;" rendered="#{!planificacionReformaT1View.reformaTraspaso.tipo}">
+                                                    <h:outputText value="#{item.actividadOperativa.unidadResponsable.nombre}" />
+                                                </p:column>
+                                                <p:column headerText="Partida Presupuestaria" style="width: 120px; text-align: center" filterBy="#{item.codigoPresupuestario}">
+                                                    <h:outputText value="#{item.codigoPresupuestario == null ? 'S/N':item.codigoPresupuestario}" />
+                                                </p:column>
+                                                <p:column headerText="Reservas Aprobadas" style="width: 110px;">
+                                                    <h:outputText value="#{item.reserva}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Saldo Disponible" style="width: 110px;">
+                                                    <h:outputText value="#{item.totalSaldoDisponible eq 0 ? 0 : item.monto - item.totalSaldoDisponible}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Traspaso Incremento" style="width: 110px;">
+                                                    <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Traspaso Reducción" style="width: 110px;">
+                                                    <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Monto Reformada" style="width: 110px;">
+                                                    <h:outputText value="#{item.montoReformada}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:rowExpansion>
+                                                    <center>
+                                                        <p:dataTable id="Subta" var="subt" value="#{item}" style="width:97%">
+                                                            <p:column headerText="Nombre del plan, programa, proyecto" style="width: 260px;" filterBy="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}">
+                                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion == null ? 'NO APLICA':subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}" />
+                                                            </p:column>
+                                                            <p:column headerText="Nº de identificación" style="width: 100px;" >
+                                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.id}" />
+                                                            </p:column>
+                                                            <p:column headerText="Plan, programa y/o proyecto" style="width: 200px;"  filterBy="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" >
+                                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                                            </p:column>
+                                                            <p:column headerText="Actividad Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.nombreActividad}">
+                                                                <h:outputText value="#{subt.actividadOperativa.nombreActividad}" />
+                                                            </p:column>
+                                                            <p:column headerText="Objetivo Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.objetivoOperativo}">
+                                                                <h:outputText value="#{subt.actividadOperativa.objetivoOperativo}" />
+                                                            </p:column>
+                                                            <p:column headerText="Medición Meta" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.medicionMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Meta IT" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.eneroMeta + subt.actividadOperativa.febreroMeta + subt.actividadOperativa.marzoMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Meta IIT" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.abrilMeta + subt.actividadOperativa.mayoMeta + subt.actividadOperativa.junioMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Meta IIIT" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.julioMeta + subt.actividadOperativa.agostoMeta + subt.actividadOperativa.septiembreMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Meta IIIVT" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.octubreMeta + subt.actividadOperativa.noviembreMeta + subt.actividadOperativa.diciembreMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Indicador Meta" style="width: 200px;"  filterBy="#{subt.actividadOperativa.indicadorMeta}">
+                                                                <h:outputText value="#{subt.actividadOperativa.indicadorMeta}" />
+                                                            </p:column>
+                                                            <p:column headerText="Monto Actividad" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.monto}">
+                                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                                </h:outputText>
+                                                            </p:column>
+                                                            <p:column headerText="Presupuesto Cuatrimestre 1" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre1Actividad}" >
+                                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                                </h:outputText>
+                                                            </p:column>
+                                                            <p:column headerText="Presupuesto Cuatrimestre 2" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre2Actividad}" >
+                                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                                </h:outputText>
+                                                            </p:column>
+                                                            <p:column headerText="Presupuesto Cuatrimestre 3" style="width: 100px;">
+                                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre3Actividad}">
+                                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                                </h:outputText>
+                                                            </p:column>
+                                                            <p:column headerText="Item Presupuestario" style="width: 200px;">
+                                                                <h:outputText value="#{subt.itemNew == null ? 'Sin definir':subt.itemNew.codigo}" />
+                                                            </p:column>
+                                                            <p:column headerText="Estructura Programática" style="width: 200px;">
+                                                                <h:outputText value="#{subt.estructruaNew == null ? 'Sin definir':subt.estructruaNew.codigo}" />
+                                                            </p:column>
+                                                            <p:column headerText="Fuente" style="width: 200px;">
+                                                                <h:outputText value="#{subt.fuenteNew == null ? 'Sin definir':subt.fuenteNew.nombre}"/>
+                                                            </p:column>
+                                                            <p:column headerText="Tipo Fuente" style="width: 200px;">
+                                                                <h:outputText value="#{subt.fuenteNew == null ? 0:subt.fuenteNew.codFuente} - #{subt.fuenteNew == null ? 'Sin Fuente':subt.fuenteNew.tipoFuente.texto}" style="text-align: left"/>
+                                                            </p:column>
+                                                            <p:column headerText="Partida Presupuestaria" style="width: 200px;">
+                                                                <h:outputText value="#{subt.codigoPresupuestario == null ? 'S/Partida':subt.codigoPresupuestario}" id="ini"/>
+                                                            </p:column>
+                                                            <p:column headerText="Período" style="width: 200px;">
+                                                                <h:outputText value="#{subt.periodo}" />
+                                                            </p:column>
+                                                        </p:dataTable>
+                                                    </center>
+                                                </p:rowExpansion>
+                                            </p:dataTable>
+                                        </p:tab>
+                                        <p:tab title="Partida Directa" titleStyle="border-right: 2px solid #eaeaea" rendered="#{planificacionReformaT1View.renderedPartidaDirecta}"> 
+                                            <h:panelGroup id="tabPDI">
+                                                <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 10px"
+                                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                             rowsPerPageTemplate="10,15,20,25" rowIndexVar="index" editable="true" editMode="cell" rows="10"
+                                                             emptyMessage="No existen datos con el criterio de búsqueda especificado" 
+                                                             id="tablaSolicitudPDI" value="#{planificacionReformaT1View.listaProformaPresupuestoPlanificado}" var="item">
+                                                    <p:column headerText="No." style="width: 20px;">
+                                                        <h:outputText value="#{index+1}" />
+                                                    </p:column>
+                                                    <p:column headerText="Estructura Programática"  style="width: 20%;">
+                                                        <h:outputText value="#{item.estructruaNew.descripcion.toUpperCase()}" />
+                                                    </p:column>
+                                                    <p:column  headerText=" Partida Presupuestaria" style="width: 20%;text-align: center">
+                                                        <p:outputLabel value="#{item.partidaPresupuestaria}" />
+                                                    </p:column>
+                                                    <p:column  headerText="Item Presupuestario"  style="width: 30%;">
+                                                        <h:outputText value="#{item.itemNew.descripcion.toUpperCase()}" />
+                                                    </p:column>
+                                                    <p:column  headerText="Tipo" style="width: 10%;text-align: center">
+                                                        <p:outputLabel value="#{item.codigo}" />
+                                                    </p:column>
+                                                    <p:column  headerText="Período" style="width: 10%;text-align: center" >
+                                                        <p:outputLabel value="#{item.periodo}"/>
+                                                    </p:column>
+                                                    <p:column  headerText="Valor asignado" style="width: 20%;">
+                                                        <p:outputLabel value="#{item.valor}" style="float: right" >
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </p:outputLabel>
+                                                    </p:column>
+                                                    <p:column headerText="Traspaso Incremento" style="width: 110px;">
+                                                        <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Traspaso Reducción" style="width: 110px;">
+                                                        <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Monto Reformada" style="width: 110px;">
+                                                        <h:outputText value="#{item.reformaCodificado}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                </p:dataTable>
+                                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                                </p:confirmDialog>
+                                            </h:panelGroup>
+                                        </p:tab>
+                                    </p:tabView>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </h:form>
+                </div>
+            </div>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{planificacionReformaT1View.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{planificacionReformaT1View.completarTarea(1)}" rendered="#{planificacionReformaT1View.btnAprobar}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Rechazar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{planificacionReformaT1View.completarTarea(0)}" rendered="#{planificacionReformaT1View.btnRechazar}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+
+    </ui:define>
+
+</ui:composition>

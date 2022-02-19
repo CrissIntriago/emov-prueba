@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:sc="http://xmlns.jcp.org/jsf/composite/sigef/components"
+
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Revision de ordenes
+    </ui:define>
+    <ui:param name="tittle" value="Revision de ordenes" />
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div style="width: 100% !important; display: inline-block">
+                <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 activo" >CENSADO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 inactivo">INACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 pendiente">PENDIENTE</div>
+                </div>
+            </div>
+
+            <p:dataTable id="dtUsers" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                         value="#{ordenesRevisionView.ordenesLazy}" var="usr1" emptyMessage="No se encontró ningún Item." style="text-align: center;"
+                         paginatorPosition="top" rowStyleClass="#{usr1.estadoDet eq 'CE'? 'estado-activo' : (usr1.orden.estado or usr1.estadoDet eq 'IN')? 'estado-inactivo' : 'estado-pendiente'}" widgetVar="usersTable" >
+
+                <p:column headerText="Num. Orden" filterBy="#{usr1.orden.numOrden}" >
+                    <p:outputLabel value="#{usr1.orden.numOrden}" />
+                </p:column>
+                <p:column headerText="Cooperativa" filterBy="#{usr1.orden.cooperativa.empresa.nombre}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.orden.cooperativa.empresa.nombre}" />
+                </p:column>
+                <p:column headerText="P" width="15%" filterBy="#{usr1.orden.cooperativa.tipo}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.orden.cooperativa.tipo}"  />
+                </p:column>
+                <p:column headerText="Fecha Actualizacion" width="15%" filterBy="#{usr1.fecAct}">
+                    <p:outputLabel value="#{usr1.fecAct}" ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                </p:column>
+                <p:column headerText="Estado" width="15%" filterBy="#{usr1.estadoDet}">
+                    <p:outputLabel value="#{usr1.estadoDet}" />
+                </p:column>
+                <p:column headerText="Acciones" width="15%">
+                    <p:commandButton title="Revisar" icon="fa fa-eye edit" class="btnTranparent editar" process="@this" 
+                                     actionListener="#{ordenesRevisionView.revisar(usr1)}" update="frmOrden, dtVehiculos" />
+                    <p:spacer width="5" />
+                    <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" disabled="#{usr1.estadoDet eq 'IN'}"
+                                     actionListener="#{ordenesRevisionView.eliminar(usr1)}" update="frmOrden" process="@this"  >
+                        <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el Usuario: #{usr1.orden.numOrden}" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+        </h:form>
+
+        <p:dialog header="Vehiculos Adjunto a la orden" modal="true" widgetVar="dlgOrden" width="45%" closable="false" >
+            <h:form id="frmOrden" style="width: 100%;" prependId="false" >
+                <p:dataTable value="#{ordenesRevisionView.coop.cooperativaVehiculoList}" var="car1"
+                             rowKey="#{car1.id}" filterEvent="enter" rows="10" id="dtVehiculos">
+                    <p:column headerText="Placa" >
+                        <p:outputLabel value="#{car1.vehiculo.placaActual}"/>
+                    </p:column>
+                    <p:column headerText="Disco" >
+                        <p:outputLabel value="#{car1.vehiculo.disco}"/>
+                    </p:column>
+                    <p:column headerText="Num. Ejes" >
+                        <p:outputLabel value="#{car1.vehiculo.numeroejes}"/>
+                    </p:column>
+                    <p:column headerText="Clase" >
+                        <p:outputLabel value="#{car1.vehiculo.claseVehiculo.texto}"/>
+                    </p:column>
+                    <p:column headerText="Propietario" >
+                        <p:outputLabel value="#{car1.vehiculo.propietario.nombreCompleto}"/>
+                    </p:column>
+                    <p:column headerText="Acciones" width="15%" style="text-align: center;">
+                        <p:commandButton title="Revisar" icon="fa fa-folder-open edit" class="btnTranparent editar" process="@this" 
+                                         actionListener="#{ordenesRevisionView.verCambios(car1)}" update="frmOrden, dtVehiculos" 
+                                         rendered="#{ordenesRevisionView.orden.estadoDet eq 'CE'}" />
+                    </p:column>
+
+                </p:dataTable>          
+                <center>
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" actionListener="#{ordenesRevisionView.cerrarDialogo()}" 
+                                     oncomplete="PF('dlgOrden').hide();" process="@this" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

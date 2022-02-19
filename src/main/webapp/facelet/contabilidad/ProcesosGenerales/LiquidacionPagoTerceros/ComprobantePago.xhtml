@@ -1,0 +1,641 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Comprobante de Pagos
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <comp:titleTask task="#{liquidacionFondoTercerosView.tarea}" tramite="#{liquidacionFondoTercerosView.tramite}" />
+                    <!--                    <center style="font-size: 14px;">
+                                            Beneficiario:  <strong># {liquidacionFondoTercerosView.nombreBeneficiario}</strong>
+                                        </center>-->
+
+                    <h:panelGroup id="dataTableComprobantePagos" layout="block" rendered="#{liquidacionFondoTercerosView.ocultarTabla}">
+                        <p:commandButton rendered="#{!liquidacionFondoTercerosView.btniniciar}" value="Nuevo Comprobante" process="@this" update="formComprobantePagos"
+                                         icon="fa fa-plus" actionListener="#{liquidacionFondoTercerosView.form(null,'NUEVO')}"
+                                         styleClass="Fs16" style="width: auto; margin-right: 10px"/> 
+
+                        <p:commandButton value="Limpiar Filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('comprobantePagoTable').clearFilters()" update="comprobantePagoTable"
+                                         styleClass="Fs16" style="width: auto; margin-right: 15px;"/>
+
+                        <p:commandButton id="mostrarColumnas" type="button" value="COLUMNAS VISIBLES" style="width: 9%; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="comprobantePagoTable" trigger="mostrarColumnas" />
+
+                        <p:dataTable  id="comprobantePagoTable" widgetVar="comprobantePagoTable" var="comprobantePago" value="#{liquidacionFondoTercerosView.comprobantePagoLazy}" 
+                                      paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{comprobantePago.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="50,60,70,100" lazy="true"
+                                      emptyMessage="No existe información con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                LISTADO DE COMPROBANTE DE PAGOS
+                            </f:facet>
+                            <p:column headerText="Nº de Comprobante" style="width: 2vw;text-align: center" filterBy="#{comprobantePago.numComprobante}">
+                                <h:outputText value="#{comprobantePago.numComprobante}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 8vw;">
+                                <h:outputText value="#{comprobantePago.detalle}" />
+                            </p:column>
+                            <p:column headerText="Fecha de Emisión" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{comprobantePago.fechaComprobante}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Período" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{comprobantePago.periodo}" />
+                            </p:column>
+                            <p:column headerText="Transacción Diario General" style="width: 3vw;text-align: center" filterBy="#{comprobantePago.diarioGeneral.numeroTransaccion}">
+                                <h:outputText value="#{comprobantePago.diarioGeneral.numeroTransaccion}" />
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{comprobantePago.estado}" >
+                                <h:outputText value="#{comprobantePago.estado}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 4vw;text-align: center">
+                                <p:commandLink actionListener="#{liquidacionFondoTercerosView.form(comprobantePago,'VIZUALIZAR')}" title="VIZUALIZAR COMPROBANTE DE PAGO" process="@this">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{liquidacionFondoTercerosView.imprimirReporteComprobante(comprobantePago)}" title="REIMPRIMIR COMPROBANTE DE PAGO" process="@this">
+                                    <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{liquidacionFondoTercerosView.anularComprobante(comprobantePago)}" title="ANULAR COMPROBANTE DE PAGO" process="@this" 
+                                               rendered="#{comprobantePago.estado=='ANULADO'?false:comprobantePago.estado!='REGISTRADO'?false:true}">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular el comprobante Nº #{comprobantePago.numComprobante} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+
+                            </p:column>
+                        </p:dataTable>
+                        <center style="margin-top: 2% ;">
+                            <p:commandButton disabled="#{liquidacionFondoTercerosView.btnCompletarTarea}"  value="COMPLETAR TAREA"
+                                             actionListener="#{liquidacionFondoTercerosView.dlogObser()}"  style="width: auto; background: #0D47A1;"
+                                             title="ENVIAR TAREA" process="@this" icon="fa fa-send" />
+
+
+                        </center>
+
+                    </h:panelGroup>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+
+                    <h:panelGroup id="formComprobantePagos" layout="block" rendered="#{!liquidacionFondoTercerosView.ocultarTabla}">
+                        <div class="ui-g-12">
+                            <p:commandButton  value="Enlaces" process="@this" update="formComprobantePagos" rendered="false"
+                                              icon="fa fa-chain" actionListener="#{liquidacionFondoTercerosView.actualizarFormulario(true)}"
+                                              styleClass="Fs16" style="width: auto; margin-right: 10px"/>  
+                            <p:commandButton value="Diario General" process="@this" update="formComprobantePagos" rendered="false"
+                                             icon="fa fa-plus-circle" actionListener="#{liquidacionFondoTercerosView.actualizarFormulario(false)}"
+                                             styleClass="Fs16" style="width: auto; margin-right: 10px"/> 
+                            <p:commandButton value="Regresar Listado" process="@this"  
+                                             icon="fa fa-list-ul" actionListener="#{liquidacionFondoTercerosView.form(null,'LISTADO')}"
+                                             styleClass="Fs16" style="width: auto; margin-right: 10px"/> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{!liquidacionFondoTercerosView.ocultarBotonesAcciones}">
+                                <p:outputLabel value="ESTADO: #{liquidacionFondoTercerosView.comprobantePago.estado}" style="font-weight: bold;font-size: 20px;float: right"/>
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="ui-g-6">
+                            <p:fieldset legend="DETALLES DEL COMPROBANTE DE PAGO">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel for="@next" value="Nº del Comprobante de Pago:" style="font-weight: bold"/>
+                                        <p:inputText id="numeroComprobantePago" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.numComprobante}" readonly="true" /> 
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                        <p:inputText id="periodoComprobantePago" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.periodo}" readonly="true" /> 
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel for="@next" value="Fecha Comprobante:" style="font-weight: bold"/>
+                                        <p:calendar id="fechaComprobantePago"  pattern="dd/MM/yyyy"  navigator="true" yearRange="c-100:c+100"
+                                                    value="#{liquidacionFondoTercerosView.comprobantePago.fechaComprobante}" style="width: 100%"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:outputLabel for="@next" value="Detalle:"  style="font-weight: bold"/>
+                                        <p:inputTextarea id="detalle" rows="4" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                         readonly="#{!liquidacionFondoTercerosView.ocultarBotonesAcciones}" 
+                                                         value="#{liquidacionFondoTercerosView.comprobantePago.detalle}"/> 
+                                    </p:panelGrid> 
+                                </p:panelGrid>
+
+                            </p:fieldset>
+                        </div>
+
+                        <div class="ui-g-6">
+                            <p:fieldset legend="ENLACES" rendered="#{liquidacionFondoTercerosView.fielsetEnlaces}" id="enlacesFielset">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel value="Enlaces" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="moduloEnlace" value="#{liquidacionFondoTercerosView.enlaceSeleccionado}" converter="#{utilConverter}" 
+                                                         filterMatchMode="startsWith" style="width: 100%; font-weight: bold;" panelStyle="font-weight: bold;">
+                                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" itemDisabled="true" />
+                                            <f:selectItems value="#{liquidacionFondoTercerosView.enlacesComprobantePago}" var="modulo" 
+                                                           itemLabel="#{modulo.texto}" itemValue="#{modulo}" itemLabelEscaped="false" itemDisabled="true"/>
+                                            <p:ajax update="enlacesFielset" listener="#{liquidacionFondoTercerosView.actualizarFielsetEnlace()}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:outputLabel for="@next" value="Procesos de Talento Humano" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="tipoNomina" value="#{liquidacionFondoTercerosView.subEnlaceSeleccionado}" style="width:100%" converter="#{utilConverter}" >
+                                            <f:selectItem itemLabel="-Seleccionar-"  itemValue="" itemDisabled="true" />
+                                            <f:selectItems value="#{liquidacionFondoTercerosView.subEnlaces}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" 
+                                                           itemLabelEscaped="false" itemDisabled="true"/>
+                                            <p:ajax listener="#{liquidacionFondoTercerosView.procesoEnlace()}"/>
+                                        </p:selectOneMenu>
+                                        <!--<p:outputLabel id="tipoNomina" value="#{liquidacionFondoTercerosView.subenlace}" style="width:100%" />-->
+
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:outputLabel style="font-size: 12px; font-weight: bold;" value="Referencia: #{liquidacionFondoTercerosView.tramite.tipoTramite.descripcion}"/>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="CONTABILIDAD" rendered="#{liquidacionFondoTercerosView.fielsetDiarioGeneral}">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridContabilidad">
+                                    <h:panelGroup>
+                                        <p:outputLabel for="@next" value="Nº de Transacción:" style="font-weight: bold"/>
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="numTransaccion" class="panelInput" value="#{liquidacionFondoTercerosView.diarioGeneral.numeroTransaccion}"
+                                                         readonly="#{!liquidacionFondoTercerosView.ocultarBotonesAcciones}" 
+                                                         onkeypress="focusNextOnEnter(event, 'botonBusquedaDiarioGeneral')">
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                            <p:commandButton title="Diarios Generales" icon="fa fa-search" id="botonBusquedaDiarioGeneral"
+                                                             actionListener="#{liquidacionFondoTercerosView.buscarDiarioGeneral('BOTONBUSQUEDA')}"
+                                                             rendered="#{liquidacionFondoTercerosView.ocultarBotonesAcciones}"
+                                                             process="numTransaccion" update="gridContabilidad,gridReservaCompromiso" styleClass="green-button button-group">
+                                            </p:commandButton>
+                                        </div>
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                        <p:inputText id="periodoDiarioGeneral" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.diarioGeneral.periodo}" readonly="true" /> 
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Fecha Transacción:" style="font-weight: bold"/>
+                                        <p:inputText id="fechaDiarioGeneral" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.diarioGeneral.fechaElaboracion}" readonly="true" >
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="RESERVA DE COMPROMISO" rendered="#{liquidacionFondoTercerosView.fielsetDiarioGeneral}">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridReservaCompromiso">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Nº Reserva Compromiso:" style="font-weight: bold"/>
+                                        <p:inputText id="numeroReservaCompromiso" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.reservaCompromiso.secuencial}" readonly="true" /> 
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                        <p:inputText id="periodoReservaCompromiso" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.reservaCompromiso.periodo}" readonly="true" /> 
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Fecha:" style="font-weight: bold"/>
+                                        <p:inputText id="fechaReservaCompromiso" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.reservaCompromiso.fechaSolicitud}" readonly="true" >
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </p:inputText> 
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="BENEFICIARIO" rendered="#{liquidacionFondoTercerosView.fielsetDiarioGeneral}">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="RUC/C.I." style="font-weight: bold"/>
+                                        <p:inputText id="identificacionBeneficiario" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.diarioGeneral.variosBeneficiarios==true ? 'NOMINA':liquidacionFondoTercerosView.comprobantePago.diarioGeneral.beneficiario.identificacionCompleta}" readonly="true" /> 
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Razón Social:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreBeneficiario" style="width: 100%;" 
+                                                     value="#{liquidacionFondoTercerosView.comprobantePago.diarioGeneral.variosBeneficiarios==true ? 'NOMINA': liquidacionFondoTercerosView.comprobantePago.diarioGeneral.beneficiario.tipoIdentificacion=='RUC'?liquidacionFondoTercerosView.comprobantePago.diarioGeneral.beneficiario.nombre:liquidacionFondoTercerosView.comprobantePago.diarioGeneral.beneficiario.nombreCompleto}" readonly="true" /> 
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+
+                        </div>
+
+                        <p:fieldset legend="COMPROBANTE DE PAGO" class="ui-g-12">
+
+                            <p:messages id="mensaje" showDetail="true" closable="true"/>
+                            <p:commandButton value="AGREGAR CUENTA CONTABLE" process="@this" actionListener="#{liquidacionFondoTercerosView.showCuentasContables()}"
+                                             icon="fa fa-plus" styleClass="Fs16" style="width: auto; margin: 15px 0px;" /> 
+                            <p:spacer width="10"/>
+                            <p:commandButton value="AGREGAR CUENTA BANCOS" process="@this" actionListener="#{liquidacionFondoTercerosView.openDlgCuentaBanco()}"
+                                             icon="fa fa-plus" styleClass="Fs16" style="width: auto; margin: 15px 0px;" /> 
+
+
+                            <p:dataTable  id="detalleComprobantePagoTable" widgetVar="detalleComprobantePagoTable" var="detalleComprobantePago" paginator="true" rows="20" 
+                                          style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                          paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          rowsPerPageTemplate="20,30,40,50" lazy="true" value="#{liquidacionFondoTercerosView.detalleComprobantePagoList}" rowKey="#{detalleComprobantePago.linea}"
+                                          emptyMessage="No existe información con el criterio de busqueda especificado" editMode="cell" editable="true"  rowIndexVar="index">
+                                <p:column headerText="Acción" style="width:4vw;text-align: center" >
+                                    <p:commandLink  title="Eliminar" process="@this" update="detalleComprobantePagoTable,beneficiarioTable" 
+                                                    actionListener="#{liquidacionFondoTercerosView.deleteComprobantePago(index,detalleComprobantePago)}" >
+                                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar esta Cuenta?"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+
+                                </p:column>
+
+                                <p:column headerText="Línea" style="width: 2vw;text-align: center">
+                                    <h:outputText value="#{detalleComprobantePago.linea}" />
+                                </p:column>
+                                <p:column headerText="Cuenta Contable" style="width: 4vw;text-align: center">
+                                    <h:outputText value="#{detalleComprobantePago.cuentaContable.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre de Cuenta Contable" style="width: 15vw;">
+                                    <h:outputText value="#{detalleComprobantePago.cuentaContable.nombre}" />
+                                </p:column>
+                                <p:column headerText="Debe" style="width: 4vw;">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{detalleComprobantePago.debe}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{detalleComprobantePago.debe}">
+                                                <p:ajax event="change" update="detalleComprobantePagoTable,beneficiarioTable" listener="#{liquidacionFondoTercerosView.determinarRelacionPresupuestaria(detalleComprobantePago,true)}" />
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>      
+                                </p:column>
+                                <p:column headerText="Haber" style="width: 4vw;">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{detalleComprobantePago.haber}" style="float: right"> 
+                                                <f:convertNumber  type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{detalleComprobantePago.haber}">
+                                                <p:ajax event="change" update="detalleComprobantePagoTable,beneficiarioTable" listener="#{liquidacionFondoTercerosView.determinarRelacionPresupuestaria(detalleComprobantePago,false)}" />
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>  
+                                </p:column>
+                                <p:column headerText="Tipo" style="width: 5vw;text-align: center">
+                                    <h:outputText value="#{detalleComprobantePago.tipoPago.texto}" />
+                                </p:column>
+                                <p:column headerText="Cedula Presupuestaria" style="width: 5vw;text-align: center">
+                                    <h:outputText value="#{detalleComprobantePago.cedulaPresupuestaria}" />
+                                </p:column>
+                                <p:column headerText="Ejecutado" style="width: 4vw;">
+                                    <h:outputText value="#{detalleComprobantePago.ejecutado}"  style="float: right">
+                                        <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Acci." style="width: 4vw;">
+                                    <p:commandLink actionListener="#{liquidacionFondoTercerosView.eliminarCuanta(detalleComprobantePago)}" update="detalleComprobantePagoTable">
+                                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                                <p:columnGroup type="footer">
+                                    <p:row >
+                                        <p:column colspan="3" footerText="TOTALES" style="text-align:right;font-weight: bold"/>
+                                        <p:column footerText="$#{liquidacionFondoTercerosView.totalDebe}" style="text-align:right;font-weight: bold" />
+                                        <p:column footerText="$#{liquidacionFondoTercerosView.totalHaber}" style="text-align:right;font-weight: bold"/>
+                                        <p:column colspan="2" footerText="TOTAL" style="text-align:center;font-weight: bold"/>
+                                        <p:column footerText="$#{liquidacionFondoTercerosView.totalValor}" style="text-align:right;font-weight: bold"/>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </p:fieldset>
+                        <div class="ui-g-12">
+                            <p:fieldset legend="BENEFICIARIO" style="margin-top: 10px">
+                                <p:commandButton rendered="false" title="Agregar un Servidor" icon="fa fa-plus" actionListener="#{liquidacionFondoTercerosView.showServidores()}" style="float: right;"/>
+                                <p:dataTable  id="beneficiarioTable" widgetVar="beneficiarioTable" var="beneficiario" paginator="true" rows="20" 
+                                              style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="20,30,40,50" lazy="true" value="#{liquidacionFondoTercerosView.beneficiarioComprobantePagoList}" rowKey="#{beneficiario.numeroTransferencia}"
+                                              emptyMessage="No existe información con el criterio de busqueda especificado">
+                                    <p:column headerText="Cuenta Bancaria" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.cuentaBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre del Banco" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.detalleBanco.banco.nombreBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.tipoCuenta.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.beneficiario.tipoIdentificacion.codigo == 'RUC' ? beneficiario.beneficiario.nombre:beneficiario.beneficiario.nombreCompleto}" />
+                                    </p:column>
+                                    <p:column headerText="Nº de Transferencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.numeroTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 3vw;">
+                                        <h:outputText value="#{beneficiario.valor}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width:4vw;text-align: center" rendered="#{!liquidacionFondoTercerosView.ocultarBotonesAcciones}">
+                                        <h:outputText value="#{beneficiario.estadoBeneficiario}"/>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="5" footerText="TOTAL" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{liquidacionFondoTercerosView.totalValorBeneficiarios}" style="text-align:right;font-weight: bold" />
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                            </p:fieldset>
+                        </div>
+                        <center>
+                            <p:commandButton value="GUARDAR" icon="fa fa-save" actionListener="#{liquidacionFondoTercerosView.saveComprobante()}" process="@this" update="dataTableComprobantePagos,formComprobantePagos,comprobantePagoTable"
+                                             styleClass="Fs16" style="width: auto; margin: 20px 0px;" rendered="#{liquidacionFondoTercerosView.ocultarBotonesAcciones}"/> 
+
+                            <p:commandButton value="CANCELAR" icon="fa fa-remove" actionListener="#{liquidacionFondoTercerosView.vaciarFormulario('CANCELAR')}" 
+                                             styleClass="Fs16" class="red-btn" style="width: auto; margin: 20px 0px 20px 15px;" rendered="#{liquidacionFondoTercerosView.ocultarBotonesAcciones}"
+                                             update="beneficiarioTable, detalleComprobantePagoTable, gridContabilidad, gridReservaCompromiso"/> 
+                        </center>
+
+                    </h:panelGroup>
+
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="cuentaBancoDLG" header="Cuenta Bancos" widgetVar="cuentaBancoDLG" width="50%" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+
+            <h:form prependId="false">
+
+                <p:outputPanel id="cuentaBancoForm" style="width: 100%;" >
+
+                    <p:dataTable  id="cuentaBancoTable" widgetVar="cuentaBancoTable" var="cuentaBanco" 
+                                  value="#{liquidacionFondoTercerosView.cuentaBancariaLazyModel}" paginator="false" 
+                                  style="width: 100%;" scrollable="true" scrollHeight="350" rows="30000"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  lazy="true" selectionMode="single" rowKey="#{cuentaBanco.id}" selection="#{liquidacionFondoTercerosView.cuentaBancariaSelecionada}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <p:ajax event="rowSelect" listener="#{liquidacionFondoTercerosView.añadirCuentaBanco()}" process="@this"/>
+                        <p:column headerText="Número de Cuenta Banco" style="width: 8vw;text-align: center">
+                            <h:outputText value="#{cuentaBanco.numeroCuenta}"/>
+                        </p:column>
+                        <p:column headerText="Nombre de Cuenta Banco" style="width: 15vw;">
+                            <h:outputText value="#{cuentaBanco.nombreCuentaBancaria}" />
+                        </p:column>
+                        <p:column headerText="Cuenta Contable" style="width: 15vw">
+                            <h:outputText value="#{cuentaBanco.cuentaMovimiento.codigo}-#{cuentaBanco.cuentaMovimiento.nombre}"/>
+                        </p:column>
+                    </p:dataTable>
+
+                </p:outputPanel>
+
+            </h:form>
+
+        </p:dialog>
+
+        <p:dialog id="diarioGeneralDLG" header="TRANSACCIONES - DIARIO GENERAL" widgetVar="diarioGeneralDLG" width="50%" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+
+            <h:form prependId="false">
+
+                <p:outputPanel id="diarioGeneralForm" style="width: 100%;" >
+
+                    <p:dataTable  id="diarioGeneralTable" widgetVar="diarioGeneralTable" var="diarioGeneral" value="#{liquidacionFondoTercerosView.diarioGeneralLazyModel}" paginator="true" rows="15" 
+                                  style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="15,20,25" lazy="true" selectionMode="single" rowKey="#{diarioGeneral.id}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            LISTADO DE TRANSACCIONES
+                        </f:facet>
+                        <p:column headerText="Nº de Transacción" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.numeroTransaccion}">
+                            <h:outputText value="#{diarioGeneral.numeroTransaccion}" />
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.estadoTransaccion}">
+                            <h:outputText value="#{diarioGeneral.estadoTransaccion}" />
+                        </p:column>
+                        <p:column headerText="Clase" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.estadoTransaccion}">
+                            <h:outputText value="#{diarioGeneral.clase.texto}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.periodo}">
+                            <h:outputText value="#{diarioGeneral.tipo.texto}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Registro" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{diarioGeneral.fechaElaboracion}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Seleccion" style="width: 3vw;text-align: center">
+                            <p:commandLink actionListener="#{liquidacionFondoTercerosView.DiarioGeneralSeleccionado(diarioGeneral,'DIALOG')}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+
+                </p:outputPanel>
+
+            </h:form>
+
+        </p:dialog>
+
+        <p:dialog id="comprobanteDiarioGeneralDLG" header="MENSAJE" widgetVar="comprobanteDiarioGeneralDLG" width="33%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteTransferenciaForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:outputLabel value="¿DESEA GENERAR EL REPORTE DE LA TRANSACCION DEL DIARIO GENERAL INTEGRADO?" style="font-weight: bold"/>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandButton value="SI" icon="fa fa-check" actionListener="#{liquidacionFondoTercerosView.generarArchivoDiarioGeneral(true)}"
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px;"/> 
+
+                        <p:commandButton value="NO" icon="fa fa-remove" actionListener="#{liquidacionFondoTercerosView.generarArchivoDiarioGeneral(false)}" 
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px 20px 15px;"/> 
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="anticiposDlg" header="Listado Anticipos" widgetVar="anticiposDlg" width="40%" style="margin-top: 90px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="anticipoForm" style="width: 100%;" >
+                    <p:dataTable  id="anticipoTable" widgetVar="anticipoTable" var="anticipo" value="#{liquidacionFondoTercerosView.anticipoRemuneracionLazy}" 
+                                  scrollable="true" scrollHeight="450" lazy="true" rows="20000" style="width: 100%" 
+                                  rowKey="#{anticipo.id}" emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <p:column headerText="Nombre Servidor" style="width: 3vw;text-align: center" filterBy="#{anticipo.servidor.persona.nombreCompleto}">
+                            <h:outputText value="#{anticipo.servidor.persona.nombreCompleto}"  />
+                        </p:column>
+                        <p:column headerText="Cargo" style="width: 3vw;">
+                            <h:outputText value="#{anticipo.distributivo.cargo.nombreCargo}" />
+                        </p:column>
+                        <p:column headerText="Monto Anticipo" style="width: 4vw;text-align: center">
+                            <h:outputText value="#{anticipo.montoAnticipo}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Fecha Registro" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{anticipo.fechaAnticipo}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{liquidacionFondoTercerosView.cargarAnticipo(anticipo)}" title="Seleccionar" process="@this"
+                                           update="formComprobantePagos" >
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{liquidacionFondoTercerosView.observasciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{liquidacionFondoTercerosView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="DlogoPersonal" header="Servidores" widgetVar="DlogoPersonal" width="40%" style="margin-top: 90px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form id="formPersona" >
+                <p:dataTable  id="diarioGeneralTable2" widgetVar="diarioGeneralTable2" var="item" value="#{liquidacionFondoTercerosView.listaServidores}" paginator="true" rows="15" 
+                              style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="15,20,25"  selectionMode="single" rowKey="#{item.id}"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                    <f:facet name="header">
+                        Servidores
+                    </f:facet>
+
+                    <p:column headerText="Nombre" style="width: 20%;" filterBy="#{item.nombreCompleto}" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.nombreCompleto}" />
+                    </p:column>
+
+                    <p:column headerText="Identificación" style="text-align: center;width: 10%;" filterBy="#{item.identificacion}" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.identificacion}"/>
+                    </p:column>
+
+                    <p:column headerText="Acción" style="text-align: center;width: 5%;">
+                        <p:commandButton title="Seleccionar"  icon="fa fa-hand-o-up" actionListener="#{liquidacionFondoTercerosView.selectData(item)}" update="beneficiarioTable"/>
+                    </p:column>
+
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlogoCuentasContables" header="Cuenta Contables" widgetVar="DlogoCuentasContables" width="60%" style="margin-top: 90px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" height="450">
+            <h:form id="formcc" >
+                <p:dataTable  id="cuentaContable" widgetVar="cuentaContable" var="item" 
+                              value="#{liquidacionFondoTercerosView.listaCuentaContables}" 
+                              style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+
+                              selectionMode="single" rowKey="#{item.id}"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                    <f:facet name="header">
+                        Cuentas Contables
+                    </f:facet>
+
+                    <p:column headerText="Codigo" style="width: 10%;text-align: center" filterBy="#{item.codigo}" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.codigo}"/>
+                    </p:column>
+
+
+                    <p:column headerText="Descripción" style="width: 40%;" filterBy="#{item.nombre}" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.nombre}"/>
+                    </p:column>
+
+
+                    <p:column headerText="Acción" style="text-align: center; width: 5%;" >
+                        <p:commandButton title="Seleccionar" icon="fa fa-hand-o-up" actionListener="#{liquidacionFondoTercerosView.aniadirCuentaContable(item)}" update="detalleComprobantePagoTable"/>
+                    </p:column>
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="partidaEstructuraRelacionadaDlg" widgetVar="partidaEstructuraRelacionadaDlg" width="30%" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="LISTADO PRESUPUESTO" >
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="partidaEstructuraRelacionadaForm" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="Cédula Presupuestaria" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{liquidacionFondoTercerosView.presupuestoSeleccionado}" style="width:100%" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="startsWith" var="t" id="listPresupuesto" panelStyle="width:180px">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="" />
+                                <f:selectItems value="#{liquidacionFondoTercerosView.presupuestoRelacionado}" var="item" itemLabel="#{item.partida} - #{item.item.descripcion}" itemValue="#{item}" />
+                                <p:column style="width:10%" >
+                                    <f:facet name="header">
+                                        <h:outputText value="Código"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.partida}" style="font-weight: bold;" />
+                                </p:column>
+                                <p:column style="width: 30%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.item.descripcion}" />
+                                </p:column>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="SELECCIONAR" icon="fa fa-save" actionListener="#{liquidacionFondoTercerosView.guardarRelacionesPresupuestarias()}" update="detalleComprobantePagoTable"
+                                             styleClass="Fs16" style="width: auto; margin: 15px;"/> 
+                        </center>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+
+
+</ui:composition>

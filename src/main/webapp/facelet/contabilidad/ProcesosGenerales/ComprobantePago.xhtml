@@ -1,0 +1,555 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Comprobante de Pagos
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <comp:titleTask task="#{comprobantePagoProcesoView.tarea}" tramite="#{comprobantePagoProcesoView.tramite}" />
+                <h:form id="formMain" prependId="false">
+
+                    <h:panelGroup id="dataTableComprobantePagos" layout="block" rendered="#{comprobantePagoProcesoView.ocultarTabla}">
+
+                        <p:commandButton value="Nuevo Comprobante" process="@this" rendered="#{!comprobantePagoProcesoView.btniniciar}"
+                                         icon="fa fa-plus" actionListener="#{comprobantePagoProcesoView.form(null,'NUEVO')}"
+                                         styleClass="Fs16" style="width: auto; margin-right: 10px" update="beneficiarioTable"/> 
+
+                        <p:commandButton value="Limpiar Filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('comprobantePagoTable').clearFilters()" update="comprobantePagoTable"
+                                         styleClass="Fs16" style="width: auto; margin-right: 15px;"/>
+
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas Visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="comprobantePagoTable" trigger="mostrarColumnas" />
+
+                        <p:dataTable  id="comprobantePagoTable" widgetVar="comprobantePagoTable" var="comprobantePago" value="#{comprobantePagoProcesoView.comprobantePagoLazy}" 
+                                      paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{comprobantePago.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="50,60,70,100" lazy="true"
+                                      emptyMessage="No existe información con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                LISTADO DE COMPROBANTE DE PAGOS
+                            </f:facet>
+                            <p:column headerText="No de Comprobante" style="width: 2vw;text-align: center" filterBy="#{comprobantePago.numComprobante}" filterMatchMode="contains">
+                                <h:outputText value="#{comprobantePago.numComprobante}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 8vw;" filterMatchMode="contains">
+                                <h:outputText value="#{comprobantePago.detalle}" />
+                            </p:column>
+                            <p:column headerText="Fecha de Emisión" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{comprobantePago.fechaComprobante}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Período" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{comprobantePago.periodo}" />
+                            </p:column>
+                            <p:column headerText="No Diario" style="width: 3vw;text-align: center" filterBy="#{comprobantePago.diarioGeneral.numeroTransaccion}">
+                                <h:outputText value="#{comprobantePago.diarioGeneral.numeroTransaccion}" />
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{comprobantePago.estado}" >
+                                <h:outputText value="#{comprobantePago.estado}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 2vw;text-align: center">
+                                <p:commandLink actionListener="#{comprobantePagoProcesoView.form(comprobantePago,'VISUALIZAR')}" title="VISUALIZAR COMPROBANTE DE PAGO" process="@this">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{comprobantePagoProcesoView.imprimirReporteComprobante(comprobantePago)}" title="REIMPRIMIR COMPROBANTE DE PAGO" process="@this">
+                                    <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{comprobantePagoProcesoView.anularComprobante(comprobantePago)}" title="ANULAR COMPROBANTE DE PAGO" process="@this" 
+                                               rendered="#{comprobantePago.estado=='ANULADO'?false:comprobantePago.estado=='TRANSFERENCIA ANULADA'?false:comprobantePago.estado!='REGISTRADO' ?false:true}">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular el comprobante Nº #{comprobantePago.numComprobante} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <center>
+                            <p:commandButton value="Completar Tarea"  actionListener="#{comprobantePagoProcesoView.abriDlogo()}"
+                                             icon="fa fa-external-link" process="@this" style="width: auto; background: #0081cb; margin-top: 2%;"
+                                             rendered="#{comprobantePagoProcesoView.btnCompletarTarea}"/>
+                        </center>
+                    </h:panelGroup>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+
+                    <h:panelGroup id="formComprobantePagos" layout="block" rendered="#{!comprobantePagoProcesoView.ocultarTabla}">
+                        <div class="ui-g-12">
+                            <p:commandButton value="Regresar Listado" process="@this"
+                                             icon="fa fa-list-ul" actionListener="#{comprobantePagoProcesoView.form(null,'LISTADO')}"
+                                             styleClass="Fs16" style="width: auto; margin-right: 10px"/> 
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{!comprobantePagoProcesoView.ocultarBotonesAcciones}">
+                                <p:outputLabel value="ESTADO: #{comprobantePagoProcesoView.comprobantePago.estado}" style="font-weight: bold;font-size: 20px;float: right"/>
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-12">
+                            <div class="ui-g-6">
+                                <p:fieldset legend="DETALLES DEL COMPROBANTE DE PAGO">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{!comprobantePagoProcesoView.ocultarBotonesAcciones}">
+                                            <p:outputLabel for="@next" value="Nº del Comprobante de Pago:" style="font-weight: bold"/>
+                                            <p:inputText id="numeroComprobantePago" style="width: 100%;" 
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.numComprobante}" readonly="true" 
+                                                         onkeypress="focusNextOnEnter(event, 'numeroComprobantePago')"/> 
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoComprobantePago" style="width: 100%;" 
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.periodo}" readonly="true" 
+                                                         onkeypress="focusNextOnEnter(event, 'periodoComprobantePago')"/> 
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:outputLabel for="@next" value="Fecha Comprobante:" style="font-weight: bold"/>
+                                            <p:calendar id="fechaComprobantePago"  pattern="dd/MM/yyyy"  navigator="true" yearRange="c-100:c+100" readonly="true"
+                                                        disabled="#{!comprobantePagoProcesoView.ocultarBotonesAcciones}"
+                                                        value="#{comprobantePagoProcesoView.comprobantePago.fechaComprobante}" style="width: 100%"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                            <p:outputLabel for="@next" value="Detalle:"  style="font-weight: bold"/>
+                                            <p:inputTextarea id="detalle" rows="4" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                             readonly="#{!comprobantePagoProcesoView.ocultarBotonesAcciones}" 
+                                                             value="#{comprobantePagoProcesoView.comprobantePago.detalle}"
+                                                             onkeypress="focusNextOnEnter(event, 'moduloEnlace')"/> 
+                                        </p:panelGrid> 
+                                    </p:panelGrid>
+
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-6">
+                                <p:fieldset legend="ENLACES" rendered="#{comprobantePagoProcesoView.proceso == 1 ? true:false}" id="enlacesFielset">
+                                    <p:panelGrid rendered="#{!comprobantePagoProcesoView.eleccion}" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:outputLabel value="Módulos:" style="font-weight: bold"/>
+                                            <p:inputText id="moduloEnlace" readonly="true"
+                                                         value="#{comprobantePagoProcesoView.enlaceSeleccionado.padre.texto}"
+                                                         onkeypress="focusNextOnEnter(event, 'moduloEnlace')"/>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Proceso:" style="font-weight: bold"/>
+                                            <p:inputText id="idEnlace" value="#{comprobantePagoProcesoView.enlaceSeleccionado.texto}" 
+                                                         onkeypress="focusNextOnEnter(event, 'idEnlace')"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid rendered="#{comprobantePagoProcesoView.eleccion}" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:outputLabel value="Módulos:" style="font-weight: bold"/>
+                                            <p:inputText id="moduloEnlace2" readonly="true" 
+                                                         value="#{comprobantePagoProcesoView.enlaceSeleccionado.padre == null ? comprobantePagoProcesoView.enlaceSeleccionado.texto:comprobantePagoProcesoView.enlaceSeleccionado.padre.texto}" 
+                                                         onkeypress="focusNextOnEnter(event, 'moduloEnlace2')"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Proceso2:" style="font-weight: bold" />
+                                            <p:inputText id="seleccionEnlace" value="#{comprobantePagoProcesoView.subEnlaceSeleccionado.texto}" readonly="true" 
+                                                         onkeypress="focusNextOnEnter(event, 'seleccionEnlace')"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                </p:fieldset>
+
+                                <p:fieldset legend="Datos Planilla" rendered="#{comprobantePagoProcesoView.renderedPlanilla()}">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1" layout="grid">
+                                            <p:outputLabel value="Tipo Rol" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="mesPlanillaIess" value="#{comprobantePagoProcesoView.mesSeleccionado}"
+                                                             filter="true" filterMatchMode="contains"
+                                                             style="width: 100%;" panelStyle="width:100px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{comprobantePagoProcesoView.mesList}"
+                                                               var="m"
+                                                               itemLabel="#{m.codigo}"
+                                                               itemValue="#{m.codigo}"/>
+                                                <p:ajax listener="#{comprobantePagoProcesoView.updatePlanilla()}" process="mesPlanillaIess"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid">
+                                            <p:outputLabel value="Tipo Planilla" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="tipoPlanilla" 
+                                                             converter="#{utilConverter}"
+                                                             value="#{comprobantePagoProcesoView.tipoPlanillaSeleccionada}" style="width: 100%">
+                                                <f:selectItem itemLabel="APORTES IESS" itemValue="#{null}" />
+                                                <f:selectItems value="#{comprobantePagoProcesoView.planillaIESSList}"
+                                                               var="p" itemLabel="#{p.nombre}" itemValue="#{p}"/>
+                                                <p:ajax listener="#{comprobantePagoProcesoView.updatePlanilla()}" process="tipoPlanilla"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                                <p:fieldset legend="CONTABILIDAD" rendered="#{comprobantePagoProcesoView.fielsetDiarioGeneral}" >
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridContabilidad">
+                                        <h:panelGroup>
+                                            <p:outputLabel for="@next" value="Nº de Transacción:" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="numTransaccion" class="panelInput" value="#{comprobantePagoProcesoView.diarioGeneral.numeroTransaccion}"
+                                                             readonly="true" onkeypress="focusNextOnEnter(event, 'numTransaccion')">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoDiarioGeneral" style="width: 100%;" 
+                                                         value="#{comprobantePagoProcesoView.diarioGeneral.periodo}" readonly="true" 
+                                                         onkeypress="focusNextOnEnter(event, 'periodoDiarioGeneral')"/> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha Transacción:" style="font-weight: bold"/>
+                                            <p:inputText id="fechaDiarioGeneral" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'fechaDiarioGeneral')"
+                                                         value="#{comprobantePagoProcesoView.diarioGeneral.fechaElaboracion}" readonly="true" >
+                                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="RESERVA DE COMPROMISO" rendered="#{comprobantePagoProcesoView.fielsetDiarioGeneral}">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridReservaCompromiso">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nº Reserva Compromiso:" style="font-weight: bold"/>
+                                            <p:inputText id="numeroReservaCompromiso" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'numeroReservaCompromiso')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.secuencial}" readonly="true" /> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoReservaCompromiso" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'periodoReservaCompromiso')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.periodo}" readonly="true" /> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha:" style="font-weight: bold"/>
+                                            <p:inputText id="fechaReservaCompromiso" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'fechaReservaCompromiso')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.fechaSolicitud}" readonly="true" >
+                                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                                            </p:inputText> 
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="RESERVA DE COMPROMISO" rendered="#{comprobantePagoProcesoView.fieldsetReservaContrato}">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridReservaCompr">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nº Reserva Compromiso:" style="font-weight: bold"/>
+                                            <p:inputText id="numeroReservaCompr" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'numeroReservaCompr')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.secuencial}" readonly="true" /> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoReservaCompr" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'periodoReservaCompr')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.periodo}" readonly="true" /> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha:" style="font-weight: bold"/>
+                                            <p:inputText id="fechaReservaCompr" style="width: 100%;" 
+                                                         onkeypress="focusNextOnEnter(event, 'fechaReservaCompr')"
+                                                         value="#{comprobantePagoProcesoView.comprobantePago.reservaCompromiso.fechaSolicitud}" readonly="true" >
+                                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                                            </p:inputText> 
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </div>
+                        </div>
+
+                        <div class="ui-g-12">
+                            <p:fieldset legend="COMPROBANTE DE PAGO">
+                                <p:commandButton value="AGREGAR CUENTA CONTABLE" process="@this" actionListener="#{comprobantePagoProcesoView.mostrarListaCuentas()}"
+                                                 rendered="#{comprobantePagoProcesoView.diarioGeneral.id!=null or comprobantePagoProcesoView.anticipoSeleccionado.id!=null ? false:true}"
+                                                 disabled="#{comprobantePagoProcesoView.comprobantePago.id != null ? true:false}"
+                                                 icon="fa fa-plus" styleClass="Fs16" style="width: auto; margin: 15px 0px" /> 
+                                <p:spacer width="10"/>
+                                <p:commandButton value="AGREGAR CUENTA BANCOS" process="@this" actionListener="#{comprobantePagoProcesoView.openDlgCuentaBanco()}"
+                                                 disabled="#{comprobantePagoProcesoView.comprobantePago.id != null ? true:false}"
+                                                 icon="fa fa-plus" styleClass="Fs15" style="width: auto; margin: 15px 10px;"/> 
+
+                                <p:dataTable  id="detalleComprobantePagoTable" widgetVar="detalleComprobantePagoTable" var="detalleComprobantePago" paginator="true" rows="20" rowIndexVar="index"
+                                              style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="20,30,40,50" lazy="true" value="#{comprobantePagoProcesoView.detalleComprobantePagoList}" rowKey="#{detalleComprobantePago.linea}"
+                                              emptyMessage="No existe información con el criterio de busqueda especificado" editMode="cell" editable="true" >
+                                    <p:column headerText="Quitar" style="width: 1vw;text-align: center">
+                                        <p:commandLink actionListener="#{comprobantePagoProcesoView.deleteComprobantePago(index, detalleComprobantePago)}" title="Quitar" 
+                                                       update="detalleComprobantePagoTable,beneficiarioTable"
+                                                       rendered="#{!detalleComprobantePago.datoCargado}">
+                                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #ff3333;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar esta Cuenta?"  icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:column headerText="Línea" style="width: 2vw;text-align: center">
+                                        <h:outputText value="#{detalleComprobantePago.linea}" />
+                                    </p:column>
+                                    <p:column headerText="Cuenta Contable" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{detalleComprobantePago.cuentaContable.codigo}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre de Cuenta Contable" style="width: 15vw;">
+                                        <h:outputText value="#{detalleComprobantePago.cuentaContable.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Debe" style="width: 4vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleComprobantePago.debe}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{detalleComprobantePago.debe}" >
+                                                    <p:ajax event="change" update="detalleComprobantePagoTable,beneficiarioTable" 
+                                                            listener="#{comprobantePagoProcesoView.determinarRelacionPresupuestaria(detalleComprobantePago,true)}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>      
+                                    </p:column>
+                                    <p:column headerText="Haber" style="width: 4vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleComprobantePago.haber}" style="float: right"> 
+                                                    <f:convertNumber  type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{detalleComprobantePago.haber}" >
+                                                    <p:ajax event="change" update="detalleComprobantePagoTable,beneficiarioTable" 
+                                                            listener="#{comprobantePagoProcesoView.determinarRelacionPresupuestaria(detalleComprobantePago,false)}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>  
+                                    </p:column>
+                                    <p:column headerText="Tipo" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{detalleComprobantePago.tipoPago.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Cedula Presupuestaria" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{detalleComprobantePago.cedulaPresupuestaria}" />
+                                    </p:column>
+                                    <p:column headerText="Ejecutado" style="width: 4vw;">
+                                        <h:outputText value="#{detalleComprobantePago.ejecutado}"  style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Acción" style="width: 2vw;text-align: center" rendered="#{!comprobantePagoProcesoView.renderedPlanilla()}">
+                                        <p:commandLink actionListener="#{comprobantePagoProcesoView.determinarRelacionPresupuestaria(detalleComprobantePago,true)}" title="Agredar Cedula Presupuestaria" update="detalleComprobantePagoTable">
+                                            <i class="fa fa-fw fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #00b0ff;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="4" footerText="TOTALES" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{comprobantePagoProcesoView.totalDebe}" style="text-align:right;font-weight: bold" />
+                                            <p:column footerText="$#{comprobantePagoProcesoView.totalHaber}" style="text-align:right;font-weight: bold"/>
+                                            <p:column colspan="2" footerText="TOTAL" style="text-align:center;font-weight: bold"/>
+                                            <p:column footerText="$#{comprobantePagoProcesoView.totalValor}" style="text-align:right;font-weight: bold"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+                            </p:fieldset>
+
+                            <p:fieldset legend="BENEFICIARIO" style="margin-top: 10px">
+                                <p:dataTable  id="beneficiarioTable" widgetVar="beneficiarioTable" var="beneficiario" paginator="true" rows="20" 
+                                              style="width: 100%;" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="20,30,40,50" lazy="true" value="#{comprobantePagoProcesoView.beneficiarioComprobantePagoList}" rowKey="#{beneficiario.numeroTransferencia}"
+                                              emptyMessage="No existe información con el criterio de busqueda especificado">
+                                    <p:column headerText="Cuenta Bancaria" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.cuentaBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre del Banco" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.detalleBanco.banco.nombreBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.tipoCuenta.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.beneficiario.tipoIdentificacion.codigo == 'RUC' ? beneficiario.beneficiario.nombre:beneficiario.beneficiario.nombreCompleto}" />
+                                    </p:column>
+                                    <p:column headerText="Nº de Transferencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.numeroTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 3vw;">
+                                        <h:outputText value="#{beneficiario.valor}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width:4vw;text-align: center" rendered="#{!comprobantePagoProcesoView.ocultarBotonesAcciones}">
+                                        <h:outputText value="#{beneficiario.estadoBeneficiario}"/>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="5" footerText="TOTAL" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{comprobantePagoProcesoView.totalValorBeneficiarios}" style="text-align:right;font-weight: bold" />
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                            </p:fieldset>
+                        </div>
+                        <center>
+                            <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{comprobantePagoProcesoView.saveComprobante()}" update="comprobantePagoTable"
+                                             styleClass="Fs16" style="width: 150px; margin: 10px;" rendered="#{comprobantePagoProcesoView.ocultarBotonesAcciones}"/> 
+
+                            <p:commandButton value="Cancelar" icon="fa fa-remove" actionListener="#{comprobantePagoProcesoView.vaciarFormulario('CANCELAR')}" 
+                                             styleClass="Fs16" style="width: 150px; margin: 10px;background: red" rendered="#{comprobantePagoProcesoView.ocultarBotonesAcciones}"
+                                             update="beneficiarioTable, detalleComprobantePagoTable, gridContabilidad, gridReservaCompromiso"/> 
+                        </center>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{comprobantePagoProcesoView.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{comprobantePagoProcesoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="cuentaBancoDLG" header="Cuenta Bancos" widgetVar="cuentaBancoDLG" width="50%" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="cuentaBancoForm" style="width: 100%;" >
+                    <p:dataTable  id="cuentaBancoTable" widgetVar="cuentaBancoTable" var="cuentaBanco" 
+                                  value="#{comprobantePagoProcesoView.cuentaBancariaLazyModel}" paginator="false" 
+                                  style="width: 100%;" scrollable="true" scrollHeight="350" rows="30000"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  lazy="true" selectionMode="single" rowKey="#{cuentaBanco.id}" selection="#{comprobantePagoProcesoView.cuentaBancariaSelecionada}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <p:ajax event="rowSelect" listener="#{comprobantePagoProcesoView.añadirCuentaBanco()}" process="@this"/>
+                        <p:column headerText="No Cta. Banco" style="width: 20%;text-align: center">
+                            <h:outputText value="#{cuentaBanco.numeroCuenta}"/>
+                        </p:column>
+                        <p:column headerText="Cuenta Banco" style="width: 40%;">
+                            <h:outputText value="#{cuentaBanco.nombreCuentaBancaria}" />
+                        </p:column>
+                        <p:column headerText="Cuenta Contable" style="width: 40%">
+                            <h:outputText value="#{cuentaBanco.cuentaMovimiento.codigo}-#{cuentaBanco.cuentaMovimiento.nombre}"/>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="comprobanteDiarioGeneralDLG" header="MENSAJE" widgetVar="comprobanteDiarioGeneralDLG" width="33%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteTransferenciaForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:outputLabel value="¿DESEA GENERAR EL REPORTE DE LA TRANSACCION DEL DIARIO GENERAL INTEGRADO?" style="font-weight: bold"/>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandButton value="SI" icon="fa fa-check" actionListener="#{comprobantePagoProcesoView.generarArchivoDiarioGeneral(true)}"
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px;"/> 
+
+                        <p:commandButton value="NO" icon="fa fa-remove" actionListener="#{comprobantePagoProcesoView.generarArchivoDiarioGeneral(false)}" 
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px 20px 15px;"/> 
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="partidaEstructuraRelacionadaDlg" widgetVar="partidaEstructuraRelacionadaDlg" width="30%" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="LISTADO PRESUPUESTO" closable="false">
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="partidaEstructuraRelacionadaForm" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="Cédula Presupuestaria" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{comprobantePagoProcesoView.presupuestoSeleccionado}" style="width:100%" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="startsWith" var="t" id="listPresupuesto" panelStyle="width:180px">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="" />
+                                <f:selectItems value="#{comprobantePagoProcesoView.presupuestoRelacionado}" var="item" itemLabel="#{item.partida} - #{item.item.descripcion}" itemValue="#{item}" />
+                                <p:column style="width:10%" >
+                                    <f:facet name="header">
+                                        <h:outputText value="Código"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.partida}" style="font-weight: bold;" />
+                                </p:column>
+                                <p:column style="width: 30%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.item.descripcion}" />
+                                </p:column>
+                                <p:column style="width: 10%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Saldo"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.montoDisponible}" >
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="SELECCIONAR" icon="fa fa-save" actionListener="#{comprobantePagoProcesoView.guardarRelacionesPresupuestarias()}" update="detalleComprobantePagoTable"
+                                             styleClass="Fs16" style="width: auto; margin: 15px;"/> 
+                        </center>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="DlogoCuentasContables" header="Cuenta Contables" widgetVar="DlogoCuentasContables" width="40%" style="margin-top: 90px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" height="450" draggable="false">
+            <h:form id="formCuentaAnt" >
+                <p:commandButton value="Limpiar filtros"  process="@this"
+                                 icon="ui-icon-refresh" onclick="PF('cuentaContable').clearFilters()" update="cuentaContable"
+                                 styleClass="Fs16" style="width: auto;margin-bottom: 5px"/>
+                <p:dataTable  id="cuentaContable" widgetVar="cuentaContable" var="cuentaContable" value="#{comprobantePagoProcesoView.listaCuentaContables}" 
+                              scrollable="true" scrollHeight="350" lazy="false" rows="20000" style="width: 100%" 
+                              selectionMode="single" rowKey="#{cuentaContable.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <p:column headerText="Código" style="width: 20%;" filterBy="#{cuentaContable.codigo}">
+                        <h:outputText value="#{cuentaContable.codigo}" />
+                    </p:column>
+                    <p:column headerText="Nombre" style="width: 65%;" filterBy="#{cuentaContable.nombre}">
+                        <h:outputText value="#{cuentaContable.nombre}" />
+                    </p:column>
+                    <p:column headerText="Acción" style="text-align: center; width: 15%;" >
+                        <p:commandLink actionListener="#{comprobantePagoProcesoView.anadirCuentaContable(cuentaContable)}" 
+                                       title="Seleccionar" process="@this" update="detalleComprobantePagoTable">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,303 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Ingreso de horas extras y suplementarias
+    </ui:define>
+    <ui:param name="tittle" value="Ingreso de horas extras y suplementarias"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset legend="Parametros" style="margin-bottom: 5px">
+                        <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="periodoSeleccionado" value="#{thHorasExtrasView.opcionBusqueda.anio}"
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thHorasExtrasView.listaPeriodo}" var="item" itemLabel="#{item}" itemValue="#{item}"/>
+                                    <p:ajax listener="#{thHorasExtrasView.actualizarTipoRol()}" update="panelGroupTipoRol"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupTipoRol">
+                                <p:outputLabel for="@next" value="Roles:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="thTipoRolSeleccionado" value="#{thHorasExtrasView.thTipoRolSeleccionado}" converter="#{utilConverter}" 
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thHorasExtrasView.thTipoRolList}" var="item" itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                                    <p:ajax update="gridBtnLoad,thHorasExtrasTable,gridReporte" listener="#{thHorasExtrasView.updateLazy()}" process="thTipoRolSeleccionado" />
+                                </p:selectOneMenu>
+                            </h:panelGroup>   
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridBtnLoad">
+                                <p:commandButton value="Nuevo registro" disabled="#{thHorasExtrasView.thTipoRolSeleccionado == null ? true:(thHorasExtrasView.thTipoRolSeleccionado.aprobado)}"
+                                                 icon="fa fa-plus-circle" actionListener="#{thHorasExtrasView.openForm(null,false)}" 
+                                                 styleClass="Fs16" style="width: 100%;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Configuración"
+                                                 icon="fa fa-fw fa-gears" actionListener="#{thHorasExtrasView.openDlgConfig()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridReporte">
+                                <p:commandButton value="Reporte" disabled="#{thHorasExtrasView.thTipoRolSeleccionado == null ? true:false}"
+                                                 icon="fa fa-fw fa-print" actionListener="#{thHorasExtrasView.openCloseRepoteDlg(true,null)}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:fieldset>
+                    <p:dataTable  id="thHorasExtrasTable" widgetVar="thHorasExtrasTable" var="thHorasExtras" value="#{thHorasExtrasView.thHorasExtrasLazy}" 
+                                  paginator="true" rows="30" style="width: 100%;margin-top: 15px" rowKey="#{thHorasExtras.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="30,50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Identificación" style="width: 8%;text-align: center" filterBy="#{thHorasExtras.idCargoServidor.idServidor.persona.identificacion}" filterMatchMode="contains">
+                            <h:outputText value="#{thHorasExtras.idCargoServidor.idServidor.persona.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 17%;" filterBy="#{thHorasExtras.idCargoServidor.idServidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                            <h:outputText value="#{thHorasExtras.idCargoServidor.idServidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Dirección / Unidad / Departamento" style="width: 25%;" filterBy="#{thHorasExtras.idCargoServidor.idCargo.idUnidad.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{thHorasExtras.idCargoServidor.idCargo.idUnidad.nombre}" />
+                        </p:column>
+                        <p:column headerText="RMU" style="width: 10%;text-align: center" filterMatchMode="contains">
+                            <h:outputText value="#{thHorasExtras.idCargoServidor.idCargo.idGrupo.remuneracionDolares}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Dias" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thHorasExtras.dias}" />
+                        </p:column>
+                        <p:column headerText="Horas" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thHorasExtras.horas}" />
+                        </p:column>
+                        <p:column headerText="Monto" style="width: 10%;text-align: center" filterMatchMode="contains">
+                            <h:outputText value="#{thHorasExtras.valor}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Acción" style="width: 10%;text-align: center">
+                            <p:commandLink title="Ver" process="@this" actionListener="#{thHorasExtrasView.openForm(thHorasExtras,true)}" >
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{thHorasExtrasView.openForm(thHorasExtras,false)}" rendered="#{!thHorasExtras.idTipoRol.aprobado}">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Eliminar" process="@this" actionListener="#{thHorasExtrasView.delete(thHorasExtras)}" 
+                                           update="thHorasExtrasTable" rendered="#{!thHorasExtras.idTipoRol.aprobado}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                            <p:commandLink title="PDF" process="@this" actionListener="#{thHorasExtrasView.openCloseRepoteDlg(true,thHorasExtras)}">
+                                <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px; color: green"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thHorasExtrasView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thHorasExtrasView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" rendered ="#{thHorasExtrasView.view}"
+                                     icon="fa fa-save" actionListener="#{thHorasExtrasView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+        <p:dialog id="thHorasDetalleDlg" widgetVar="thHorasDetalleDlg" width="50%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Detalle de las horas extras">
+            <h:form prependId="false" id="thHorasDetalleForm">
+                <p:fieldset legend="Información del servidor" id="fieldsetServidor">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thHorasExtrasView.thHorasExtras.id == null ? true:false}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <div class="ui-inputgroup">
+                                <p:inputText id="identificacion" class="panelInput" value="#{thHorasExtrasView.identificacion}"
+                                             onkeypress="focusNextOnEnter(event, 'identificacion')" maxlength="10">
+                                    <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                </p:inputText>
+                                <p:commandButton title="Buscar" icon="fa fa-search" id="btnIdentificacion"
+                                                 actionListener="#{thHorasExtrasView.findServidor()}"
+                                                 update="fieldsetServidor,thConfigHorasExtraTable" process="identificacion" styleClass="button-group">
+                                </p:commandButton>
+                            </div>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thHorasExtrasView.thHorasExtras.id == null ? false:true}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacionView" value="#{thHorasExtrasView.thHorasExtras.idCargoServidor.idServidor.persona.identificacion}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionView')" style="width: 100%"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="apellido" value="#{thHorasExtrasView.thHorasExtras.idCargoServidor.idServidor.persona.apellido}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'apellido')" style="width: 100%"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                            <p:inputText id="nombre" value="#{thHorasExtrasView.thHorasExtras.idCargoServidor.idServidor.persona.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombre')" style="width: 100%"/>
+                        </h:panelGroup>
+
+                    </p:panelGrid>
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="RMU:" style="font-weight: bold"/><br/>
+                            <p:inputNumber id="rmu" value="#{thHorasExtrasView.thHorasExtras.rmu}" 
+                                           symbol="$" readonly="true" onkeypress="focusNextOnEnter(event, 'rmu')" style="width: 100%"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Dias:" style="font-weight: bold"/>
+                            <p:inputText id="dias" value="#{thHorasExtrasView.thHorasExtras.dias}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'dias')" style="width: 100%"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Horas:" style="font-weight: bold"/>
+                            <p:inputText id="horas" value="#{thHorasExtrasView.thHorasExtras.horas}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'horas')" style="width: 100%"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridValor">
+                            <p:outputLabel for="@next" value="Total horas extras:" style="font-weight: bold"/><br/>
+                            <p:inputNumber id="valor" value="#{thHorasExtrasView.thHorasExtras.valor}" 
+                                           symbol="$" readonly="true" onkeypress="focusNextOnEnter(event, 'valor')" style="width: 100%"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thConfigHorasExtraTable" widgetVar="thConfigHorasExtraTable" var="thConfigHorasExtra" value="#{thHorasExtrasView.thHorasExtrasDetalles}" 
+                              paginator="true" rows="30" style="width: 100%;margin-top: 15px" rowKey="#{index}" rowIndexVar="index" editable="true" editMode="cell"
+                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="30,50,60,70,100" lazy="true" selectionMode="single" 
+                              emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <p:column headerText="Tipo" style="width: 20%;text-align: center" filterBy="#{thConfigHorasExtra.tipo}" filterMatchMode="contains">
+                        <h:outputText value="#{thConfigHorasExtra.tipo}" />
+                    </p:column>
+                    <p:column headerText="Porcentaje" style="width: 20%;text-align: center" sortBy="#{thConfigHorasExtra.porcentaje}" >
+                        <h:outputText value="#{thConfigHorasExtra.porcentaje}%" />
+                    </p:column>
+                    <p:column headerText="Indice" style="width: 20%;text-align: center" sortBy="#{thConfigHorasExtra.indice}" >
+                        <h:outputText value="#{thConfigHorasExtra.indice}" />
+                    </p:column>
+                    <p:column headerText="Horas" style="width: 20%;text-align: center" sortBy="#{thConfigHorasExtra.horas}" rendered="#{!thHorasExtrasView.view}">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thConfigHorasExtra.horas}" />
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber value="#{thConfigHorasExtra.horas}" disabled="#{thHorasExtrasView.view}">
+                                    <p:ajax update="thConfigHorasExtraTable,gridValor" listener="#{thHorasExtrasView.calcularMonto(thConfigHorasExtra)}" />
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Horas" style="width: 20%;text-align: center" sortBy="#{thConfigHorasExtra.horas}" rendered="#{thHorasExtrasView.view}" >
+                        <h:outputText value="#{thConfigHorasExtra.horas}" />
+                    </p:column>
+                    <p:column headerText="Monto" style="width: 20%;text-align: center" sortBy="#{thConfigHorasExtra.valor}" >
+                        <h:outputText value="#{thConfigHorasExtra.valor}" style="float: right"> 
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Acciones" style="width: 20%;text-align: center" rendered="#{!thHorasExtrasView.view}">
+                        <p:commandLink title="Eliminar" process="@this" actionListener="#{thHorasExtrasView.deleteDetalle(thConfigHorasExtra,index)}"  
+                                       update="thConfigHorasExtraTable">
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput"/>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                        <p:commandButton value="Guardar" id="btnsave" style="background: green;width: 100%"
+                                         icon="fa fa-save" actionListener="#{thHorasExtrasView.closeForm()}" styleClass="Fs16" >
+                            <p:confirm header="Confirmación de guardado" message="¿Está seguro desea guardar el registro?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput"/>
+                </p:panelGrid>
+            </h:form>        
+        </p:dialog>
+        <p:dialog id="reporteDlg" widgetVar="reporteDlg" width="20%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Generar reporte">
+            <h:form prependId="false" id="reporteForm">
+                <p:fieldset legend="Reporte detallado" rendered="#{thHorasExtrasView.thHorasExtras == null ? true:false}">
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar PDF" icon="fa fa-fw fa-file-pdf-o" actionListener="#{thHorasExtrasView.printReport('pdf',1)}"
+                                             styleClass="Fs16" style="width: 100%;background: red">
+                            </p:commandButton>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar EXCEL" icon="fa fa-fw fa-file-excel-o" actionListener="#{thHorasExtrasView.printReport('xlsx',1)}"
+                                             styleClass="Fs16" style="width: 100%;background: green">
+                            </p:commandButton>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Reporte general" rendered="#{thHorasExtrasView.thHorasExtras == null ? true:false}">
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar PDF" icon="fa fa-fw fa-file-pdf-o" actionListener="#{thHorasExtrasView.printReport('pdf',2)}"
+                                             styleClass="Fs16" style="width: 100%;background: red">
+                            </p:commandButton>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar EXCEL" icon="fa fa-fw fa-file-excel-o" actionListener="#{thHorasExtrasView.printReport('xlsx',2)}"
+                                             styleClass="Fs16" style="width: 100%;background: green">
+                            </p:commandButton>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Reporte individual" rendered="#{thHorasExtrasView.thHorasExtras == null ? false:true}">
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar PDF" icon="fa fa-fw fa-file-pdf-o" actionListener="#{thHorasExtrasView.printReport('pdf',3)}"
+                                             styleClass="Fs16" style="width: 100%;background: red">
+                            </p:commandButton>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar EXCEL" icon="fa fa-fw fa-file-excel-o" actionListener="#{thHorasExtrasView.printReport('xlsx',3)}"
+                                             styleClass="Fs16" style="width: 100%;background: green">
+                            </p:commandButton>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                        <p:commandButton value="Cerrar" style="width: 100%"
+                                         icon="fa fa-close" actionListener="#{thHorasExtrasView.openCloseRepoteDlg(false,null)}" styleClass="Fs16" />
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>        
+        </p:dialog>
+    </ui:define>
+</ui:composition>

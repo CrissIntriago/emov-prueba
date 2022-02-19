@@ -1,0 +1,85 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <comp:ventaComisaria solicitudVentanilla="#{liquidacionInquilinatoMB.solicitud}" task="#{liquidacionInquilinatoMB.tarea}" tramite="#{liquidacionInquilinatoMB.tramite}"/>
+                </div>
+            </div>
+            <div class="ui-g-8" style="margin: auto;">          
+
+                <h:form id="mainForm" prependId="false">
+
+                    <p:tabView id="tabViewDocumentos" style="width: 100%;" prependId="false">
+                        <p:tab title="Requisitos" id="tabRequisitos">
+                            <p:dataTable value="#{correcionDocumentosMB.requisitosTramite}" var="item" rows="20"
+                                         paginator="true" paginatorPosition="bottom" rowsPerPageTemplate="20,25,35,50" rowStyleClass="#{item.requisitos.obligatorio ? 'old' : null}" 
+                                         paginatorTemplate="{CurrentPageReport} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado" rowIndexVar="index"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}">
+                                <f:facet name="header">
+                                    Listado de Requisitos
+                                </f:facet>
+                                <p:column headerText="No" style="width: 5%;text-align: center;">
+                                    <p:outputLabel value="#{index+1}"/>
+                                </p:column>
+                                <p:column headerText="Requisito" style="width: 25%;">
+                                    <p:outputLabel value="#{item.requisitos.idRequisito.nombre}"/>
+                                </p:column>
+                                <p:column headerText="Obligatorio" style="width: 10%;text-align: center;">
+                                    <p:outputLabel value="#{item.requisitos.obligatorio?'SI':'NO'}"/>
+                                </p:column>
+                                <p:column headerText="Acción" style="width: 60%;">
+                                    <p:fileUpload fileUploadListener="#{correcionDocumentosMB.handleFileUpload}"  style="width: 100%" 
+                                                  accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                                  label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60" onstart="#{correcionDocumentosMB.addReqTramite(item)}" 
+                                                  update="tabViewDocumentos"/>
+                                </p:column>
+                            </p:dataTable>  
+                        </p:tab>
+                        <p:tab title="Documentos" id="tabDocumentos">
+                            <u:documents id="listDocumentos" entiti="#{correcionDocumentosMB.tramite}" showDelete="true"/>
+                        </p:tab>
+                    </p:tabView>
+                    <center>
+                        <p:commandButton value="Completar Tarea" icon="fa fa-send" style="width: auto; margin-top: 10px;" oncomplete="PF('dlgObservaciones').show()" update="frmDlgObser"
+                                         action="#{correcionDocumentosMB.send()}"/>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{correcionDocumentosMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-save" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{correcionDocumentosMB.completarTarea()}" style="width: 100px;margin: 10px"  />
+
+                            <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background:green;width:100px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

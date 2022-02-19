@@ -1,0 +1,446 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:poue="http://primefaces.org/ui/extensions">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Legalización de la Certificación Presupuestaria</ui:define>
+    <ui:define name="content">
+
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{firmaElectronicaMB.tarea}" tramite="#{firmaElectronicaMB.tramite}" />
+                </div>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form  id="formMain" prependId="false" >
+
+                <p:fileUpload fileUploadListener="#{documentoReservaView.handleFileUpload}"  style="width: 50%" 
+                                      accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                      label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60"  
+                                      update="formMain"/>
+                
+                
+                    <p:commandButton value="Limpiar Filtros" 
+                                     rendered="#{!documentoReservaView.ocultarDocumente}"
+                                     style="width: auto;margin-bottom: 1%;" icon="fa fa-eraser"
+                                     onclick="PF('dataaprobacion').clearFilters()" 
+                                     actionListener="#{firmaElectronicaMB.clearAllFilters}"
+                                     update="dataaprobacion">
+                        <p:resetInput target="dataaprobacion" />
+                    </p:commandButton>
+                    <p:dataTable id="dataaprobacion" rendered="#{!documentoReservaView.ocultarDocumente}"
+                                 widgetVar="dataaprobacion" var="item" value="#{firmaElectronicaMB.lazy}" paginator="true" rows="25" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="25,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            RESERVAS DE COMPROMISO
+                        </f:facet>
+
+                        <p:column headerText="Codigo" style="width:8%;text-align: center" filterBy="#{item.secuancialForFilter}" filterMatchMode="contains">
+                            <p:outputLabel value="#{item.secuancialForFilter}" />
+                        </p:column>
+
+                        <p:column headerText="DESCRIPCIÓN" style="width: 20%;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{item.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="UNIDAD REQUIRIENTE" style="width: 20%;" filterBy="#{item.unidadRequiriente.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataaprobacion').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{firmaElectronicaMB.unidadFiltros}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="BENEFICIARIO" style="width: 20%;">
+                            <p:outputLabel value="#{item.beneficiario == null ? 'PROCESO INICIAL':item.beneficiario.nombreCompleto.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="FECHA SOLICITUD" style="width: 8%; text-align: center;">
+                            <p:outputLabel value="#{item.fechaSolicitud}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="FECHA APROBACIÓN" style="width: 8%; text-align: center;">
+                            <p:outputLabel value="#{item.fechaSolicitud}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="ESTADO" style="width: 8%;text-align: center" filterBy="#{item.estado.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataaprobacion').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{firmaElectronicaMB.estadoFiltro}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.estado.texto.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="ACCIONES" style="width: 8%; text-align: center;">
+
+                            <p:commandLink  title="IMPRIMIR DOCUMENTO" process="@this" actionListener="#{firmaElectronicaMB.armarDocumento(item)}">                                            
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                            </p:commandLink>
+
+
+                            <p:commandLink  title="VISUALIZAR" process="@this"  actionListener="#{firmaElectronicaMB.visualizarSolicitudes(item)}">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+
+
+                            <p:commandLink  title="COMPLETAR TAREA" process="@this" actionListener="#{firmaElectronicaMB.completarTarea(item)}">  
+                                <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                <p:confirm header="Confirmación de Terminación de Tarea" message="Esta seguro de haber completado la tarea #{item.numTramite} ?" 
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>  
+
+                            <p:commandLink  title="FIRMAR DOCUMENTTO" process="@this" update="formMain" 
+                                            actionListener="#{firmaElectronicaMB.previoFirmar(item)}">                                            
+                                <i class="fa fa-paint-brush" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+
+                            <p:commandLink  title="ACTUALIZAR SOLICITUD" process="@this" actionListener="#{firmaElectronicaMB.actualizarSolicitudDeReservaAprobada(item)}" 
+                                            rendered="false"  update="dataaprobacion" >
+                                <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #00ff33;"></i>
+                            </p:commandLink>
+
+                            <p:commandLink title="VER SOLICITUD ACTUALIZADA" process="@this" actionListener="#{firmaElectronicaMB.vizualizarSolicitudActualizada(item)}" rendered="false">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #00ff33;"></i>
+                            </p:commandLink>
+
+                        </p:column>  
+                    </p:dataTable>
+
+                    <p:panelGrid columns="1" layout="grid" rendered="#{firmaElectronicaMB.ocultarDocumente}" >
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-6, ui-grid-col-6">
+                            <p:fileUpload style="width: 100%" accept=".pdf" 
+                                          fileUploadListener="#{firmaElectronicaMB.handleFileUpload}"
+                                          skinSimple="true" allowTypes="/(\.|\/)(pdf)$/" mode="advanced" dragDropSupport="false" 
+                                          label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar"  previewWidth="60"  update="formMain" />
+
+
+
+                            <h:panelGrid id="pnlClaveFirma" columns="2"  style="font-weight: bolder; width: 100%" 
+                                         rendered="#{firmaElectronicaMB.existenImagenes}" >
+                                <p:password autocomplete="false" value="#{firmaElectronicaMB.clave}" 
+                                            style="width: 50%" placeholder="Clave" redisplay="true"/>
+                                <p:commandButton value="Validar" process="pnlClaveFirma" 
+                                                 update="formMain" style="width: 30%"
+                                                 icon="fa fa-check" 
+                                                 rendered="#{firmaElectronicaMB.existenImagenes}" 
+                                                 actionListener="#{firmaElectronicaMB.validarFirmaImagenPDF()}"/>
+                            </h:panelGrid>
+                        </p:panelGrid>
+                        <p:fieldset legend="DOCUMENTOS" style="width: 100%;">
+                            <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-6, ui-grid-col-6">
+                                <p:dataGrid  id="dtPdfs"  var="imagen" value="#{firmaElectronicaMB.imagenesPdfs}" 
+                                             style="border: 1px"  
+                                             columns="1" layout="grid" emptyMessage="Valide su firma electrónica"
+                                             rows="1" paginator="true" 
+                                             paginatorPosition="bottom"  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             >
+                                    <div style="width: 100%; height: 100%">
+                                        <p:graphicImage id="img" value="#{imagen.url}" alt="#{imagen.url}"/>
+                                        <poue:imageAreaSelect id="areaSelect" for="img" maxWidth="150" maxHeight="50" 
+                                                              widgetVar="areaSelct"
+                                                              autoHide="true" handles="false" movable="false" persistent="false" 
+                                                              resizable="false">
+                                            <p:ajax event="selectEnd" listener="#{firmaElectronicaMB.selectEndListener}" />
+                                        </poue:imageAreaSelect>
+                                    </div>
+                                    <p:ajaxStatus style="position:fixed; right:15px; bottom:15px" id="statusApp"   >
+                                        <f:facet name="start">
+                                            <i class="fa fa-circle-o-notch fa-spin ajax-loader" aria-hidden="true" 
+                                               style="font-size: 80px"></i>
+                                        </f:facet>
+                                        <f:facet name="complete">
+                                            <h:outputText value="" />
+                                        </f:facet>
+                                    </p:ajaxStatus>
+                                </p:dataGrid>
+
+                                <p:fieldset rendered="#{firmaElectronicaMB.rutaArchivoMostrat ne ''}">
+                                    <iframe  style="width: 100%; height: 500px" 
+                                             src="#{application.contextPath}/images?ruta=#{firmaElectronicaMB.rutaArchivoMostrat}"/>    
+                                </p:fieldset>
+                            </p:panelGrid>
+                            <center>
+                                <p:commandButton value="Cerrar" style="width: 50%"
+                                                 action="#{firmaElectronicaMB.setOcultarDocumente(false)}" update="formMain" />
+                            </center>
+                        </p:fieldset>
+                    </p:panelGrid>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+
+                </h:form>
+            </div>
+
+
+        </div>
+
+
+        <!--        <p:dialog  id="dlogoFirma"  header="FIRMA DOCUMENTOS" widgetVar="dlogoFirma" height="600"
+                           modal="true" width="1200" showEffect="fade" hideEffect="fade" resizable="false">
+        
+                    <h:form id="mainForm" prependId="false" style="width: 90%; margin: auto;">
+        
+        
+                        <p:fileUpload style="width: 50%" accept=".pdf" fileUploadListener="#{firmaElectronicaMB.handleFileUpload}"
+                                      skinSimple="true" allowTypes="/(\.|\/)(pdf)$/" mode="advanced" dragDropSupport="false" 
+                                      label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar"  previewWidth="60"  update="mainForm" />
+        
+                        <center>
+                            <div id="box" style="width: 100%">
+                                <h:panelGrid id="pnlClaveFirma" columns="1"  style="font-weight: bolder; width: 100%" rendered="#{firmaElectronicaMB.existenImagenes}" >
+                                    <h:panelGroup>
+                                        <p:password autocomplete="false" value="#{firmaElectronicaMB.clave}"  style="width: 10%" placeholder="Clave" redisplay="true"/>
+                                        <p:spacer width="10px"/>
+                                        <p:commandButton value="Validar" process="pnlClaveFirma" update="mainForm" style="width: 10%"
+                                                         icon="fa fa-check" rendered="#{firmaElectronicaMB.existenImagenes}"  actionListener="#{firmaElectronicaMB.validarFirmaImagenPDF()}"/>
+                                    </h:panelGroup>
+                                </h:panelGrid>
+                            </div>
+                        </center>
+                        <br/>
+        
+                        <p:fieldset legend="DOCUMENTOS" style="width: 100%;">
+                            <p:fieldset class="ui-g-5" style="float: left;">
+                                <p:dataGrid  id="dtPdfs"  var="imagen" value="#{firmaElectronicaMB.imagenesPdfs}" 
+                                             style="border: 1px"  
+                                             columns="1" layout="grid" emptyMessage="Valide su firma electrónica"
+                                             rows="1" paginator="true" 
+                                             paginatorPosition="bottom"  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             >
+                                    <div style="width: 80%; height: 100%">
+                                        <p:graphicImage id="img" value="#{imagen.url}" alt="#{imagen.url}"  width="470" height="500"/>
+                                        <poue:imageAreaSelect id="areaSelect" for="img" maxWidth="150" maxHeight="50" widgetVar="areaSelct"
+                                                              autoHide="true" handles="false" movable="false" persistent="false" resizable="false">
+                                            <p:ajax event="selectEnd" listener="#{firmaElectronicaMB.selectEndListener}" />
+                                        </poue:imageAreaSelect>
+                                    </div>
+                                    <p:ajaxStatus style="position:fixed; right:15px; bottom:15px" id="statusApp"   >
+                                        <f:facet name="start">
+                                            <i class="fa fa-circle-o-notch fa-spin ajax-loader" aria-hidden="true" style="font-size: 80px"></i>
+                                        </f:facet>
+                                        <f:facet name="complete">
+                                            <h:outputText value="" />
+                                        </f:facet>
+                                    </p:ajaxStatus>
+                                </p:dataGrid>
+                            </p:fieldset>
+        
+                            <p:fieldset rendered="#{firmaElectronicaMB.rutaArchivoMostrat ne ''}" class="ui-g-6" style="float: right">
+                                <iframe  style="width: 90%; height: 500px" src="#{application.contextPath}/images?ruta=#{firmaElectronicaMB.rutaArchivoMostrat}"/>    
+                            </p:fieldset>
+        
+                        </p:fieldset>
+        
+        
+        
+                    </h:form>
+                </p:dialog>-->
+
+        <p:dialog id="DlgoVisualizacionAprobacion"  header="Detalle Solicitud" widgetVar="DlgoVisualizacionAprobacion" height="450"
+                  modal="true" width="80%" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formVisualizacionAprobacion"  prependId="false">
+
+                <div class="ui-g-12">
+                    <div class="ui-g-7">
+                        <p:fieldset legend="INFORMACIÓN">
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="DESCRIPCIÓN:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel   value="#{firmaElectronicaMB.solicitudReservaCompromiso.descripcion}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Nº DE SOLICITUD:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value= "#{firmaElectronicaMB.solicitudReservaCompromiso.secuancialForFilter}" style="margin-right: 3%;"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="ESTADO:" style="font-weight: bold;"/><br/>
+                                    <p:outputLabel value= "#{firmaElectronicaMB.solicitudReservaCompromiso.estado.texto}" style="margin-right: 3%;text-transform: uppercase"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel style="font-weight: bold;" value="FECHA SOLICITUD:   "/><br/>
+                                    <p:outputLabel value="#{firmaElectronicaMB.solicitudReservaCompromiso.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-5">
+                        <p:fieldset legend="BENEFICIARIO">
+                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="TIPO:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{firmaElectronicaMB.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':(firmaElectronicaMB.solicitudReservaCompromiso.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR')}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="IDENTIFICACIÓN:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{firmaElectronicaMB.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':firmaElectronicaMB.solicitudReservaCompromiso.beneficiario.identificacion}#{firmaElectronicaMB.solicitudReservaCompromiso.tipoBeneficiario == true ? '001':''}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="BENEFICIARIO:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{firmaElectronicaMB.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':firmaElectronicaMB.solicitudReservaCompromiso.beneficiario.nombreCompleto}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                </div>
+
+                <div class="ui-g-12">
+
+                    <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="4"
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="4,6"
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="datosEnDetalle" value="#{firmaElectronicaMB.listaSolicitudes}" var="item">
+                        <f:facet name="header">
+                            LISTADO DE PRODUCTOS
+                        </f:facet>
+                        <p:column headerText="CONCEPTO" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} 
+                                           #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="DESCRIPCION" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} 
+                                           #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="PARTIDA" style="width: 10%;text-align: center">
+                            <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.refDistributivo.partidaPresupuestaria} #{item.partidasDirecta.partidaPresupuestaria}"/>
+                        </p:column>
+
+                        <p:column headerText="MONTO SOLICITADO" style="width: 20%">
+                            <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>      
+
+                        <p:column headerText="MONTO COMPROMETIDO" style="width: 20%">
+                            <p:outputLabel value="#{item.montoComprometido}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="MONTO EJECUTADO" style="width: 20%">
+                            <p:outputLabel value="#{item.ejecutado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="MONTO LIQUIDADO" style="width: 20%">
+                            <p:outputLabel value="#{item.liquidado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:columnGroup type="footer">
+                            <p:row>
+                                <p:column colspan="3" style="text-align:right;font-weight: bold; font-size: 13px;" footerText="Suma:" />
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{firmaElectronicaMB.totalSolicitado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column  style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{firmaElectronicaMB.totalComprometido}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{firmaElectronicaMB.totalEjecutado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{firmaElectronicaMB.totalLiquidado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+                            </p:row>
+                        </p:columnGroup>
+
+                    </p:dataTable>    
+
+                </div>
+
+                <div class="ui-g-12">
+                    <p:tabView>
+                        <p:tab title="REQUISITOS" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="4"
+                                          currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="4,6"
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          id="requisitoData" widgetVar="requisitosTablaView" var="requisito" 
+                                          value="#{firmaElectronicaMB.procedimientoRequisitoList}"
+                                          style="margin: 20px 0px" lazy="true"  
+                                          emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE REQUISITOS
+                                </f:facet>
+                                <p:column headerText="PROCEDIMIENTO" groupRow="true">
+                                    <h:outputText value="#{requisito.idProcedimiento.nombre}"/>
+                                </p:column>
+                                <p:column headerText="REQUISITO" style="width:30%;">
+                                    <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                    <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                    <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column rendered="false" headerText="ACCIONES" style="width:10%;text-align: center">
+                                    <p:commandLink title="VER REQUISITO"  update="viewPDF" >
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>  
+                        </p:tab>
+                        <p:tab title="DOCUMENTOS" titleStyle="border-right: 2px solid #eaeaea">
+                            <u:documents entiti="#{firmaElectronicaMB.solicitudReservaCompromiso}"/>
+
+                        </p:tab>
+                    </p:tabView>
+                </div>
+
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

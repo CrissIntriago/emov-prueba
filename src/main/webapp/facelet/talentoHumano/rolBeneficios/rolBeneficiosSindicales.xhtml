@@ -1,0 +1,189 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <body>
+        <ui:composition template="./../../../WEB-INF/template/template.xhtml">
+            <ui:define name="title">
+                Beneficios Sindicales
+            </ui:define>
+            <ui:param name="tittle" value=" Beneficios Sindicales" />
+            <ui:define name="content">
+                <h:form prependId="false" id="formMain" >
+                    <p:fieldset style="width: 89% ; margin-left: 5%;margin-right: 5%">
+                        <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Período Rol Beneficio" for="periodo"/>
+                                <p:selectOneMenu id="periodo"  value="#{beneficiosSindicalesView.tipoRolBeneficios}"
+                                                 filter="true" filterMatchMode="contains" converter="#{utilConverter}"
+                                                 style="width: 85%;" panelStyle="width:100px">
+                                    <f:selectItem itemLabel="Seleccionar" noSelectionOption="true" value="#{null}"/>
+                                    <f:selectItems value="#{beneficiosSindicalesView.listTipoRolBeneficios}"
+                                                   var="p"
+                                                   itemLabel="#{p.descripcion}"
+                                                   itemValue="#{p}"/>
+                                    <p:ajax update="desde, hasta, estado,descripcionS,dtSindicales,btnPdf,btnExcel,btnAgg" listener="#{beneficiosSindicalesView.buscar()}"
+                                            process="@this"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Fecha Desde" for="desde" />
+                                <p:inputText id="desde" value="#{beneficiosSindicalesView.tipoRolBeneficios.periodoDesde}"
+                                             readonly="true">
+                                    <f:convertDateTime pattern="dd-MMM-yyyy"/>
+                                </p:inputText>
+
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Fecha Hasta" for="hasta" />
+                                <p:inputText id="hasta" value="#{beneficiosSindicalesView.tipoRolBeneficios.periodoHasta}"
+                                             readonly="true">
+                                    <f:convertDateTime pattern="dd-MMM-yyyy"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Estado Rol" for="estado"/>
+                                <p:inputText id="estado" value="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.descripcion}"
+                                             readonly="true">
+                                </p:inputText>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+
+                                <p:outputLabel value="Descripción " for="descripcionS"/>
+                                <p:inputTextarea  disabled="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.codigo == 'registrado-rol' ? false : true}"
+                                                  counter="display" maxlength="255" id="descripcionS" 
+                                                  style="resize: none; overflow: scroll; border: #bdbdbd solid 1px ; height: 38px;max-height: 38px; max-width: 500px; width: 500px"
+                                                  counterTemplate="{0} characters remaining."
+                                                  value="#{beneficiosSindicalesView.tipoRolBeneficios.descripcionRol}" >
+                                    <p:ajax update="descripcionS" listener="#{beneficiosSindicalesView.editRlBeneficio(beneficiosSindicalesView.tipoRolBeneficios)}" event="change" />
+                                </p:inputTextarea>
+                                <p:outputLabel  id="display"/>
+
+
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <br/>
+                    <p:commandButton disabled="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.codigo == 'registrado-rol' ? false : true}"
+                                     value="Agregar Servidor" icon="ui-icon-plus" id="btnAgg"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-left: 5%;"
+                                     actionListener="#{beneficiosSindicalesView.openDlg()}"
+                                     update="dtSindicales"
+                                     />
+                    <p:commandButton actionListener="#{beneficiosSindicalesView.generarReporte(false)}"
+                                     id="btnPdf" disabled="#{beneficiosSindicalesView.desabilitar}" 
+                                     value="Generar Pdf" icon="ui-icon-print"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-left: 1%;"
+                                     />
+                    <p:commandButton actionListener="#{beneficiosSindicalesView.generarReporte(true)}"
+                                     id="btnExcel" disabled="#{beneficiosSindicalesView.desabilitar}" 
+                                     value="Exportar Excel" icon="ui-icon-description"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-left: 1%;"
+                                     />
+                    <br/>
+                    <p:remoteCommand name="onCellE" update="dtSindicales" />
+                    <p:dataTable id= "dtSindicales" widgetVar="dtSindicales" var="sin"
+                                 paginator="TRUE" rows="15" value="#{beneficiosSindicalesView.beneficioLazy}"
+                                 paginatorPosition="bottom" filterEvent="enter"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                 rowsPerPageTemplate="15,20,30,40,50,100"
+                                 editable="true" editMode="cell" lazy="true"
+                                 emptyMessage="No existe el criterio de búsqueda especificado"
+                                 style="width: 90% ; margin-left: 5%;margin-right: 5%; text-align: center"
+                                 >
+                        <p:ajax event="cellEdit"  oncomplete="onCellE()" listener="#{beneficiosSindicalesView.onCellEdit(sin)}" />
+
+                        <p:column headerText="NOMBRE" filterBy="#{sin.servidorP.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                            <h:outputText value="#{sin.servidorP.persona.nombreCompleltoSql}"/>
+                        </p:column>
+                        <p:column headerText="CÉDULA" filterBy="#{sin.servidorP.persona.identificacion}" filterMatchMode="contains">
+                            <h:outputText value="#{sin.servidorP.persona.identificacion}" />
+                        </p:column>
+                        <p:column headerText="CARGO" filterBy="#{sin.servidorP.distributivo.cargo.nombreCargo}" filterMatchMode="contains">
+                            <h:outputText value="#{sin.servidorP.distributivo.cargo.nombreCargo}"/>
+                        </p:column>
+                        <p:column headerText="RÉGIMEN" filterBy="#{sin.servidorP.distributivo.regimen.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{sin.servidorP.distributivo.regimen.nombre}"/>
+                        </p:column>
+                        <p:column headerText="DESCRIPCIÓN" >
+                            <p:cellEditor disabled="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.codigo != 'registrado-rol' ? true : false}" >
+                                <f:facet name="output"><h:outputText value="#{sin.descripcion}"/></f:facet>
+                                <f:facet name="input">
+                                    <p:inputText value="#{sin.descripcion}">
+
+                                    </p:inputText>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="VALOR BENEFICIO" style="text-align:right;" >
+                            <p:cellEditor disabled="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.codigo != 'registrado-rol' ? true : false}" >
+                                <f:facet name="output"><h:outputText value="#{sin.valorBeneficio}"/></f:facet>
+                                <f:facet name="input">
+                                    <p:inputText   value="#{sin.valorBeneficio}">
+                                        <p:keyFilter regEx="/[\d\.\s,]" />   
+                                    </p:inputText>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="ACCIONES" >
+                            <p:commandLink disabled="#{beneficiosSindicalesView.tipoRolBeneficios.estadoAprobacionBen.codigo != 'registrado-rol' ? true : false}"
+                                           title="Eliminar Servidor " process="@this" actionListener="#{beneficiosSindicalesView.Eliminar(ben)}" update="dtSindicales" >
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" 
+                                           message="¿Está seguro de eliminar el Servidor?" icon="fa fa-exclamation-triangle"/>
+                                <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar el Servidor de este Beneficio?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>
+                        <p:columnGroup type="footer">
+                            <p:row>
+                                <p:column footerText="Total: "  colspan="5" style="text-align:right; font-weight: bold"/>
+                                <p:column footerText="$#{beneficiosSindicalesView.totalValorB}"  style="text-align:right; font-weight: bold" />
+                                <p:column footerText=""  style="text-align:right; font-weight: bold" />
+                            </p:row>
+                        </p:columnGroup>
+                    </p:dataTable>  
+                </h:form>
+                <p:dialog id="dlgServidor" header="Servidores" widgetVar="dlgServidor" modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="860">
+                    <h:form id="frmdlg" prependId="false">
+                        <div class="ui-g">
+                            <div class="ui-g-12">
+                                <p:dataTable id="dtServidor" widgetVar="dtServidor" var="ser" style="width: 100%;
+                                             text-align: center" reflow="true" paginator="true" lazy="true" rows="10"
+                                             rowsPerPageTemplate="10,50,100" filterEvent="enter" value="#{beneficiosSindicalesView.listServidor}" 
+                                             paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                                    <f:facet name="header">
+                                        LISTADO DE SERVIDORES PÚBLICOS
+                                    </f:facet>
+                                    <p:column headerText="Identificación" style="width: 10%; font-size: 15px;">
+                                        <h:outputText value="#{ser.persona.identificacion}"/>
+                                    </p:column>
+                                    <p:column headerText="Nombre" style="width: 10%; font-size: 15px;">
+                                        <h:outputText value="#{ser.persona.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Apellido" style="width: 10%; font-size: 15px;">
+                                        <h:outputText value="#{ser.persona.apellido}"/>
+                                    </p:column>
+                                    <p:column headerText="Cargo" style="width: 10%; font-size: 15px;">
+                                        <h:outputText value="#{ser.distributivo.cargo.nombreCargo}"/>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="text-align: center; width: 7%; font-size: 13px;" >
+                                        <p:commandButton icon="fa fa-arrow-circle-o-left"
+                                                         title="Seleccionar Servidor y cerrar"
+                                                         actionListener="#{beneficiosSindicalesView.GuardarRegistro(ser)}"
+                                                         update="dtSindicales"
+                                                         />
+                                    </p:column>
+                                </p:dataTable>
+                            </div>
+                        </div>
+                    </h:form>
+                </p:dialog>
+            </ui:define>
+        </ui:composition>
+    </body>
+</html>

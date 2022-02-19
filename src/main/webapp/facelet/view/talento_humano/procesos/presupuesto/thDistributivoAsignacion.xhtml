@@ -1,0 +1,481 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Asignación de partida presupuestaria
+    </ui:define>
+    <ui:param name="tittle" value="Asignación de partida presupuestaria"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <comp:titleTask task="#{thPartidaPresupuestariaView.tarea}" tramite="#{thPartidaPresupuestariaView.tramite}" /> 
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Asignación general" process="@this"
+                                     icon="fa fa-plus" actionListener="#{thPartidaPresupuestariaView.openDlgParametros()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Completar tarea" process="@this" 
+                                     icon="fa fa-check" actionListener="#{thPartidaPresupuestariaView.openDlg()}"
+                                     styleClass="Fs16" style="width: auto;background: #0081cb"/>
+                    <p:dataTable  id="thCargoTable" widgetVar="thCargoTable" var="cargo" value="#{thPartidaPresupuestariaView.thCargoLazyModel}" 
+                                  paginator="true" rows="25" style="width: 100%;margin-top: 15px" rowKey="#{cargo.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="25,50,75,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Nombre" style="width: 20%;" filterBy="#{cargo.nombreCargo}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.nombreCargo}" />
+                        </p:column>
+                        <p:column headerText="Código" style="width: 10%;" filterBy="#{cargo.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.codigo}" />
+                        </p:column>                                      
+                        <p:column headerText="Unidad administrativa" style="width: 13%;" filterBy="#{cargo.idUnidad.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idUnidad.nombre}" />
+                        </p:column>                                      
+                        <p:column headerText="Regimen laboral" style="width: 13%;" filterBy="#{cargo.idRegimen.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idRegimen.nombre}" />
+                        </p:column>                                      
+                        <p:column headerText="Grupo organizacional" style="width: 13%;" filterBy="#{cargo.idGrupo.grupoOrganizacional}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idGrupo.grupoOrganizacional}" />
+                        </p:column>
+                        <p:column headerText="Activo" style="width: 7%;text-align: center" filterBy="#{cargo.activo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thCargoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cargo.activo?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Cargo asignado" style="width: 7%;text-align: center" filterBy="#{cargo.asignado}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thCargoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cargo.asignado?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 7%;text-align: center" filterBy="#{cargo.idCatalogoItem}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thCargoTable').filter()" converter="#{utilConverter}" style="width: 100%">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.listTipoCargo}" var="n" itemLabel="#{n.texto}" itemValue="#{n}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cargo.idCatalogoItem.texto}" />
+                        </p:column>
+                        <p:column headerText="Acción" style="width: 10%;text-align: center">
+                            <p:commandLink title="Editar" process="@this" actionListener="#{thPartidaPresupuestariaView.loadCargo(cargo)}"  
+                                           update="cargoForm">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="cargoDlg" widgetVar="cargoDlg" width="80%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Cargo">
+            <h:form prependId="false" id="cargoForm">
+                <p:fieldset legend="Detalle del cargo" style="margin-bottom: 10px">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Seleccionar período:" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{thPartidaPresupuestariaView.opcionBusqueda.anio}"  style="width: 100%;">
+                                <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                                <f:selectItems value="#{thPartidaPresupuestariaView.listaPeriodo}" var="p" itemLabel="#{p}" itemValue="#{p}"/>
+                                <p:ajax update="thCargosRubroTable" listener="#{thPartidaPresupuestariaView.rubrosXanio()}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre:" style="font-weight: bold"/>
+                            <p:inputText id="nombreCargo" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'nombreCargo')"
+                                         value="#{thPartidaPresupuestariaView.thCargo.nombreCargo}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Regímen laboral:" style="font-weight: bold"/>
+                            <p:inputText id="idRegimen" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idRegimen')"
+                                         value="#{thPartidaPresupuestariaView.thCargo.idRegimen.nombre}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Unidad administrativa:" style="font-weight: bold"/>
+                            <p:inputText id="idUnidad" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idUnidad')"
+                                         value="#{thPartidaPresupuestariaView.thCargo.idUnidad.nombre}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>                       
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Grado de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="grado" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'grado')"
+                                         readonly="true" value="#{thPartidaPresupuestariaView.thCargo.idGrupo.grado}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Remuneración de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="remuneracionDolares" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'remuneracionDolares')"
+                                         readonly="true"  value="$#{thPartidaPresupuestariaView.thCargo.idGrupo.remuneracionDolares}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="grupoOrganizacional" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'grupoOrganizacional')"
+                                         readonly="true"  value="#{thPartidaPresupuestariaView.thCargo.idGrupo.grupoOrganizacional}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                            <p:inputText id="idCatalogoItem" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idCatalogoItem')"
+                                         readonly="true"  value="#{thPartidaPresupuestariaView.thCargo.idCatalogoItem.texto}">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thCargosRubroTable" widgetVar="thCargosRubroTable" var="thCargosRubro" value="#{thPartidaPresupuestariaView.thCargoRubrosList}" 
+                              scrollable="true" scrollHeight="200" lazy="false" rows="200000" style="width: 100%" rowKey="#{thCargosRubro.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado" editable="true" editMode="cell" rowIndexVar="irowIndexVarndex">
+                    <p:column headerText="Rubro" filterBy="#{thCargosRubro.idRubro.nombre}"  style="width: 30%" filterMatchMode="contains">
+                        <h:outputText value="#{thCargosRubro.idRubro.nombre}" />
+                    </p:column> 
+                    <p:column headerText="Tipo" style="width: 20%;text-align: center" filterBy="#{thCargosRubro.idRubro.ingreso}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('thCargosRubroTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="Ingreso" itemValue="true" />
+                                <f:selectItem itemLabel="Egreso" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{thCargosRubro.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column> 
+                    <p:column headerText="Cod. estructura" style="width: 20%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thCargosRubro.idEstructura.codigo}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thCargosRubro.idEstructura}" style="width:100%" 
+                                                 panelStyle="width:35%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preEstructuraProgramaticaList}" var="estructura" 
+                                                   itemLabel="#{estructura.codigo}" itemValue="#{estructura}" />
+                                    <p:ajax update="thCargosRubroTable" process="@this" listener="#{thPartidaPresupuestariaView.addCuenta(thCargosRubro)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="Código"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. estructura" style="width: 30%">
+                        <h:outputText value="#{thCargosRubro.idEstructura.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Cod. presupuesto" style="width: 20%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thCargosRubro.idPresupuesto.codigo}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thCargosRubro.idPresupuesto}" style="width:100%" 
+                                                 panelStyle="width:35%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preCatalogoPresupuestoList}" var="partida" 
+                                                   itemLabel="#{partida.descripcion}" itemValue="#{partida}" />
+                                    <p:ajax update="thCargosRubroTable" process="@this" listener="#{thPartidaPresupuestariaView.addCuenta(thCargosRubro)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. presupuesto" style="width: 30%">
+                        <h:outputText value="#{thCargosRubro.idPresupuesto.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Cod. fuente" style="width: 20%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thCargosRubro.idFuente.codFuente}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thCargosRubro.idFuente}" style="width:100%" 
+                                                 panelStyle="width:35%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preFuenteList}" var="fuente" 
+                                                   itemLabel="#{fuente.nombre}" itemValue="#{fuente}" />
+                                    <p:ajax update="thCargosRubroTable" process="@this" listener="#{thPartidaPresupuestariaView.addCuenta(thCargosRubro)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codFuente}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.nombre}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. fuente" style="width: 30%">
+                        <h:outputText value="#{thCargosRubro.idFuente.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 30%;text-align: center">
+                        <h:outputText value="#{thCargosRubro.partidaPresupuestaria}"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="parametrosDlg" widgetVar="parametrosDlg" width="80%" position="top" style="margin-top: 80px"  
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Asignación de cuentas">
+            <h:form prependId="false" id="parametrosForm">
+                <p:fieldset legend="Parametros" style="margin-bottom: 10px">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group"  id="gridBusqueda">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Seleccionar período:" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{thPartidaPresupuestariaView.opcionBusqueda.anio}"  style="width: 100%;">
+                                <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                                <f:selectItems value="#{thPartidaPresupuestariaView.listaPeriodo}" var="p" itemLabel="#{p}" itemValue="#{p}"/>
+                                <p:ajax update="thrubrosTable" listener="#{thPartidaPresupuestariaView.findRubroXparametros()}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Cargo:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="idTipoCargo" value="#{thPartidaPresupuestariaView.thCargoSeleccionado}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{''}" noSelectionOption="true" />
+                                <f:selectItems value="#{thPartidaPresupuestariaView.thCargosList}" var="item" itemLabel="#{item}" itemValue="#{item}"/>
+                                <p:ajax process="idTipoCargo" listener="#{thPartidaPresupuestariaView.findRubroXparametros()}" update="thCargoTable, gridBusqueda"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Unidad administrativa:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="unidadFind" value="#{thPartidaPresupuestariaView.unidadFind}" converter="#{utilConverter}"
+                                             disabled="#{thPartidaPresupuestariaView.thCargoSeleccionado == null ? true:(thPartidaPresupuestariaView.thCargoSeleccionado == '' ? true:false)}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thPartidaPresupuestariaView.unidadesAdministrativasList}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}"/>
+                                <p:ajax process="unidadFind" listener="#{thPartidaPresupuestariaView.findRubroXparametros()}" update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Tipo de contrato:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="filtroContrato" value="#{thPartidaPresupuestariaView.filtroContrato}" converter="#{utilConverter}"
+                                             disabled="#{thPartidaPresupuestariaView.thCargoSeleccionado == null ? true:(thPartidaPresupuestariaView.thCargoSeleccionado == '' ? true:false)}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thPartidaPresupuestariaView.tipoCargoList}" var="item" itemLabel="#{item.texto}" itemValue="#{item}"/>
+                                <p:ajax process="filtroContrato" listener="#{thPartidaPresupuestariaView.findRubroXparametros()}" update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="filtroClasificacion" value="#{thPartidaPresupuestariaView.filtroClasificacion}" converter="#{utilConverter}"
+                                             disabled="#{thPartidaPresupuestariaView.thCargoSeleccionado == null ? true:(thPartidaPresupuestariaView.thCargoSeleccionado == '' ? true:false)}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thPartidaPresupuestariaView.listTipoCargo}" var="item" itemLabel="#{item.texto}" itemValue="#{item}"/>
+                                <p:ajax process="filtroClasificacion" listener="#{thPartidaPresupuestariaView.findRubroXparametros()}" update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thrubrosTable" widgetVar="thrubrosTable" var="thrubros" value="#{thPartidaPresupuestariaView.thCargoRubrosList}" 
+                              scrollable="true" scrollHeight="300" lazy="false" rows="200000" style="width: 100%" 
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado" editable="true" editMode="cell" rowIndexVar="irowIndexVarndex">
+                    <p:column headerText="Nombre" style="width: 10%;" filterBy="#{thrubros.idRubro.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{thrubros.idRubro.nombre}" />
+                    </p:column>
+                    <p:column headerText="Tipo" style="width: 10%;text-align: center" filterBy="#{thrubros.idRubro.ingreso}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('thrubrosTable').filter()" styleClass="custom-filter">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="INGRESO" itemValue="true" />
+                                <f:selectItem itemLabel="EGRESO" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{thrubros.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column>      
+                    <p:column headerText="Cod. estructura" style="width: 10%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thrubros.idEstructura.codigo}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thrubros.idEstructura}" style="width:100%" 
+                                                 panelStyle="width:25%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preEstructuraProgramaticaList}" var="estructura" 
+                                                   itemLabel="#{estructura.codigo} - #{estructura.descripcion}" itemValue="#{estructura}" />
+                                    <p:ajax update="thrubrosTable" listener="#{thPartidaPresupuestariaView.generarPartida(thrubros)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.nombre}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. estructura" style="width: 10%">
+                        <h:outputText value="#{thrubros.idEstructura.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Cod. presupuesto" style="width: 10%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thrubros.idPresupuesto.codigo}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thrubros.idPresupuesto}" style="width:100%" 
+                                                 panelStyle="width:25%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preCatalogoPresupuestoList}" var="partida" 
+                                                   itemLabel="#{partida.codigo} - #{partida.descripcion}" itemValue="#{partida}" />
+                                    <p:ajax update="thrubrosTable" listener="#{thPartidaPresupuestariaView.generarPartida(thrubros)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. presupuesto" style="width: 10%">
+                        <h:outputText value="#{thrubros.idPresupuesto.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Cod. fuente" style="width: 10%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{thrubros.idFuente.codFuente}"/>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{thrubros.idFuente}" style="width:100%" 
+                                                 panelStyle="width:35%" 
+                                                 converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="contains" var="t">
+                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                    <f:selectItems value="#{thPartidaPresupuestariaView.preFuenteList}" var="fuente" 
+                                                   itemLabel="#{fuente.nombre}" itemValue="#{fuente}" />
+                                    <p:ajax update="thrubrosTable" listener="#{thPartidaPresupuestariaView.generarPartida(thrubros)}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codFuente}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.nombre}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Nom. fuente" style="width: 10%">
+                        <h:outputText value="#{thrubros.idFuente.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thrubros.partidaPresupuestaria}"/>
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Generar" update="formMain"
+                                     icon="fa fa-save" actionListener="#{thPartidaPresupuestariaView.actualizarCuenta()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px">
+                        <p:confirm header="Confirmación de cargar datos" message="¿Esta seguro de generar estas relaciones de rubros-partidas presupuestaria?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{thPartidaPresupuestariaView.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Culminar tarea"  title="Culminar tarea" process="frmDlgObser" update="frmDlgObser"
+                                                 actionListener="#{thPartidaPresupuestariaView.completarTarea()}" style="width: 100%"  >
+                                    <p:confirm header="Confirmación de completar tarea" message="¿Está seguro de culminar la tarea ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandButton>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

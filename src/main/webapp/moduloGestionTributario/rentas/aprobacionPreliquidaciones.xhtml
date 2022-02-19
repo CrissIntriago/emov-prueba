@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="title">
+        Tipos de Liquidaciones
+    </ui:define>
+    <ui:param name="tittle" value="Pre-Liquidaciones" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">         
+                <h:form id="frmMain" prependId="false">
+                    <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{aprobacionPreliquidacionMB.titulosCredito}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                 selectionMode="single" rowKey="#{titulo.id}" selection="#{aprobacionPreliquidacionMB.liquidacion}" filterEvent="enter">
+                        <p:ajax event="rowSelect" update="opLiquidacionesEmitidas"/>
+                        <p:column  headerText="ID Liquidación" width="50" filterBy="#{titulo.idLiquidacion}" filterStyle="width: 60%;">
+                            <h:outputText value="#{titulo.idLiquidacion}" />
+                        </p:column>
+                        <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                            <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                        </p:column>
+                        <p:column headerText="No. Liq." width="70" filterBy="#{titulo.numLiquidacion}" sortBy="#{titulo.numLiquidacion}" filterStyle="width: 80%;">
+                            <h:outputText value="#{titulo.numLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 60%;">
+                            <h:outputText value="#{titulo.anio}"/>
+                        </p:column>
+                        <p:column headerText="Predio" width="200" >
+                            <h:outputText value="#{titulo.predio == null ? titulo.localComercial.clavePreial:titulo.predio.claveCat }" />
+                        </p:column>
+                        <p:column headerText="Local" width="200" filterBy="#{titulo.localComercial.numLocal}">
+                            <h:outputText value="#{titulo.localComercial.numLocal}" />
+                        </p:column>
+                        <p:column headerText="Validador" width="100" >
+                            <h:outputText value="#{titulo.usuarioValida eq null or titulo.usuarioValida eq ''?titulo.liquidadorResponsable:titulo.usuarioValida}" />
+                        </p:column>
+                        <p:column headerText="Fecha emision" width="200" >
+                            <h:outputText value="#{titulo.fechaIngreso}" >
+                                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacion}" filterStyle="width: 80%;">
+                            <h:outputText  value="#{titulo.vendedorRuralIdentificacion}" rendered="#{aprobacionPreliquidacionMB.renderAlcabalaSolicitante(titulo)}"/>
+                            <h:outputText  value="#{titulo.comprador.identificacion}" rendered="#{!aprobacionPreliquidacionMB.renderAlcabalaSolicitante(titulo)}"/>
+                        </p:column>
+                        <p:column headerText="Solicitante" width="250">
+                            <h:outputText  value="#{titulo.vendedorRural}" rendered="#{aprobacionPreliquidacionMB.renderAlcabalaSolicitante(titulo)}"/>
+                            <h:outputText  value="#{titulo.comprador ne null?titulo.comprador.nombreCompleto: (titulo.observacion.contains('|')?titulo.observacion.substring(0,titulo.observacion.indexOf('|')):titulo.nombreComprador)}" rendered="#{!aprobacionPreliquidacionMB.renderAlcabalaSolicitante(titulo)}"/>
+                        </p:column>
+
+                        <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+<!--                                <p:column headerText="Saldo" width="60"><h:outputText value="#{titulo.saldo}" style="font-weight: bold;"/></p:column>
+                        <p:column headerText="Interes" width="60"><h:outputText value="#{aprobacionPreliquidacionMB.interes(titulo)}" style="font-weight: bold;"/></p:column>
+                        <p:column headerText="Total Pago" width="60"><h:outputText value="#{titulo.totalPago+aprobacionPreliquidacionMB.interes(titulo)}" style="font-weight: bold;"/></p:column>-->
+                        <p:column headerText="Estado" width="65"><h:outputText value="#{ !titulo.validada ? 'Sin validar' : titulo.estadoLiquidacion.descripcion}" style="font-weight: bold;"/></p:column>
+
+
+                        <p:column headerText="*******" width="100" >
+                            <p:commandLink actionListener="#{aprobacionPreliquidacionMB.imprimir(titulo)}" 
+                                           title="#{titulo.idLiquidacion}" process="@this">
+                                <i class="fa fa-fw fa-print" style="font-size: 1.5em;" />
+                            </p:commandLink>
+                            <p:spacer width="10"/>
+                            <p:commandLink disabled="#{titulo.validada}" title="Validar" 
+                                           actionListener="#{aprobacionPreliquidacionMB.validarLiquidacion(titulo)}" 
+                                           update="dtLiquidaciones" process="@this">
+                                <i class="fa fa-check" style="font-size: 1.5em;" />
+                            </p:commandLink>
+                            <p:spacer width="10"/>
+                            <p:commandLink disabled="#{titulo.estadoLiquidacion.id ne 2 }" id="ajax" title="Anular"  actionListener="#{aprobacionPreliquidacionMB.openDialogAnularLiquidacion(titulo)}"  update="frmAnular"
+                                           oncomplete="PF('dlgAnular').show()" process="@this">                                
+                                <i class="fa fa-remove" style="font-size: 1.5em;color: red" />
+                            </p:commandLink>
+                        </p:column>
+
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                        <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                    </p:confirmDialog>
+                    <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones">
+                        <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgDetalle').show();" update="formDetEmision"  process="@this" actionListener="#{aprobacionPreliquidacionMB.calculosAdicionales()}"/>
+                    </p:contextMenu>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center" height="400">
+            <h:form id="formDetEmision">
+                <dlg:detalleLiquidacion liquidacion="#{aprobacionPreliquidacionMB.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgAnular" header="Escribir Observaciones para Anular la Emision"
+                  height="500" width="500" responsive="true" closable="true" closeOnEscape="true"
+                  modal="true" appendTo="@(body)" >
+
+            <h:form id="frmAnular">
+                <p:outputLabel value="Seleccione el Documento a Adjuntar"
+                               style="font-size: 18px; font-weight: bold;" />
+                <p:fileUpload fileUploadListener="#{aprobacionPreliquidacionMB.handleFileDocumentBySave}" dragDropSupport="false"
+                              multiple="false" mode="advanced"
+                              uploadLabel="Subir" cancelLabel="Cancelar"
+                              update="frmAnular"
+                              label="Seleccionar" skinSimple="true"
+                              sizeLimit="350000000" sequential="true"
+                              allowTypes="/(\.|\/)(pdf|xlsx|docx|xls|doc)$/" />
+
+                <p:dataTable id="dtDocumentosAnexos"  value="#{aprobacionPreliquidacionMB.listaDocumentos}" var="pp" reflow="true"
+                             rowIndexVar="index"
+                             paginator="true" rows="5" paginatorPosition="top" style="width: 100%" widgetVar="dtDocumentosAnexos"
+                             emptyMessage="No existen documentos Asociados">
+                    <p:column headerText="Fecha Creacion">
+                        <h:outputText value="#{pp.fechaCreacion}"/>
+                    </p:column>
+                    <p:column headerText="Descripcion">
+                        <h:outputText value="#{pp.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Tipo Archivo">
+                        <h:outputText value="#{pp.descripcion}" />
+
+                    </p:column>
+                    <p:column headerText="Accion" style="text-align: center" >
+
+                        <p:commandLink actionListener="#{titulosPrediales.inactivarDocumento(pp,index)}" update="frmAnular">
+                            <i class="fa fa-fw fa-trash" style="font-size: 1.5em"></i>
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>
+                <br></br>
+                <center>
+                    <h:panelGrid columns="1">
+                        <p:inputTextarea id="obsservacion21" value="#{aprobacionPreliquidacionMB.observacion}"
+                                         rows="10" cols="50" style="width: 98%; text-transform: uppercase" />
+                    </h:panelGrid>
+
+                    <p:commandButton value="Aceptar"
+                                     process="@all" actionListener="#{aprobacionPreliquidacionMB.anularLiquidacion()}"  update="dtLiquidaciones"  >
+                        <p:confirm header="Confirmacion" message="Esta seguro de anular la liquidacion" icon="ui-icon-alert" />
+                    </p:commandButton>
+                </center>
+
+
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

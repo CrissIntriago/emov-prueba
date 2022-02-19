@@ -1,0 +1,1081 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        INGRESOS A BODEGA
+    </ui:define>
+    <ui:param name="tittle" value="INGRESO DE INVENTARIO" />
+    <ui:define name="content">
+        <style type="text/css">
+            .white-button.ui-button.ui-state-default {
+                background-color: #ffffff;
+                color: #222222;
+                border-color: #d6d6d6;
+                /* with the exported variables from Nova and Luna Themes*/
+                /*border-color: var(--input-border-color, #d6d6d6);*/
+            }
+
+            .white-button.ui-button.ui-state-default:enabled:hover,
+            .white-button.ui-button.ui-state-default:focus {
+                background-color: #f2f2f2;
+                border-color: #ccc;
+                color: #373a3c;
+                /* with the exported variables from Nova and Luna Themes*/
+                /*/border-color: var(--input-hover-border-color, #ccc);*/
+            }
+
+            .green-button.ui-button.ui-state-default {
+                background-color: #5cb85c;
+                border-color: #5cb85c;
+                color: #fff;
+            }
+
+            .green-button.ui-button.ui-state-default:enabled:hover,
+            .green-button.ui-button.ui-state-default:focus {
+                background-color: #4cae4c;
+                border-color: #5cb85c;
+            }
+
+            .red-button.ui-button.ui-state-default {
+                background-color: #d9534f;
+                border-color: #d9534f;
+                color: #fff;
+            }
+
+            .red-button.ui-button.ui-state-default:enabled:hover,
+            .red-button.ui-button.ui-state-default:focus {
+                background-color: #d43f3a;
+                border-color: #d9534f;
+            }
+        </style>
+        <h:form id="frmMain" >
+            <p:growl id="msgs" showDetail="true"/>
+            <div class="ui-g">
+                <div class="ui-g-12">
+                    <div class="ui-g-6" id="egrr">
+                        <p:fieldset legend="INGRESO" style="font-weight: bold" id="ingresoCabecera1">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="egr">
+                                <h:panelGroup>
+                                    <p:outputLabel for="num" value="INGRESO NO:" class="FontBold"/>
+                                    <div class="ui-inputgroup">
+                                        <p:inputText  id="num" style="font-weight: bold; font-size: 12px" placeholder="#{procesoIngresoInvSinProView.bandera? 'ING-XXXXX' : 'Generado por el sistema.'}"
+                                                      class="panelInput" value="#{procesoIngresoInvSinProView.inventario.codigo}"
+                                                      readonly="#{!procesoIngresoInvSinProView.bandera}">
+                                        </p:inputText>
+                                        <p:commandButton icon="fa fa-search"   style="border-radius: 0% !important; left: -18px" update="frmMain" process="num"
+                                                         rendered="#{procesoIngresoInvSinProView.bandera}" actionListener="#{procesoIngresoInvSinProView.buscarIngreso()}"/>
+                                    </div>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <br/><br/><br/><br/>
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="ingresoCabecera2">
+                                <h:panelGroup>
+                                    <p:commandButton value="NUEVO INGRESO"
+                                                     icon="fa fa-plus" process="@this"
+                                                     update="frmMain"
+                                                     actionListener="#{procesoIngresoInvSinProView.nuevoIngreso()}"
+                                                     style="width: 100%"/>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:outputLabel value="FECHA DE INGRESO:" for="fechaIngreso" style="width: 100%;" class="FontBold" />
+                                    <p:calendar id="fechaIngreso" pattern="yyyy-MM-dd" mask="true" required="#{!procesoIngresoInvSinProView.bandera}"
+                                                navigator="true" yearRange="c-100:c+100" locale="es"
+                                                value="#{procesoIngresoInvSinProView.inventario.fechaMovimiento}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="DATO EGRESO" id="carEgreso" style="font-weight: bold" rendered="#{procesoIngresoInvSinProView.mostrar}" >
+                            <p:outputPanel id="outPanelCargarEgreso" style="width: 100%">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup>
+                                        <p:commandButton value="CARGAR EGRESO" process="@this"  id="btnCargarEgreso"
+                                                         actionListener="#{procesoIngresoInvSinProView.abrirDialogoEgreso()}"
+                                                         style=" width: 100%">
+                                            <p:ajax event="dialogReturn"
+                                                    listener="#{procesoIngresoInvSinProView.selectDatosEgreso}"
+                                                    update="egresoRel"/>
+                                        </p:commandButton>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel value="EGRESO RELACIONADO:" for="egresoRel" style="width: 100%;"/>
+                                        <p:inputText  id="egresoRel" style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"
+                                                      value="#{procesoIngresoInvSinProView.inventarioEgreso.codigo}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-6">
+                        <p:fieldset legend="DATOS NUEVO INGRESO" style="font-weight: bold" >
+                            <p:outputPanel id="outPanelMedidaUno" style="width: 100%">
+                                <p:panelGrid columns="3" columnClasses="ui-grid-col-4" layout="grid" styleClass="ui-panelgrid-blank form-group" style="width: 100%">
+                                    <p:panelGrid columns="1" style="width: 100%">
+                                        <p:outputLabel value="RESPONSABLE:" for="responsableIngreso" style="width: 100%;" class="FontBold"/>
+                                        <p:inputText  id="responsableIngreso" style="text-transform: uppercase; width: 100%" required="true"
+                                                      class="panelInput" readonly="true" value="#{procesoIngresoInvSinProView.inventario.usuarioOriginador}">
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" style="width: 100%">
+                                        <p:outputLabel value="TIPO MOVIMIENTO:" for="tipoMovimiento" style="width: 100%;" class="FontBold"/>
+                                        <p:inputText  id="tipoMovimiento" style="text-transform: uppercase; width: 100%;"
+                                                      class="panelInput" readonly="true" required="true"
+                                                      value="#{procesoIngresoInvSinProView.inventario.tipoMovimiento}">
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" style="width: 100%">
+                                        <p:outputLabel value="MOTIVO:" style="width: 100%;" class="FontBold"/>
+                                        <p:selectOneMenu style="width:100%" value="#{procesoIngresoInvSinProView.inventario.motivoMovimiento}"
+                                                         disabled="#{procesoIngresoInvSinProView.habilitar}" converter="entityConverter">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems value="#{procesoIngresoInvSinProView.motivoMovimiento}" var="medidaUno"
+                                                           itemLabel="#{medidaUno.texto}" itemValue="#{medidaUno}"/>
+                                            <p:ajax listener="#{procesoIngresoInvSinProView.mostrarBtn()}" update="frmMain,listaItem"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" columnClasses="ui-grid-col-12" layout="grid" styleClass="ui-panelgrid-blank form-group" style="width: 100%">
+                                    <p:panelGrid columns="1" style="width: 100%" >
+                                        <p:outputLabel value="OBSERVACIÓN:" for="observacion" class="FontBold"/>
+                                        <p:inputTextarea id="observacion" rows="3" cols="17" autoResize="false"
+                                                         class="panelInput"  readonly="false"
+                                                         onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                                         style="width: 100%; text-transform: uppercase;border: 1px solid #cccccc"
+                                                         value="#{procesoIngresoInvSinProView.inventario.observacion}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-12">
+                        <p:fieldset legend="DATOS CONSTATACIÓN FÍSICA INVENTARIO" style="font-weight: bold;margin-bottom: 10px"
+                                    id="datosCons" rendered="#{procesoIngresoInvSinProView.rendCons}">
+                            <p:outputPanel id="outPanelCons" style="width: 100%">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:commandButton value="Adicionar" icon="fa fa-plus" process="@this"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDialogCons()}"
+                                                     style=" float: right; width: 130px">
+                                        <p:ajax event="dialogReturn"
+                                                listener="#{procesoIngresoInvSinProView.selectDatosCons}"
+                                                update="dtCons"/>
+                                    </p:commandButton>
+                                    <p:dataTable id="dtCons" var="con" reflow="true" paginator="true" rows="10"
+                                                 rowsPerPageTemplate="10,50,100" paginatorPosition="bottom"
+                                                 value="#{procesoIngresoInvSinProView.listCons}" filterEvent="keyup"
+                                                 emptyMessage="No se encontró ninguna constatación seleccionada.">
+                                        <f:facet name="header">
+                                            LISTA DE CONSTATACIÓN FÍSICA DE INVENTARIO
+                                        </f:facet>
+                                        <p:column headerText="Número Constatación" style="font-weight: bold" >
+                                            <h:outputText value="#{con.codigo}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Constatación" style="font-weight: bold">
+                                            <h:outputText value="#{con.fechaConstatacion}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Originador" style="font-weight: bold" >
+                                            <h:outputText value="#{con.usuarioCreacion}"/>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="font-weight: bold" >
+                                            <h:outputText value="#{con.estado}"/>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold">
+                                            <center>
+                                                <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoIngresoInvSinProView.borrarElementoCons(con)}"
+                                                               update="dtCons, frmMain:dtItemIngreso">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar elemento seleccionado?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </p:fieldset>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                        <p:fieldset legend="#{procesoIngresoInvSinProView.condContrato eq true ? 'DATOS OFICIO' : 'DATOS OFICIO DE DONACIÓN'}"
+                                    style="font-weight: bold;margin-bottom: 10px" rendered="#{procesoIngresoInvSinProView.rendOficio}">
+                            <p:outputPanel id="outPanelMedidaDos" style="width: 100%">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:commandButton value="ADICIONAR" process="@this" id="btnOficio" icon="fa fa-plus"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDialogoOficioCambios(null)}"
+                                                     update="frmOficio,dlgOficios" style=" float: right; width: auto">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtOficio" var="of" reflow="true" paginator="true" rows="10" rowsPerPageTemplate="10,50,100"
+                                                 paginatorPosition="bottom" value="#{procesoIngresoInvSinProView.listOficio}" filterEvent="keyup"
+                                                 emptyMessage="#{procesoIngresoInvSinProView.condContrato eq true ? 'No se encontró ningún oficio':'No se encontró ningún oficio de donación'}">
+                                        <f:facet name="header">
+                                            #{procesoIngresoInvSinProView.condContrato eq true ? 'OFICIO RELACIONADO A INGRESO':'OFICIO DE DONACIÓN RELACIONADO A INGRESO'}
+                                        </f:facet>
+                                        <p:column headerText="#{procesoIngresoInvSinProView.condContrato eq true ? 'Número Oficio' : 'Número oficio Donación'}" style="font-weight: bold; width: 150px" >
+                                            <h:outputText value="#{of.numeroOficio}"/>
+                                        </p:column>
+                                        <p:column headerText="#{procesoIngresoInvSinProView.condContrato eq true ? 'Fecha Oficio' : 'Fecha oficio Donación'}" style="font-weight: bold">
+                                            <h:outputText value="#{of.fechaOficio}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Identificación Proveedor" style="font-weight: bold" rendered="false" >
+                                            <h:outputText value="#{of.proveedor.cliente.identificacion}"/>
+                                        </p:column>
+                                        <p:column headerText="Razón Social" style="font-weight: bold" rendered="false">
+                                            <h:outputText value="#{of.proveedor.cliente.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="Nombre Comercial" style="font-weight: bold" rendered="false">
+                                            <h:outputText value="#{of.proveedor.cliente.apellido}"/>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 150px" >
+                                            <center>
+                                                <p:commandLink title="Editar" update="frmOficio" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.abrirDialogoOficioCambios(of)}" process="@this">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink title="Eliminar" process="@this" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.borrarElementoOficio(of)}"
+                                                               update="dtOficio">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </p:fieldset>
+                        <p:fieldset legend="DATOS DE ADQUISICIÓN" style="font-weight: bold" rendered="#{procesoIngresoInvSinProView.rendOrden}">
+                            <br/>
+                            <h:panelGroup layout="block" style="width: 50%; text-align: center" class="panelInput" >
+                                <p:outputLabel value="MOTIVO DE ADQUISICIÓN:" style="width: 50%; padding-right: 2px" class="FontBold"/>
+                                <p:selectOneMenu style="width:50%" value="#{procesoIngresoInvSinProView.opcionAdquisicion}" >
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{0}"/>
+                                    <f:selectItem itemLabel="Orden de Compra" itemValue="1"/>
+                                    <f:selectItem itemLabel="Contrato de Adquisición" itemValue="#{2}"/>
+                                    <f:selectItem itemLabel="Num. Oficio - Referencia" itemValue="#{3}"/>
+                                    <p:ajax listener="#{procesoIngresoInvSinProView.seleccionarTipoAdquisicion()}" update="frmMain,outPanelMedidaTres"/>
+                                </p:selectOneMenu>
+                                <br/>
+                            </h:panelGroup>
+                            <p:outputPanel id="outPanelMedidaTres" style="width: 100%">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{procesoIngresoInvSinProView.opcionAdquisicion == 2 and !procesoIngresoInvSinProView.inventario.solicitudCompra}">
+                                    <p:commandButton value="Adicionar" icon="fa fa-plus" process="@this" id="btnOrden"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     actionListener="#{procesoIngresoInvSinProView.openDlgAdquisicion()}"
+                                                     update="frmOrden"
+                                                     style=" float: right; width: 130px">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtOrden" var="ord" rows="7" rowsPerPageTemplate="7"
+                                                 value="#{procesoIngresoInvSinProView.listAdq}" paginator="true"
+                                                 paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 emptyMessage="Ninguna documento escogido.">
+                                        <f:facet name="header">
+                                            DATOS DE ADQUISICIÓN
+                                        </f:facet>
+                                        <p:column headerText="Num. Orden" style="font-weight: bold; width: 40%" >
+                                            <h:outputText value="#{ord.idProceso}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Emisión" style="font-weight: bold;text-align: center;width: 20%">
+                                            <h:outputText value="#{ord.fechaEmision}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Fecha Aceptación" style="font-weight: bold;width: 20%;text-align: center;">
+                                            <h:outputText value="#{ord.fechaAceptacion}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 20%;text-align: center;">
+                                            <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoIngresoInvSinProView.borrarElementoAdq(ord)}"
+                                                           update="frmMain,frmMain:outPanelMedidaTres">
+                                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                            </p:commandLink>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{procesoIngresoInvSinProView.inventario.solicitudCompra}">
+                                    <p:commandButton value="Adicionar" icon="fa fa-plus" process="@this" id="btnSolicCompra"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDlgOrdenCompra()}"
+                                                     update="frmOrdenCompra"
+                                                     style=" float: right; width: 130px">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtSolicCompra"
+                                                 var="ordComp" rows="7" rowsPerPageTemplate="7"
+                                                 value="#{procesoIngresoInvSinProView.listSolicitudOrdenCompras}" paginator="true"
+                                                 paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 emptyMessage="Ninguna documento escogido.">
+                                        <f:facet name="header">
+                                            DATOS DE SOLICITUDES DE COMPRAS
+                                        </f:facet>
+                                        <p:column headerText="Num. Orden" style="font-weight: bold; width: 40%" >
+                                            <h:outputText value="#{ordComp.codigoOrden}"/>
+                                        </p:column>
+                                        <p:column headerText="Autorizador" style="font-weight: bold; width: 40%" >
+                                            <h:outputText value="#{ordComp.autorizador.persona.nombreCompleto}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Elaboración" style="font-weight: bold;text-align: center;width: 20%">
+                                            <h:outputText value="#{ordComp.fechaElaboracion}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Fecha Aceptación" style="font-weight: bold;width: 20%;text-align: center;">
+                                            <h:outputText value="#{ordComp.fechaAceptacion}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 20%;text-align: center;">
+                                            <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoIngresoInvSinProView.borrarElementoSolicCompra(ord)}"
+                                                           update="frmMain:dtSolicCompra">
+                                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                            </p:commandLink>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{procesoIngresoInvSinProView.opcionAdquisicion == 3}">
+                                    <p:commandButton value="ADICIONAR" process="@this" id="btnOficioAdquisicion" icon="fa fa-plus"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDialogoOficioCambios(null)}"
+                                                     update="frmOficio,dlgOficios" style=" float: right; width: auto">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtOficioAdquisicion" var="of" reflow="true" paginator="true" rows="10" rowsPerPageTemplate="10,50,100"
+                                                 paginatorPosition="bottom" value="#{procesoIngresoInvSinProView.listOficio}" filterEvent="keyup"
+                                                 emptyMessage="No se encontró ningún oficio">
+                                        <f:facet name="header">
+                                            OFICIO DE ADQUISICIÓN
+                                        </f:facet>
+                                        <p:column headerText="Número Oficio" style="font-weight: bold; width: 150px" >
+                                            <h:outputText value="#{of.numeroOficio}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Oficio" style="font-weight: bold">
+                                            <h:outputText value="#{of.fechaOficio}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Identificación Proveedor" style="font-weight: bold"  >
+                                            <h:outputText value="#{of.proveedor.cliente.identificacion}"/>
+                                        </p:column>
+                                        <p:column headerText="Razón Social" style="font-weight: bold" >
+                                            <h:outputText value="#{of.proveedor.cliente.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="Nombre Comercial" style="font-weight: bold">
+                                            <h:outputText value="#{of.proveedor.cliente.apellido}"/>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 150px" >
+                                            <center>
+                                                <p:commandLink title="Editar" update="frmOficio" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.abrirDialogoOficioCambios(of)}" process="@this">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink title="Eliminar" process="@this" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.borrarElementoOficio(of)}"
+                                                               update="dtOficioAdquisicion">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </p:fieldset>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                        <p:fieldset legend="FACTURAS o GUÍA DE REMISIÓN RELACIONADAS A NUEVO INGRESO" style="font-weight: bold" rendered="#{procesoIngresoInvSinProView.rendFactura}">
+                            <p:outputPanel id="outPanelMedidaCinco" style="width: 100%">
+
+                                <p:selectBooleanCheckbox id="selectGuiaRem" style="width: 150px" value="#{procesoIngresoInvSinProView.guiaRemision}" itemLabel="Guía de Remisión">
+                                    <p:ajax process="@this" update="frmMain,outPanelMedidaTres" />
+                                </p:selectBooleanCheckbox>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <p:commandButton value="Adicionar" process="@this" id="btnFactura"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     icon="fa fa-plus" update="frmFactura"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDialogoFacturaCambios(null, null)}"
+                                                     style=" float: right; width: 130px">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtFactura" var="fac" reflow="true" paginator="true" rows="7" value="#{procesoIngresoInvSinProView.listFactura}"
+                                                 rowsPerPageTemplate="7" rowIndexVar="can" paginatorPosition="bottom" filterEvent="keyup"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 emptyMessage="No se encontró ninguna factura para mostrar.">
+                                        <f:facet name="header">
+                                           #{procesoIngresoInvSinProView.guiaRemision ?  'GUÍA DE REMISIÓN' : 'FACTURAS RELACIONADA A INGRESO'} 
+                                        </f:facet>
+                                        <p:column headerText="Número Factura" style="font-weight: bold;text-align: center;width: 20%" >
+                                            <h:outputText value="#{fac.numFactura}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Emisión" style="font-weight: bold;text-align: center;width: 15%">
+                                            <h:outputText value="#{fac.fechaFactura}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Fecha Caducidad" style="font-weight: bold;text-align: center;width: 15%">
+                                            <h:outputText value="#{fac.fechaCaducidad}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Número Autorización" style="font-weight: bold;text-align: center;width: 40%" >
+                                            <h:outputText value="#{fac.numAutorizacion}"/>
+                                        </p:column>
+                                        <p:column headerText="Proveedor" style="font-weight: bold;text-align: center;width: 40%" >
+                                            <h:outputText value="#{fac.proveedor.cliente.nombreCompleto}"/>
+                                        </p:column>
+                                        <p:column headerText="Proveedor" style="font-weight: bold;text-align: center;width: 40%" >
+                                            <h:outputText value="#{fac.proveedor.cliente.identificacionCompleta}"/>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; text-align: center;width: 10%">
+                                            <p:commandLink title="Editar" update="frmFactura"
+                                                           actionListener="#{procesoIngresoInvSinProView.abrirDialogoFacturaCambios(fac, can)}" process="@this">
+                                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                            </p:commandLink>
+                                            <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoIngresoInvSinProView.borrarElementoFactura(can)}"
+                                                           update="dtFactura">
+                                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                            </p:commandLink>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+<!--                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{ procesoIngresoInvSinProView.guiaRemision}">
+                                    <p:commandButton value="ADICIONAR" process="@this" id="btnGuiaRemision" icon="fa fa-plus"
+                                                     disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                     actionListener="#{procesoIngresoInvSinProView.abrirDialogoGuiaCambios(null)}"
+                                                     update="frmGuiaRemision,dlgGuiaRemision" style=" float: right; width: auto">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtAdquisicionRemision" var="guia" reflow="true" paginator="true" rows="10" rowsPerPageTemplate="10,50,100"
+                                                 paginatorPosition="bottom" value="#{procesoIngresoInvSinProView.listOficioGuiaR}" filterEvent="keyup"
+                                                 emptyMessage="No se encontró ningún oficio">
+                                        <f:facet name="header">
+                                            GUÍA DE REMISIÓN DE ADQUISICIÓN
+                                        </f:facet>
+                                        <p:column headerText="Número Guía Remisión" style="font-weight: bold; width: 150px" >
+                                            <h:outputText value="#{guia.numeroOficio}"/>
+                                        </p:column>
+                                        <p:column headerText="Fecha Oficio" style="font-weight: bold">
+                                            <h:outputText value="#{guia.fechaOficio}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Identificación Proveedor" style="font-weight: bold"  >
+                                            <h:outputText value="#{guia.proveedor.cliente.identificacion}"/>
+                                        </p:column>
+                                        <p:column headerText="Razón Social" style="font-weight: bold" >
+                                            <h:outputText value="#{guia.proveedor.cliente.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="Nombre Comercial" style="font-weight: bold">
+                                            <h:outputText value="#{guia.proveedor.cliente.apellido}"/>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 150px" >
+                                            <center>
+                                                <p:commandLink title="Editar" update="frmGuiaRemision" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.abrirDialogoGuiaCambios(guia)}" process="@this">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink title="Eliminar" process="@this" disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                               actionListener="#{procesoIngresoInvSinProView.borrarElementoGuia(guia)}"
+                                                               update="dtAdquisicionRemision">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>-->
+                            </p:outputPanel>
+                        </p:fieldset>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                        <p:fieldset id="listaItem" legend="DETALLE DEL ÍTEM"   style="margin-bottom:20px"  >
+                            <h:panelGrid columns="1">
+                                <p:outputPanel id="outPanelMedidaSeis" style="width: 100%" >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:commandButton value="ADICIONAR" process="@this" id="btnItem"
+                                                         disabled="#{procesoIngresoInvSinProView.mostrar2}"
+                                                         icon="fa fa-plus"
+                                                         actionListener="#{procesoIngresoInvSinProView.abrirDialogo()}"
+                                                         style=" float: right; width: auto">
+                                            <p:ajax event="dialogReturn" update="dtItemIngreso"
+                                                    listener="#{procesoIngresoInvSinProView.selectDatosItem}"  />
+                                        </p:commandButton>
+                                        <p:remoteCommand name="onCellEdit" update="dtItemIngreso"/>
+                                        <p:dataTable emptyMessage="Ningún Ítem para mostrar." rowsPerPageTemplate="30,50,100" paginatorPosition="bottom"
+                                                     reflow="true" paginator="true"  rows="30"
+                                                     id="dtItemIngreso" rowIndexVar="can"
+                                                     value="#{procesoIngresoInvSinProView.listDetalle}"
+                                                     var="med" editable="true" editMode="cell" widgetVar="dtIngg">
+                                            <f:facet name="header" >
+                                                DETALLE DE ITEM
+                                            </f:facet>
+                                            <p:column headerText="#" style=" width: 10px" >
+                                                <h:outputText value="#{can +1 }"/>
+                                            </p:column>
+                                            <p:column headerText="Cod. Ítem" style="width: 80px">
+                                                <h:outputText value="#{med.codigoAgrupado}"/>
+                                            </p:column>
+                                            <p:column headerText="Descripción" style=" width: 200px"  >
+                                                <h:outputText value="#{med.descripcion}"/>
+                                            </p:column>
+                                            <p:column headerText="Cuenta Contable" style=" width: 85px; text-align: center" >
+                                                <h:outputText value="#{med.cuentaContable.codigo}"/>
+                                            </p:column>
+                                            <p:column headerText="Estante" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}">
+                                                    <f:facet name="output"><h:outputText  value="#{med.estante}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.estante}" style="width:100%">
+                                                            <p:keyFilter regEx="/[\d]/"/>
+                                                        </p:inputText> </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Fila" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}" >
+                                                    <f:facet name="output"><h:outputText  value="#{med.fila}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.fila}" style="width:100%">
+                                                            <p:keyFilter regEx="/[\d]/"/>
+                                                        </p:inputText> </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Columna" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}" >
+                                                    <f:facet name="output"><h:outputText  value="#{med.columna}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.columna}" style="width:100%">
+                                                            <p:keyFilter regEx="/[\d]/"/>
+                                                        </p:inputText> </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Cajón" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}" >
+                                                    <f:facet name="output"><h:outputText  value="#{med.cajon}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.cajon}" style="width:100%">
+                                                            <p:keyFilter regEx="/[\d]/"/>
+                                                        </p:inputText> </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Cuadrante" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}" >
+                                                    <f:facet name="output"><h:outputText  value="#{med.cuadrante}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.cuadrante}" style="width:100%">
+                                                            <p:keyFilter regEx="/[\d]/"/>
+                                                        </p:inputText> </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Medida">
+                                                <h:outputText value="#{med.tipoMedida.descripcion}"/>
+                                            </p:column>
+                                            <p:column headerText="Cantidad a ingresar" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}">
+                                                    <f:facet name="output"><h:outputText  value="#{med.cantidadTemp}" /></f:facet>
+                                                    <f:facet name="input">
+                                                        <p:inputText value="#{med.cantidadTemp}" style="width:100%">
+                                                            <p:keyFilter mask="num" />
+                                                            <p:ajax update="dtItemIngreso" listener="#{procesoIngresoInvSinProView.calcularIvaDetalle(med)}" />
+                                                        </p:inputText>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Precio Unitario" rendered="#{procesoIngresoInvSinProView.mostrarAccObs}">
+                                                <p:cellEditor  disabled="#{procesoIngresoInvSinProView.saldoMotivoAjuste(med)}">
+                                                    <f:facet name="output">
+                                                        <h:outputText  value="#{med.precioTemp}" style="float: right;">
+                                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC" maxFractionDigits="4"/>
+                                                        </h:outputText></f:facet>
+                                                    <f:facet name="input">
+                                                        <p:inputNumber value="#{med.precioTemp}" style="width:100%" decimalPlaces="4">
+                                                            <p:ajax update="dtItemIngreso" listener="#{procesoIngresoInvSinProView.calcularIvaDetalle(med)}" />
+                                                        </p:inputNumber>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="IVA %" rendered="#{procesoIngresoInvSinProView.mostrarAccObs}" style="text-align: center">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}" >
+                                                    <f:facet name="output">
+                                                        <h:outputText  value="#{med.ivaTemp}%" />
+                                                    </f:facet>
+                                                    <f:facet name="input">
+                                                        <p:inputNumber value="#{med.ivaTemp}" symbol="%" symbolPosition="s" maxlength="2" decimalPlaces="0">
+                                                            <p:ajax update="dtItemIngreso" listener="#{procesoIngresoInvSinProView.calcularIvaDetalle(med)}" />
+                                                        </p:inputNumber>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column  headerText="Total" rendered="#{procesoIngresoInvSinProView.mostrarAccObs}">
+                                                <h:outputText value="#{med.totalTemp}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC" maxFractionDigits="3"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Observación">
+                                                <p:cellEditor disabled="#{procesoIngresoInvSinProView.mostrar3}">
+                                                    <f:facet name="output"><h:outputText  value="#{med.observacionTemp}" /></f:facet>
+                                                    <f:facet name="input"><p:inputText value="#{med.observacionTemp}" style="width:100%"
+                                                                                       onkeyup="javascript:this.value = this.value.toUpperCase();"/></f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Acciones" style=" width: 70px" rendered="#{procesoIngresoInvSinProView.mostrarAccObs1}">
+                                                <center>
+                                                    <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoIngresoInvSinProView.borrarElementoLista(med)}"
+                                                                   update="dtItemIngreso">
+                                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>
+                                                </center>
+                                            </p:column>
+                                            <p:columnGroup type="footer">
+                                                <p:row>
+                                                    <p:column colspan="10" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total:" />
+                                                    <p:column footerText="#{procesoIngresoInvSinProView.cantidadTotal}"  style=" font-weight: bold;font-size: 12px"/>
+                                                    <p:column footerText="#{procesoIngresoInvSinProView.valorUnitarioTotal}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                                    <p:column footerText="" />
+                                                    <p:column footerText="#{procesoIngresoInvSinProView.valorTotal}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                                    <p:column colspan="#{procesoIngresoInvSinProView.mostrarAccObs1 ? '2':'1'}"/>
+                                                  
+                                                </p:row>
+                                            </p:columnGroup>
+                                        </p:dataTable>
+                                    </p:panelGrid>
+                                </p:outputPanel>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+                            </h:panelGrid>
+                            <center>
+                                <p:commandButton value="Generar Ingreso" icon="fa fa-save" id="btnGen"
+                                                 disabled="#{procesoIngresoInvSinProView.habilitar}"
+                                                 process="outPanelMedidaUno"
+                                                 actionListener="#{procesoIngresoInvSinProView.guardar()}" update="frmMain"
+                                                 style=" width: 170px">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Cancelar" icon="ui-icon-clear" styleClass="red-btn"
+                                                 process="@this" update="frmMain"
+                                                 actionListener="#{procesoIngresoInvSinProView.limpiarTodo()}"
+                                                 style="width: 170px">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Imprimir"  id="imp" disabled="#{procesoIngresoInvSinProView.bolImprimir}"
+                                                 icon="fa fa-print" process="@this" update="frmMain"
+                                                 actionListener="#{procesoIngresoInvSinProView.imprimirIngreso()}"
+                                                 style="width: 170px">
+                                </p:commandButton>
+                                <br/><br/><br/>
+                            </center>
+                        </p:fieldset>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog header="#{procesoIngresoInvSinProView.condContrato eq true or procesoIngresoInvSinProView.opcionAdquisicion eq '3' ? 'Formulario Datos oficio' : 'Formulario Datos oficio De Donación'}"
+                  widgetVar="dlgOficio" modal="true" resizable="false" showEffect="fade" hideEffect="fade" id="dlgOficios">
+            <h:form prependId="false" id="frmOficio">
+                <p:growl id="msgs1" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="outPanelOficio" style="width: 100%">
+                            <p:fieldset legend="DATOS" style="margin-bottom:40px; font-weight: bold" id="datosOficioCambios">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" >
+                                        <p:outputLabel value="#{procesoIngresoInvSinProView.condContrato eq true or procesoIngresoInvSinProView.opcionAdquisicion eq '3' ? 'Número de oficio':'Num. Oficio Donación'}" for="numOficio" style="width: 100%;"/>
+                                        <p:inputText  id="numOficio" style="text-transform: uppercase"
+                                                      value="#{procesoIngresoInvSinProView.oficio.numeroOficio}" class="panelInput" readonly="false" />
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1"  >
+                                        <p:outputLabel value="#{procesoIngresoInvSinProView.condContrato eq true or procesoIngresoInvSinProView.opcionAdquisicion eq '3' ? 'Fecha oficio':'Fecha Oficio Donación'}" style="width: 100%;"></p:outputLabel>
+                                        <p:calendar id="fecOficio" pattern="dd-MM-yyyy" mask="true" required="true" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                    value="#{procesoIngresoInvSinProView.oficio.fechaOficio}" maxdate="sysdate" />
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+
+                            <p:fieldset legend="PROVEEDOR" style="margin-bottom:40px; font-weight: bold" id="datosProvOficioCambios" rendered="#{procesoIngresoInvSinProView.opcionAdquisicion eq '3'}">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="2">
+                                        <p:outputLabel value="IDENTIFICACIÓN" style="width: 100%" />
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="identifica3"
+                                                         class="panelInput" value="#{procesoIngresoInvSinProView.proveedor.cliente.identificacion}"
+                                                         maxlength="13" style=" width: 120px" required="true"/>
+                                            <p:commandButton  title="Buscar Proveedor" icon="fa fa-search"
+                                                              id="btnProveedorCambiosOficio"
+                                                              styleClass="green-button button-group"
+                                                              actionListener="#{procesoIngresoInvSinProView.buscarProveedor(false)}"
+                                                              process="@this, identifica3" update="datosProvOficioCambios">
+                                                <p:ajax event="dialogReturn" listener="#{procesoIngresoInvSinProView.selectDatos}" update="identifica3, datoRazon2"/>
+                                            </p:commandButton>
+                                        </div>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid"  styleClass="ui-panelgrid-blank form-group" id="datoRazon2" >
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Razón social" for="razonCambioOficio" style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.proveedor.cliente.nombre}"
+                                                      id="razonCambioOficio" style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Nombre Comercial" for="nombreComCambioOficio" style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.proveedor.cliente.apellido}"
+                                                      id="nombreComCambioOficio" style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <center>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Guardar" icon="fa fa-save"
+                                                 actionListener="#{procesoIngresoInvSinProView.guardarOficio()}"
+                                                 process="@form" update="frmMain"
+                                                 rendered="#{procesoIngresoInvSinProView.nuevo}"/>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Editar" icon="fa fa-edit"
+                                                 actionListener="#{procesoIngresoInvSinProView.editarOficio()}"
+                                                 process="@form" update="frmMain"
+                                                 rendered="#{!procesoIngresoInvSinProView.nuevo}"/>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Cerrar" process="@this"
+                                                 onclick="PF('dlgOficio').hide()"
+                                                 actionListener="#{procesoIngresoInvSinProView.limpiarVariableOficio()}" />
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario de Ordenes de Compra" width="50%"
+                  widgetVar="dlgOrdenCompra" modal="true" resizable="false" showEffect="fade" hideEffect="fade" id="dlgOrdenCompra">
+            <h:form prependId="false" id="frmOrdenCompra">
+                <p:dataTable id="dtOrdenCompra" var="oc" reflow="true" paginator="true" rows="10"
+                             rowsPerPageTemplate="10,50,100" paginatorPosition="bottom"
+                             value="#{procesoIngresoInvSinProView.listSolicitudOrdenCompras}" filterEvent="keyup"
+                             emptyMessage="No se encontró ninguna constatación seleccionada.">
+                    <f:facet name="header">
+                        LISTA DE ORDENES DE COMPRA
+                    </f:facet>
+                    <p:column headerText="Número Orden" style="font-weight: bold" >
+                        <h:outputText value="#{oc.codigoOrden}"/>
+                    </p:column>
+                    <p:column headerText="Fecha Aceptación" style="font-weight: bold">
+                        <h:outputText value="#{oc.fechaAceptacion}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Autorizador" style="font-weight: bold" >
+                        <h:outputText value="#{oc.autorizador.persona.nombreCompleltoSql}"/>
+                    </p:column>
+                    <p:column headerText="Acciones" style="font-weight: bold">
+                        <center>
+                            <p:commandLink title="Seleccionar" process="@this"
+                                           update="dtOrdenCompra">
+                                <i class="fa fa-arrow-circle-o-left" style="font-size: 1.5em; margin-right: 5px; color: blue;"></i>
+                            </p:commandLink>
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos de Orden de Compra por Catálogo Electrónico" widgetVar="dlgOrdenElectronico"
+                  modal="true" resizable="false" showEffect="fade"  id="dlgOrdenElectronicos">
+            <h:form prependId="false" id="frmOrden">
+                <p:growl id="msgs" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="outPanelOrden" style="width: 100%">
+                            <p:fieldset legend="DATOS" style="margin-bottom:40px; font-weight: bold" id="datosOrdenCambios">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" >
+                                        <p:outputLabel value="Número de orden" for="numOrden" style="width: 100%;"/>
+                                        <p:inputText  id="numOrden" style="text-transform: uppercase"
+                                                      value="#{procesoIngresoInvSinProView.ordenCompra.numeroOrden}" class="panelInput" readonly="false" >
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid  columns="1"  >
+                                        <p:outputLabel value="Fecha Emisión" style="width: 100%;"></p:outputLabel>
+                                        <p:calendar id="fecOrden" pattern="dd-MM-yyyy" mask="true" required="true"
+                                                    value="#{procesoIngresoInvSinProView.ordenCompra.fechaOrden}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1"  >
+                                        <p:outputLabel value="Fecha Aceptación" style="width: 100%;"></p:outputLabel>
+                                        <p:calendar id="fecAcepOrden" pattern="dd-MM-yyyy" mask="true" required="true"
+                                                    value="#{procesoIngresoInvSinProView.ordenCompra.fechaAceptacion}"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <center>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Guardar"
+                                                 icon="fa fa-save"
+                                                 actionListener="#{procesoIngresoInvSinProView.guardarOrdenCatalogoElec()}"
+                                                 process="@form" update="frmMain:dtOrden"
+                                                 rendered="#{procesoIngresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Editar"
+                                                 actionListener="#{procesoIngresoInvSinProView.editarOrdenCatalogoElec()}"
+                                                 icon="fa fa-edit"
+                                                 process="@form" update="frmMain:dtOrden"
+                                                 rendered="#{!procesoIngresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Cerrar"
+                                                 onclick="PF('dlgOrdenElectronico').hide()"
+                                                 actionListener="#{procesoIngresoInvSinProView.limpiarVariableOrdenCatalogoElec()}"
+                                                 process="@this">
+                                </p:commandButton>
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos de Factura" widgetVar="dlgFactura"   modal="true"   id="dlgFacturas" width="400">
+            <h:form prependId="false" id="frmFactura">
+                <p:growl id="msgss" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="outPanelfactura">
+                            <p:fieldset legend="DATOS" style=" font-weight: bold" id="datosFacturaCambios">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" rendered="#{procesoIngresoInvSinProView.guiaRemision}">
+                                        <p:outputLabel value="Número Guía Remisión" for="numGuiaRem"/><br/>
+                                        <p:inputText id="numGuiaRem"
+                                                     value="#{procesoIngresoInvSinProView.factura.numFactura}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" rendered="#{!procesoIngresoInvSinProView.guiaRemision}">
+                                        <p:outputLabel value="Número Factura" for="numFacturaCambio"/><br/>
+                                        <p:inputMask mask="999-999-999999999" id="numFacturaCambio" placeholder="999-999-999999999"
+                                                     value="#{procesoIngresoInvSinProView.factura.numFactura}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block">
+                                        <p:outputLabel value="Fecha Emisión" for="fecFactura"/><br/>
+                                        <p:calendar id="fecFactura"  value="#{procesoIngresoInvSinProView.factura.fechaFactura}"
+                                                    locale="es" readonlyInput="true"
+                                                    pattern="dd-MM-yyyy"
+                                                    maxdate="#{procesoIngresoInvSinProView.factura.fechaCaducidad}" navigator="true">
+                                            <p:ajax event="dateSelect" update="fecFacturaCad"/>
+                                        </p:calendar>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block">
+                                        <p:outputLabel value="Fecha Caducidad"/><br/>
+                                        <p:calendar id="fecFacturaCad" required="false" value="#{procesoIngresoInvSinProView.factura.fechaCaducidad}"
+                                                    locale="es" readonlyInput="true"
+                                                    pattern="dd-MM-yyyy"
+                                                    mindate="#{procesoIngresoInvSinProView.factura.fechaFactura}" navigator="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block">
+                                        <p:outputLabel value="Número Autorización" for="numAut" /><br/>
+                                        <p:inputText  id="numAut" style="text-transform: uppercase"
+                                                      value="#{procesoIngresoInvSinProView.factura.numAutorizacion}" class="panelInput">
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                </p:panelGrid>                                
+                            </p:fieldset>
+                            <p:fieldset legend="PROVEEDOR" id="fieldProveedor">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="2">
+                                        <p:outputLabel value="IDENTIFICACIÓN" style="width: 100%" />
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="identificaFactura"
+                                                         class="panelInput" value="#{procesoIngresoInvSinProView.factura.proveedor.cliente.identificacion}"
+                                                         maxlength="13" style=" width: 120px" />
+                                            <p:commandButton  title="Buscar Proveedor" icon="fa fa-search"
+                                                              styleClass="green-button button-group"
+                                                              actionListener="#{procesoIngresoInvSinProView.buscarProveedor(true)}"
+                                                              process="identificaFactura" >
+                                                <p:ajax event="dialogReturn" listener="#{procesoIngresoInvSinProView.selectDatosFacturaProveedor}" update="fieldProveedor"/>
+                                            </p:commandButton>
+                                        </div>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" id="datosProveedorFactura" styleClass="ui-panelgrid-blank form-group" >
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Razón social" style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.factura.proveedor.cliente.nombre}"
+                                                      style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Nombre Comercial"  style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.factura.proveedor.cliente.apellido}"
+                                                      style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <center>
+                                <p:commandButton value="Guardar" style="width: 100px;"
+                                                 icon="fa fa-save"
+                                                 actionListener="#{procesoIngresoInvSinProView.guardarFactura()}"
+                                                 process="@form" update="frmMain:dtFactura"
+                                                 rendered="#{procesoIngresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Editar" style="width: 100px;"
+                                                 actionListener="#{procesoIngresoInvSinProView.editarFactura()}"
+                                                 icon="fa fa-edit"
+                                                 process="@form" update="frmMain:dtFactura"
+                                                 rendered="#{!procesoIngresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Cerrar" icon="fa fa-remove" style="width: 100px;"
+                                                 onclick="PF('dlgFactura').hide()" class="red-btn"
+                                                 actionListener="#{procesoIngresoInvSinProView.limpiarVariableFactura()}"
+                                                 process="@this">
+
+                                </p:commandButton>
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="DATOS DE ADQUISICIÓN"
+                  widgetVar="dlgAdquisiciones" closeOnEscape="true"
+                  modal="true" width="60%" height="400px"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgAdquisiciones">
+            <h:form  id="frmDlgAdquisicion" prependId="false">
+                <br/>
+                <p:dataTable id="dtAdquisiciones" var="ord" reflow="true"  paginator="true"
+                             rows="10" rowsPerPageTemplate="10"
+                             paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             filterEvent="keyup" value="#{procesoIngresoInvSinProView.listaAdaqui}"
+                             emptyMessage="No se encontró ningun orden de compra en el sistema.">
+                    <f:facet name="header">
+                        LISTA DE ORDEN DE ADQUISICIÓN
+                    </f:facet>
+                    <p:column headerText="N° Proceso" style="width: 10%;  font-size: 12px;" filterBy="#{ord.idProceso}" filterMatchMode="contains">
+                        <h:outputText value="#{ord.idProceso}" />
+                    </p:column>
+                    <p:column headerText="Tipo de Proceso" filterBy="#{ord.tipoProceso}" filterMatchMode="contains" style="width: 10%;  font-size: 12px;" >
+                        <h:outputText  value="#{ord.tipoProceso}"/>
+                    </p:column>
+                    <p:column headerText="N° Contrato" style="width: 10%;  font-size: 12px;" filterBy="#{ord.numeroContrato}" filterMatchMode="contains">
+                        <h:outputText  value="#{ord.numeroContrato}"/>
+                    </p:column>
+                    <p:column headerText="Fecha Contrato" style="width: 10%;  font-size: 12px;text-align: center" >
+                        <h:outputText  value="#{ord.fechaContrato}">
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Monto" style="width: 10%; font-size: 12px;" >
+                        <h:outputText  value="#{ord.valorContratado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Descripción" filterBy="#{ord.descripcion}" filterMatchMode="contains" style="width: 42%;  font-size: 12px;" >
+                        <h:outputText  value="#{ord.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                        <p:commandLink  title="Seleccionar" actionListener="#{procesoIngresoInvSinProView.closeSelectAdquisicion(ord)}"  process="@this">
+                            <i class="fa fa-plus" style="font-size: 1.5em; "></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+                <br/>
+                <br/>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos Guía de Remisión"
+                  widgetVar="dlgGuiaRemision" modal="true" resizable="false" showEffect="fade" hideEffect="fade" id="dlgGuiaRemision">
+            <h:form prependId="false" id="frmGuiaRemision">
+                <p:growl id="msgs2" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="outPanelGuia" style="width: 100%">
+                            <p:fieldset legend="DATOS" style="margin-bottom:10px; font-weight: bold" id="datosGuiaCambios">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" >
+                                        <p:outputLabel value="Número de Guía de Remisión" for="numRemision" style="width: 100%;"/>
+                                        <p:inputText  id="numRemision" style="text-transform: uppercase"
+                                                      value="#{procesoIngresoInvSinProView.guiaRem.numeroOficio}" class="panelInput" readonly="false" />
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1"  >
+                                        <p:outputLabel value="Fecha Guía de Remisión" style="width: 100%;"></p:outputLabel>
+                                        <p:calendar id="fecRemision" pattern="dd-MM-yyyy" mask="true" required="true" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                    value="#{procesoIngresoInvSinProView.guiaRem.fechaOficio}" maxdate="sysdate" />
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+
+                            <p:fieldset legend="PROVEEDOR" style="margin-bottom:20px; font-weight: bold" id="datosProvGuiaCambios">
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="2">
+                                        <p:outputLabel value="IDENTIFICACIÓN" style="width: 100%" />
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="identifica4"
+                                                         class="panelInput" value="#{procesoIngresoInvSinProView.proveedor.cliente.identificacion}"
+                                                         maxlength="13" style=" width: 120px" required="true"/>
+                                            <p:commandButton  title="Buscar Proveedor" icon="fa fa-search"
+                                                              id="btnProveedorCambiosGuia"
+                                                              styleClass="green-button button-group"
+                                                              actionListener="#{procesoIngresoInvSinProView.buscarProveedor(false)}"
+                                                              process="@this, identifica4" update="datosProvGuiaCambios">
+                                                <p:ajax event="dialogReturn" listener="#{procesoIngresoInvSinProView.selectDatos}" update="identifica4, datoRazon3"/>
+                                            </p:commandButton>
+                                        </div>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid"  styleClass="ui-panelgrid-blank form-group" id="datoRazon3" >
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Razón social" for="razonCambioGuia" style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.proveedor.cliente.nombre}"
+                                                      id="razonCambioGuia" style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Nombre Comercial" for="nombreComCambioGuia" style="width: 100%;"/>
+                                        <p:inputText  value="#{procesoIngresoInvSinProView.proveedor.cliente.apellido}"
+                                                      id="nombreComCambioGuia" style="text-transform: uppercase"
+                                                      class="panelInput" readonly="true"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <center>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Guardar" icon="fa fa-save"
+                                                 actionListener="#{procesoIngresoInvSinProView.guardarGuia()}"
+                                                 process="@form" update="frmMain"
+                                                 rendered="#{procesoIngresoInvSinProView.nuevo}"/>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Editar" icon="fa fa-edit"
+                                                 actionListener="#{procesoIngresoInvSinProView.editarGuia()}"
+                                                 process="@form" update="frmMain"
+                                                 rendered="#{!procesoIngresoInvSinProView.nuevo}"/>
+                                <p:spacer width="10" />
+                                <p:commandButton value="Cerrar" process="@this"
+                                                 onclick="PF('dlgGuiaRemision').hide()"
+                                                 actionListener="#{procesoIngresoInvSinProView.limpiarVariableGuia()}" />
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

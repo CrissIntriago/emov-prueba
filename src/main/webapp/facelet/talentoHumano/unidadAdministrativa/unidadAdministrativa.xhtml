@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"/>
+    <ui:define name="title">Unidad Administrativa</ui:define>
+    <ui:param name="tittle" value="Unidades Administrativas" />
+    <ui:define name="content">
+        <h:form id="formu">
+            <div class="ui-g">
+                <div class="ui-g-12">
+                    <div class="card card-w-title">
+                        <p:commandButton value="Adicionar" style="width: auto; margin-bottom: 10px; " icon="fa fa-plus" actionListener="#{unidadAdministrativaView.formulario(null)}" process="@this"/>
+                        <p:commandButton value="Limpiar Filtro" title="Limpiar Filtro" icon="ui-icon-refresh" styleClass="Fs16" process="@this" update="cuentas" onclick="PF('cuentas').clearFilters()"/>   
+                        <div style="width: 100% !important; display: inline-block">
+                            <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                                <div class="ui-g-32 ui-md-16 ui-lg-4 estado-activo" >ACTIVO</div>
+                                <div class="ui-g-32 ui-md-16 ui-lg-4 estado-inactivo">INACTIVO</div>
+                            </div>
+                        </div>
+                        <p:dataTable id="cuentas" widgetVar="cuentas" var="item" value="#{unidadAdministrativaView.lazy}" paginator="true" rows="25" style="width: 100%;" paginatorPosition="bottom"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     rowsPerPageTemplate="25,50,100" lazy="true" emptyMessage="No hay Registro de Unidad Administrativa"  
+                                     selection="#{unidadAdministrativaView.unidadSeleccionada}" 
+                                     selectionMode="single" rowKey="#{item.id}"
+                                     rowStyleClass="#{item.estadoActivo eq true ? 'estado-activo' : 'estado-inactivo'}">
+                            <p:ajax event="rowToggle" listener="#{unidadAdministrativaView.cargandoNodos(item)}" update="treeGroupe" />
+                            <p:column style="width:2rem">
+                                <p:rowToggler />
+                            </p:column>
+                            <p:column headerText="Nombre" sortBy="#{item.nombre}" filterBy="#{item.nombre}" filterMatchMode="contains" >
+                                <h:outputText value="#{item.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column filterBy="#{item.padre.id}" headerText="Supervisa" >
+                                <f:facet name="filter">
+                                    <p:selectOneMenu filter="true"  filterMatchMode="contains" onchange="PF('cuentas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                        <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{unidadAdministrativaView.padrelista}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.padre.nombre==null?'ENTIDAD':item.padre.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column filterBy="#{item.ubicacionInstitucion.id}" headerText="Ubicación"  style="width: 10%;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu filter="true" filterMatchMode="contains"  onchange="PF('cuentas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                        <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{unidadAdministrativaView.listUbicacionInst}" var="ubi" itemLabel="#{ubi.descripcion}" itemValue="#{ubi.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+
+                                <h:outputText value="#{item.ubicacionInstitucion.descripcion}" />
+                            </p:column>
+                            <p:column filterBy="#{item.tipoUnidad.id}" headerText="Tipo de Unidad"  style="width: 10%;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu filter="true" filterMatchMode="contains"  onchange="PF('cuentas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                        <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{unidadAdministrativaView.listaCatalogoItem}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+
+                                <h:outputText value="#{item.tipoUnidad.texto}" />
+                            </p:column>
+                            <p:column headerText="Fecha de vigencia" style="width: 8%;">
+                                <h:outputText value="#{item.fechaVigencia}">
+                                    <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha de Caducidad" style="width: 8%;" >
+                                <h:outputText value="#{item.fechaCaducidad}">
+                                    <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 10%;">
+                                <p:commandLink title="Registrar Unidad" actionListener="#{unidadAdministrativaView.form(item,false)}"  process="@this"
+                                               disabled="#{item.tipoUnidad != null?  item.tipoUnidad.codigo.contains('UN'): true}">
+                                    <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Asignar Unidad Supervisa"   process="@this"
+                                               actionListener="#{unidadAdministrativaView.reasignarUnidad(item)}"  rendered="#{item.tipoUnidad != null?  !item.tipoUnidad.codigo.contains('ENT') : false  }">
+                                    <i class="fa fa-unsorted" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  actionListener="#{unidadAdministrativaView.formulario(item)}" title="Editar Unidad" process="@this">
+                                    <i class="fa fa-edit"  style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  actionListener="#{unidadAdministrativaView.eliminar(item)}" title="Eliminar Unidad" update="formu" process="@this">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Está seguro de inactivar esta unidad administrativa #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                            <p:rowExpansion>
+                                <p:treeTable id="treeGroupe" value="#{unidadAdministrativaView.root}" var="nodo" 
+                                             emptyMessage="No hay Registro de Unidad Administrativa ">
+                                    <p:column headerText="Sub Unidad">
+                                        <h:outputText value="#{nodo.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Tipo de Unidad"  filterBy="#{nodo.tipoUnidad.texto}">
+                                        <h:outputText  value="#{nodo.tipoUnidad.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Fecha de vigencia" style="width: 8%;">
+                                        <h:outputText value="#{nodo.fechaVigencia}">
+                                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Fecha de Caducidad" style="width: 8%;" >
+                                        <h:outputText value="#{nodo.fechaCaducidad}">
+                                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="text-align: center; width: 10%;">
+                                        <p:commandLink title="Registrar Unidad" actionListener="#{unidadAdministrativaView.form(nodo,false)}"  process="@this"
+                                                       disabled="#{nodo.tipoUnidad != null?  nodo.tipoUnidad.codigo.contains('UN'): true}">
+                                            <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="Asignar Unidad Supervisa"   process="@this"
+                                                       rendered="#{nodo.tipoUnidad != null?  !nodo.tipoUnidad.codigo.contains('ENT') : false  }"
+                                                       actionListener="#{unidadAdministrativaView.reasignarUnidad(nodo)}">
+                                            <i class="fa fa-unsorted" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink  actionListener="#{unidadAdministrativaView.formulario(nodo)}" title="Editar Unidad" process="@this">
+                                            <i class="fa fa-edit"  style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink  actionListener="#{unidadAdministrativaView.eliminar(nodo)}" title="Eliminar Unidad" update="formu" process="@this">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de inactivar esta unidad administrativa #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:treeTable>
+                            </p:rowExpansion>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+        <p:dialog header="Formulario Unidades Administrativas" widgetVar="formDlg" 
+                  modal="true" height="400" width="350">
+            <h:form id="form" prependId="false">
+                <!--<h:panelGroup id="formGroup">-->
+                <p:panel>
+                    <p:panelGrid columns="1"  layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
+                        <p:outputLabel value="Nombre:" />
+                        <p:inputText value="#{unidadAdministrativaView.unidadAdministrativa.nombre}"/>
+                        <p:outputLabel value="Tipo de unidad:" />
+                        <p:selectOneMenu  converter="#{utilConverter}" value="#{unidadAdministrativaView.unidadAdministrativa.tipoUnidad}">
+                            <f:selectItem itemLabel="Seleccione un tipo de unidad" itemValue="#{null}"/>
+                            <f:selectItems value="#{unidadAdministrativaView.listaCatalogoItem}"
+                                           var="c"  itemLabel="#{c.texto}" itemValue="#{c}"/>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Ubicación:" />
+                        <p:selectOneMenu  converter="#{utilConverter}" value="#{unidadAdministrativaView.unidadAdministrativa.ubicacionInstitucion}">
+                            <f:selectItem itemLabel="Seleccione la ubicación" itemValue="#{null}"/>
+                            <f:selectItems value="#{unidadAdministrativaView.listUbicacionInst}"
+                                           var="ubi"  itemLabel="#{ubi.descripcion}" itemValue="#{ubi}"/>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Fecha Vigente:" />
+                        <p:datePicker value="#{unidadAdministrativaView.unidadAdministrativa.fechaVigencia}" />
+                        <p:outputLabel value="Fecha Caducidad:" />
+                        <p:datePicker value="#{unidadAdministrativaView.unidadAdministrativa.fechaCaducidad}"/>
+                    </p:panelGrid>
+                    <div style="text-align: center">
+                        <p:commandButton value="Guardar" actionListener="#{unidadAdministrativaView.guardarUnidadAdministrativa()}" 
+                                         icon="fa fa-save"  style="width: auto;" update="formu"/>
+                    </div>
+                </p:panel>
+                <!--</h:panelGroup>-->
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Unidades padres" widgetVar="formDlgPadres" 
+                  modal="true" height="300" width="350">
+            <h:form id="formDlgPadres" prependId="false">
+                <!--<h:panelGroup id="formGroup">-->
+                <p:panel>
+                    <p:panelGrid columns="1"  layout="grid" styleClass="ui-panelgrid-blank ui-fluid">
+                        <p:outputLabel value="Nombre:" />
+                        <p:inputText readonly="true" value="#{unidadAdministrativaView.unidadAdministrativa.nombre}"/>
+                        <p:outputLabel value="Tipo de unidad:" />
+                        <p:inputText readonly="true" value="#{unidadAdministrativaView.unidadAdministrativa.tipoUnidad.texto}"/>
+                        <p:outputLabel value="Unidad Padre:" />
+                        <p:selectOneMenu  converter="#{utilConverter}" value="#{unidadAdministrativaView.unidadAdministrativa.padre}">
+                            <f:selectItem itemLabel="Seleccione un tipo de unidad" itemValue="#{null}"/>
+                            <f:selectItems value="#{unidadAdministrativaView.padresReasignar}"
+                                           var="c"  itemLabel="#{c.nombre}" itemValue="#{c}"/>
+                        </p:selectOneMenu>
+                        <p:outputLabel value="Fecha Vigente:" />
+                        <p:inputText  readonly="true" value="#{unidadAdministrativaView.unidadAdministrativa.fechaVigencia}" />
+                        <p:outputLabel   value="Fecha Caducidad:" />
+                        <p:inputText readonly="true" value="#{unidadAdministrativaView.unidadAdministrativa.fechaCaducidad}"/>
+                    </p:panelGrid>
+                    <div style="text-align: center">
+                        <p:commandButton value="Guardar" actionListener="#{unidadAdministrativaView.guardarUnidadAdministrativa()}" 
+                                         icon="fa fa-save"  style="width: auto;" update="formu" >
+                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de inactivar esta unidad administrativa #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                    </div>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </p:panel>
+                <!--</h:panelGroup>-->
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Distributivo General
+    </ui:define>
+    <ui:param name="tittle" value="Distributivo General" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="car card-w-title">
+                            <br></br>
+                            <h:panelGroup id="dataTableDistributivo" layout="block">
+                                <div style="width: 100% !important; display: inline-block">
+                                    <div class="ui-g" style="float: left; width: 50% !important; text-align: right;">
+                                        <p:commandButton value="Agregar Distributivo" icon="ui-icon-plus" update="panelDistributivo"
+                                                         styleClass="Fs16" style="width: 150px; margin-bottom: 10px;" actionListener="#{distributivoSinProcesoView.form(null)}"/>
+                                        <p:commandButton value="Limpiar Filtro" icon="ui-icon-refresh" styleClass="Fs16" process="@this" 
+                                                         update="dtDistributivo" actionListener="#{distributivoSinProcesoView.limpiarFiltro()}"
+                                                         style="width: 150px; margin-left: 10px;" onclick="PF('dtDistributivo').clearFilters()" />
+                                        <p:commandButton value="Imprimir" icon="ui-icon-print" styleClass="Fs16" process="@this"  
+                                                         style="width: 150px; margin-left: 10px;" actionListener="#{distributivoSinProcesoView.opendlgPrint()}" />
+                                    </div>
+                                    <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;" onclick="activos();">ACTIVO</div>
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;" onclick="vacantes();">VACANTE</div>
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;" onclick="inactivos();">INACTIVO</div>
+                                    </div>
+                                </div>
+                                <p:remoteCommand actionListener="#{distributivoSinProcesoView.filtroActivosInactivos(1)}" name="activos" />
+                                <p:remoteCommand actionListener="#{distributivoSinProcesoView.filtroActivosInactivos(2)}" name="vacantes" />
+                                <p:remoteCommand actionListener="#{distributivoSinProcesoView.filtroActivosInactivos(3)}" name="inactivos" />
+                                <p:dataTable id="dtDistributivo" widgetVar="dtDistributivo" var="dis" style="width: 100%;text-align:center;font-size: 10px"
+                                             reflow="true" paginator="true"  lazy="true" rows="25" rowsPerPageTemplate="25,50,100"
+                                             value="#{distributivoSinProcesoView.distributivoLazy}" emptyMessage="No se encontró ningún Distributivo."
+                                             selection="#{distributivoSinProcesoView.distributivo}" rowKey="#{dis.id}" selectionMode="single"  
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             scrollable="true"  rowExpandMode="single" paginatorPosition="bottom"
+                                             rowStyleClass="#{dis.estadoActivo eq false ? 'estado-inactivo':(dis.servidorPublico ne null ? 'estado-normal':'estado-activo')}"
+                                             rowIndexVar="num">
+                                    <f:facet name="header" >
+                                        LISTADO DISTRIBUTIVO
+                                    </f:facet>
+                                    <p:column headerText="No" style="text-align: center;width: 3%">
+                                        <h:outputText value="#{num + 1}" />   
+                                    </p:column>
+                                    <p:column headerText="Identificación" style="width: 7%;" filterBy="#{dis.servidorPublico.persona.identificacion}">                                      
+                                        <h:outputText value="#{dis.servidorPublico.persona.identificacion}"/>
+                                    </p:column>
+                                    <p:column headerText="Nombres" style="width: 10%; font-weight: bold;" 
+                                              filterBy="#{dis.servidorPublico.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.servidorPublico.persona.nombreCompleltoSql == null?'VACANTE':dis.servidorPublico.persona.nombreCompleto.toUpperCase()}"/>
+                                    </p:column>
+                                    <p:column headerText="Código " style="width: 6%;" filterBy="#{dis.codigoSQL}" filterMatchMode="contains">                                      
+                                        <h:outputText value="#{dis.codigoSQL}"/>
+                                    </p:column>
+                                    <p:column headerText="Cargo" style="width: 11%; " filterBy="#{dis.cargo.nombreCargo}" filterMatchMode="contains" >
+                                        <h:outputText value="#{dis.cargo.nombreCargo}"/>
+                                    </p:column>
+                                    <p:column  headerText="Vigencia Desde" style="width: 7%;">
+                                        <h:outputText value="#{dis.vigenciaDesde}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Vigencia Hasta" style="width: 7%;">
+                                        <h:outputText value="#{dis.vigenciaHasta == null?'NO HAY FECHA CADUCIDAD':dis.vigenciaHasta}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Unidad" style="width: 10%;" filterBy="#{dis.unidadAdministrativa.nombre}" filterMatchMode="contains" >
+                                        <h:outputText value="#{dis.unidadAdministrativa.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Supervisa" style="width: 10%;" filterBy="#{dis.unidadAdministrativa.padre.nombre}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.unidadAdministrativa.padre.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Régimen" style="width:12%;" filterBy="#{dis.regimen.nombre}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.regimen.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Tipo Contrato" style="width: 12%; " filterBy="#{dis.tipoContrato.nombre}">
+                                        <h:outputText value="#{dis.tipoContrato.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="text-align: center; width: 5%;">
+                                        <p:commandLink  title="Editar Distributivo" process="@this" actionListener="#{distributivoSinProcesoView.form(dis)}">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink  title="Eliminar Distributivo" process="@this" actionListener="#{distributivoSinProcesoView.eliminar(dis)}">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" 
+                                                       message="Esta seguro de eliminar el distributivo?" icon="fa fa-exclamation-triangle"/>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el cargo #{dis.cargo.nombreCargo} del distributivo ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="distributivoDialogo" header="Formulario de Distributivo" widgetVar="distributivoDialogo" width="60%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="true">
+            <h:form id="frmdlg" prependId="false">
+                <h:panelGroup id="panelDistributivo" layout="block">
+                    <h:panelGroup layout="block">
+                        
+                            <p:fieldset legend="DATOS DEL CARGO" style="width: 100%;" class="ui-g-4">
+                                <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="selectCargo" value="Cargo:" style="width: 100%;"/>
+                                        <p:selectOneMenu  id="selectCargo" value="#{distributivoSinProcesoView.distributivo.cargo}" converter="#{utilConverter}"
+                                                          panelStyle="width:150px" style="width: 100%" filter="true" filterMatchMode="startsWith" required="false">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                            <f:selectItems value="#{distributivoSinProcesoView.listCargo}" var="list"
+                                                           itemLabel="#{list.nombreCargo}" itemValue="#{list}"
+                                                           itemLabelEscaped="false"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Unidad Administrativa:" style="width: 100%;" title="Unidad Administrativa"/>
+                                        <p:selectOneMenu value="#{distributivoSinProcesoView.distributivo.unidadAdministrativa}" converter="#{utilConverter}"
+                                                         panelStyle="width:150px" style="width: 100%" filter="true" filterMatchMode="contains" required="false">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                            <f:selectItems value="#{distributivoSinProcesoView.listUnidad}" var="unidad"
+                                                           itemLabel="#{unidad.nombre}" itemValue="#{unidad}"
+                                                           itemLabelEscaped="false"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Régimen Laboral:" style="width: 100%;"/>
+                                        <p:selectOneMenu value="#{distributivoSinProcesoView.distributivo.regimen}" converter="#{utilConverter}"
+                                                         panelStyle="width:150px" style="width: 100%" filter="true" filterMatchMode="startsWith"
+                                                         disabled="#{distributivoSinProcesoView.editar}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoSinProcesoView.listRegimen}" var="listRe"
+                                                           itemLabel="#{listRe.nombre}" itemValue="#{listRe}"
+                                                           itemLabelEscaped="false" 
+                                                           />
+                                            <p:ajax update="tipoCont" listener="#{distributivoSinProcesoView.update}" />
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Tipo de contrato:"  style="width: 100%;"/>
+                                        <p:selectOneMenu disabled="#{distributivoSinProcesoView.editar1}" value="#{distributivoSinProcesoView.distributivo.tipoContrato}" 
+                                                         converter="#{utilConverter}" panelStyle="width:150px" style="width: 100%" filter="true"
+                                                         filterMatchMode="startsWith" id="tipoCont">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoSinProcesoView.regimen}" var="tipoC" itemLabel="#{tipoC.nombre}" itemValue="#{tipoC}"
+                                                           itemLabelEscaped="false" id="regim"/>
+                                            <p:ajax update="panelfieldsetDetalle"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Fecha Desde:"  style="width: 100%;"/><br/>
+                                        <p:calendar  id="fecha-desde" value="#{distributivoSinProcesoView.distributivo.vigenciaDesde}" navigator="true" 
+                                                     locale="es" pattern="dd-MM-yyyy" mask="true" />
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Fecha Hasta:"  style="width: 100%;" /><br/>
+                                        <p:calendar required="false" id="fecha-hasta" value="#{distributivoSinProcesoView.distributivo.vigenciaHasta}" 
+                                                    navigator="vigenciaDesde:distributivoSinProcesoViewtrue" locale="es" pattern="dd-MM-yyyy" mask="true" />
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                    
+                            <p:fieldset legend="DATOS ESCALA SALARIAL" id="fieldsetEscala" style="width: 100%;" class="ui-g-4">
+                                <p:panelGrid id="panelEscala" columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="grupoo" value="Grupo Ocupacional:" style="width: 100%;"/>
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="grupoo" class="panelInput" readonly="true"  style="width: 90%"
+                                                         value="#{distributivoSinProcesoView.distributivoEscala.escalaSalarial.grupoOrganizacional}" />
+                                            <p:commandButton  title="Lista de Escala Salarial" icon="fa fa-search"
+                                                              disabled="#{distributivoSinProcesoView.bloqueo}" 
+                                                              styleClass="green-button button-group" style="width: 10%"
+                                                              actionListener="#{distributivoSinProcesoView.openDlgEscala()}"
+                                                              process="@this">
+                                                <p:ajax event="dialogReturn" listener="#{distributivoSinProcesoView.selectDataEscala}" update="fieldsetEscala" />
+                                            </p:commandButton>
+                                        </div>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid id="panelgrado" columns="2" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="grado" value="Grado:" style="width: 100%;"/>
+                                        <p:inputText id="grado" class="panelInput" readonly="true" style="width: 100%;"
+                                                     value="#{distributivoSinProcesoView.distributivoEscala.escalaSalarial.grado}">                                            
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel title="Remuneración Mensual Unificada" for="RMU" value="R.M.U:" style="width: 100%;"/>
+                                        <p:inputText  id="RMU" class="panelInput" readonly="true" required="false" style="width: 100%;"
+                                                      value="#{distributivoSinProcesoView.distributivoEscala.remuneracionDolares}">                                            
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset> 
+                    
+                    </h:panelGroup>
+                    <h:panelGroup id="panelfieldsetDetalle" layout="block">
+                        <div class="ui-g-12">
+                            <p:fieldset legend="PROYECCIÓN ANUAL" id="dataTableDistributivo" style="width: 100%;">
+                                <div style="display: block; width: 100%">
+                                    <p:commandButton id="btnRubroAdd" value="Agregar Rubros" icon="ui-icon-plus" process="@this"
+                                                     styleClass="Fs16" style="width: 150px; display: block ; float: left; margin-bottom: 15px;" 
+                                                     actionListener="#{distributivoSinProcesoView.openDlgValoresParametrizables()}">
+                                        <p:ajax event="dialogReturn" listener="#{distributivoSinProcesoView.selectDataRubros}" update="dtValores" />
+                                    </p:commandButton>
+                                    <div style="text-align: right; font-size: 18px;">
+                                        <p:selectOneMenu  value="#{distributivoSinProcesoView.busqueda.anio}" 
+                                                          style=" font-size: 18px; height:30px; width: 20%; text-align: right; border: 1px solid #009688;">
+                                            <f:selectItem itemValue="#{null}" itemLabel="Seleccione un período" noSelectionOption="true"/>
+                                            <f:selectItems value="#{distributivoSinProcesoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                            <p:ajax  listener="#{distributivoSinProcesoView.buscarP()}" update="dtValores,fieldsetEscala,panelEscala,btnRubroAdd,guardar1" />
+                                        </p:selectOneMenu>
+                                    </div>
+                                </div>
+                                <p:remoteCommand name="onCellE" update="dtValores" />
+                                <p:dataTable paginator="true" paginatorPosition="bottom" style="text-align: center; margin-top:5px;width: 100%" rowIndexVar="index"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rows="5" rowsPerPageTemplate="5,10" value="#{distributivoSinProcesoView.valoresDistributivoList}" var="rubro" 
+                                             emptyMessage="No existen Rubros Seleccionados." id="dtValores"  editable="true" editMode="cell">
+                                    <f:facet  name="header">Rubros Seleccionados</f:facet>
+                                    <p:ajax event="cellEdit" listener="#{distributivoSinProcesoView.onCellEdit(rubro)}" oncomplete="onCellE()" />
+                                    <p:column headerText="Nombre Rubro" style="width: 27%">
+                                        <h:outputText value="#{rubro.valoresParametrizados.tipo}"/>
+                                    </p:column>
+                                    <p:column headerText="Estado Rubro" style="width: 21%">
+                                        <h:outputText value="#{rubro.valoresParametrizados.tipoEstado.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Valor Rubro" style="width: 21%">
+                                        <p:cellEditor disabled="#{rubro.valoresParametrizados.tipoEstado.texto == 'FIJO' or distributivoSinProcesoView.habilitar(rubro) ? true:false}">
+                                            <f:facet name="output"><h:outputText value="#{rubro.valorRubro}"/></f:facet>
+                                            <f:facet name="input"><p:inputText value="#{rubro.valorRubro}" style="width: 100%"/></f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Proyección" style="width: 9%">
+                                        <p:cellEditor  disabled="#{distributivoSinProcesoView.habilitar(rubro)}">
+                                            <f:facet name="output"><h:outputText value="#{rubro.proyeccion}"   /></f:facet>
+                                            <f:facet name="input"><p:spinner id="rotate" value="#{rubro.proyeccion}" min="1" max="12" style="width: 100%">
+                                                    <p:keyFilter regEx="/[\d]/" />
+                                                </p:spinner>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Monto" style="width: 12%">
+                                        <h:outputText value="#{rubro.valorResultante}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column  headerText="Acciones" style="text-align: center; width: 10%">
+                                        <p:commandLink disabled="#{distributivoSinProcesoView.habilitar(rubro)}"  title="Eliminar Rubro" process="@this" 
+                                                       actionListener="#{distributivoSinProcesoView.borrarRubroListaTest(index)}" update="dtValores,panelEscala" >
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" 
+                                                       message="¿Está seguro de eliminar el Rubro?" icon="fa fa-exclamation-triangle"/>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar el Rubro  del distributivo ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:fieldset>   
+                        </div>
+                    </h:panelGroup>
+                    <center>
+                        <p:commandButton  value="Guardar" id="guardar1" actionListener="#{distributivoSinProcesoView.guardar()}" icon="ui-icon-save"  styleClass="Fs16"/>
+                    </center>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgPrint" header="Formulario de Impresión de Distributivo" widgetVar="dlgPrint" modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="250">
+            <h:form id="frmldlgprint" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="panelDisAnexo" style="width: 100%">
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel title="Año de Impresión Distributivo" for="anio" value="Año de Distributivo:" style="width: 100%;"/>
+                                        <p:selectOneMenu  id="anio" value="#{distributivoSinProcesoView.anio}" style=" width: 100%">
+                                            <f:selectItem itemLabel="Seleccione un año"   itemValue="0"/>
+                                            <f:selectItems value="#{distributivoSinProcesoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel title="Tipo" for="selectTipo" value="Tipo" style="width: 100%;"/>
+                                        <p:selectOneMenu  id="selectTipo" value="#{distributivoSinProcesoView.tipoReporte}" style=" width: 100%">
+                                            <f:selectItem itemLabel="Todo..."   itemValue="all"/>
+                                            <f:selectItem itemLabel="Asignados."   itemValue="asignados"/>
+                                            <f:selectItem itemLabel="Vacantes."   itemValue="vacantes"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <br></br>
+                                <center>
+                                    <p:commandButton value="Imprimir" id="print"
+                                                     actionListener="#{distributivoSinProcesoView.printReport()}"
+                                                     icon="ui-icon-print"  
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,487 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Reforma Asignación De Partidas Al Distributivo Anexo </ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <u:titleTask task="#{distributivoAnexoReformaView.tarea}" tramite="#{distributivoAnexoReformaView.tramite}" />
+            </div>
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formPanelesFistributivo">
+                    <p:fieldset legend="Opciones" >
+                        <p:commandButton disabled="#{distributivoAnexoReformaView.enabledReforma}" value="Reformas"  actionListener="#{distributivoAnexoReformaView.showPanel1()}"
+                                         icon="fa fa-check" style="width: 10%;" update="formPanelesFistributivo,fmReformaGlobal,formAnexoData"/> 
+                    </p:fieldset>
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformaGlobal">
+                    <p:panel rendered="#{distributivoAnexoReformaView.panelReforma}">
+                        <p:dataTable id="dataIngresoEgresoReorma" widgetVar="dataIngresoEgresoReorma" var="item" value="#{distributivoAnexoReformaView.lazyReforma}" 
+                                     paginator="true" rows="30" style="width: 100%;" paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="30,40,50,100" lazy="true"  rowIndexVar="index"
+                                     emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <p:column headerText="No.REFORMA" style="text-align: center;">
+                                <p:outputLabel value="#{item.numeracion}"/>
+
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO" style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" /> 
+                            </p:column>
+                            <p:column headerText="CUPO" >
+                                <p:outputLabel value="#{distributivoAnexoReformaView.totalCupo(item)}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel> 
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto}" />   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 15%;text-align: center;">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}"   title="Asigna #{item.tipo==true?'Suplemento':'Reduccion'}"
+                                               process="@this"  actionListener="#{distributivoAnexoReformaView.registrarDistributivoAnexo(item)}"
+                                               update="formPanelesFistributivo,fmReformaGlobal,formAnexoData" >
+                                    <i class="fa fa-money" style="margin: 10px 10px 10px 10px;font-size: 1.5em"></i>
+                                </p:commandLink>
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}" rendered="#{item.tipo}" title="Asignar Partidas Nuevas"   
+                                               process="@this" actionListener="#{distributivoAnexoReformaView.registrarDistributivoAnexoNuevos(item)}" 
+                                               update="formPanelesFistributivo,fmReformaGlobal,formAnexoData" >
+                                    <i class="fa fa-empire" style="margin: 10px 10px 10px 10px;font-size: 1.5em"></i>
+                                </p:commandLink>
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}"  title="Editar Partidas"   
+                                               process="@this" actionListener="#{distributivoAnexoReformaView.registrarDistributivoAnexoModificacion(item)}" 
+                                               update="formPanelesFistributivo,fmReformaGlobal,formAnexoData" >
+                                    <i class="fa fa-edit" style="margin: 10px 10px 10px 10px;font-size: 1.5em"></i>
+                                </p:commandLink>
+                                <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this"  
+                                                actionListener="#{distributivoAnexoReformaView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div> 
+            <div class="ui-g-12" style="text-align: center">
+                <h:form prependId="false" id="formAnexoData">
+                    <p:panel  rendered="#{distributivoAnexoReformaView.panelData}"  style="text-align: left; font-size: 12px;">
+                        <p:panelGrid columns="2" layout="grid" style="font-size: 12px;"  styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                <p:outputLabel  value="Cupo: " class="FontBold"/>
+                                <p:outputLabel value="#{distributivoAnexoReformaView.totalCupo()==null?'NO TIENE CUPO':distributivoAnexoReformaView.totalCupo()}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                <p:outputLabel  value="Cupo Asignado: " class="FontBold"/>
+                                <p:outputLabel value="#{distributivoAnexoReformaView.totalCupoAsignado()}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panel>
+                    <p:panel rendered="#{distributivoAnexoReformaView.panelData}">
+                        <p:dataTable    value="#{distributivoAnexoReformaView.listaPartidasAnexo}"  id="listaDistributivoAnexo" widgetVar="listaDistributivoAnexo"  
+                                        paginatorPosition="bottom" var="item" rows="20" paginator="true"  
+                                        currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                        paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                        rowsPerPageTemplate="20,25,35,50"  editable="true" editMode="cell" scrollable="true" rowIndexVar="index"
+                                        emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                ASIGNAR PARTIDA A DISTRIBUTIVO - ANEXO DEL PERÍODO #{distributivoAnexoReformaView.periodo}
+                            </f:facet>
+                            <p:column headerText="No." style="width: 20px; text-align: center">
+                                #{index+1}
+                            </p:column>
+
+                            <p:column headerText="Tipo" filterBy="#{item.distributivoAnexo.valorParametrizado.tipo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.valorParametrizado.tipo}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 20%;" filterBy="#{item.distributivoAnexo.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.nombre}" />
+                            </p:column>
+                            <p:column headerText="Monto"  filterBy="#{item.monto}">
+                                <h:outputText value="#{item.monto}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column headerText="Item" filterBy="#{item.itemApA.codigo}" filterMatchMode="contains" >
+                                <h:outputText value="#{item.itemApA.codigo}" />
+                            </p:column>
+                            <p:column headerText="Estructura" filterBy="#{item.estructuraApA.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.estructuraApA.codigo}" />
+                            </p:column>
+                            <p:column headerText="Fuente" filterBy="#{item.fuenteApA.tipoFuente.orden}" filterMatchMode="contains">
+                                <h:outputText value="#{item.fuenteApA.tipoFuente.orden}" />
+                            </p:column>
+                            <p:column headerText="Tipo Fuente" filterBy="#{item.fuenteDirectaA.texto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.fuenteDirectaA.texto}"/>
+                            </p:column>
+                            <p:column headerText="Partida" style="text-align: center" filterBy="#{item.partidaAp}" filterMatchMode="contains">
+                                <h:outputText value="#{item.partidaAp}" />
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaSuplemento}"   filterBy="#{item.reformaSuplemento}"  headerText="Suplemento" style="width: 10%">
+                                <p:cellEditor disabled="#{item.monto.doubleValue()==0?true:false}">
+                                    <f:facet name="input">
+                                        <p:inputNumber id="suplemento"
+                                                       value="#{item.reformaSuplemento}" style="width:100%;">
+                                            <p:ajax event="change" listener="#{distributivoAnexoReformaView.cellEditSuplemento(item)}" update="listaDistributivoAnexo,formAnexoData"   />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output"> 
+                                        <h:outputText value="#{item.reformaSuplemento}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaReduccion}"  headerText="Reducción" style="width: 10%">
+                                <p:cellEditor disabled="#{item.monto.doubleValue()==0?true:false}">
+                                    <f:facet name="input">
+                                        <p:inputNumber id="reduccion"
+                                                       value="#{item.reformaReduccion}" style="width:100%;">
+                                            <p:ajax event="change" listener="#{distributivoAnexoReformaView.cellEditReduccion(item)}" update="listaDistributivoAnexo,formAnexoData"   />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output"> 
+                                        <h:outputText value="#{item.reformaReduccion}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column   headerText="Monto Codificado" style="width: 10%" filterBy="#{item.reformaCodificado}">
+                                <h:outputText value="#{item.reformaCodificado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                    <p:panel  rendered="#{distributivoAnexoReformaView.panelData2}"  style="text-align: left; font-size: 12px;">
+                        <p:panelGrid columns="2" layout="grid" style="font-size: 12px;"  styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                <p:outputLabel  value="Cupo:" class="FontBold"/>
+                                <p:outputLabel value="#{distributivoAnexoReformaView.totalCupoDA==null?'NO TIENE CUPO':distributivoAnexoReformaView.totalCupoDA}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                <p:outputLabel  value="Cupo Asignado: " class="FontBold"/>
+                                <p:outputLabel value="#{distributivoAnexoReformaView.totalCupoAsignado()==null?'NO TIENE CUPO':distributivoAnexoReformaView.totalCupoAsignado()}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panel>
+                    <p:panel rendered="#{distributivoAnexoReformaView.panelData2}">
+                        <p:dataTable    value="#{distributivoAnexoReformaView.listaPartidasAnexoNuevo}"  id="listaDistributivoAnexoNuevo" widgetVar="listaDistributivoAnexoNuevo"  
+                                        paginatorPosition="bottom" var="item" rows="20" paginator="true"  
+                                        paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                        rowsPerPageTemplate="20,25,35,50"  editable="true" editMode="cell" scrollable="true"
+                                        currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"  rowIndexVar="index"
+                                        emptyMessage="No existen datos con el criterio de busqueda especificado">
+
+                            <f:facet name="header">
+                                ASIGNAR PARTIDA A DISTRIBUTIVO - ANEXO DEL PERÍODO #{distributivoAnexoReformaView.periodo}
+                            </f:facet>
+                            <p:column headerText="No." style="width: 20px; text-align: center">
+                                #{index+1}
+                            </p:column>
+
+
+                            <p:column headerText="Tipo" style="width: 20%;" filterBy="#{item.distributivoAnexo.valorParametrizado.tipo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.valorParametrizado.tipo}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 20%;" filterBy="#{item.distributivoAnexo.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.nombre}" />
+                            </p:column>
+                            <p:column headerText="Monto" style="width: 5%;" filterBy="#{item.monto}">
+                                <h:outputText value="#{item.monto}"  style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Reserva" style="width: 5%;"  filterBy="#{item.reserva}">
+                                <h:outputText value="#{item.reserva}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Item" style="width: 10%;" filterBy="#{item.itemApA.codigo}" filterMatchMode="contains">
+                                <p:cellEditor >
+                                    <f:facet name="output"><h:outputText value="#{item.itemApA.codigo}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu  value="#{item.itemApA}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                          effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Item Presupuestario" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaItem}" var="th" itemLabel="#{th.codigo}" itemValue="#{th}" /> 
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.descripcion}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.EditCellAndCalculatePartida(item)}"  update="listaDistributivoAnexoNuevo,formAnexoData"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Estructura" style="width: 10%;" filterBy="#{item.estructuraApA.codigo}" filterMatchMode="contains">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{item.estructuraApA.codigo}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu  value="#{item.estructuraApA}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                          effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Estructura" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaEstructura}" var="the" itemLabel="#{the.codigo}" itemValue="#{the}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.descripcion}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.EditCellAndCalculatePartida(item)}"  update="listaDistributivoAnexoNuevo,formAnexoData"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Fuente" style="width: 10%;" filterBy="#{item.fuenteApA.tipoFuente.orden}" filterMatchMode="contains">
+                                <p:cellEditor >
+                                    <f:facet name="output"><h:outputText value="#{item.fuenteApA.tipoFuente.orden}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu filter="true" filterMatchMode="startsWith"   value="#{item.fuenteApA}" panelStyle="width:22%"
+                                                         style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                            <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaFuente}" var="n" itemLabel="#{n.tipoFuente.orden}//#{n.tipoFuente.texto}//#{n.nombre}" itemValue="#{n}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="Código"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.tipoFuente.orden}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 50%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Fuente"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.tipoFuente.texto}" />
+                                            </p:column>
+
+                                            <p:column style="width: 90%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Tipo Fuente"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.nombre}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.EditCellAndCalculatePartida(item)}"  update="listaDistributivoAnexoNuevo,formAnexoData"/>
+                                        </p:selectOneMenu>
+
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Partida" style="width: 8%; text-align: center;" filterBy="#{item.partidaAp}" filterMatchMode="contains">
+                                <h:outputText value="#{item.partidaAp}" />
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaSuplemento}"   headerText="Suplemento"  filterBy="#{item.reformaSuplemento}" filterMatchMode="contains">
+                                <h:outputText value="#{item.reformaSuplemento}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaReduccion}"  headerText="Reducción">
+                                <h:outputText value="#{item.reformaReduccion}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column   headerText="Monto Codificado" filterBy="#{item.reformaCodificado}" filterMatchMode="contains">
+                                <h:outputText value="#{item.reformaCodificado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+
+                    <p:panel rendered="#{distributivoAnexoReformaView.panelData3}">
+                        <p:dataTable    value="#{distributivoAnexoReformaView.listaPartidasAnexoModificacion}"  id="listaDistributivoAnexoModificacion" widgetVar="listaDistributivoAnexoModificacion"  
+                                        paginatorPosition="bottom" var="item" rows="20" paginator="true"  
+                                        paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                        rowsPerPageTemplate="20,25,35,50"  editable="true" editMode="cell" scrollable="true" rowIndexVar="index"
+                                        currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                        emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                ASIGNAR PARTIDA A DISTRIBUTIVO - ANEXO DEL PERÍODO #{distributivoAnexoReformaView.periodo}
+                            </f:facet>
+
+                            <p:column headerText="No." style="width: 20px; text-align: center">
+                                #{index+1}
+                            </p:column>
+
+
+                            <p:column headerText="Tipo" style="width: 20%;" filterBy="#{item.distributivoAnexo.valorParametrizado.tipo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.valorParametrizado.tipo}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 20%;" filterBy="#{item.distributivoAnexo.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{item.distributivoAnexo.nombre}" />
+                            </p:column>
+                            <p:column headerText="Monto" style="width: 5%;" filterBy="#{item.monto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.monto}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Reserva" style="width: 5%;" filterBy="#{item.reserva}" filterMatchMode="contains">
+                                <h:outputText value="#{item.reserva}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Item" style="width: 10%;" filterBy="#{item.itemApA.codigo}" filterMatchMode="contains">
+                                <p:cellEditor disabled="#{item.monto.doubleValue()==0?false:true}">
+                                    <f:facet name="output"><h:outputText value="#{item.itemApA.codigo}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu  value="#{item.itemApA}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                          effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Item Presupuestario" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaItem}" var="th" itemLabel="#{th.codigo}" itemValue="#{th}" /> 
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.descripcion}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.editPartidar(item)}"  update="listaDistributivoAnexoModificacion"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Estructura" style="width: 10%;" filterBy="#{item.estructuraApA.codigo}" filterMatchMode="contains">
+                                <p:cellEditor disabled="#{item.monto.doubleValue()==0?false:true}" >
+                                    <f:facet name="output"><h:outputText value="#{item.estructuraApA.codigo}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu  value="#{item.estructuraApA}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                          effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Estructura" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaEstructura}" var="the" itemLabel="#{the.codigo}" itemValue="#{the}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.descripcion}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.editPartidar(item)}"  update="listaDistributivoAnexoModificacion"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Fuente" style="width: 10%;" filterBy="#{item.fuenteApA.tipoFuente.orden}" filterMatchMode="contains">
+                                <p:cellEditor disabled="#{item.monto.doubleValue()==0?false:true}">
+                                    <f:facet name="output"><h:outputText value="#{item.fuenteApA.tipoFuente.orden}" /></f:facet>
+                                    <f:facet name="input" >
+                                        <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{item.fuenteApA}" panelStyle="width:22%"
+                                                         style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                            <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{distributivoAnexoReformaView.listaFuente}" var="n" itemLabel="#{n.tipoFuente.orden}//#{n.tipoFuente.texto}//#{n.nombre}" itemValue="#{n}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="Código"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.tipoFuente.orden}" style="font-weight: bold;" />
+                                            </p:column>
+                                            <p:column style="width: 50%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Fuente"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.tipoFuente.texto}" />
+                                            </p:column>
+                                            <p:column style="width: 90%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Tipo Fuente"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.nombre}" />
+                                            </p:column>
+                                            <p:ajax event="change"  listener="#{distributivoAnexoReformaView.editPartidar(item)}"  update="listaDistributivoAnexoModificacion"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Partida" style="width: 8%; text-align: center" filterBy="#{item.partidaAp}" filterMatchMode="contains">
+                                <h:outputText value="#{item.partidaAp}" />
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaSuplemento}" filterBy="#{item.reformaSuplemento}" headerText="Suplemento" filterMatchMode="contains">
+                                <h:outputText value="#{item.reformaSuplemento}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column rendered="#{distributivoAnexoReformaView.columnaReduccion}"  filterBy="#{item.reformaReduccion}" headerText="Reducción" filterMatchMode="contains">
+                                <h:outputText value="#{item.reformaReduccion}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column   headerText="Monto Codificado" filterMatchMode="contains" filterBy="#{item.reformaCodificado}">
+                                <h:outputText value="#{item.reformaCodificado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form> 
+            </div>
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{distributivoAnexoReformaView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{distributivoAnexoReformaView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

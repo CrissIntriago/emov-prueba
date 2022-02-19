@@ -1,0 +1,215 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Reporte de Biometrico
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <p:outputPanel id="fomInfo">                        
+                        <p:fieldset id="fieldsetanticipo" legend="REGISTRO DE DIAS LABORADOS" 
+                                    toggleable="true" toggleSpeed="500" collapsed="false"
+                                    style="width: 90%;margin-left: 5%">
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <h:panelGroup>
+                                    <p:outputLabel value="Período " for="periodo" class="Wid100"/>
+                                    <p:selectOneMenu id="periodo" value="#{reporteMensual.busqueda.anio}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{reporteMensual.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        <p:ajax listener="#{reporteMensual.mesesRoles()}" update="mes" process="@this"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:outputLabel value="Rol: " for="@next" class="Wid100"/>
+                                    <p:selectOneMenu id="mes" value="#{reporteMensual.diaLaborado.tipoRol}"
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{reporteMensual.rolesMensuales}" var="m" itemLabel="#{m.descripcion}" itemValue="#{m}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:outputLabel value="Tipo Rol" for="tipoRol" class="Wid100"/>
+                                    <p:inputText id="tipoRol" value="#{reporteMensual.diaLaborado.tipoRol.tipoRol.descripcion}" readonly="true">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup>
+                                    <p:outputLabel value="Mes Rol" for="mesRol" class="Wid100"/>
+                                    <p:inputText id="mesRol" value="#{reporteMensual.diaLaborado.tipoRol.mes.descripcion}" readonly="true">
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <center>
+                                <h:panelGrid columns="2" >
+                                    <p:commandButton value="Buscar" id="buscar-btn" 
+                                                     update="dataTabledias,tipoRol,mesRol,panelDiaLab,obtener-datos-btn"
+                                                     actionListener="#{reporteMensual.buscar()}"
+                                                     icon="ui-icon-search" process="mes" styleClass="Fs16" />
+
+                                    <p:commandButton value="Datos Biometrico" title="Buscar datos en el biometrico"
+                                                     disabled="#{reporteMensual.disabledbtnBiometrico}"
+                                                     id="obtener-datos-btn" update="dataTabledias"                                                     
+                                                     icon="ui-icon-search" process="@this" styleClass="Fs16"
+                                                     actionListener="#{reporteMensual.obtenerDatosBiometrico()}"/>
+                                </h:panelGrid>
+                            </center>
+                        </p:fieldset>
+                        <br/><br/>
+                        <h:panelGroup id="panelDiaLab">
+                            <div>
+                                <p:commandButton value="Agregar Servidor Público"                                             
+                                                 process="mes"
+                                                 rendered="#{reporteMensual.tipoRol.tipoRol.codigo == 'rol_adicional' ? true:false}"
+                                                 disabled="#{reporteMensual.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? true: false}"
+                                                 icon="ui-icon-plus"                                             
+                                                 update="panelDiaLab"
+                                                 actionListener="#{reporteMensual.openDlgServidor()}"
+                                                 style="width: auto;float: left;margin-left:5%;"/>
+                                <p:commandButton value="Grabar"                                             
+                                                 process="mes"
+                                                 disabled="#{reporteMensual.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? true: false}"
+                                                 icon="ui-icon-save"                                             
+                                                 update="panelDiaLab"
+                                                 rendered="#{reporteMensual.tipoRol.diasLaborados ? false:true}"
+                                                 actionListener="#{reporteMensual.grabarDias(true)}"
+                                                 style="width: auto;float: right;margin-right:4%;"/>
+                                <p:commandButton value="Editar"                                             
+                                                 process="mes"
+                                                 disabled="#{reporteMensual.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? true: false}"
+                                                 rendered="#{reporteMensual.tipoRol.diasLaborados ? true:false}"
+                                                 icon="ui-icon-add"
+                                                 styleClass="amber-btn"
+                                                 update="panelDiaLab"
+                                                 actionListener="#{reporteMensual.grabarDias(false)}"
+                                                 style="width: auto;margin-right: 4%;float: right"/>
+
+                            </div>
+                            <br/><br/><br/>
+                            <p:dataTable id="dataTabledias" widgetVar="dataTabledias" var="dia" value="#{reporteMensual.lazy}" 
+                                         paginator="true" rows="15"
+                                         paginatorPosition="bottom"
+                                         filterEvent="enter"
+                                         lazy="true"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="15,20,30,40,50,100" 
+                                         editable="#{reporteMensual.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? false: true}"
+                                         editMode="cell"
+                                         emptyMessage="No existen criterio de busqueda especificado"
+                                         selection="#{reporteMensual.diaLaborado}" selectionMode="single" rowKey="#{dia.id}"
+                                         style="width: 91%;margin-left: 5%">
+                                <f:facet name="header">
+                                    #{reporteMensual.diaLaborado.tipoRol.descripcion}
+                                </f:facet>
+                                <p:ajax event="cellEdit" listener="#{reporteMensual.guardarDia(dia)}" update="dataTabledias" />
+
+                                <p:column headerText="Cedula Servidor" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{dia.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre Servidor" style="width: 10%">
+                                    <h:outputText value="#{dia.servidor.persona.nombreCompleto}"/>
+                                </p:column>                                
+                                <p:column headerText="Cargo" style="width: 10%">
+                                    <h:outputText value="#{dia.servidor.distributivo.cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Unidad Administrativa" style="width: 20%">
+                                    <h:outputText value="#{dia.servidor.distributivo.unidadAdministrativa.nombre}" />
+                                </p:column>
+                                <p:column headerText="Mes" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{dia.mes}" />
+                                </p:column>
+                                <p:column headerText="Días Laborados" style="text-align: center;width: 5%">
+                                    <p:cellEditor disabled="#{reporteMensual.tipoRol.diasLaborados == true}">
+                                        <f:facet name="input" >
+                                            <p:inputNumber id="presInicial" maxValue="#{reporteMensual.diaMax(dia)}"
+                                                           value="#{dia.dias}" style="width:100%;" decimalPlaces="0">
+
+                                            </p:inputNumber>
+                                        </f:facet>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{dia.dias}" style="text-align: center">
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Acciones" style="width: 3%;text-align: center"
+                                          rendered="#{reporteMensual.tipoRol.diasLaborados ? false:true}">
+                                    <p:commandLink title="Eliminar"
+                                                   update="formMain"
+                                                   process="@this"
+                                                   actionListener="#{reporteMensual.eliminar(dia)}">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar ?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>   
+                                </p:column> 
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                    <!--
+                                        <p:dialog closeOnEscape="true" header="Formulario Plan Local" 
+                                                  widgetVar="servicorDialog" modal="true" showEffect="fade" 
+                                                  hideEffect="fade" resizable="false">
+                                        </p:dialog>-->
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="servidorPublicoDialog" header="Formulario de Servidor Público" widgetVar="servidorPublicoDialog"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="900">
+            <h:form id="frmdlg" prependId="false">
+                <div class="ui-g"> 
+                    <div class="ui-g-12">
+                        <p:outputPanel id="formServidorPublico"  style="width: auto;" >
+                            <p:dataTable id="dtServidor" widgetVar="ser" var="ser" style="width: 100%;
+                                         text-align: center" reflow="true" paginator="true" lazy="true" rows="15"
+                                         rowsPerPageTemplate="15,30" filterEvent="enter"
+                                         value="#{reporteMensual.listaServidoresMostrar}"
+                                         paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                                <f:facet name="header">
+                                    LISTADO DE SERVIDORES PÚBLICOS
+                                </f:facet>
+                                <p:column headerText="Identificación" style="width: 10%; font-size: 15px;">
+                                    <h:outputText value="#{ser.persona.identificacion}"/>
+                                </p:column>
+                                <p:column headerText="Apellido" style="width: 10%; font-size: 15px;">
+                                    <h:outputText  value="#{ser.persona.apellido}"/>
+                                </p:column>
+                                <p:column headerText="Nombre" style="width: 10%; font-size: 15px;">
+                                    <h:outputText value="#{ser.persona.nombre}"/>
+                                </p:column>
+                                <p:column headerText="Cargo" style="width: 10%; font-size: 15px;" >
+                                    <h:outputText value="#{ser.distributivo.cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Fecha Ingreso" style="width: 10%; font-size: 15px;">
+                                    <h:outputText value="#{ser.fechaIngreso}" >
+                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 7%; font-size: 13px;" >
+                                    <p:commandButton icon="fa fa-arrow-circle-o-right"
+                                                     title="Seleccionar Servidor y cerrar"
+                                                     actionListener="#{reporteMensual.selectServidor(ser)}"                                                   >
+
+                                    </p:commandButton>
+                                </p:column>
+                            </p:dataTable>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

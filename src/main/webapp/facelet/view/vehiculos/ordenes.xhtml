@@ -1,0 +1,127 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:sc="http://xmlns.jcp.org/jsf/composite/sigef/components"
+
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Listado de ordenes
+    </ui:define>
+    <ui:param name="tittle" value="Listado de ordenes" />
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div style="width: 100% !important; display: inline-block">
+                <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 activo" >ACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 inactivo">INACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3">
+                        <p:commandButton id="cbNuevoUsuario" title="Crear Orden" icon="fa fa-plus" actionListener="#{ordenesView.nuevo(null)}" 
+                                         process="@this" class="btnColorWhite" value=" Nueva" />
+                    </div>
+                </div>
+            </div>
+
+            <p:dataTable id="dtUsers" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                         value="#{ordenesView.ordenesLazy}" var="usr1" emptyMessage="No se encontró ningún Item." style="text-align: center;"
+                         paginatorPosition="top" rowStyleClass="#{usr1.estado? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable" >
+
+                <p:column headerText="Num. Orden" filterBy="#{usr1.numOrden}" >
+                    <p:outputLabel value="#{usr1.numOrden}" />
+                </p:column>
+                <p:column headerText="Cooperativa" filterBy="#{usr1.cooperativa.empresa.nombre}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.cooperativa.empresa.nombre}" />
+                </p:column>
+                <p:column headerText="Tipo Cooperativa" width="15%" filterBy="#{usr1.cooperativa.tipo}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.cooperativa.tipo}"  />
+                </p:column>
+                <p:column headerText="Fecha Agendamiento" width="15%" filterBy="#{usr1.fecIni}">
+                    <p:outputLabel value="#{usr1.fecIni}" ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                </p:column>
+                <p:column headerText="Estado" width="15%" filterBy="#{usr1.estadoOt}">
+                    <p:outputLabel value="#{usr1.estadoOt}" />
+                </p:column>
+                <p:column headerText="Acciones" width="15%">
+                    <p:commandButton title="Editar orden de trabajo" icon="fa fa-edit edit" class="btnTranparent editar" process="@this" 
+                                     actionListener="#{ordenesView.nuevo(usr1)}" update="frmOrden" />
+                    <p:spacer width="5" />
+                    <p:commandButton title="Visualizar" icon="fa fa-eye edit" class="btnTranparent ver" process="@this" 
+                                     actionListener="#{ordenesView.nuevo(usr1)}" update="frmOrden" action="#{ordenesView.setVer(true)}" />
+                    <p:spacer width="5" />
+                    <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" disabled="#{!usr1.estado}"
+                                     actionListener="#{ordenesView.eliminar(usr1)}" update="frmOrden" process="@this"  >
+                        <p:confirm icon="fa fa-warning delete" message="Esta seguro de deshabilitar la orden # #{usr1.numOrden}" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+        </h:form>
+
+        <p:dialog header="Orden de Trabajo *" modal="true" widgetVar="dlgOrden" width="45%" closable="false" >
+            <h:form id="frmOrden" style="width: 100%;" prependId="false" >
+                <p:panelGrid columns="2" style="width: 100%;" layout="grid" >
+                    <comp:text label="Fecha Inicio" value="#{ordenesView.orden.fecIni}" typeInput="date" required="true" minDate="sysdate" />
+                    <comp:text label="Fecha Finalizacion" value="#{ordenesView.orden.fecFin}" typeInput="date" required="true" minDate="sysdate" />
+                    <h:panelGroup layout="block">
+                        <p:outputLabel value="Supervisor" class="label-bold"/>
+                        <p:selectOneMenu value="#{ordenesView.orden.supervisor}" converter="#{utilConverter}" >
+                            <f:selectItem itemLabel="Seleccione supervisor" itemValue="#{null}" />
+                            <f:selectItems value="#{ordenesView.usuarios}" var="item2" itemLabel="#{item2.funcionario eq null? item2.usuario : item2.funcionario.persona.apellido} #{item2.funcionario.persona.nombre}" 
+                                           itemValue="#{item2}" itemDisabled="#{item2.funcionario eq null}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block">
+                        <p:outputLabel value="Responsable" class="label-bold"/>
+                        <p:selectOneMenu value="#{ordenesView.orden.responsable}" converter="#{utilConverter}" >
+                            <f:selectItem itemLabel="Seleccione responsable" itemValue="#{null}" />
+                            <f:selectItems value="#{ordenesView.usuarios}" var="item3" itemLabel="#{item3.funcionario eq null? item3.usuario : item3.funcionario.persona.apellido} #{item3.funcionario.persona.nombre}" 
+                                           itemValue="#{item3}" itemDisabled="#{item3.funcionario eq null}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block">
+                        <p:outputLabel value="Cooperativa" class="label-bold"/>
+                        <p:inputText value="#{ordenesView.coop.empresa.apellido}" id="nameCoop" />
+                        <p:commandButton icon="fa fa-search" title="Buscar Cooperativa" actionListener="#{ordenesView.openDlg()}" process="@this">
+                            <p:ajax event="dialogReturn" listener="#{ordenesView.returnDialoProcess}" update="dtVehiculos,nameCoop" />
+                        </p:commandButton>
+                    </h:panelGroup>
+                </p:panelGrid>
+                
+                <p:dataTable value="#{ordenesView.coop.cooperativaVehiculoList}" var="car1"
+                             rowKey="#{car1.id}" filterEvent="enter" rows="10" id="dtVehiculos">
+                    <p:column headerText="Placa" >
+                        <p:outputLabel value="#{car1.vehiculo.placaActual}"/>
+                    </p:column>
+                    <p:column headerText="Disco" >
+                        <p:outputLabel value="#{car1.vehiculo.disco}"/>
+                    </p:column>
+                    <p:column headerText="Num. Ejes" >
+                        <p:outputLabel value="#{car1.vehiculo.numeroejes}"/>
+                    </p:column>
+                    <p:column headerText="Clase" >
+                        <p:outputLabel value="#{car1.vehiculo.claseVehiculo.texto}"/>
+                    </p:column>
+                    <p:column headerText="Propietario" >
+                        <p:outputLabel value="#{car1.vehiculo.propietario.nombreCompleto}"/>
+                    </p:column>
+                    
+                </p:dataTable>
+                
+                <center>
+                    <p:commandButton title="Guardar Información" icon="fa fa-save" actionListener="#{ordenesView.guardar()}" 
+                                     rendered="#{!ordenesView.ver}"/>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" actionListener="#{ordenesView.cerrarDialogo()}" 
+                                     oncomplete="PF('dlgOrden').hide();" process="@this" /> 
+                    
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

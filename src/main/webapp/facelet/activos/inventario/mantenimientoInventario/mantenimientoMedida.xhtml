@@ -1,0 +1,136 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Mantenimiento de Medidas
+    </ui:define>
+<ui:param name="tittle" value="MANTENIMIENTO DE MEDIDAS"/>
+    <ui:define name="content">
+        <h:form id="frmMain">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                            <p:growl id="msgs" showDetail="true"/>
+                            <div>
+                                <h:panelGroup id="panelMedida">
+                                    <p:commandButton value="NUEVA MEDIDA" icon="fa fa-plus"
+                                                     update="frmMedida" style="width: auto;"
+                                                     actionListener="#{catalogoMedidaController.form(null)}"
+                                                     process="@this">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <br/><br/>
+                                    <p:dataTable id="dtMedida" var="med" reflow="true" paginator="true" lazy="true" rows="20" 
+                                                 rowsPerPageTemplate="20,40,100" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 paginatorPosition="bottom" value="#{catalogoMedidaController.lazyMedida}" filterEvent="keyup"
+                                                 emptyMessage="No se encontró ninguna medida.">
+                                        <f:facet name="header">
+                                            Lista de Medidas
+                                        </f:facet>
+                                        <p:column headerText="Código" style="font-weight: bold; width: 20%" >
+                                            <h:outputText value="#{med.id}" />   
+                                        </p:column>
+                                        <p:column headerText="Descripción" style="font-weight: bold;width: 30%" filterBy="#{med.descripcion}" filterMatchMode="contains">
+                                            <h:outputText value="#{med.descripcion}" /> 
+                                        </p:column>
+                                        <p:column headerText="Unidad de Medida" style="font-weight: bold;width:30%" filterBy="#{med.tipoMedida.texto}" >
+                                            <h:outputText value="#{med.tipoMedida.texto}" />  
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 20%">
+                                            <center>
+                                                <p:commandLink title="Editar Catálogo" update="frmMedida" 
+                                                               actionListener="#{catalogoMedidaController.form(med)}" process="@this">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>    
+                                                <p:commandLink title="Eliminar" update="frmMain:dtMedida" class="action-delete"
+                                                               actionListener="#{catalogoMedidaController.eliminar(med)}" process="@this" >
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar la medida?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>        
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </h:panelGroup>
+                            </div>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog header="Formulario Ingreso de Medida"
+                  widgetVar="dlgMedida"
+                  modal="true"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgMedidas">
+            <h:form prependId="false" id="frmMedida">
+                <p:growl id="msgs" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outPanelMedida" style="width: 100%">   
+                                <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+
+                                    <p:panelGrid columns="1" >
+                                        <p:outputLabel value="Descripción" for="descripcionMedida" style="width: 100%;"/>
+                                        <p:inputText  id="descripcionMedida" style="text-transform: uppercase" 
+                                                      onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                                      value="#{catalogoMedidaController.catalogoMedida.descripcion}" class="panelInput" readonly="false" >
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid  columns="1"  >
+                                        <p:outputLabel value="Tipo" style="width: 100%;"></p:outputLabel>
+                                        <p:selectOneMenu style="width:200px" value="#{catalogoMedidaController.catalogoMedida.tipoMedida}" 
+                                                         disabled="#{catalogoMedidaController.catalogoMedida.tipoMedida eq null ? false:catalogoMedidaController.tmedida}"
+                                                         converter="entityConverter">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems value="#{catalogoMedidaController.catalogoItem}" var="medidaUno"
+                                                           itemLabel="#{medidaUno.texto}" itemValue="#{medidaUno}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <br></br>
+                                <center>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Guardar"
+                                                     icon="fa fa-save"
+                                                     actionListener="#{catalogoMedidaController.guardar()}"
+                                                     process="@form" update="frmMain:dtMedida"
+                                                     rendered="#{catalogoMedidaController.nuevo}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Editar"
+                                                     actionListener="#{catalogoMedidaController.editar()}"
+                                                     icon="fa fa-edit"
+                                                     process="@form" update="frmMain:dtMedida"
+                                                     rendered="#{!catalogoMedidaController.nuevo}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Cerrar"
+                                                     onclick="PF('dlgMedida').hide()"
+                                                     actionListener="#{catalogoMedidaController.limpiarVariable()}"
+                                                     process="@this" update="frmMedida">
+
+                                    </p:commandButton>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

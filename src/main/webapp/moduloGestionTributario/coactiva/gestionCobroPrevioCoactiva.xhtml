@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:b="http://bootsfaces.net/ui"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="title">        
+        Gestión de Cobro Previo Coactiva
+    </ui:define>
+    <ui:param name="tittle" value="Gestión de Cobro Previo Coactiva" />
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <div class="ui-g">
+                <div class="ui-g-6">
+                    <p:fieldset legend="Búsqueda del contribuyente">
+                        <div class="ui-g-4">
+                            <p class="p-m-0">
+                                <h2>CÉDULA/RUC</h2>
+                                <p:inputText value="#{gestionCobroPrevioCoactivaMB.criterio}" placeholder="CÉDULA/RUC"/>
+                                <p:commandButton style="margin-left: 3rem" value="Consultar" update="dtPropietarios"
+                                                 actionListener="#{gestionCobroPrevioCoactivaMB.consultarLiquidaciones()}"/>
+                            </p>
+                        </div>
+                        <div class="ui-g-4">
+                            <h3><p:outputLabel rendered="#{gestionCobroPrevioCoactivaMB.propietario ne null}" value="Nombres del propietario"></p:outputLabel></h3>
+                            <p:outputLabel rendered="#{gestionCobroPrevioCoactivaMB.propietario ne null}" value="#{gestionCobroPrevioCoactivaMB.propietario.nombrePosesionario}"></p:outputLabel>
+                        </div>
+                    </p:fieldset>
+                </div>
+                <div class="ui-g-6">
+                    <p:fieldset legend="Propiedades">
+                        <p class="p-m-0">
+                            <p:dataTable id="dtPropietarios" paginator="true"  rows="5" rowsPerPageTemplate="10,20,50,100" 
+                                         style="text-align: center;" emptyMessage="No se encontraron resultados" 
+                                         paginatorPosition="bottom" selection="#{gestionCobroPrevioCoactivaMB.propietario}" selectionMode="single" rowKey="#{pro}"
+                                         paginatorTemplate="{FirstPageOLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         value="#{gestionCobroPrevioCoactivaMB.propiedades}" var="pro" filterEvent="enter">
+                                <p:ajax event="rowSelect" listener="#{gestionCobroPrevioCoactivaMB.buscarLiquidacion}"/>
+                                <p:column headerText="Código Catastral" filterBy="#{pro.claveCat}" filterStyle="width: 95%;"><p:outputLabel value="#{pro.claveCat}"/></p:column>
+                                <p:column headerText="Dirección" filterBy="#{pro.direccion}" filterStyle="width: 95%;"><p:outputLabel value="#{pro.direccion}"/></p:column>
+                                <p:column headerText="MZ Urb" filterBy="#{pro.urbMz}" filterStyle="width: 95%;"><p:outputLabel value="#{pro.urbMz}"/></p:column>
+                                <p:column headerText="Sector Urb" filterBy="#{pro.urbSecnew}" filterStyle="width: 95%;"><p:outputLabel value="#{pro.urbSecnew}"/></p:column>
+                                <p:column headerText="Solar Urb" filterBy="#{pro.urbSolarnew}" filterStyle="width: 95%;"><p:outputLabel value="#{pro.urbSolarnew}"/></p:column>
+                            </p:dataTable>
+                        </p>
+                    </p:fieldset>
+                </div>
+                <p:fieldset legend="Liquidaciones pendientes de pago">
+                    <p class="p-m-0">
+                        <p:dataTable id="dtLiquidaciones" paginator="true" lazy="true" rows="5" rowsPerPageTemplate="10,20,50,100" 
+                                     style="text-align: center;" emptyMessage="No se encontraron resultados" 
+                                     paginatorPosition="bottom"
+                                     paginatorTemplate="{FirstPageOLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     value="#{gestionCobroPrevioCoactivaMB.liquidaciones}" var="liquidacion" filterEvent="enter">
+                            <p:column headerText="Liquidacion" filterBy="#{liquidacion.idLiquidacion}" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion.idLiquidacion}"/></p:column>
+                            <p:column headerText="Año" filterBy="#{liquidacion.anio}" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion.anio}"/></p:column>
+                            <p:column headerText="Codigo Local" filterBy="#{liquidacion.codigoLocal}" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion.codigoLocal}"/></p:column>
+                            <p:column headerText="Total Pago" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion.totalPago}"/></p:column>
+                            <p:column headerText="Estado" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion.estadoLiquidacion.descripcion}"/></p:column>
+                            <p:column>
+                                <p:commandButton icon="fa fa-eye" title="Detalle" actionListener="#{gestionCobroPrevioCoactivaMB.seleccionLiquidacion(liquidacion)}"/>
+                                <p:commandButton icon="fa fa-download"   title="Descargar" style="margin-left: 1rem" actionListener="#{gestionCobroPrevioCoactivaMB.generearaReporte(liquidacion)}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p>
+                </p:fieldset>
+            </div>
+
+        </h:form> 
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" id="dlgDetalle" resizable="false"
+                  closeOnEscape="true" modal="true" width="50%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{gestionCobroPrevioCoactivaMB.liquidacion}"/>
+                <center><p:commandButton style="margin: 10px" value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

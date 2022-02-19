@@ -1,0 +1,596 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="GENERAR LIQUIDACIÒN"/>
+    <ui:define name="head">
+        <style type="text/css">
+
+            .ui-datepicker .ui-datepicker-title select {
+                font-size: 1em;
+                margin: 1px 0;
+                color: black;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+
+                <h:form id="frmAlcPlus"  >
+                    <center>
+                        <p:outputLabel value="Tipo de Liquidación" style="height: 25px; font-size: 14px; font-weight: bold;" />
+                        <p:spacer width="10"/>
+                        <p:selectOneMenu value="#{plusvaliaAlcabalas.tipoLiquidacion}" converter="entityConverter" 
+                                         converterMessage="Error al intentar realizar conversión" style="vertical-align: middle; width: 10%" >
+                            <f:selectItem itemLabel="Seleccione.." itemValue="#{null}"/>
+                            <f:selectItems value="#{plusvaliaAlcabalas.tiposLiquidacions}" var="tipo" itemLabel="#{tipo.nombreTransaccion}" itemValue="#{tipo}"/>
+                            <p:ajax update="frmAlcPlus" listener="#{plusvaliaAlcabalas.consultarRubros()}"/>
+                        </p:selectOneMenu>
+                    </center>
+                    <br/>
+
+                    <div style="width:40%; margin:auto;">
+                        <dlg:consultaPredioGeneral predio="#{plusvaliaAlcabalas.predio}" id="prediosConsulta"
+                                                   consultar="#{plusvaliaAlcabalas.consultar()}"
+                                                   tipoCons="#{plusvaliaAlcabalas.tipoCons}"
+                                                   consultarModel="#{plusvaliaAlcabalas.validarClaveOtroCanton()}"
+                                                   predioModel="#{plusvaliaAlcabalas.predioModel}"
+                                                   alcabalasPlusvalia="true"
+                                                   tipo="#{plusvaliaAlcabalas.esUrbano}"
+                                                   update="prediosConsulta,frmAlcPlus"/>
+                    </div>
+
+
+                    <br/>
+                    <p:panel>
+                        <p:panelGrid columns="6" style="width: 100%" layout="grid"
+                                     columnClasses="ui-grid-col-3, ui-grid-col-4, ui-grid-col-1, ui-grid-col-3, ui-grid-col-1, ui-grid-col-2">
+                            <p:outputLabel value="Urbanización /  Barrio / Ciudadela: "/>
+                            <p:inputText id="c21" value="#{plusvaliaAlcabalas.predio.divisionUrb}"  style="width: 100%" />
+
+                            <p:outputLabel value="Manzana: "/>
+                            <p:inputText id="c11" value="#{plusvaliaAlcabalas.predio.mz}" readonly="true" style="width: 100%"/>
+
+                            <p:outputLabel value="Solar: "/>
+                            <p:inputText id="c33" value="#{plusvaliaAlcabalas.predio.lote}" readonly="true" style="width: 100%" />
+
+                        </p:panelGrid>
+                        <div align="center">
+                            <h:panelGrid columns="3" id="entes_global">
+
+                                <!--VENDEDOR ENTE-->
+                                <p:panelGrid id="outDatosEnte"  style="width: 420px; padding: 0px;">
+                                    <f:facet name="header" class="ui-widget-header">
+                                        <p:row>
+                                            <p:column colspan="2" >
+                                                <p:outputLabel value="Datos del Vendedor" style="font-size: 16px; font-weight: bold; color: white"/>
+                                                <div style="float: right; ">
+                                                    <p:commandLink oncomplete="PF('dlogentes').show()" actionListener="#{plusvaliaAlcabalas.buscarEnte(1)}"  rendered="true"  update="fmClientes" >
+                                                        <i class="fa fa-search" style="font-size: 1.5em; color: white" />
+                                                    </p:commandLink>
+                                                </div>
+                                            </p:column>
+                                        </p:row>
+                                    </f:facet>
+                                    <p:row>
+                                        <p:column >
+                                            Tipo de Persona:<br/>
+                                            <p:inputText value="Natural" rendered="#{plusvaliaAlcabalas.esPersonaVend}" readonly="true"/>
+                                            <p:inputText value="Jurídica" rendered="#{!plusvaliaAlcabalas.esPersonaVend}" readonly="true"/>
+                                        </p:column>
+                                        <p:column>
+                                            <p:outputLabel value="Cédula" rendered="#{plusvaliaAlcabalas.esPersonaVend}"/>
+                                            <p:outputLabel value="Ruc" rendered="#{plusvaliaAlcabalas.esPersonaVend}"/><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.identificacionCompleta}" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="#{plusvaliaAlcabalas.esPersonaVend}">
+                                        <p:column >
+                                            <p:outputLabel value="Nombres:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.nombre}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                        <p:column>
+                                            <p:outputLabel value="Apellidos:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.apellido}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="#{plusvaliaAlcabalas.esPersonaVend}">
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Razón Social:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.razonSocial}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="false">
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Representante Legal:" /><br/>
+                                            <!--<p:inputText value="#{cc.getNombreRepresentante(cc.attrs.ente.representanteLegal)}" style="width: 90%" readonly="true"/>-->
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  >
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Direccion:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.direccion}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  >
+                                        <p:column  >
+                                            <p:outputLabel value="Fecha de Nacimiento:" rendered="#{plusvaliaAlcabalas.esPersonaVend}" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.fechaNacimiento}" style="width: 90%" readonly="true">
+                                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                            </p:inputText>
+                                        </p:column>
+                                        <p:column  >
+                                            <!--<p:outputLabel value="Condición:" rendered="#{plusvaliaAlcabalas.esPersonaVend and plusvaliaAlcabalas.vendedorPredioOtroCanton.estado eq 'F'}" />-->
+                                            <p:outputLabel value="Edad:" rendered="#{plusvaliaAlcabalas.esPersonaVend and plusvaliaAlcabalas.vendedorPredioOtroCanton.estado ne 'F'}" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.vendedorPredioOtroCanton.edad}" style="width: 90%" readonly="true" />
+                                        </p:column>
+                                    </p:row>
+                                </p:panelGrid>
+
+                                <p:spacer width="100" />
+
+                                <!--COMPRADOR ENTE-->                                                                                             
+                                <p:panelGrid id="outDatosEnte_"  style="width: 420px; padding: 0px;">
+                                    <f:facet name="header" class="ui-widget-header">
+                                        <p:row>
+                                            <p:column colspan="2" >
+                                                <p:outputLabel value="Datos del comprador" style="font-size: 16px; font-weight: bold; color: white"/>
+                                                <div style="float: right; ">
+                                                    <p:commandLink oncomplete="PF('dlogentes').show()" actionListener="#{plusvaliaAlcabalas.buscarEnte(0)}"  rendered="true"  update="fmClientes" >
+                                                        <i class="fa fa-search" style="font-size: 1.5em; color: white" />
+                                                    </p:commandLink>
+                                                </div>
+                                            </p:column>
+                                        </p:row>
+                                    </f:facet>
+                                    <p:row>
+                                        <p:column >
+                                            Tipo de Persona:<br/>
+                                            <p:inputText value="Natural" rendered="#{plusvaliaAlcabalas.esPersonaComp}" readonly="true"/>
+                                            <p:inputText value="Jurídica" rendered="#{!plusvaliaAlcabalas.esPersonaComp}" readonly="true"/>
+                                        </p:column>
+                                        <p:column>
+                                            <p:outputLabel value="Cédula" rendered="#{plusvaliaAlcabalas.esPersonaComp}"/>
+                                            <p:outputLabel value="Ruc" rendered="#{plusvaliaAlcabalas.esPersonaComp}"/><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.identificacionCompleta}" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="#{plusvaliaAlcabalas.esPersonaComp}">
+                                        <p:column >
+                                            <p:outputLabel value="Nombres:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.nombre}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                        <p:column>
+                                            <p:outputLabel value="Apellidos:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.apellido}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="#{plusvaliaAlcabalas.esPersonaComp}">
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Razón Social:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.razonSocial}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  rendered="false">
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Representante Legal:" /><br/>
+                                            <!--<p:inputText value="#{cc.getNombreRepresentante(cc.attrs.ente.representanteLegal)}" style="width: 90%" readonly="true"/>-->
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  >
+                                        <p:column colspan="2" >
+                                            <p:outputLabel value="Direccion:" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.direccion}" style="width: 90%" readonly="true"/>
+                                        </p:column>
+                                    </p:row>
+                                    <p:row  >
+                                        <p:column  >
+                                            <p:outputLabel value="Fecha de Nacimiento:" rendered="#{plusvaliaAlcabalas.esPersonaComp}" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.fechaNacimiento}" style="width: 90%" readonly="true">
+                                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                            </p:inputText>
+                                        </p:column>
+                                        <p:column  >
+                                            <!--<p:outputLabel value="Condición:" rendered="#{plusvaliaAlcabalas.esPersonaComp and plusvaliaAlcabalas.comprador.estado eq 'F'}" />-->
+                                            <p:outputLabel value="Edad:" rendered="#{plusvaliaAlcabalas.esPersonaComp and plusvaliaAlcabalas.comprador.estado ne 'F'}" /><br/>
+                                            <p:inputText value="#{plusvaliaAlcabalas.comprador.edad}" style="width: 90%" readonly="true" />
+                                        </p:column>
+                                    </p:row>
+                                </p:panelGrid>
+
+
+                            </h:panelGrid>
+                        </div>
+                    </p:panel>
+                    <p:panel rendered="false" >
+                        <p:panelGrid columns="8" style="width: 100%" layout="grid"
+                                     columnClasses="ui-grid-col-2, ui-grid-col-4, ui-grid-col-1, ui-grid-col-2, ui-grid-col-1, ui-grid-col-2, ui-grid-col-1, ui-grid-col-2">
+                            <p:outputLabel value="Urbanización /  Barrio / Ciudadela: "/>
+                            <p:inputText id="c2" value="#{plusvaliaAlcabalas.predio.ciudadela == null ? plusvaliaAlcabalas.predio.nombreEdificio:plusvaliaAlcabalas.predio.ciudadela.nombre}" readonly="true" style="width: 100%" />
+
+                            <p:outputLabel value="Manzana: "/>
+                            <p:inputText id="c1" value="#{plusvaliaAlcabalas.predio.mz}" readonly="true" style="width: 100%"/>
+
+                            <p:outputLabel value="Solar: "/>
+                            <p:inputText id="c3" value="#{plusvaliaAlcabalas.predio.solar}" readonly="true" style="width: 100%" />
+
+                            <p:outputLabel value="Es Matriz: "/>
+                            <p:selectBooleanCheckbox id="c4" value="#{plusvaliaAlcabalas.esMatriz}"  style="width: 100%" >
+                                <p:ajax update="frmAlcPlus"/>
+                            </p:selectBooleanCheckbox>
+                        </p:panelGrid>
+                        <br/>
+
+                        <br/>
+                        <h:panelGrid columns="5">
+                            <p:dataTable value="#{plusvaliaAlcabalas.predio.catPredioPropietarioList}" rows="5" 
+                                         rowKey="#{prop.id}"
+                                         style="width: 100% !important" selection="#{plusvaliaAlcabalas.vendedor}" var="prop"
+                                         selectionMode="single" rowIndexVar="index" paginator="true" paginatorPosition="top"
+                                         emptyMessage="No se encontró ningún propietario asociado al predio." reflow="true">
+                                <f:facet name="header">
+                                    <p:outputLabel value="Datos vendedor" style="font-size: 16px; font-weight: bold; color: #FFFFFF"/>
+                                </f:facet>
+
+                                <p:column style="width: 25%" headerText="Cedula o RUC">
+                                    <h:outputText value="#{prop.ciuCedRuc}" />
+                                </p:column>
+                                <p:column style="width: 40%" headerText="Nombres">
+                                    <h:outputText value="#{prop.ente}" />
+                                </p:column>
+                            </p:dataTable>
+                            <div align="center">
+                                <h:panelGroup>
+
+                                    <dlg:datosEntes ente="#{plusvaliaAlcabalas.comprador}"
+                                                    esPersona="#{plusvaliaAlcabalas.esPersonaComp}"
+                                                    buscar="#{plusvaliaAlcabalas.buscarEnte()}"
+                                                    header="Datos del comprador"
+                                                    seleccion="#{plusvaliaAlcabalas.seleccionarComprador}"
+                                                    id="outComprador"
+                                                    update="frmAlcPlus:outComprador:outDatosEnte, frmAlcPlus:outComprador"
+                                                    mostrarBuscar="true"/>
+
+                                </h:panelGroup>
+                            </div>
+                            <p:spacer width="30"/>
+                            <p:dataTable value="#{plusvaliaAlcabalas.detallePlusvalias}" rows="5" rowKey="#{prop.id}"
+                                         style="width: 100% !important" var="predioAdj1"
+                                         rowIndexVar="index" paginator="true" paginatorPosition="top"
+                                         emptyMessage="No se adjuntado predios." reflow="true"
+                                         rendered="#{plusvaliaAlcabalas.esMatriz and !plusvaliaAlcabalas.alcabala}">
+                                <f:facet name="header">
+                                    <p:outputLabel value="Predios Adicionales." style="font-size: 16px; font-weight: bold; color: #006699"/>
+                                    <p:commandLink actionListener="#{plusvaliaAlcabalas.mostrarDialog('/resources/dialog/predios')}"
+                                                   style="float: right; vertical-align: middle;" title="Buscar Comprador"  >
+                                        <p:ajax event="dialogReturn" listener="#{plusvaliaAlcabalas.seleccionarPredios}" update="frmAlcPlus, frmAlcPlus:outComprador:outDatosEnte"  />
+                                        <i class="fa fa-search" style="font-size: 1.3em; margin-right: 4px; color: #0066cc;"></i>
+                                    </p:commandLink>
+                                </f:facet>
+
+                                <p:column style="width: 25%" headerText="Cedula o RUC">
+                                    <h:outputText value="#{predioAdj1.prediosAsociados.numPredio}" />
+                                </p:column>
+                                <p:column style="width: 40%" headerText="Manzana">
+                                    <h:outputText value="#{predioAdj1.prediosAsociados.mz}" />
+                                </p:column>
+                                <p:column style="width: 40%" headerText="Solar">
+                                    <h:outputText value="#{predioAdj1.prediosAsociados.solar}" />
+                                </p:column>
+                                <p:column style="width: 40%" headerText="Nombres">
+                                    <h:outputText value="#{predioAdj1.prediosAsociados.nombreUrb}" />
+                                </p:column>
+                            </p:dataTable>
+                        </h:panelGrid>
+                    </p:panel>
+                    <br/>
+                    <p:fieldset rendered="#{plusvaliaAlcabalas.comprador != null}">
+                        <center>
+                            <h:panelGrid columns="6" style="width: 100%">
+                                <!--                        <p:outputLabel value="Meses de vigencia: "/>
+                                                        <p:inputText value="# {plusvaliaAlcabalas.valoresCalc.vigencia}"/>-->
+                                <p:outputLabel value="Avaluo municipal: "/>
+                                <p:inputText value="#{plusvaliaAlcabalas.predio.avaluoMunicipal}" readonly="true" >
+                                    <f:convertNumber type="number" pattern="###,##0.00" locale="EN"  currencySymbol="$"/>
+                                </p:inputText>
+                                <p:outputLabel value="Fecha Escritura anterior: "/>
+                                <p:calendar value="#{plusvaliaAlcabalas.valoresCalc.fechaEscritaAnt}" pattern="dd/MM/yyyy" navigator="true" style="color: #000000" />
+                                <p:outputLabel value="Fecha Escritura Actual: "/>
+                                <p:calendar value="#{plusvaliaAlcabalas.valoresCalc.fechaEscritaAct}" pattern="dd/MM/yyyy" navigator="true" style="color: #000000" />
+
+                            </h:panelGrid>
+                        </center>
+                        <br/>  <br/>
+
+                        <center>
+                            <div style="width: 100%;margin-left: 70px;; " class="ui-g-12">
+                                <p:fieldset  class="ui-g-6"   id="pngDatAlcPlu">
+                                    <!--                PLUSVALIA -->
+                                    <p:panelGrid id="pnlPlus" columns="4" rendered="#{plusvaliaAlcabalas.tipoLiquidacion.prefijo == 'PLU' }" >
+                                        <p:outputLabel value="Fecha de Inscripción Ant: "/>
+                                        <p:calendar id="l1" value="#{plusvaliaAlcabalas.liquidacion.fechaContratoAnt}" pattern="dd/MM/yyyy" navigator="true" style="color: #000000"
+                                                    valueChangeListener="#{plusvaliaAlcabalas.obtenerFaccionAnio()}"
+                                                    onkeypress="focusNextOnEnter(event, 'frmAlcPlus:l2_input')">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.obtenerFaccionAnio()}" event="dateSelect" process="@this" update="pnlPlus, dtRubros,frmAlcPlus:t1, dtRubros"/>
+                                            <p:ajax listener="#{plusvaliaAlcabalas.obtenerFaccionAnio()}" event="change" process="@this" update="pnlPlus, dtRubros,frmAlcPlus:t1, dtRubros"/>
+                                        </p:calendar>
+                                        <p:outputLabel value="Venta Act: "/>
+                                        <p:inputText style="background: yellow;" type="number" id="l2" value="#{plusvaliaAlcabalas.liquidacion.cuantia}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:l3_input')"   >
+                                            <p:ajax listener="#{plusvaliaAlcabalas.restarDiferenc()}" process="@this" update="pnlPlus, dtRubros"/>
+                                        </p:inputText>
+
+                                        <p:outputLabel value="Venta Ant: "/>
+                                        <p:inputText type="number" id="l3" value="#{plusvaliaAlcabalas.liquidacion.costoAdq}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:l5_input')" >
+                                            <p:ajax listener="#{plusvaliaAlcabalas.restarDiferenc()}" process="@this" update="pnlPlus, dtRubros"/>
+                                        </p:inputText>
+                                        <p:outputLabel value="Diferencia Neta: " />
+                                        <p:inputText id="l4" value="#{plusvaliaAlcabalas.valoresCalc.diferenciaNeta}" readonly="true" >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="" type="currency"  />
+                                        </p:inputText>
+
+                                        <p:outputLabel rendered="false" value="Mejoras CEM/Construcción: " />
+                                        <p:inputText rendered="false" type="number" id="l5" value="#{plusvaliaAlcabalas.valoresCalc.mejorasCemConst}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:l6_input')">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.obtenerDifNet2()}" update="pnlPlus, dtRubros"/>
+                                        </p:inputText>
+                                        <p:outputLabel rendered="false" value="Mejoras Urbanización: " />
+                                        <p:inputText rendered="false" type="number" id="l6" value="#{plusvaliaAlcabalas.valoresCalc.mejorasUrb}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')" >
+                                            <p:ajax listener="#{plusvaliaAlcabalas.obtenerDifNet2()}" update="pnlPlus, dtRubros"/>
+                                        </p:inputText>
+
+                                        <p:outputLabel rendered="false" value="Diferencia Neta 2: " />
+                                        <p:inputText rendered="false" id="l7" value="#{plusvaliaAlcabalas.valoresCalc.diferenciaNeta2}" readonly="true"  >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="" type="currency" />
+                                        </p:inputText>
+                                        <p:outputLabel value="Rebajas General: " />
+                                        <h:panelGroup>
+                                            <p:inputText id="rebajaPlus" value="#{plusvaliaAlcabalas.valoresCalc.porcentajeRebaja}" readonly="false" style="width: 30px;">
+                                                <p:ajax listener="#{plusvaliaAlcabalas.obtenerDifNet2()}" update="t1, pnlPlus, dtRubros,l8"/>
+                                            </p:inputText>%
+                                            <p:inputText id="l8" value="#{plusvaliaAlcabalas.valoresCalc.rebajaGen}" readonly="true" style="width: 90px;" >
+                                                <f:convertNumber maxFractionDigits="2"  />
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                        <p:outputLabel value="Base Desvalorización: " />
+                                        <p:inputText id="l9" value="#{plusvaliaAlcabalas.valoresCalc.baseDesvalorizacion}" readonly="true" >
+                                            <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" currencySymbol="" type="currency" />
+                                        </p:inputText>
+                                        <p:outputLabel value="Desvalorización Monetaria: " />
+                                        <h:panelGroup>
+                                            <p:inputText value="#{plusvaliaAlcabalas.desvalorizacion.valor}" readonly="true" style="width: 40px;" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:l10_input')">%
+                                                <p:ajax listener="#{plusvaliaAlcabalas.DesvalorizavioMonetario()}" process="@this" update="pnlPlus, dtRubros, t1"/>
+                                            </p:inputText>
+                                            <p:inputText id="l10" value="#{plusvaliaAlcabalas.valoresCalc.desvalorizacionMonet}" style="width: 85px;" readonly="true">
+
+                                                <f:convertNumber maxFractionDigits="2"  minFractionDigits="2"  />
+                                            </p:inputText>
+
+                                        </h:panelGroup>
+
+                                        <p:outputLabel value="Utilidad Imponible: " />
+                                        <p:inputText id="l11" value="#{plusvaliaAlcabalas.valoresCalc.utilidadImponib}" readonly="true" >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="" type="currency" />
+                                        </p:inputText>
+                                        <p:outputLabel rendered="false" value="Es primera venta ?"/>
+                                        <p:selectBooleanCheckbox rendered="false" id="checkPrimera" value="#{plusvaliaAlcabalas.ventaPrimeraVez}" >
+                                            <p:ajax update="frmAlcPlus:t1, dtRubros" listener="#{plusvaliaAlcabalas.valorTotal()}"/>
+                                        </p:selectBooleanCheckbox>
+                                    </p:panelGrid>
+
+                                    <!--                ALCABALAS -->
+                                    <h:panelGrid id="dataAlcabala" columns="4" rendered="#{plusvaliaAlcabalas.tipoLiquidacion.prefijo== 'ALC'}" >
+
+                                        <p:outputLabel  value="Fecha de Contrato Anterior "/>
+                                        <p:calendar id="A1" value="#{plusvaliaAlcabalas.liquidacion.fechaContratoAnt}" pattern="dd/MM/yyyy" navigator="true" style="color: #000000"
+                                                    valueChangeListener="#{plusvaliaAlcabalas.obtenerFaccionAnio()}">
+                                            <p:ajax event="dateSelect" process="A1" update="dtRubros, t1, a5, aa, xx,a3,a4,dataAlcabala" listener="#{plusvaliaAlcabalas.calcularAlcabala()}" />
+                                        </p:calendar>
+                                        <!--<h:outputText value="Tipo Alcabala" style="display: block;"/>-->
+<!--                                        <p:selectOneMenu value="#{plusvaliaAlcabalas.tipoAlcabala}"  >
+                                            <f:selectItem itemLabel="Seleccione" itemValue="10"/>
+                                            <f:selectItem itemLabel="NORMAL" itemValue="0"/>-->
+                                        <!--                                            <f:selectItem itemLabel="BIESS" itemValue="1"/>-->
+<!--                                            <p:ajax update="dtRubros, t1, a5, aa, xx,a3,a4" listener="#{plusvaliaAlcabalas.calcularAlcabala()}" />
+                                    </p:selectOneMenu>-->
+
+                                        <p:outputLabel value="Venta de adquisición: " />
+                                        <p:inputText id="a3" value="#{plusvaliaAlcabalas.liquidacion.cuantia}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:a4_input')">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.calcularAlcabala()}"  update="dtRubros, t1, a5, aa, xx,a3,a4, pngDatAlcPlu,dataAlcabala" process="@form"/>
+                                        </p:inputText>
+                                        <p:outputLabel value="Valor BIESS: " rendered="false"/>
+                                        <p:inputText id="aa" rendered="false" value="#{plusvaliaAlcabalas.liquidacion.valorHipoteca}" disabled="#{plusvaliaAlcabalas.tipoAlcabala == 0}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:a4_input')">
+                                            <p:ajax  listener="#{plusvaliaAlcabalas.calcularAlcabala()}"  update="dtRubros, t1, a5, aa, xx,a3,a4, pngDatAlcPlu,dataAlcabala"/>
+                                        </p:inputText>
+
+
+                                        <h:panelGroup layout="block">
+                                            <p:selectBooleanCheckbox id="checkPrimeraManual" value="#{plusvaliaAlcabalas.porcentajeManual}" >
+                                                <p:ajax  process="checkPrimeraManual" update="dtRubros, t1, a5, aa, xx,a3,a4,dataAlcabala" listener="#{plusvaliaAlcabalas.calcularAlcabala()}"/>
+                                            </p:selectBooleanCheckbox>
+                                            <p:outputLabel value="Dcto.: " />
+                                        </h:panelGroup>
+                                        <p:inputNumber  decimalPlaces="2" id="a4" value="#{plusvaliaAlcabalas.liquidacion.porcientoRebaja}" 
+                                                        onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.calcularAlcabala()}"  update="dtRubros, t1, a5, aa, xx,a3,a4,dataAlcabala"/>
+
+                                        </p:inputNumber>
+
+
+
+
+
+
+
+                                        <p:outputLabel value="% Dsto. Fracc: " />
+                                        <p:inputText id="xx" value="#{plusvaliaAlcabalas.liquidacion.desceuentoBiess}" 
+                                                     onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.calcularAlcabala()}"  update="dtRubros, t1, a5, aa, xx,a3,a4,dataAlcabala"/>
+                                        </p:inputText>
+                                        <p:outputLabel value="Aplicar exoneracion?"/>
+                                        <h:panelGroup>
+                                            <p:selectBooleanCheckbox id="checkExedente" value="#{plusvaliaAlcabalas.ventaPrimeraVez}" >
+                                                <p:ajax update="dtRubros, t1, a5,frmAlcPlus"  />
+                                            </p:selectBooleanCheckbox>
+                                            <p:inputNumber id="valor_procen" value="#{plusvaliaAlcabalas.valorPorcentajeExoneracion}" maxValue="100" minValue="1" rendered="#{plusvaliaAlcabalas.ventaPrimeraVez}"
+                                                           onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')"> 
+                                                <p:ajax update="dtRubros, t1, aa, a3, a4, a5, xx,valor_procen,dataAlcabala" process="valor_procen" listener="#{plusvaliaAlcabalas.calcularAlcabala()}"/>
+
+                                            </p:inputNumber>
+                                        </h:panelGroup>
+
+                                        <p:outputLabel value="Base imponible: " />
+                                        <p:inputNumber decimalPlaces="2"  id="a5" value="#{plusvaliaAlcabalas.liquidacion.valorComercial}" readonly="true">
+                                            <p:ajax listener="#{plusvaliaAlcabalas.calcularAlcabala()}"  update="dtRubros, t1, a5, aa, xx,a3,a4,dataAlcabala"/>
+                                        </p:inputNumber>
+
+                                    </h:panelGrid>
+                                    <p:commandButton rendered="#{plusvaliaAlcabalas.tipoLiquidacion.prefijo== 'ALC'}" value="Valores Predeterminados" icon="fa fa-refresh" style="width: auto;" actionListener="#{plusvaliaAlcabalas.consultar()}" 
+                                                     update="frmAlcPlus" process="@this"/>
+                                </p:fieldset>
+
+                                <p:fieldset  class="ui-g-5" id="panelRubros" rendered="#{plusvaliaAlcabalas.tipoLiquidacion.prefijo == 'PLU' or plusvaliaAlcabalas.tipoLiquidacion.prefijo== 'ALC'}">
+
+                                    <!--                    ALCABALA Y PLUSVALIA -->
+                                    <p:dataTable id="dtRubros" reflow="true" value="#{plusvaliaAlcabalas.rubrosLiquidacion}"
+                                                 var="rub" rowIndexVar="index"  editable="true" editMode="cell"  >
+                                        <p:ajax event="cellEdit" listener="#{plusvaliaAlcabalas.editRubro(rub)}" update="frmAlcPlus:t1, dtRubros" process="@form"/>
+                                        <p:column style="width: 5%">
+                                            <h:outputText value="#{index+1}" />
+                                        </p:column>
+                                        <p:column headerText="Descripción del Rubro" id="valorRubros">
+                                            <h:outputText value="#{rub.descripcion}" />
+                                        </p:column>
+                                        <p:column headerText="Valor a Cobrar por el Rubro" id="colValor" style="width: 25%; text-align: right;">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText style="text-align: right;width: 100%;font-weight: bold;"  value="#{rub.valorTotal}" />
+                                                </f:facet>
+                                                <f:facet name="input">
+                                                    <p:inputNumber decimalPlaces="2" value="#{rub.valorTotal}"  style="text-align: right;width: 100%; font-weight: bold;"
+                                                                   label="Price"/>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                            <!--                                <h:outputText value="# {rub.valorTotal}">
+                                                                                <f:convertNumber pattern="¤#,##0.00" currencySymbol="$" />
+                                                                            </h:outputText>-->
+                                        </p:column>
+                                        <p:column id="colCobRub" headerText="Rubro a Cobrar" style="width: 15%; text-align: center;">
+                                            <!--<p:graphicImage value="/css/homeIconsImages/seleccionado.png" rendered="#{rub.cobrar}"/>-->
+                                            <p:selectBooleanCheckbox id="check" value="#{rub.cobrar}">
+                                                <p:ajax update="frmAlcPlus, dtRubros" listener="#{plusvaliaAlcabalas.recalcularTotalAlcabla()}"/>
+                                            </p:selectBooleanCheckbox>
+                                        </p:column>
+                                    </p:dataTable>
+
+                                    <br/>
+                                    <div align="center">
+                                        <p:row>
+                                            <p:column>
+                                                <p:outputLabel  value="Total a cancelar: " style="width: auto;font-weight: bold; font-size: 14px;"/>     
+                                            </p:column>
+                                            <p:column>
+                                                <p:inputText id="t1" value="#{plusvaliaAlcabalas.liquidacion.totalPago}"  readonly="true" 
+                                                             style="width: auto;font-weight: bold;font-size: 20px; color: blue;">
+                                                    <f:convertNumber maxFractionDigits="2" pattern="$ #,##0.00" />
+                                                </p:inputText>
+
+                                            </p:column>
+                                        </p:row>
+
+
+
+                                    </div>
+
+
+                                </p:fieldset>
+                            </div>
+                        </center>
+                    </p:fieldset>
+
+                    <br/>
+                    <center>
+                        <p:commandButton value="Procesar" oncomplete="PF('obs').show()" id="btn_procesar"
+                                         icon="ui-icon-gear" styleClass="btnStyle" iconPos="r" style="width: 10%;"
+                                         rendered="#{plusvaliaAlcabalas.comprador != null}" >
+                            <p:confirm header="Advertencia" icon="ui-icon-info" message="¿Esta seguro de guardar los datos ingresados?" />
+                        </p:commandButton>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+        <dlg:dialogNumLiquidacion headerDialog="#{plusvaliaAlcabalas.liquidacion.tipoLiquidacion.nombreTransaccion}"
+                                  idLiq="#{plusvaliaAlcabalas.liquidacion.idLiquidacion}"
+                                  actionButton="#{plusvaliaAlcabalas.initView()}"
+                                  update="frmAlcPlus"
+                                  id="numLiquidacion"/>
+
+        <p:dialog  id="dlogentes" widgetVar="dlogentes" 
+                   header="Persona"  width="70%" 
+                   responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="fmClientes">
+                <center>
+                    <p:panelGrid columns="4">
+
+                        <p:outputLabel value="Tipo Persona:" style="font-weight: bolder; "/>
+                        <p:selectOneMenu value="#{plusvaliaAlcabalas.esPersona}" style="width: 160px; ">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                            <f:selectItem itemLabel="Natural" itemValue="true" />
+                            <f:selectItem itemLabel="Jurídica" itemValue="false" />
+                            <p:ajax listener="#{plusvaliaAlcabalas.cambioTipoPersona()}" update="tdListEntes"/>
+                        </p:selectOneMenu>
+                        <p:commandButton actionListener="#{plusvaliaAlcabalas.agregar()}" value="Agregar Persona"/>
+                    </p:panelGrid>
+                </center>
+                <br/>
+                <p:dataTable id="tdListEntes" paginator="true" lazy="true" rows="10"
+                             rowsPerPageTemplate="10,30,50,100" scrollable="true"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             value="#{plusvaliaAlcabalas.entes}" var="user" style="width: 100%"
+                             filterEvent="enter"
+                             emptyMessage="No se encontr&#243; ningún Item">
+                    <p:column headerText="C.I./R.U.C." style="text-align: center;"
+                              filterBy="#{user.identificacionCompleta}" filterStyle="width: 80%;" width="20%">
+                        <h:outputText value="#{user.identificacion}" style="text-align: center; font-size: 12px"/>
+                    </p:column>
+                    <p:column headerText="Nombres" style="text-align: center"
+                              filterBy="#{user.nombre}" filterStyle="width: 80%;" width="30%" >
+                        <h:outputText value="#{user.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Apellidos" style="text-align: center"
+                              filterBy="#{user.apellido}" filterStyle="width: 80%;" width="30%">
+                        <h:outputText value="#{user.apellido}"/>
+                    </p:column>
+                    <p:column headerText="Razón Social" style="text-align: center"
+                              filterBy="#{user.razonSocial}" filterStyle="width: 80%;" width="30%" >
+                        <h:outputText value="#{user.razonSocial}"/>
+                    </p:column>
+                    <p:column headerText="Nombre Comercial" style="text-align: center"
+                              filterBy="#{user.nombreComercial}" filterStyle="width: 80%;" width="30%" >
+                        <h:outputText value="#{user.nombreComercial}"/>
+                    </p:column>
+                    <p:column headerText="Seleccionar" style="text-align: center;" width="20%">
+                        <p:commandLink title="Seleccionar"   actionListener="#{plusvaliaAlcabalas.selectEnte(user)}" 
+                                       oncomplete="PF('dlogentes').hide();" update="fmClientes,frmAlcPlus">
+                            <i class="fa fa-fw fa-check-circle-o" style="font-size: 1.5em" />
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <dlg:observaciones actionButton="#{plusvaliaAlcabalas.procesar()}"
+                           observaciones="#{plusvaliaAlcabalas.liquidacion.observacion}"
+                           placeHolder="Observaciones de la Liquidacion, campo no obligatorio."
+                           requerido="false" />
+
+    </ui:define>
+</ui:composition>

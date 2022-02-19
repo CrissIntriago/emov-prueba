@@ -1,0 +1,203 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Certificación de PAPP
+    </ui:define>
+    <ui:param name="tittle" value="#{analisisProcesoView.planProgramaProyecto.nombre}" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <u:titleTask task="#{analisisProcesoView.tarea}" tramite="#{analisisProcesoView.tramite}" />
+                <div class="ui-g-12">
+                    <p:outputPanel id="fomInfo">       
+                        <div class="ui-inputgroup" style="margin-bottom: 10px;">
+                            <p:outputLabel value="PERÍODO:"  style="font-weight: bolder;margin-right: 5px;margin-top: 5px" />
+                            <p:selectOneMenu value="#{analisisProcesoView.busqueda.anio}"
+                                             style="width: 16% !important;border:1px solid #00796B;text-align: center;">
+                                <f:selectItem itemLabel="Seleccione un período" itemValue="#{null}" />
+                                <f:selectItems value="#{analisisProcesoView.periodos}" 
+                                               var="anio" itemLabel="#{anio.anio}" itemValue="#{anio.anio}"/>
+                                <p:ajax listener="#{analisisProcesoView.cargarXanio()}" update="formMain"/> 
+                            </p:selectOneMenu> 
+                        </div>
+                        <p:dataTable  expandableRowGroups="true" id="listaactividad" widgetVar="listaactividad" paginatorPosition="bottom" var="item"
+                                      value="#{analisisProcesoView.listaPlanPapp}" rows="20" paginator="true"
+                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      style="text-align: center;"
+                                      rowsPerPageTemplate="20,25,35,50"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                PAPP
+                            </f:facet>
+                            <p:column  headerText="Código" style="width: 10%;text-align: center;">
+                                <h:outputText value="#{item.codigo}" />
+                            </p:column>
+                            <p:column  headerText="Número de Trámite" style="width: 10%;text-align: center;">
+                                <h:outputText value="#{item.numeroTramite}" />
+                            </p:column>
+                            <p:column  headerText="Solicitante" style="width: 10%;text-align: center;">
+                                <h:outputText value="#{analisisProcesoView.usuarioSolicita(item)}" />
+                            </p:column>
+                            <p:column  headerText="Unidad Requirente" style="width: 10%;text-align: center;">
+                                <h:outputText value="#{item.unidad.nombre}" />
+                            </p:column>
+                            <p:column  headerText="Fecha de Solicitud" style="width: 10%;text-align: center;">
+                                <h:outputText value="#{item.fechaTramite}" >
+                                    <f:convertDateTime pattern="yyyy/MM/dd" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                                <p:commandLink title="Continuar" 
+                                               actionListener="#{analisisProcesoView.continuarTarea(item)}">
+                                    <i class="fa fa-paper-plane-o new" style="font-size: 1.8em; margin-right: 5px;"></i>
+                                </p:commandLink>
+                                <p:commandLink update="formMain" 
+                                               actionListener="#{analisisProcesoView.openDialogAmortizacion(item)}"
+                                               title="Visualizar PAPP" process="@this">
+                                    <i class="fa fa-edit" style="font-size: 1.8em; margin-right: 5px;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:outputPanel>
+                </div>
+            </div>
+        </h:form>
+        <p:dialog widgetVar="dlgObservaciones" modal="true" >
+            <h:form id="frmDlgObser">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                    <p:fieldset >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Fecha Aprobación" indicateRequired="true" /><br/>
+                            <p:calendar id="fecha-v" locale="es" value="#{analisisProcesoView.pappProceso.fechaAprovacion}" pattern="yyyy/MM/dd" placeholder="yyyy/MM/dd" mask="true" required="true" navigator="true"/>
+                        </h:panelGroup>
+                    </p:fieldset>
+                    <p:fieldset >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Observaciones:" indicateRequired="false" style="font-weight: bold" /><br/>
+                            <p:inputTextarea id="observacion" value="#{analisisProcesoView.observaciones}" 
+                                             rows="7" style="border: 1px solid; border-radius: 5px 5px 5px 5px;font-weight: bold;width: 98%"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </h:panelGroup>
+                    </p:fieldset>
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Aceptar" title="Aceptar Aprobacion" style="width: 100px" icon="fa fa-thumbs-o-up"
+                                     actionListener="#{analisisProcesoView.completarTarea(1)}" process="frmDlgObser"/>
+                    <p:spacer width="10" />
+                    <p:commandButton value="Rechazar" styleClass="red-btn" title="Rechazar" style="width: 100px" icon="fa fa-trash"
+                                     actionListener="#{analisisProcesoView.completarTarea(0)}" process="frmDlgObser"/>
+                    <p:spacer width="10" />
+                    <p:commandButton value="Cerrar" onclick="PF('dlgObs').hide()" icon="fa fa-close"
+                                     style="width: 100px" process="@this"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:dialog header="Tabla de Items PAPP"
+                  widgetVar="dlgAnt"
+                  modal="true"
+                  height="450px" width="80%"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgAnt">
+            <h:form prependId="false" id="frmAnt">
+                <p:growl id="msgsss2" showDetail="true"/>
+                <div class="ui-fluid">
+                    <div class="ui-g">
+                        <div class="ui-g-12">
+                            <h:panelGroup >
+                                <div class="car card-w-title" style="width: 100%">
+                                    <h1 style="text-align: center;font-size: 45px;font-family: serif;"> 
+                                        #{analisisProcesoView.planProgramaProyecto.nombre}
+                                    </h1>
+                                </div>
+                            </h:panelGroup>
+                            <div class="ui-g-12">
+                                <h:panelGroup id="panelGAmortizacion" layout="block">
+                                    <p:tabView>
+                                        <p:tab title="Detalle">
+                                            <p:dataTable id="dtAmortizacion" widgetVar="dtAmortizacion" var="pro" 
+                                                         paginator="true" rows="12" value="#{analisisProcesoView.listProductoPro}"
+                                                         paginatorPosition="bottom" scrollable="true" scrollWidth="1150" editable="true" editMode="cell"
+                                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                         rowsPerPageTemplate="12,24,36"
+                                                         emptyMessage="No existen criterio de busqueda especificado" >
+
+                                                <p:column headerText="Nombre Actividad" style="text-align: center; width: 200px;">
+                                                    <h:outputText value="#{pro.producto.actividadOperativa.nombreActividad}" style="float: left"/>
+                                                </p:column>                                
+                                                <p:column headerText="Unidad Responsable" style="text-align: center; width: 200px;">
+                                                    <h:outputText value="#{pro.producto.actividadOperativa.unidadResponsable.nombre}"  style="float: left" />
+                                                </p:column>
+                                                <p:column headerText="Monto de la Actividad" style="text-align: center; width: 70px;">
+                                                    <h:outputText value="#{pro.producto.actividadOperativa.monto}"  style="float: right" >
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+
+                                                <p:column headerText="Nombre del Producto" style="text-align: center; width: 200px;">
+                                                    <h:outputText value="#{pro.producto.descripcion}" style="float: left" />
+                                                </p:column>       
+                                                <p:column headerText="Monto del Producto" style="text-align: center; width: 70px;">
+                                                    <h:outputText value="#{pro.producto.montoReformada}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+
+                                                <p:column headerText="Monto Disponible" style="width: 70px">
+                                                    <h:outputText value="#{analisisProcesoView.getMontoDisponible(pro)}" style="float: right">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+
+                                                <p:column headerText="Monto Solicitado" style="width: 70px">
+                                                    <p:cellEditor>
+                                                        <f:facet name="input">
+                                                            <p:inputNumber id="montoSolicitado" value="#{pro.solicitado}" style="width:100%;">
+                                                                <p:ajax event="change" listener="#{analisisProcesoView.editarValorSolicitado(pro)}" update="dtAmortizacion" />
+                                                            </p:inputNumber>
+                                                        </f:facet>
+                                                        <f:facet name="output"> 
+                                                            <h:outputText value="#{pro.solicitado}" style="float: right">
+                                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                            </h:outputText>
+                                                        </f:facet>
+                                                    </p:cellEditor>
+                                                </p:column>
+                                            </p:dataTable>
+
+                                        </p:tab>
+                                        <p:tab title="DOCUMENTOS">              
+                                            <u:documents entiti="#{analisisProcesoView.tramite}"/>
+                                        </p:tab>
+
+
+                                    </p:tabView>
+
+                                    <br/>
+                                    <center>
+                                        <p:commandButton value="Aceptar" oncomplete="PF('dlgAnt').hide()" update="frmAnt" style="width: auto;"/>
+                                    </center>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

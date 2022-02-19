@@ -1,0 +1,268 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Procedimientos y Requisitos
+    </ui:define>
+    <ui:param name="tittle" value="PROCEDIMIENTOS Y REQUISITOS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="mainForm" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block">
+
+                        <p:commandButton value="Añadir Procedimiento" actionListener="#{mantRequisitoView.formProcedimiento(null)}" process="@this"
+                                         icon="ui-icon-plus" styleClass="Fs16" style="width: 200px;margin-bottom: 10px"/>
+                        <p:commandButton value="Añadir Requisito" actionListener="#{requisitoView.callTableRequito()}" process="@this"
+                                         icon="ui-icon-plus" styleClass="Fs16" style="width: 200px;margin-bottom: 10px"/>
+                        <p:commandButton value="Limpiar filtros"  process="@this" 
+                                         icon="ui-icon-refresh" onclick="PF('prodecimientoRequisitoTable').clearFilters()" update="prodecimientoRequisitoTable"
+                                         styleClass="Fs16" style="width: 200px;margin-bottom: 10px"/>
+                        <p:dataTable  id="prodecimientoRequisitoTable" widgetVar="prodecimientoRequisitoTable" var="item" 
+                                      value="#{mantRequisitoView.procedimientoLazy}" paginator="true" rows="20" 
+                                      style="width: 100%;" paginatorPosition="bottom"
+                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="20,30,40,50,60,100" lazy="true" rowKey="#{item.id}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                Listado de Procedimientos con sus Respectivos Requisitos
+                            </f:facet>
+                            <p:column style="width: 17px;">
+                                <p:rowToggler />
+                            </p:column>
+                            <p:column headerText="Proceso" style="width: 45%;" filterBy="#{item.idTipoTramite.id}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu id="selectProcesoFilter" filter="true" filterMatchMode="contains"
+                                                     onchange="PF('prodecimientoRequisitoTable').filter()" styleClass="custom-filter">
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{mantRequisitoView.procesoList}" var="filtro" itemLabel="#{filtro.descripcion}" itemValue="#{filtro.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.idTipoTramite.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Procedimiento" filterBy="#{item.nombre}" style="width: 45%">
+                                <h:outputText value="#{item.nombre}" />  
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 10%" >
+                                <p:commandLink actionListener="#{mantRequisitoView.formProcedimiento(item)}" title="Editar Procedimiento">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar" actionListener="#{mantRequisitoView.eliminarProcedimiento(item)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar el procedimiento?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink title="Duplicar registro" actionListener="#{mantRequisitoView.duplicarProcedimiento(item)}">
+                                    <i class="fa fa-copy" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de Duplicacion" message="¿Esta seguro de Copiar el procedimiento?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                            <p:rowExpansion>
+                                <br></br>
+                                <h:panelGroup id="dataRowTable" layout="block">
+                                    <p:dataTable id="rowTable" widgetVar="rowTable" var="pro" value="#{mantRequisitoView.viewRequisitos(item)}" 
+                                                 rows="10" style="width: 100%;border: 1px solid black"                                                      
+                                                 emptyMessage="No existen requisitos registrados en este procedimiento">
+                                        <p:column headerText="Requisito" style="width: 30%;" >
+                                            <h:outputText value="#{pro.idRequisito.nombre}" />
+                                        </p:column>  
+                                        <p:column headerText="Obligatorio" style="width: 30%;text-align: center">
+                                            <h:outputText value="#{pro.obligatorio == true ? 'SI':'NO'}" />
+                                        </p:column> 
+                                    </p:dataTable>
+                                </h:panelGroup> 
+                                <br></br>
+                            </p:rowExpansion>
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="DlgRegistroProcedimiento" header="Formulario de Registro de Procedimiento" 
+                  widgetVar="DlgRegistroProcedimiento" modal="true" width="45%" height="450"
+                  showEffect="fade" hideEffect="fade" resizable="false" appendTo="@(body)">
+            <h:form id="formRegistroProcedimiento" prependId="false">  
+                <p:outputPanel style="width: 100%;" >
+                    <p:fieldset legend="Procedimiento" style="margin-bottom:15px">
+                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridMain">
+                            <p:panelGrid  id="panelTipoTramite" columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Tipo trámite:" style="font-weight: bold" indicateRequired="false"/>
+                                <p:selectOneMenu id="select_1" value="#{mantRequisitoView.procedimiento.idTipoTramite}" converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{mantRequisitoView.procesoList}" var="ps1"  itemLabel="#{ps1.descripcion}" 
+                                                   itemValue="#{ps1}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Nombre:" style="width: 100%;font-weight: bold"/>
+                                <p:inputText style="width: 100%;text-transform:uppercase" value="#{mantRequisitoView.procedimiento.nombre}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Descripción:" style="width: 100%;font-weight: bold"/>
+                                <p:inputText style="width: 100%;text-transform:uppercase" value="#{mantRequisitoView.procedimiento.descripcion}" />
+                            </p:panelGrid>  
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Requisitos" style="margin-bottom:15px">
+                        <p:commandButton value="Agregar requisito" actionListener="#{mantRequisitoView.formRequisito(null)}"
+                                         icon="ui-icon-plus" process="@this"
+                                         styleClass="Fs16" style="width: auto;margin: 5px 0px"/>
+                        <p:dataTable id="requisitosAnadidos" widgetVar="requisitosAnadidos" var="requisito" 
+                                     value="#{mantRequisitoView.procedimientoRequisitoList}" style="width: 100%;margin: 5px 0px" paginatorPosition="bottom"
+                                     filterEvent="enter" lazy="true" rowKey="#{requisito.idRequisito}"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                Listado de Requisitos
+                            </f:facet>
+                            <p:column headerText="Requisito" style="width: 20%">
+                                <h:outputText value="#{requisito.idRequisito.nombre}" />
+                            </p:column>
+                            <p:column headerText="Obligatorio" style="width: 5%;text-align: center">
+                                <h:outputText value="#{requisito.obligatorio== true ? 'Si':'No'}" />
+                            </p:column>
+
+                            <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                                <p:commandLink actionListener="#{mantRequisitoView.eliminarRequisito(requisito)}" title="Quitar" update="requisitosAnadidos">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de quitar este requisito ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+
+                        </p:dataTable>
+                    </p:fieldset>
+                    <center>
+                        <p:commandButton value="Guardar" id="guardarProcedimiento" update="formRegistroProcedimiento"
+                                         icon="ui-icon-save" actionListener="#{mantRequisitoView.saveProcedimiento()}"  
+                                         styleClass="Fs16"/>
+                    </center>
+                </p:outputPanel>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="DlgAniadirRequisito" header="Formulario de Seleccion de Requisito" 
+                  widgetVar="DlgAniadirRequisito" modal="true" width="30%"
+                  showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false">  
+                <p:outputPanel id="formDlgAnadirRequisito" style="width: 100%;" >
+                    <p:fieldset legend="Requisito" style="margin-bottom:15px">
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Nombre:" style="width: 100%;"/>
+                            <p:selectOneMenu value="#{mantRequisitoView.requisitoSeleccionado}" converter="#{utilConverter}"
+                                             style="width: 100%;" filter="true" filterMatchMode="startsWith">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{mantRequisitoView.itemsRequisitos}" var="select" itemLabel="#{select.nombre}" 
+                                               itemValue="#{select}" itemLabelEscaped="false" />
+                                <p:ajax listener="#{mantRequisitoView.acualizarDescripcion()}" update="descripcionRequisito" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Descripción:" style="width: 100%;font-weight: bold"/>
+                            <p:inputTextarea rows="1" readonly="true" id="descripcionRequisito" style="width: 100%;text-transform:uppercase" 
+                                             value="#{mantRequisitoView.requisitoSeleccionado.descripcion}" />
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Obligatorio" style="width: 100%;font-weight: bold"/>
+                            <p:selectBooleanButton id="obligatorio" value="#{mantRequisitoView.procedimientoRequisito.obligatorio}" 
+                                                   onLabel="Si" offLabel="No" onIcon="fa fa-check" offIcon="fa fa-times" style="width:60px"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <center>
+                        <p:commandButton value="Añadir" id="anadirRequisito" update="requisitosAnadidos"
+                                         icon="ui-icon-save" actionListener="#{mantRequisitoView.addRequisito()}"
+                                         styleClass="Fs16"/>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="DlgRegistroRequisito2" header="Formulario de Registro de Requisito" 
+                  widgetVar="DlgRegistroRequisito2" modal="true" width="30%"
+                  showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false">  
+                <p:outputPanel id="formRegistroRequisito2" style="width: 100%;" >
+                    <p:fieldset legend="Requisito">
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Nombre:" style="width: 100%;"/>
+                            <p:inputTextarea rows="1" style="width: 100%;text-transform:uppercase" 
+                                             value="#{requisitoView.requisito.nombre}" onkeyup="toUpperCase(this)"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Descripción:" style="width: 100%;font-weight: bold"/>
+                            <p:inputTextarea rows="5" style="width: 100%;text-transform:uppercase" 
+                                             value="#{requisitoView.requisito.descripcion}" onkeyup="toUpperCase(this)"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <center>
+                        <p:commandButton value="Añadir" id="guardarRequisito2" update="requisitosTable2"
+                                         icon="ui-icon-save" actionListener="#{requisitoView.saveRequisito()}" style="margin:15px"
+                                         styleClass="Fs16"/>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="callTableRequisito" header="Mantenimiento de Registro de Requisito" height="460"
+                  widgetVar="callTableRequisito" modal="true" width="60%" position="center"
+                  showEffect="fade" hideEffect="fade" resizable="false">
+            <div class="ui-g-12">
+                <h:form id="formCallTableRequisito" prependId="false"> 
+                    <p:outputPanel id="formTableRequisito" style="width: 100%;" >
+                        <div class="ui-g-12">
+                            <p:commandButton value="Agregar requisito" actionListener="#{requisitoView.formRequisito(null)}"
+                                             icon="ui-icon-plus" 
+                                             styleClass="Fs16" style="width: 175px;margin-bottom: 10px"/>
+                            <p:commandButton value="Limpiar filtros"  process="@this" 
+                                             icon="ui-icon-refresh" onclick="PF('requisitosTable2').clearFilters()" update="requisitosTable2"
+                                             styleClass="Fs16" style="width: 175px;"/>
+                            <p:dataTable id="requisitosTable2" widgetVar="requisitosTable2" var="requisito" 
+                                         paginator="true" rows="10"
+                                         value="#{requisitoView.requisitoLazyModel}" style="width: 100%;margin: 10px 0px" 
+                                         lazy="true" paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="10,20,30,40"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    Listado de Requisitos
+                                </f:facet>
+                                <p:column headerText="Nombre" style="width: 43%" filterBy="#{requisito.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{requisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="Descripción" style="width: 43%" filterBy="#{requisito.descripcion}" filterMatchMode="contains">
+                                    <h:outputText value="#{requisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 14%">
+                                    <p:commandLink actionListener="#{requisitoView.formRequisito(requisito)}" title="Editar Requisito" process="@this">
+                                        <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink actionListener="#{requisitoView.deleteRequisito(requisito)}" title="Quitar" update="requisitosTable2" process="@this">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar este requisito?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>   
+                        </div>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

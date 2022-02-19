@@ -1,0 +1,98 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Asignación de Comprobantes
+    </ui:define>
+
+    <ui:define name="head">
+
+    </ui:define>
+    <ui:param name="tittle" value="Asignación de Comprobantes" />
+    <ui:define name="content">
+        <h:form id="mainForm" prependId="false" enctype="multipart/form-data">
+            <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-8, ui-grid-col-4" styleClass="ui-panelgrid-blank form-group">
+                <p:fieldset legend="Asignaciones Emitidas">
+                    <p:dataTable id="dataComprobantes" widgetVar="dataComprobantes" value="#{asignarComprobantesMB.lazy}"
+                                 var="comp" reflow="true" paginator="true" lazy="true"
+                                 rows="10" rowsPerPageTemplate="10,20,50,10" paginatorPosition="bottom"
+                                 emptyMessage="No se encontro ningún criterio de busqueda">
+                        <p:column headerText="Usuario" filterBy="#{comp.usuario.usuario}" filterMatchMode="contains">
+                            <h:outputText value="#{comp.usuario.usuario}" />
+                        </p:column>
+                        <p:column headerText="Fecha Asignación" style="text-align: center">
+                            <h:outputText value="#{comp.fechaCreacion}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="N° secuencia inicial">
+                            <h:outputText value="#{comp.secInicio}" style="float: right"/>
+                        </p:column>
+                        <p:column headerText="N° secuencia Final" >
+                            <h:outputText value="#{comp.secFin}" style="float: right"/>
+                        </p:column>
+                        <p:column headerText="Total de titulos Asignados">
+                            <h:outputText value="#{comp.totalTitulo}" style="float: right"/>
+                        </p:column>
+                        <p:column headerText="Total de Titulos Usados">
+                            <h:outputText value="#{comp.totalTituloUsado}"  style="float: right"/>
+                        </p:column>
+                        <p:column headerText="Acciones" style="text-align: center">
+                            <p:commandLink actionListener="#{asignarComprobantesMB.eliminar(comp)}"
+                                           title="Eliminar">
+                                <i class="fa fa-remove" style="font-size: 1.5em;color: red" />
+                                <p:confirm header="Elimiar" message="Esta seguro(a) de continuar..." icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:fieldset>
+                <p:fieldset legend="Datos a Ingresar" id="datosAsignacion">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:outputLabel value="Usuario: " style="font-size: 13px" />
+                        <p:outputLabel value="Punto de Emisión: " style="font-size: 13px"/>                                
+                        <p:selectOneMenu id="selectUser" value="#{asignarComprobantesMB.comprobante.usuario}" 
+                                         converter="#{utilConverter}" >
+                            <f:selectItem itemLabel="Seleccionar.." itemValue="#{null}" />
+                            <f:selectItems value="#{asignarComprobantesMB.usuarios}" 
+                                           var="us" itemLabel="#{us.usuario}" itemValue="#{us}"/>
+                        </p:selectOneMenu>
+                        <p:inputText value="#{asignarComprobantesMB.comprobante.puntoEmision}" onkeypress="focusNextOnEnter(event, 'secInicio')" />
+                        <p:outputLabel value="Secuencia Inicial: " style="font-size: 13px"/>
+                        <p:outputLabel value="Secuencia Final: " style="font-size: 13px"/>
+                        <p:inputText id="secInicio" value="#{asignarComprobantesMB.comprobante.secInicio}" onkeypress="focusNextOnEnter(event, 'secFin')">
+                            <p:keyFilter mask="num" />
+                        </p:inputText>
+                        <p:inputText id="secFin" value="#{asignarComprobantesMB.comprobante.secFin}" onkeypress="focusNextOnEnter(event, 'totalTitulo')">
+                            <p:keyFilter mask="num" />
+                            <p:ajax event="change" process="@form" 
+                                    listener="#{asignarComprobantesMB.calcularTitulosAsignados()}" />
+                        </p:inputText>
+                        <p:outputLabel value="Total Asignado:" style="font-size: 13px"/>
+                        <p:outputLabel value="Total Usados:" style="font-size: 13px"/>
+                        <p:inputText id="totalTitulo" value="#{asignarComprobantesMB.comprobante.totalTitulo}" readonly="true" onkeypress="focusNextOnEnter(event, 'totalTituloUsado')"/>
+                        <p:inputText id="totalTituloUsado" value="#{asignarComprobantesMB.comprobante.totalTituloUsado}" readonly="true" onkeypress="focusNextOnEnter(event, 'descripcion')"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Descipción: " style="font-size: 13px"/>
+                        <p:inputTextarea rows="5" cols="50" id="descripcion"
+                                         value="#{asignarComprobantesMB.comprobante.descripcion}"
+                                         counterTemplate="{0} characters remaining." autoResize="false" />
+                    </p:panelGrid>
+                    <br/>
+                    <br/>
+                    <center>
+                        <p:commandButton id="save" value="#{asignarComprobantesMB.comprobante.id != null ? 'Editar':'Guardar'}"
+                                         process="@form"
+                                         actionListener="#{asignarComprobantesMB.guardarEditar()}" ></p:commandButton>
+                    </center>
+                </p:fieldset>
+            </p:panelGrid>
+        </h:form>
+    </ui:define>
+
+</ui:composition>

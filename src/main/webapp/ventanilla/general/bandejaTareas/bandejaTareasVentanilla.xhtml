@@ -1,0 +1,230 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Bandeja de Tareas Pendientes</ui:define>
+    <ui:param name="tittle" value="Bandeja de Tareas Pendientes" />
+    <ui:define name="head">
+        <style>
+            .logo {
+                width: 5%;
+            }
+            .detail {
+                width: 75%;
+                /*padding-left: 25px;*/
+            }
+            .actions {
+                width: 10%;
+                padding-left: 25px;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false" style="background-color: white">
+                    <div class="ui-g-12">
+                        <div class="ui-g-7">
+                            <p:fieldset legend="Busqueda parámetrizadas:" style="font-weight: bold">
+                                <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{userSession.hasRole('admin')}">
+                                        <p:outputLabel value="Usuario:" style="font-weight: bold"/>
+                                        <p:inputText value="#{bandejaTareasVentanillaMB.usuario}" >
+                                            <p:ajax event="change" listener="#{bandejaTareasVentanillaMB.updateTaskUser()}" update="taskGrid,fielsetNumTramites" />
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="No. trámite:" style="font-weight: bold"/>
+                                        <p:inputText value="#{bandejaTareasVentanillaMB.lazy.filterss['numTramite']}" >
+                                            <p:ajax event="change" update="taskGrid"  />
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Nombre trámite:" style="font-weight: bold"/>
+                                        <p:inputText value="#{bandejaTareasVentanillaMB.lazy.filterss['name']}" >
+                                            <p:ajax event="change" update="taskGrid"  />
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Fecha ingreso:" style="font-weight: bold"/>
+                                        <p:calendar value="#{bandejaTareasVentanillaMB.lazy.filterss['tramite.fechaIngreso']}" pattern="yyyy-MM-dd" navigator="true" locale="es" >
+                                            <p:ajax event="dateSelect" update="taskGrid" />
+                                        </p:calendar>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-3">
+<!--                            <p:fieldset legend="Busqueda por período:" style="font-weight: bold">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelPeriodo">
+                                        <p:outputLabel value="Período:" style="font-weight: bold"/>
+                                        <p:selectOneMenu value="#{bandejaTareasVentanillaMB.opcionBusqueda.anio}"  style="width: 100%;">
+                                            <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                                            <f:selectItems value="#{bandejaTareasVentanillaMB.listaPeriodo}" var="p" itemLabel="TRÁMITES - #{p.anio}" itemValue="#{p.anio}"/>
+                                            <p:ajax listener="#{bandejaTareasVentanillaMB.updateTaskUser()}" update="taskGrid,panelTramite"/> 
+                                        </p:selectOneMenu>  
+                                    </h:panelGroup>  
+                                </p:panelGrid>
+                            </p:fieldset>-->
+                        </div>
+                        <div class="ui-g-2">
+                            <p:fieldset legend="No. de trámites:" style="font-weight: bold" id="fielsetNumTramites">
+                                <center>
+                                    <h:panelGroup layout="block" style="width: 100%;margin: 11px 0px" class="panelInput" id="panelTramite">
+                                        <p:outputLabel styleClass="fa fa-tasks" value="TRÁMITES: #{bandejaTareasVentanillaMB.cantidad}" class="FontBold Fs18" />
+                                    </h:panelGroup>    
+                                </center>
+                            </p:fieldset>
+                        </div>
+                    </div>
+                    <div class="ui-g-12" >
+                        <p:dataTable var="task" value="#{bandejaTareasVentanillaMB.lazy}" paginator="true" rows="20"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     filterEvent="enter" emptyMessage="No existen datos con los parámetros especificados"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,20,50,100" id="taskGrid" widgetVar="taskGrid" lazy="true"
+                                     style="width: 100%"
+                                     paginatorPosition="bottom">
+                            <f:facet name="header">
+                                LISTADO DE TAREAS
+                            </f:facet>
+                            <p:column style="width: 7%" headerText="No." filterBy="#{task.numTramite}" sortBy="#{task.numTramite}">
+                                <center>
+                                    <h:outputText value="#{task.numTramite}" />
+                                </center>
+                            </p:column>
+                            <p:column style="width: 32%" headerText="Trámite" >
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('taskGrid').filter()" styleClass="custom-filter" style="width: 100% !important;">
+                                        <f:selectItem itemLabel="Tipo trámite" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{bandejaTareasVentanillaMB.tipoTramites}" var="t" itemLabel="#{t.descripcion}" itemValue="#{t.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{task.idTipoTramite.descripcion}" />
+                            </p:column>
+                            <p:column style="width: 32%" headerText="Tarea" sortBy="#{task.name}" filterBy="#{task.name}">
+                                <h:outputText value="#{task.name}"  />
+                            </p:column>
+                            <p:column style="width: 10%;text-align: center" headerText="Fecha ingreso" >
+                                <p:outputLabel value="#{task.tramite.fechaIngreso}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Periodo" style="width: 10%;text-align: center" >
+                                <h:outputText value="#{task.periodo}" />
+                            </p:column>
+                            <p:column style="width: 9%" headerText="Acciones" >
+                                <center>
+                                    <p:commandLink class="realizar" actionListener="#{bandejaTareasVentanillaMB.sendTask(task)}" title="Envia al formulario de realizar tarea" >
+                                        <i class="fa fa-paper-plane-o newi" style="font-size: 20px"></i>
+                                    </p:commandLink>
+                                    <p:spacer width="5" />
+                                    <p:commandLink class="ver" actionListener="#{bandejaTareasVentanillaMB.viewProcess(task)}" update="dlgTarea" title="Ver información y estado del trámite" >
+                                        <i class="fa fa-search newi" style="font-size: 20px"></i>
+                                    </p:commandLink>
+                                </center>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </h:form>        
+            </div>
+        </div>
+        <p:dialog modal="true" closeOnEscape="true" closable="true" height="450" width="70%" id="dlgTarea" minHeight="300"
+                  widgetVar="dlgTarea" header="Detalle del trámite numero: #{bandejaTareasVentanillaMB.tarea.tramite.numTramite}">
+            <p:panelGrid columns="2" class="Wid100">
+                <comp:text label="Tipo de Trámite" readonly="true" value="#{bandejaTareasVentanillaMB.tarea.idTipoTramite.descripcion}" />
+                <comp:text label="Fecha de creacion" readonly="true" value="#{bandejaTareasVentanillaMB.tarea.tramite.fechaIngreso}" />
+            </p:panelGrid>
+            <h:form id="frmDetalleTarea">
+                <p:tabView style="margin-top: 15px">
+                    <p:tab title="Tarea">
+                        <p:dataTable value="#{bandejaTareasVentanillaMB.tasks}" emptyMessage="El trámite no ha sido ingresado."
+                                     var="tarea" scrollable="true" scrollHeight="350" style="text-align: center;width: 100%">
+                            <p:column headerText="Nombre Tarea">
+                                <p:outputLabel value="#{tarea.name}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="100">
+                                <p:outputLabel value="#{tarea.assignee}" rendered="#{tarea.assignee ne null}"/>
+                            </p:column>
+                            <p:column headerText="Fech.Inicio" width="120">
+                                <p:outputLabel value="#{tarea.createTime}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Fech.Fin" width="120">
+                                <p:outputLabel value="#{tarea.endTime}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss"    />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Observaciones">
+                        <p:dataTable value="#{bandejaTareasVentanillaMB.tarea.tramite.observaciones}" emptyMessage="Sin elementos..."
+                                     var="obs" scrollable="true" scrollHeight="350" style="text-align: center;width: 100%">
+                            <p:column headerText="Tarea" width="150">
+                                <p:outputLabel value="#{obs.tarea}"/>
+                            </p:column>
+                            <p:column headerText="Observacion">
+                                <p:outputLabel value="#{obs.observacion}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="100">
+                                <p:outputLabel value="#{obs.userCre}"/>
+                            </p:column>
+                            <p:column headerText="Fecha" width="14%">
+                                <p:outputLabel value="#{obs.fecCre}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Flujo">
+                        <p:graphicImage value="#{bandejaTareasVentanillaMB.imageProcessInstance}" stream="false" width="100%"  />
+                    </p:tab>
+                    <p:tab title="Documentos">
+                        <comp:documents entiti="#{bandejaTareasVentanillaMB.tarea.tramite}" />
+                    </p:tab>
+                    <p:tab title="Referencia">
+                        <p:fieldset legend="Referencia:">
+                            <center>
+                                <p:outputLabel value="#{bandejaTareasVentanillaMB.tarea.tramite.nombreBeneficiario}" class="Fs13" escape="false"
+                                               style="text-align: justify;"/>   
+                            </center>
+                        </p:fieldset>
+                        <p:fieldset legend="Observación inicial:">
+                            <center>
+                                <p:outputLabel value="#{bandejaTareasVentanillaMB.tarea.tramite.nombrePropietario}" class="Fs13"
+                                               style="text-transform: uppercase;text-align: justify;font-weight: bold;"/>   
+                            </center>
+                        </p:fieldset>
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="DlgMensajeDiario" widgetVar="DlgMensajeDiario" width="30%" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false" position="center" draggable="false">
+            <h:form prependId="false" id="formMensajeDiario">
+                <p:outputPanel id="mensajeDiario" style="width: 100%;" >
+                    <div class="ui-g-12">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;text-align: center" class="panelInput" >
+                                <p:graphicImage name="logo_timer.png" library="images" style="width: 40%"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                    </div>
+                    <div class="ui-g-12">
+                        <center>
+                            <p:outputLabel value="EL TIEMPO VIGENTE DE SU CONTRASEÑA ACTUAL" style="font-weight: bold"/>
+                            <h1>#{bandejaTareasVentanillaMB.tiempoFaltante} DIAS</h1>
+                        </center>  
+                    </div>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

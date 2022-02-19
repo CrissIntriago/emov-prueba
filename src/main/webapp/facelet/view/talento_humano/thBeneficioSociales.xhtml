@@ -1,0 +1,244 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Beneficios Sociales
+    </ui:define>
+    <ui:param name="tittle" value="Beneficios Sociales" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset legend="Parametros" style="margin-bottom: 5px">
+                        <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridParametros">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Tipo de beneficio social:"/>
+                                <p:selectOneMenu id="option" value="#{thBeneficiosSocialesView.codeBeneficiacio}">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="0"/>
+                                    <f:selectItem itemLabel="Décimo tercero" itemValue="1"/>
+                                    <f:selectItem itemLabel="Décimo cuarto" itemValue="2"/>
+                                    <f:selectItem itemLabel="Fondos de reserva" itemValue="3"/>
+                                    <p:ajax process="option"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="periodoSeleccionado" value="#{thBeneficiosSocialesView.opcionBusqueda.anio}"
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thBeneficiosSocialesView.listaPeriodo}" var="item" itemLabel="#{item}" itemValue="#{item}"/>
+                                    <p:ajax listener="#{thBeneficiosSocialesView.actualizarTipoRol()}" update="panelGroupTipoRol"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupTipoRol">
+                                <p:outputLabel for="@next" value="Roles:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="thTipoRolSeleccionado" value="#{thBeneficiosSocialesView.thTipoRolSeleccionado}" converter="#{utilConverter}" 
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thBeneficiosSocialesView.thTipoRolList}" var="item" itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                                    <p:ajax update="gridParametros" process="thTipoRolSeleccionado"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>       
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Consultar registros" update="thBeneficioSocialTable,gridReporte"
+                                                 icon="fa fa-refresh" actionListener="#{thBeneficiosSocialesView.loadLazy()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{!thBeneficiosSocialesView.thTipoRolSeleccionado.aprobado}" >
+                                <p:commandButton value="Generar/Actualizar registros" 
+                                                 icon="fa fa-refresh" actionListener="#{thBeneficiosSocialesView.loadData()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                    <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de actualizar la información?" icon="fa fa-exclamation-triangle" />
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Configuración"
+                                                 icon="fa fa-fw fa-gears" actionListener="#{thBeneficiosSocialesView.openDlgConfig()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                </p:commandButton>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:fieldset>
+                    <p:fieldset legend="Generar reporte" style="margin-bottom: 5px">
+                        <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridReporte">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="PDF(Todos)" id="generarReportePDF" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-pdf-o" actionListener="#{thBeneficiosSocialesView.report('pdf',3)}"
+                                                 styleClass="Fs16" style="width: 100%;background: red"/> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="EXCEL(Todos)" id="generarReporteEXCEL" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-excel-o" actionListener="#{thBeneficiosSocialesView.report('xlsx',3)}"
+                                                 styleClass="Fs16" style="width: 100%;background: green"/> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="PDF(Acumulan)" id="generarReportePDF2" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-pdf-o" actionListener="#{thBeneficiosSocialesView.report('pdf',1)}"
+                                                 styleClass="Fs16" style="width: 100%;background: red"/> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="EXCEL(Acumulan)" id="generarReporteEXCEL2" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-excel-o" actionListener="#{thBeneficiosSocialesView.report('xlsx',1)}"
+                                                 styleClass="Fs16" style="width: 100%;background: green"/> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="PDF(No acumulan)" id="generarReportePDF3" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-pdf-o" actionListener="#{thBeneficiosSocialesView.report('pdf',2)}"
+                                                 styleClass="Fs16" style="width: 100%;background: red"/> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="EXCEL(No acumulan)" id="generarReporteEXCEL3" update="formMain" rendered="#{thBeneficiosSocialesView.btnreport}"
+                                                 icon="fa fa-file-excel-o" actionListener="#{thBeneficiosSocialesView.report('xlsx',2)}"
+                                                 styleClass="Fs16" style="width: 100%;background: green"/> 
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>                    
+                    <p:dataTable  id="thBeneficioSocialTable" widgetVar="thBeneficioSocialTable" var="thBeneficioSocial" value="#{thBeneficiosSocialesView.thBeneficiosSocialesLazyModel}" 
+                                  paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{thBeneficioSocial.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Identificación" style="width: 10%;text-align: center" filterBy="#{thBeneficioSocial.idServidor.persona.identificacion}" filterMatchMode="contains">
+                            <h:outputText value="#{thBeneficioSocial.idServidor.persona.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Apellidos y nombres" style="width: 30%;" filterBy="#{thBeneficioSocial.idServidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                            <h:outputText value="#{thBeneficioSocial.idServidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Derecho" style="width: 10%;text-align: center" filterBy="#{thBeneficioSocial.derecho}" filterMatchMode="contains">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thBeneficioSocialTable').filter()" 
+                                                 style="width: 100%" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="APROBADO" itemValue="true" />
+                                    <f:selectItem itemLabel="NO APROBADO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{thBeneficioSocial.derecho?'TIENE DERECHO':'NO TIENE DERECHO'}" />
+                        </p:column>
+                        <p:column headerText="Aprobado" style="width: 10%;text-align: center" filterBy="#{thBeneficioSocial.acumula}" filterMatchMode="contains">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thBeneficioSocialTable').filter()"
+                                                 style="width: 100%" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="APROBADO" itemValue="true" />
+                                    <f:selectItem itemLabel="NO APROBADO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{thBeneficioSocial.acumula?'ACUMULA':'NO ACUMULA'}" />
+                        </p:column>
+                        <p:column headerText="Tipo de beneficio" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thBeneficioSocial.decimoTercero?'DÉCIMO TERCERO':(thBeneficioSocial.decimoCuarto ? 'DÉCIMO CUARTO':(thBeneficioSocial.fondosReserva ? 'FONDO RESERVA':''))}" />
+                        </p:column>
+                        <p:column headerText="Cta. Contable" style="width: 10%;text-align: center" filterBy="#{thBeneficioSocial.idCuentas.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{thBeneficioSocial.idCuentas.codigo}" />
+                        </p:column>
+                        <p:column headerText="Partida" style="width: 10%;text-align: center" filterBy="#{thBeneficioSocial.partida}" filterMatchMode="contains">
+                            <h:outputText value="#{thBeneficioSocial.partida}" />
+                        </p:column>
+                        <p:column headerText="RMU" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thBeneficioSocial.valorRmu}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Valor" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thBeneficioSocial.valorRubro}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Acción" style="width: 10%;text-align: center" >
+                            <p:commandLink title="Ver" process="@this" actionListener="#{thBeneficiosSocialesView.form(thBeneficioSocial,true)}"  
+                                           update="thBeneficioSocialForm" rendered="#{!thBeneficioSocial.idThTipoRol.aprobado}">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{thBeneficiosSocialesView.form(thBeneficioSocial,false)}"  
+                                           update="thBeneficioSocialForm" rendered="#{!thBeneficioSocial.idThTipoRol.aprobado}">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Eliminar" process="@this" actionListener="#{thBeneficiosSocialesView.delete(thBeneficioSocial)}"  
+                                           update="thBeneficioSocialForm" rendered="#{!thBeneficioSocial.idThTipoRol.aprobado}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thBeneficioSocialDlg" widgetVar="thBeneficioSocialDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Editar un registro">
+            <h:form prependId="false" id="thBeneficioSocialForm">
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                        <p:inputText id="identificacion" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'identificacion')"
+                                     value="#{thBeneficiosSocialesView.thBeneficiosSociales.idServidor.persona.identificacion}" readonly="#{thBeneficiosSocialesView.view}">
+                        </p:inputText>
+                    </h:panelGroup>                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Apellidos y nombres:" style="font-weight: bold"/>
+                        <p:inputText id="nombreCompleltoSql" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'nombreCompleltoSql')"
+                                     value="#{thBeneficiosSocialesView.thBeneficiosSociales.idServidor.persona.nombreCompleltoSql}" readonly="#{thBeneficiosSocialesView.view}">
+                        </p:inputText>
+                    </h:panelGroup> 
+                </p:panelGrid>
+                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Valor rubro:" style="font-weight: bold"/><br></br>
+                        <p:inputNumber id="valorRubro" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'valorRubro')" symbol="$"
+                                       value="#{thBeneficiosSocialesView.thBeneficiosSociales.valorRubro}" readonly="#{thBeneficiosSocialesView.view}">
+                        </p:inputNumber>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel  value="¿Tiene derecho?" style="width: 100%;"/><br></br>
+                        <p:selectBooleanButton value="#{thBeneficiosSocialesView.thBeneficiosSociales.derecho}" disabled="#{thBeneficiosSocialesView.view}"
+                                               onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel  value="¿Acumula?" style="width: 100%;"/><br></br>
+                        <p:selectBooleanButton value="#{thBeneficiosSocialesView.thBeneficiosSociales.acumula}" disabled="#{thBeneficiosSocialesView.view}"
+                                               onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" update="thBeneficioSocialTable" rendered ="#{!thBeneficiosSocialesView.view}"
+                                     icon="fa fa-save" actionListener="#{thBeneficiosSocialesView.edit()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>         
+        </p:dialog>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thBeneficiosSocialesView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thBeneficiosSocialesView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" update="thBeneficioSocialTable" rendered ="#{!thBeneficiosSocialesView.view}"
+                                     icon="fa fa-save" actionListener="#{thBeneficiosSocialesView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>            
+    </ui:define>
+</ui:composition>

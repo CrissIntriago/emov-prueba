@@ -1,0 +1,353 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Constatación Física Inventario
+    </ui:define>
+    <ui:param name="tittle" value="CONSTATACIÓN FÍSICA DE INVENTARIOS" />
+    <ui:define name="content">
+        <style type="text/css">
+            .diferencia {
+                font-weight: bold !important;
+                color: #cc0000 !important;
+            }
+        </style>
+        <h:form id="frmMain">
+            <p:growl id="msgs" showDetail="true"/>
+            <p:fieldset legend="BÚSQUEDA" toggleable="true" collapsed="false" toggleSpeed="500" style="font-weight: bold; width: 50%; float: left" id="datosOrdenCambios" >
+                <p:panelGrid columns="4" columnClasses="ui-grid-col-3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="btnsConsulta" style="width: 100%;">
+
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Desde" style="width: 100%;"></p:outputLabel>
+                        <p:calendar id="desde" pattern="dd-MM-yyyy" mask="true" style="width: 100%;" navigator="true" locale="es"
+                                    value="#{constatacionFisicaInvView.fechaDesde}"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Hasta" style="width: 100%;"></p:outputLabel>
+                        <p:calendar id="hasta" pattern="dd-MM-yyyy" mask="true" style="width: 100%;"  navigator="true" locale="es"
+                                    value="#{constatacionFisicaInvView.fechaHasta}"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="" style="width: 100%;"></p:outputLabel>
+                        <p:commandButton title="Buscar" value="BUSQUEDA" style="width: auto;"
+                                         actionListener="#{constatacionFisicaInvView.busqueda()}" process="@this,btnsConsulta" update="dtConsulta">
+                        </p:commandButton>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="" style="width: 100%;"></p:outputLabel>
+                        <p:commandButton title="limpiar filtro" value="LIMPIAR FILTRO" style="width: auto;"
+                                         actionListener="#{constatacionFisicaInvView.busquedaLimpiar()}" process="@this,btnsConsulta" update="btnsConsulta">
+                        </p:commandButton>
+                    </p:panelGrid>
+
+                </p:panelGrid> 
+            </p:fieldset>
+            <p:commandButton value="NUEVO"
+                             icon="fa fa-plus" process="@this" update="frmMain"
+                             actionListener="#{constatacionFisicaInvView.cerrar(null)}"
+                             style="float: right; width: 170px; margin-right: 10px; margin-top: 20px">
+            </p:commandButton> 
+            <br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+            <p:dataTable id="dtConsulta" 
+                         widgetVar="dtConsulta"
+                         var="cons" 
+                         reflow="true"  
+                         paginator="true" 
+                         lazy="true" rows="10"  value="#{constatacionFisicaInvView.lazyModel}"
+                         rowsPerPageTemplate="10,20,100" 
+                         paginatorPosition="bottom"
+                         filterEvent="keyup"
+                         emptyMessage="No se encontró datos que mostrar.">
+                <f:facet name="header">
+                    Datos
+                </f:facet>
+                <p:column headerText="Número" style="font-weight: bold; width: 15%;" filterBy="#{cons.codigo}" filterMatchMode="contains">   <!-- filterBy="# {cons.codigo}"-->
+                    <h:outputText value="#{cons.codigo}"/>   
+                </p:column>
+                <p:column headerText="Fecha " style="font-weight: bold; width: 15%; text-align: center" >
+                    <h:outputText value="#{cons.fechaConstatacion}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd"/>
+                    </h:outputText> 
+                </p:column>
+                <p:column headerText="Estado" style="font-weight: bold; width: 15%" filterBy="#{cons.estado.id}">
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('dtConsulta').filter()" styleClass="custom-filter">
+                            <f:selectItem itemLabel="-Estado-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{constatacionFisicaInvView.listEstados}" var="e" itemLabel="#{e.texto}" itemValue="#{e.id}"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{cons.estado.texto}" />  
+                </p:column>
+                <p:column headerText="Observación:" style="font-weight: bold; " filterBy="#{cons.observacion}" filterMatchMode="contains">   <!-- filterBy="# {cons.codigo}"-->
+                    <h:outputText value="#{cons.observacion}"/>   
+                </p:column>
+                <p:column headerText="Acciones" style="font-weight: bold; width: 15%">
+                    <center>
+                        <p:commandLink 
+                            title="Seleccionar Constatación"
+                            process="@this"
+                            actionListener="#{constatacionFisicaInvView.cerrar(cons)}" update="frmMain">
+                            <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                        </p:commandLink>
+
+                        <p:commandLink title="Eliminar" process="@this" 
+                                       actionListener="#{constatacionFisicaInvView.eliminarConst(cons)}"  update="frmMain" >
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red; border-radius: 150px"></i>
+                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink> 
+
+                        <p:commandLink  
+                            title="ReImprimir"
+                            process="@this"
+                            actionListener="#{constatacionFisicaInvView.ReimprimirConstatacion(cons,true)}">
+                            <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                        </p:commandLink>
+                        <p:commandLink  
+                            title="ReImprimir"
+                            process="@this"
+                            actionListener="#{constatacionFisicaInvView.ReimprimirConstatacion(cons,false)}">
+                            <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 5px; color: green;"></i>
+                        </p:commandLink>
+                    </center>
+                </p:column>
+            </p:dataTable>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog>
+        </h:form>
+        <p:dialog header="Formulario Constataciones Físicas de Inventario"
+                  widgetVar="dlgConsulta"
+                  modal="true" closable="false"
+                  height="450px" width="80%"
+                  resizable="false" 
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgConsultas">
+            <h:form prependId="false" id="frmConsulta">
+                <p:growl id="msgss" showDetail="true"/>
+                <p:outputPanel id="outPanelOrden" style="width: 100%">                               
+                    <p:fieldset legend="DATOS GENERALES" style=" font-weight: bold" id="flsDatos">
+                        <p:outputPanel id="outPanelUno" style="width: 100%; margin-bottom: 3px">
+                            <center>
+                                <p:panelGrid columns="6" layout="grid"  styleClass="ui-panelgrid-blank form-group" id="pnlGDatos">
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Número Const.Física" for="numConst" style="width: 100%;"/>
+                                        <p:inputText 
+                                            id="numConst" style="text-transform: uppercase; width: 100px" 
+                                            class="panelInput" readonly="true" value="#{constatacionFisicaInvView.constatacionFisicaInventario.codigo}">
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Fecha Const.Física" for="fecConst" style="width: 100%;"/>
+                                        <p:calendar id="fecConst" pattern="dd-MM-yyyy" mask="true" style="width: 100%;"  navigator="true" locale="es"
+                                                    value="#{constatacionFisicaInvView.constatacionFisicaInventario.fechaConstatacion}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Estado Const.Física" for="estConst" style="width: 100%;"/>
+                                        <p:inputText  
+                                            id="estConst" style="text-transform: uppercase; width: 100px" 
+                                            class="panelInput" readonly="true" value="#{constatacionFisicaInvView.constatacionFisicaInventario.estado}">
+                                        </p:inputText>
+                                    </p:panelGrid>                                                
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Usuario Originador" for="usuConst" style="width: 100%;"/>
+                                        <p:inputText  
+                                            id="usuConst" style="text-transform: uppercase; width: 100px" 
+                                            class="panelInput" readonly="true" value="#{constatacionFisicaInvView.constatacionFisicaInventario.usuarioCreacion}">
+                                        </p:inputText>
+                                    </p:panelGrid> 
+                                    <p:panelGrid columns="2">
+                                        <p:outputLabel value="Observación:" for="obsConst" style="width: 100%;"/>
+                                        <p:inputTextarea  
+                                            id="obsConst" style="text-transform: uppercase; border: 1px solid #cccccc"  rows="3" cols="33" autoResize="true" 
+                                            class="panelInput" readonly="false" value="#{constatacionFisicaInvView.constatacionFisicaInventario.observacion}">
+                                        </p:inputTextarea>
+                                    </p:panelGrid> 
+                                </p:panelGrid> 
+                            </center>
+                        </p:outputPanel>
+                    </p:fieldset>
+                    <p:commandButton  value="Seleccionar Items" style="margin-top: 5px; margin-bottom: 5px" 
+                                      title="Buscar"  id="btnItem"  disabled="#{constatacionFisicaInvView.banderaBotonSelection}"
+                                      icon="fa fa-plus" actionListener="#{constatacionFisicaInvView.buscarItem()}" 
+                                      process="@this" update="dialogItems"/>
+
+                    <p:remoteCommand name="onCellEdit" update="dtItem"/>
+                    <p:dataTable  emptyMessage="Ningún ítem para mostrar."
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="5,10" paginatorPosition="bottom"
+                                  reflow="true" paginator="true"  rows="5"  scrollable="true" scrollWidth="100%"
+                                  id="dtItem" rowIndexVar="can" value="#{constatacionFisicaInvView.listDetalle}"
+                                  var="item" editable="true" editMode="cell" widgetVar="dtItems">
+                        <f:facet name="header" >
+                            Detalle de Items 
+                        </f:facet>
+                        <p:ajax event="cellEdit" listener="#{constatacionFisicaInvView.onCellEdit}" update="dtItem" oncomplete="onCellEdit()"/>
+                        <p:column headerText="#" style=" width: 25px" >
+                            <h:outputText value="#{can +1 }"/>   
+                        </p:column>
+                        <p:column headerText="Cuenta Contable" style="width:50px" >
+                            <h:outputText value="#{item.cuentaContable.codigo}"/> 
+                        </p:column>
+                        <p:column headerText="Código Ítem" style="width:80px" >   
+                            <h:outputText value="#{item.codigoAgrupado}"/>  
+                        </p:column>
+                        <p:column headerText="Ítem" style="width:250px">
+                            <h:outputText value="#{item.descripcion}"/>  
+                        </p:column>
+                        <p:column headerText="Stock" style="width:50px" >
+                            <h:outputText value="#{item.cantidadExistente}"/>  
+                        </p:column>
+                        <p:column style="width:90px" headerText="Constatado">
+                            <p:cellEditor disabled="#{constatacionFisicaInvView.constatacionFisicaInventario.estado eq 'EMITIDA' ? false: true}" >  
+                                <f:facet name="output"><h:outputText value="#{item.cantMas}" /></f:facet>
+                                <f:facet name="input"><p:inputText value="#{item.cantMas}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column style="width:90px" headerText="Diferencia" >
+                            <h:outputText value="#{item.cantMen}" styleClass="#{item.cantMen lt 0 ? 'diferencia': null}" />  
+                        </p:column>
+                        <p:column headerText="Área" style="width:150px" >
+                            <h:outputText value="#{item.asignarGrupo.padre.padre.codigo} - #{item.asignarGrupo.padre.padre.descripcion} "/>  
+                        </p:column>
+                        <p:column headerText="Grupo" style="width:150px" >
+                            <h:outputText value="#{item.asignarGrupo.padre.descripcion}"/>  
+                        </p:column>
+                        <p:column headerText="Subgrupo" style="width:150px" >
+                            <h:outputText value="#{item.asignarGrupo.descripcion}"/>  
+                        </p:column>
+                        <p:column headerText="Observación:" rendered="#{constatacionFisicaInvView.constatacionFisicaInventario.estado eq 'EMITIDA' ? true: false}" style="width:300px" >
+                            <p:cellEditor>
+                                <f:facet name="output"><h:outputText value="#{item.obsAdicional}" /></f:facet>
+                                <f:facet name="input"><p:inputText value="#{item.obsAdicional}" style="width:100%"/></f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="Imagen" style="text-align: center; width: 15%">
+                            <p:commandLink actionListener="#{constatacionFisicaInvView.mostrarImgDialog(item)}" title="Img" process="@this">
+                                <p:graphicImage value="/resources/icons/foto.png"
+                                                width="auto" height="25" 
+                                                style="margin-right: 8px;"/>   
+                            </p:commandLink>                
+                        </p:column>
+                        <p:column headerText="Acciones" style=" width: 80px">
+                            <center>
+                                <p:commandLink title="Eliminar" process="@this" actionListener="#{constatacionFisicaInvView.borrarElementoLista(can)}" disabled="#{constatacionFisicaInvView.banderaBotonG}"
+                                               update="dtItem">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el item?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>        
+                            </center>
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                    <br/>
+                    <center> 
+                        <p:commandButton value="Guardar"
+                                         icon="fa fa-save"
+                                         id="btnGen" disabled="#{constatacionFisicaInvView.banderaBotonG}"
+                                         process="outPanelUno" update="frmMain" actionListener="#{constatacionFisicaInvView.guardar()}" 
+                                         style=" width: 170px">
+                            <p:confirm header="Guardar Información" message="Los datos serán guardados, favor revise si toda la información esta correcta. Desea Continuar?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                        <p:spacer width="10" />
+                        <p:commandButton value="Cancelar"
+                                         icon="ui-icon-clear" styleClass="red-btn"
+                                         process="@this" update="frmMain" actionListener="#{constatacionFisicaInvView.cancelar()}"
+                                         style="width: 170px">
+                        </p:commandButton>
+                        <p:spacer width="10" />
+<!--                                            <p:commandButton value="IMPRIMIR" disabled="#{constatacionFisicaInvView.bolImprimir}"
+                                         icon="fa fa-print" process="@this" actionListener="#{constatacionFisicaInvView.imprimirConstatacion()}" 
+                                         style="width: 170px">
+                        </p:commandButton>-->
+
+                    </center>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="imagenDialog" closeOnEscape="true" header="Constatación" widgetVar="imagenDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formImg" style="width: 100%;" >
+                                <p:panelGrid  columns="4" columnClasses="ui-grid-col-3" styleClass="form-group ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <f:facet name="header">
+                                            <p:graphicImage value="#{constatacionFisicaInvView.item.urlImagenConstatacion}"
+                                                            width="250" height="250" 
+                                                            style="margin-right: 8px;"/>  
+                                        </f:facet>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dialogItems" widgetVar="dialogItems" width="75%" position="center" 
+                  draggable="false" header="Items" modal="true" showEffect="fade" height="500px"
+                  hideEffect="fade" resizable="false">
+            <h:form id="formItemsDialog" prependId="false">
+                <p:dataTable id="dtItemDialog" 
+                             var="item" value="#{constatacionFisicaInvView.lazyItem}"
+                             reflow="true"
+                             paginator="true"  rowKey="#{item.id}"
+                             lazy="true" rows="15" 
+                             rowsPerPageTemplate="15,30"
+                             paginatorPosition="bottom"
+                             filterEvent="keyup"
+                             selection="#{constatacionFisicaInvView.listItemsSeleccionados}"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"  
+                             emptyMessage="No existe item.">
+                    <f:facet name="header" >
+                        <p:commandButton process="@form"  icon="fa fa-plus-circle" value="Añadir" actionListener="#{constatacionFisicaInvView.addItemsSelect()}" />
+                    </f:facet>
+                    <p:column selectionMode="multiple" style="width: 3%;text-align:center"/>
+                    <p:column headerText="Código" style="font-weight: bold; width: 9%; text-align: center" filterBy="#{item.codigoAgrupado}" filterMatchMode="contains">
+                        <h:outputText value="#{item.codigoAgrupado}"/>   
+                    </p:column>
+                    <p:column headerText="Area" filterBy="#{item.asignarGrupo.padre.padre.nombre}" filterMatchMode="contains" width="18%">
+                        <h:outputText value="#{item.asignarGrupo.padre.padre.nombre}"/> 
+                        <!--<h:outputText value="#{ detalleItemView.obtenerNombreSub(item.asignarGrupo.padre).nombre}"/>--> 
+                    </p:column>
+                    <p:column headerText="Grupo" filterBy="#{item.asignarGrupo.padre.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{item.asignarGrupo.padre.nombre}"/> 
+                    </p:column>
+                    <p:column headerText="Subgrupo" filterBy="#{item.asignarGrupo.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{item.asignarGrupo.nombre}"/> 
+                    </p:column>
+                    <p:column headerText="Descripción" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                        <h:outputText value="#{item.descripcion}"/> 
+                    </p:column>
+                    <p:column headerText="Unidad de medida" style="text-align: center"  width="6%">
+                        <h:outputText value="#{item.tipoMedida.descripcion}"/>  
+                    </p:column>
+                    <p:column headerText="Stock"  width="5%" style="text-align: center">
+                        <h:outputText value="#{item.cantidadExistente}"/>  
+                    </p:column>                 
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

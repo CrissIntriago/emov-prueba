@@ -1,0 +1,523 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Iniciar Trámite
+    </ui:define>
+
+    <ui:param name="tittle" value="INICIAR TRÁMITE"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="formMain" prependId="false">
+                    <div class="card" style="padding: 20px; "> 
+                        <p:outputLabel value="!👋 Hola Bienvenido al inicio del trámite #{userSession.nameUser}! 😁 antes de iniciar un trámite verifica que toda la información esté correctamente.️" 
+                                       style="font-weight: bold"/>
+                    </div>
+                    <div class="ui-g">
+                        <div class="ui-g-4">
+                            <div class="card">
+                                <p:outputLabel value="🏢 Departamentos y Servicios Disponibles" style="font-weight: bold"/><br/><br/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                    <h:panelGroup id="panelDept">
+                                        <p:outputLabel id="lblDepartamento" value="Departamentos"  style="font-weight: bolder" /><br></br>
+                                        <p:selectOneMenu id="cmbDepartamento" value="#{iniciarTramiteVentanillaMB.departamento}" filter="true"
+                                                         converter="dtoConverter" autoWidth="true"  
+                                                         style="width: 100%" filterMatchMode="contains">
+                                            <p:ajax listener="#{iniciarTramiteVentanillaMB.getServicioByDpto()}" 
+                                                    update="panelItems"/>
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" />
+                                            <f:selectItems value="#{iniciarTramiteVentanillaMB.departamentos}" var="dpt" 
+                                                           itemLabel="#{dpt.nombre}" itemValue="#{dpt}"/>
+                                        </p:selectOneMenu>    
+                                    </h:panelGroup> 
+                                    <h:panelGroup id="panelItems">
+                                        <p:outputLabel id="lblServicios" value="Servicio" 
+                                                       style="font-weight: bolder" /><br></br>
+                                        <p:selectOneMenu value="#{iniciarTramiteVentanillaMB.tramite.servicio}"
+                                                         converter="dtoConverter" autoWidth="false" filter="true"
+                                                         style="width: 100%" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" />
+                                            <f:selectItems value="#{iniciarTramiteVentanillaMB.servicios}"
+                                                           var="item" itemLabel="#{item.nombre}" itemValue="#{item}"/>
+                                            <p:ajax update="formMain" listener="#{iniciarTramiteVentanillaMB.cargarTipoContribuyentes()}"/>
+                                        </p:selectOneMenu>    
+                                    </h:panelGroup>
+                                    <h:panelGroup id="panelContribuyentes">
+                                        <p:outputLabel id="lblContribuyentes" value="Contribuyente" style="font-weight: bold" /><br></br>
+                                        <p:selectOneMenu value="#{iniciarTramiteVentanillaMB.servicioTipo}"
+                                                         converter="dtoConverter" autoWidth="false" filter="true"
+                                                         style="width: 100%">
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" />
+                                            <f:selectItems value="#{iniciarTramiteVentanillaMB.serviciosTipos}"
+                                                           var="st" itemLabel="#{st.tipoContribuyentes.nombre}" itemValue="#{st}"/>
+                                            <p:ajax update="formMain" listener="#{iniciarTramiteVentanillaMB.getRequisitosByServicio()}"/>
+                                        </p:selectOneMenu>    
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </div>
+                            <div class="card">
+                                <p:outputLabel value="👩 🧑 Solicitante" style="font-weight: bold" /><br/><br/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="idBeneficiacio">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Identificación:" style="font-weight: bold"/>
+                                        <div class="ui-inputgroup"> 
+                                            <p:inputText value="#{iniciarTramiteVentanillaMB.tramite.solicitante.identificacion}" 
+                                                         placeholder="Ingrese la Identificación" style="width: 100%" 
+                                                         readonly="#{iniciarTramiteVentanillaMB.tramite.solicitante.id ne null}"
+                                                         onkeypress="if (event.keyCode == 13) {
+                                                                     return false;
+                                                                 }">
+                                            </p:inputText>
+                                            <p:spacer width="5" />
+                                            <p:commandButton icon="fa fa-search" title="Buscar Solicitante" 
+                                                             actionListener="#{iniciarTramiteVentanillaMB.searchBeneficiario(true)}">
+                                                <p:ajax event="dialogReturn" update="idBeneficiacio"
+                                                        listener="#{iniciarTramiteVentanillaMB.selectBeneficiario}"/>
+                                            </p:commandButton>
+                                            <p:remoteCommand name="buscar" actionListener="#{iniciarTramiteVentanillaMB.searchBeneficiario(true)}"  />
+                                            <p:spacer width="5" />
+                                            <p:commandButton  icon="fa fa-trash" update="idBeneficiacio"
+                                                              actionListener="#{iniciarTramiteVentanillaMB.limpiarDatosSolicitante()}" >
+                                            </p:commandButton>
+                                        </div>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                        <p:outputLabel value="Nombres:" style="font-weight: bold"/>
+                                        <p:inputText id="nombre_solicitante" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.nombre}"
+                                                     onkeypress="focusNextOnEnter(event, 'razonSocial')" readonly="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Apellidos:" style="font-weight: bold"/>
+                                        <p:inputText id="apellido_solicitante" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.apellido}"
+                                                     onkeypress="focusNextOnEnter(event, 'razonSocial')" readonly="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                  rendered="#{iniciarTramiteVentanillaMB.tramite.solicitante.identificacion.length() eq 13}">
+                                        <p:outputLabel value="Razon Social:" style="font-weight: bold"/>
+                                        <p:inputText id="razonSocial" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.razonSocial}"
+                                                     onkeypress="focusNextOnEnter(event, 'razonSocial')" readonly="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                                  rendered="#{iniciarTramiteVentanillaMB.tramite.solicitante.identificacion.length() eq 13}">
+                                        <p:outputLabel value="Nombre Comercial:" style="font-weight: bold"/>
+                                        <p:inputText id="nombre" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.nombreComercial}"
+                                                     onkeypress="focusNextOnEnter(event, 'nombre')" readonly="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Dirección:" style="font-weight: bold"/>
+                                        <p:inputText id="direccion" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.direccion}"
+                                                     onkeypress="focusNextOnEnter(event, 'direccion')"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Correo:" style="font-weight: bold"/>
+                                        <p:inputText id="correo" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.email}"
+                                                     onkeypress="focusNextOnEnter(event, 'email')"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Teléfono:" style="font-weight: bold"/>
+                                        <p:inputText id="telefono" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.solicitante.celular}"
+                                                     onkeypress="focusNextOnEnter(event, 'celular')"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <center>
+                                            <p:commandButton value="Actualizar" icon="fa fa-refresh" style="width: auto"
+                                                             actionListener="#{iniciarTramiteVentanillaMB.actualizarSolicitante()}"/>
+                                        </center>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </div>
+                            <div class="card">
+                                <p:outputLabel value="🧐 Asunto u observación del trámite" style="font-weight: bold"/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup>
+                                        <p:inputTextarea id="concepto" style="width: 100%;" value="#{iniciarTramiteVentanillaMB.tramite.concepto}"
+                                                         onkeypress="focusNextOnEnter(event, 'concepto')" readonly="false" rows="5">
+                                        </p:inputTextarea>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </div>
+                        </div>
+                        <div class="ui-g-8">
+                            <div class="card">
+                                <p:outputLabel value="📑 Escoja un servicio y el tipo de contribuyente para la carga de los requisitos" style="font-weight: bold"
+                                               rendered="#{iniciarTramiteVentanillaMB.tramite.servicio eq null or iniciarTramiteVentanillaMB.servicioTipo eq null}"/>
+                                <p:outputPanel rendered="#{not empty iniciarTramiteVentanillaMB.listaRequisitosGlobal}"> 
+                                    <p:outputLabel value="📃 Requisitos del Servicio #{iniciarTramiteVentanillaMB.tramite.servicio.nombre}" 
+                                                   style="font-weight: bold"/><br/><br/>
+                                    <h:panelGroup>
+                                        <p:dataTable id="dtRequisitos" value="#{iniciarTramiteVentanillaMB.listaRequisitosGlobal}"
+                                                     var="item" paginator="true" rowsPerPageTemplate="10,15" rows="10"
+                                                     paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                     emptyMessage="No existen requisitos" tableStyle="table-layout:auto" rowKey="#{item.servicioRequisitos.id}"
+                                                     selection="#{iniciarTramiteVentanillaMB.requisitosSeleccionados}">
+                                            <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                                            <p:column headerText="Nombre Requisito" style="width: 450px">
+                                                <p:outputLabel value="#{item.servicioRequisitos.nombre}"/>
+                                            </p:column>
+                                            <p:column headerText="Requerido" style="width: 16px;text-align: center;">
+                                                <p:outputLabel value="#{item.servicioRequisitos.opcional ==true?'NO':'SI'}"/>
+                                            </p:column>
+                                        </p:dataTable>
+                                    </h:panelGroup>
+                                </p:outputPanel>
+                            </div>
+                            <div class="card">
+                                <p:outputLabel value="⚠️ Validaciones" style="font-weight: bold"/><br/><br/>
+                                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                    <h:panelGroup rendered="#{iniciarTramiteVentanillaMB.tramite.servicio.vinculadoPredio}">
+                                        <p:outputLabel value="Validación de Predio" style="font-weight: bold"/><br/><br/>
+                                        <div class="card">
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Código Predial/Catastral" style="font-weight: bold"/>
+                                                <p:panelGrid columns="3">
+                                                    <p:selectOneMenu value="#{iniciarTramiteVentanillaMB.tipoPredio}" 
+                                                                     style="width:100% !important;" autoWidth="false">
+                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                                                        <f:selectItem itemLabel="Urbano" itemValue="U" />
+                                                        <f:selectItem itemLabel="Rural" itemValue="R" />
+                                                    </p:selectOneMenu>  
+                                                    <p:inputText value="#{iniciarTramiteVentanillaMB.codigoCatastral}"/>
+                                                    <p:commandButton icon="fa fa-search" title="Validar" 
+                                                                     actionListener="#{iniciarTramiteVentanillaMB.validarPredio()}"/>
+                                                </p:panelGrid> 
+                                            </p:panelGrid>
+                                        </div>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{not empty iniciarTramiteVentanillaMB.listRequisitoTasa}">
+                                        <p:outputLabel value="Comprobantes" style="font-weight: bold"/><br/><br/>
+                                        <!--                                        <div class="card">
+                                                                                    <p:panelGrid columns="3">
+                                                                                        <p:outputLabel value="Código verificador" style="font-weight: bold"/>
+                                                                                        <p:inputText id="codigoVerificador" value="# {iniciarTramiteVentanillaMB.codigoVerificador}">
+                                                                                            <p:tooltip id="toolTipVerificador" for="codigoVerificador" value="Ingrese el código generado en la liquidacion"/>
+                                                                                        </p:inputText>
+                                                                                        <p:commandButton icon="fa fa-search" title="Validar" 
+                                                                                                         actionListener="# {iniciarTramiteVentanillaMB.validarComprobante()}"/> 
+                                                                                    </p:panelGrid><br/>
+                                                                                    <p:repeat value="# {iniciarTramiteVentanillaMB.listRequisitoTasa}" var="tasa">
+                                                                                        <h:panelGroup>
+                                                                                            <p:outputLabel value="* # {tasa.nombre}" style="font-weight: bold"/>
+                                                                                        </h:panelGroup>
+                                                                                    </p:repeat>
+                                                                                </div>-->
+                                        <p:repeat value="#{iniciarTramiteVentanillaMB.listRequisitoTasa}" var="tasa">
+                                            <div class="card">
+                                                <p:panelGrid columns="1">
+                                                    <p:outputLabel value="#{tasa.nombre}" style="font-weight: bold"/>
+                                                    <p:panelGrid columns="3">
+                                                        <p:inputText id="codigoVerificador" value="#{iniciarTramiteVentanillaMB.codigoVerificador}">
+                                                            <p:tooltip id="toolTipVerificador" for="codigoVerificador" value="Código verificador"/>
+                                                        </p:inputText>
+                                                        <p:inputText id="numComprobante" value="#{iniciarTramiteVentanillaMB.numeroComprobante}">
+                                                            <p:tooltip id="toolTipFades" for="numComprobante" value="Número de Comprobante"/>
+                                                        </p:inputText>
+                                                        <p:commandButton icon="fa fa-search" title="Validar" 
+                                                                         actionListener="#{iniciarTramiteVentanillaMB.validarComprobante(tasa)}"/> 
+                                                    </p:panelGrid>
+                                                </p:panelGrid>
+                                            </div>
+                                        </p:repeat>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </div>
+                            <div class="card">
+                                <p:outputLabel value="📑 Subir Documento" style="font-weight: bold"/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="panelDocumento">
+                                    <p:outputLabel value="#{iniciarTramiteVentanillaMB.file.fileName}" rendered="#{iniciarTramiteVentanillaMB.file ne null}"/>
+                                    <p:fileUpload fileUploadListener="#{iniciarTramiteVentanillaMB.handleFileUpload}"  style="width: 100%" accept=".pdf"
+                                                  skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false"
+                                                  messageTemplate="Solo puede subir archivos PDF"
+                                                  label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" update="panelDocumento" previewWidth="60" />
+                                </p:panelGrid>
+                            </div>
+                            <div class="card">
+                                <p:outputLabel value="🧒 👦 Usuarios disponibles para el trámite" style="font-weight: bold"/>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="El usuario se asignará automaticamente" 
+                                                   style="margin-top: 10px; margin-bottom: 10px; font-weight: bold;"
+                                                   rendered="#{!iniciarTramiteVentanillaMB.eleccionUsuarios}"/>
+
+                                    <h:panelGroup  rendered="#{iniciarTramiteVentanillaMB.eleccionUsuarios}" >
+                                        <p:outputLabel value="Usuario asignado" 
+                                                       style="margin-top: 10px; margin-bottom: 10px; font-weight: bold;"
+                                                       rendered="#{iniciarTramiteVentanillaMB.eleccionUsuarios and iniciarTramiteVentanillaMB.existeResponsable}"/>
+                                        <p:dataTable id="dtUsuarios" widgetVar="dtUsuarios" 
+                                                     value="#{iniciarTramiteVentanillaMB.userList}" var="user"
+                                                     rendered="#{iniciarTramiteVentanillaMB.existeResponsable}"
+                                                     rowKey="#{user.id}" reflow="true" rowIndexVar="i"
+                                                     emptyMessage="No existen responsables"  style="font-size: 12px">
+                                            <p:column headerText="Usuario" filterBy="#{user.usuario.usuario}">
+                                                <h:outputText value="#{user.usuario.usuario}"/>
+                                            </p:column>
+                                            <p:column headerText="Nombres" filterBy="#{user.usuario.funcionario.persona.nombre}">
+                                                <h:outputText value="#{user.usuario.funcionario.persona.nombre}"/><br/>
+                                            </p:column>
+                                            <p:column headerText="Apellidos" filterBy="#{user.usuario.funcionario.persona.apellido}">
+                                                <h:outputText value="#{user.usuario.funcionario.persona.apellido}"/><br/>
+                                            </p:column>
+                                            <p:column headerText="Rol">
+                                                <h:outputText value="#{user.rol.nombre}"/>
+                                            </p:column>
+                                        </p:dataTable>
+
+
+                                        <p:dataTable id="dtUsuariosSelect" widgetVar="dtUsuariosSelect"
+                                                     value="#{iniciarTramiteVentanillaMB.userList}" var="TasksUser"
+                                                     filterEvent="enter"
+                                                     paginator="true" rowsPerPageTemplate="10,50,100" 
+                                                     paginatorPosition="bottom" rows="10" 
+                                                     rendered="#{!iniciarTramiteVentanillaMB.existeResponsable}"
+                                                     rowKey="#{TasksUser.id}" reflow="true"
+                                                     selection="#{iniciarTramiteVentanillaMB.userSelect}" rowIndexVar="i"
+                                                     emptyMessage="No existen registros"  style="font-size: 12px">
+                                            <p:column headerText="Usuario" filterBy="#{TasksUser.usuario.usuario}">
+                                                <h:outputText value="#{TasksUser.usuario.usuario}"/>
+                                            </p:column>
+                                            <p:column headerText="Nombres" filterBy="#{TasksUser.usuario.funcionario.persona.apellido}">
+                                                <h:outputText value="#{TasksUser.usuario.funcionario.persona.apellido}"/><br/>
+                                            </p:column>
+                                            <p:column headerText="Apellidos" filterBy="#{TasksUser.usuario.funcionario.persona.apellido}">
+                                                <h:outputText value="#{TasksUser.usuario.funcionario.persona.apellido}"/><br/>
+                                            </p:column>
+                                            <p:column headerText="Rol" width="70">
+                                                <h:outputText value="#{TasksUser.rol.nombre}"/>
+                                            </p:column>
+                                            <p:column headerText="***" style="text-align: center" width="40" 
+                                                      selectionMode="single"/>
+                                        </p:dataTable>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </div>
+                        </div>
+                    </div>
+                    <center>
+                        <h:panelGroup id="panelTramite" layout="block">
+                            <br/>
+                            <p:commandButton value="Iniciar trámite" icon="fa fa-play" 
+                                             actionListener="#{iniciarTramiteVentanillaMB.initTramite()}"
+                                             id="btnIniciarTramite" style="width: auto"/>
+                        </h:panelGroup>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dialogDeudas" width="60%" widgetVar="dialogDeudas" modal="true" showEffect="fade"
+                  hideEffect="fade" resizable="false" closeOnEscape="true">
+            <h:form id="formDeudasPredio"  prependId="false">
+                <div class="ui-g ui-fluid">
+                    <div class="ui-g-4">
+                        <h:panelGroup>
+                            <h4>Detalle del Predio</h4>
+                            <p:panelGrid columns="2">
+                                <h:outputText value="Código Catastral:" style="font-weight: bold"/>
+                                <h:outputText value="#{iniciarTramiteVentanillaMB.catPredio.claveCat}"/>
+                                <h:outputText value="Código Predia:" style="font-weight: bold"/>
+                                <h:outputText value="#{iniciarTramiteVentanillaMB.catPredio.numPredio}"/>
+                                <h:outputText value="Cédula Contribuyente:" style="font-weight: bold"/>
+                                <h:outputText value="#{iniciarTramiteVentanillaMB.clientePredio()!=null? iniciarTramiteVentanillaMB.clientePredio().identificacion:''}"/>
+                                <h:outputText value="Contribuyente:" style="font-weight: bold"/>
+                                <h:outputText value="#{iniciarTramiteVentanillaMB.clientePredio()!=null? iniciarTramiteVentanillaMB.clientePredio().nombreCompleto:''}"/>
+                                <h:outputText value="Dirección:" style="font-weight: bold"/>
+                                <h:outputText value="#{iniciarTramiteVentanillaMB.catPredio.direccion}"/>
+                                <h:outputText value="Total a pagar:" style="font-weight: bold"/>
+                                <h:outputText value="$ #{iniciarTramiteVentanillaMB.totalEmisiones}" style="font-weight: bold"/>
+                            </p:panelGrid>
+                            <br/><br/>
+                            <center>
+                                <p:commandButton value="Autorizar" 
+                                                 rendered="#{iniciarTramiteVentanillaMB.requiereAutorizacion and !iniciarTramiteVentanillaMB.predioAutorizado}"
+                                                 style="margin-right: 5px; width: auto" icon="fa fa-check" 
+                                                 onclick="PF('dlgAutorizado').show()" update="formAutorizacion"/>
+                                <p:commandButton value="Aceptar"
+                                                 style="margin-right: 5px;width: auto" icon="fa fa-check" 
+                                                 rendered="#{!iniciarTramiteVentanillaMB.requiereAutorizacion or iniciarTramiteVentanillaMB.predioAutorizado}"
+                                                 onclick="PF('dialogDeudas').hide()" update="formAutorizacion"/>
+                                <p:commandButton value="Cancelar" onclick="PF('dialogDeudas').hide()" 
+                                                 style="background-color: red;width: auto" icon="fa fa-close"/>
+                            </center>
+                        </h:panelGroup>
+                    </div>
+                    <div class="ui-g-8">
+                        <h:panelGroup>
+                            <h4>Deudas</h4>
+                            <p:outputLabel value="No existen deudas" style="font-weight: bold" 
+                                           rendered="#{empty iniciarTramiteVentanillaMB.emisionesPrediales}"/>
+                            <p:dataTable id="dtDeudas" value="#{iniciarTramiteVentanillaMB.emisionesPrediales}"
+                                         var="deuda" widgetVar="dtDeudas" rendered="#{not empty iniciarTramiteVentanillaMB.emisionesPrediales}"
+                                         emptyMessage="No existen duedas" scrollable="true" scrollHeight="250">
+                                <p:column headerText="Año" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="#{deuda.anio}"/>
+                                </p:column>
+                                <p:column headerText="Total de Rubros" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.totalPago}"/>
+                                </p:column>
+                                <p:column headerText="Descuento Pronto pago" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.descuento}"/>
+                                </p:column>
+                                <p:column headerText="Interés" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.interes}"/>
+                                </p:column>
+                                <p:column headerText="Recargo" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.recargo}"/>
+                                </p:column>
+                                <p:column headerText="Coactiva" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.valorCoactiva}"/>
+                                </p:column>
+                                <p:column headerText="Abonado" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.abonado()}"/>
+                                </p:column>
+                                <p:column headerText="Total" style="width: 16px;text-align: center;">
+                                    <p:outputLabel value="$ #{deuda.pagoFinal}"/>
+                                </p:column>
+                                <p:columnGroup type="footer">
+                                    <p:row id="footerTotalDeudas" style="font-weight: bold;font-size: 17px;">
+                                        <p:column colspan="1" footerText="Total:"
+                                                  style="font-weight: bold;font-size: 11px;width: 16px;"/>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalRubros}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText> 
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalDescuentoProntoPago}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalInteres}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalRecargo}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalCoactiva}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalEmisiones}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column style="font-weight: bold;font-size: 11px;width: 16px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{iniciarTramiteVentanillaMB.totalEmisiones}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="continuarDlg" widgetVar="continuarDlg" width="30%" position="center" closable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false" id="frmContinuar">
+                <div class="ticket__divider">
+                    <center>
+                        <h2>Inicio del Trámite</h2>
+                        <p:outputLabel value="#{iniciarTramiteVentanillaMB.tramite.tipoTramite.descripcion}"
+                                       style="font-weight: bold;font-size: 20px;"/><br/>
+                        <p:outputLabel value="#{iniciarTramiteVentanillaMB.tramite.servicio.nombre}"
+                                       style="font-weight: bold;"/><br/>
+                        <p:outputLabel value="#{iniciarTramiteVentanillaMB.tramite.codigo}"
+                                       style="width: 100%; font-size: 20px;"/>
+                    </center>
+                </div>
+                <div class="ticket__divider">
+                    <br/>
+                    <center>
+                        <p:commandButton value="Continuar" icon="fa fa-play" 
+                                         actionListener="#{iniciarTramiteVentanillaMB.continuarProceso()}"
+                                         id="btnContinuar" styleClass="Fs16" style="width: auto;margin-right: 5px"/>
+                        <p:commandButton value="Comprobante" icon="fa fa-print"
+                                         actionListener="#{iniciarTramiteVentanillaMB.imprimirTicket()}"
+                                         id="btnImprimir" styleClass="Fs16" style="width: auto;"/>
+                    </center>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgAutorizado" widgetVar="dlgAutorizado" modal="true" showEffect="fade" hideEffect="fade"
+                  resizable="false" closable="false">
+            <div class="card">
+                <h:form id="formAutorizacion">
+                    <p:poll widgetVar="pollIncrement" interval="3"
+                            listener="#{iniciarTramiteVentanillaMB.predioConDeudaAutorizado}" autoStart="false"/>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                 rendered="#{!iniciarTramiteVentanillaMB.loading}">
+                        <h:panelGroup>
+                            <center>
+                                <h1 class="p-text-center"><h:outputText value="Validar Predio con deudas"/></h1>
+                            </center>
+                            <p:outputLabel value="Ingrese una observación de porque se debería permitir el predio con deudas.." />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Observación:" style="font-weight: bold"/>
+                            <p:inputTextarea id="conceptoAprobarPredio" style="width: 100%;" 
+                                             value="#{iniciarTramiteVentanillaMB.observacionAprobarPredio}"
+                                             rows="6" cols="30">
+                            </p:inputTextarea>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <center>
+                                <p:commandButton value="Autorizar" style="margin-right: 5px" icon="fa fa-check" 
+                                                 actionListener="#{iniciarTramiteVentanillaMB.autorizarPredioConDeudas()}"/>
+                                <p:commandButton value="Cancelar" onclick="PF('dlgAutorizado').hide()" 
+                                                 style="background-color: red;" icon="fa fa-close"/>
+                            </center>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group"
+                                 rendered="#{iniciarTramiteVentanillaMB.loading}">
+                        <h:panelGroup>
+                            <center>
+                                <h1 class="p-text-center"><h:outputText value="Validar Predio con deudas"/></h1> 
+                            </center>
+                            <p:outputLabel value="Porfavor espere, mientras un administrador aprueba esta solicitud." />
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <center>
+                                <p:graphicImage value="/resources/images/loading.gif" library="barcelona-layout" 
+                                                style="background: transparent" width="50%"/>
+                                <br/>
+                                <p:commandButton value="Cancelar Aprobación" 
+                                                 actionListener="#{iniciarTramiteVentanillaMB.cancelarAprobacion()}"
+                                                 style="background-color: red;" icon="fa fa-close"/>
+                            </center>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

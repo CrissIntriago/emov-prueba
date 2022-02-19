@@ -1,0 +1,244 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Décimo Tercer Sueldo
+    </ui:define>
+    <ui:param name="tittle" value="Rol Décimo Tercer Sueldo" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <br></br>
+                    <p:outputPanel id="fomInfo">                        
+                        <p:fieldset id="fieldsetanticipo" 
+                                    legend="Cabecera de Rol" toggleable="true" 
+                                    toggleSpeed="500" collapsed="false"
+                                    style="width: 79.2%;margin-left: 10%" >
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel value="Periodo" for="periodo" />
+                                    <p:selectOneMenu id="periodo" style="width: 100px;"
+                                                     value="#{decimoTerceroView.busqueda.anio}">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                      noSelectionOption="true" />
+                                        <f:selectItems value="#{decimoTerceroView.periodos}"
+                                                       var="periodo"
+                                                       itemLabel="#{periodo.anio}"
+                                                       itemValue="#{periodo.anio}"/>
+                                        <p:ajax  listener="#{decimoTerceroView.actualizarRoles()}" update="mes"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Rol: " for="@next"/>
+                                    <p:selectOneMenu id="mes" value="#{decimoTerceroView.decimotercero.tipoRol}"
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{decimoTerceroView.rolesMensuales}"
+                                                       var="m"
+                                                       itemLabel="#{m.descripcion}"
+                                                       itemValue="#{m}"/>
+                                        <p:ajax update="mes,tipoRol,mesRol,estadoRol,panelFondos"
+                                                listener="#{decimoTerceroView.buscar()}" process="@this"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Tipo Rol" for="tipoRol"/>
+                                    <p:inputText id="tipoRol" value="#{decimoTerceroView.decimotercero.tipoRol.tipoRol.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Mes Rol" for="mesRol"/>
+                                    <p:inputText id="mesRol" value="#{decimoTerceroView.decimotercero.tipoRol.mes.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Estado Rol" for="estadoRol"/>
+                                    <p:inputText id="estadoRol" value="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.texto}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid> 
+                        </p:fieldset>
+                        <br/><br/>
+                        <h:panelGroup id="panelFondos" layout="block">
+                            <p:commandButton value="Actualizar datos"
+                                             disabled="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='aprobado-rol' or
+                                                         decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='pagado-rol'}"
+                                             icon="fa fa-fw fa-refresh"
+                                             update="dataTableFondos,fieldsetanticipo"
+                                             actionListener="#{decimoTerceroView.actualizarDatos()}"
+                                             process="@this"
+                                             style="width: 150px;margin-left: 10%"/>
+                            <p:commandButton value="Eliminar Registros"
+                                             disabled="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='aprobado-rol' or
+                                                         decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='pagado-rol'}"
+                                             icon="fa fa-fw fa-trash"
+                                             update="dataTableFondos,fieldsetanticipo"
+                                             actionListener="#{decimoTerceroView.eliminarRegistros()}"
+                                             process="@this"
+                                             styleClass="red-btn"
+                                             style="width: 150px;color: black"/>
+                            <p:commandButton value="Generar Reporte"
+                                             icon="fa fa-file-pdf-o"
+                                             actionListener="#{decimoTerceroView.generarReporte()}"
+                                             process="@this"
+                                             style="width: 150px;"/>
+                            <br/><br/>
+                            <p:dataTable id="dataTableFondos" widgetVar="dataTableFondos" var="decimo" 
+                                         value="#{decimoTerceroView.lazy}" 
+                                         paginator="true" rows="15"
+                                         paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         selection="#{decimoTerceroView.decimoterceroSeleccionado}" selectionMode="single" rowKey="#{decimo.id}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="15,20,30,40,50,100" 
+                                         editable="true" editMode="cell" lazy="true"
+                                         rowIndexVar="num"
+                                         emptyMessage="No existen criterio de busqueda especificado"
+                                         style="width: 80%;margin-left: 10%">
+                                <f:facet name="header">
+                                    #{decimoTerceroView.rolSeleccionado.descripcion}
+                                </f:facet>
+
+                                <p:column headerText="N°" style="width: 3%;text-align: center">
+                                    <h:outputText value="#{num+1}"/>
+                                </p:column>                                
+                                <p:column headerText="N° Cedula" style="width: 8%;text-align: center" filterBy="#{decimo.acumulacionFondos.servidor.persona.identificacion}" filterMatchMode="contains">
+                                    <h:outputText value="#{decimo.acumulacionFondos.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre Servidor" style="width: 20%;text-align: center" filterBy="#{decimo.acumulacionFondos.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                    <h:outputText value="#{decimo.acumulacionFondos.servidor.persona.nombreCompleltoSql}"/>
+                                </p:column>                                
+                                <p:column headerText="Tiene Derecho" style="width: 5%;text-align: center;" filterBy="#{decimo.acumulacionFondos.derecho}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('datatableFondos').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{decimo.acumulacionFondos.derecho ? 'SI':'NO'}"/>
+                                </p:column>
+                                <p:column headerText="Acumula" style="width: 5%;text-align: center;" filterBy="#{decimo.acumulacionFondos.acumula}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataTableFondos').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{decimo.acumulacionFondos.acumula ? 'SI':'NO'}"/>
+                                </p:column>
+                                <p:column headerText="Días Laborado" style="width: 10% ;text-align: center;">
+                                    <h:outputText value="#{decimo.diasLaborado.dias}"/>
+                                </p:column>
+                                <p:column headerText="R.M.U." style="width: 10%;text-align: center;">
+                                    <h:outputText value="#{decimo.distributivoEscala.remuneracionDolares}"/>
+                                </p:column>
+                                <p:column headerText="Décimo Tercero" style="width: 10%;text-align: center;">
+                                    <h:outputText value="#{decimo.valorFondos}"/>
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 8%"
+                                          rendered="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='registrado-rol'}">  
+                                    <p:commandLink title="Eliminar"  
+                                                   action="#{decimoTerceroView.eliminar(decimo)}"
+                                                   process="@this" update="formMain:panelFondos">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                        <p:confirm header="Confirmación de Eliminación" message="¿Está seguro que desea eliminar?" 
+                                                   icon="fa fa-exclamation-triangle"/>
+                                        <p:confirm header="Confirmación de Eliminación" message="¿Está seguro que desea eliminar?"
+                                                   icon="fa fa-exclamation-triangle"/>
+
+                                    </p:commandLink>
+                                </p:column>
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="7" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total Acumulan:" />
+                                        <p:column footerText="#{decimoTerceroView.totalAcumula}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column rendered="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='registrado-rol'}"
+                                                  footerText="" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column colspan="7" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total No Acumulan:" />
+                                        <p:column footerText="#{decimoTerceroView.totalNoAcumula}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column rendered="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='registrado-rol'}"
+                                                  footerText="" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column colspan="7" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Valor Total:" />
+                                        <p:column footerText="#{decimoTerceroView.totalTotal}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column rendered="#{decimoTerceroView.decimotercero.tipoRol.estadoAprobacion.codigo=='registrado-rol'}"
+                                                  footerText="" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="dlgGenerarReporte" widgetVar="dlgGenerarReporte" width="40%" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Parametros del reporte" >
+            <h:form prependId="false" id="formReporte">
+                <p:fieldset legend="Listado de roles:">
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:selectOneMenu id="rolesList" value="#{decimoTerceroView.tipoRolSeleccionado}"
+                                         converter="#{utilConverter}"
+                                         filter="true" filterMatchMode="contains"
+                                         style="width: 100%;" panelStyle="width:100px">
+                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{decimoTerceroView.rolesMensuales}"
+                                           var="m"
+                                           itemLabel="#{m.descripcion}"
+                                           itemValue="#{m}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Parametro adicional:" style="margin-top: 10px">
+                    <p:selectOneRadio id="customRadio2" layout="custom" value="#{decimoTerceroView.parametroEstado}">
+                        <f:selectItem itemLabel="item_1" itemValue="0" />
+                        <f:selectItem itemLabel="item_2" itemValue="1" />
+                        <f:selectItem itemLabel="item_3" itemValue="2" />
+                    </p:selectOneRadio>
+                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                        <h:panelGrid columns="3" cellpadding="5">
+                            <p:radioButton id="opt3" for="customRadio2" itemIndex="0" />
+                            <h:outputLabel for="opt3" value="TODOS" />
+                        </h:panelGrid>
+                        <h:panelGrid columns="3" cellpadding="5">
+                            <p:radioButton id="opt4" for="customRadio2" itemIndex="1" />
+                            <h:outputLabel for="opt4" value="Si Acumulan" />
+                        </h:panelGrid>
+                        <h:panelGrid columns="3" cellpadding="5">
+                            <p:radioButton id="opt5" for="customRadio2" itemIndex="2" />
+                            <h:outputLabel for="opt5" value="No Acumulan" />
+                        </h:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="Generar PDF" id="generarReportePDF" update="formMain"
+                                     icon="fa fa-file-pdf-o" actionListener="#{decimoTerceroView.closeDlgReporte()}"
+                                     styleClass="Fs16" style="width: auto;margin: 8px"/> 
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

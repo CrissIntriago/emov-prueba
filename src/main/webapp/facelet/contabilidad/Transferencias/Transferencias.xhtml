@@ -1,0 +1,639 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Transferencias
+    </ui:define>
+    <ui:param name="tittle" value="TRANSFERENCIAS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <div class="ui-inputgroup" style="margin-bottom: 20px">
+                        <p:selectOneMenu value="#{transferenciasView.periodo}"  style="width: 30%;border:1px solid #00796B;text-align: center"
+                                         disabled="#{!transferenciasView.ocultarTabla}">
+                            <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Período" itemDisabled="true"/>
+                            <f:selectItems value="#{transferenciasView.listaPeriodo}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                        </p:selectOneMenu>
+                        <p:commandButton icon="fa fa-refresh"  actionListener="#{transferenciasView.cargarRegistros()}" 
+                                         rendered="#{transferenciasView.ocultarTabla}" update="transferenciaTable"
+                                         style="border-radius: 0px;width: 50px" title="Actualizar Registros"/>
+                        <p:commandButton icon="fa fa-plus" actionListener="#{transferenciasView.form(null)}"
+                                         rendered="#{transferenciasView.ocultarTabla}"
+                                         style="border-radius: 0px;width: 50px" title="Nuevo Registro"/> 
+                        <p:commandButton icon="fa fa-paint-brush" onclick="PF('transferenciaTable').clearFilters()"
+                                         rendered="#{transferenciasView.ocultarTabla}"
+                                         style="border-radius: 0px;width: 50px" update="transferenciaTable" title="Limpiar Filtro"/>
+                        <p:commandButton id="mostrarColumnas" style="border-radius: 0px;width: 50px" icon="fa fa-table" 
+                                         rendered="#{transferenciasView.ocultarTabla}" title="Columnas Visibles"/>
+                        <p:columnToggler datasource="transferenciaTable" trigger="mostrarColumnas" />
+                        <p:commandButton icon="fa fa-arrow-circle-left" actionListener="#{transferenciasView.vaciarFormulario('CANCELAR')}" 
+                                         rendered="#{!transferenciasView.ocultarTabla}" update="formMain"
+                                         style="border-radius: 0px;width: 50px" title="Regresar"/>
+                    </div>
+                    <h:panelGroup id="mantenimientoTransferencia" layout="block" rendered="#{transferenciasView.ocultarTabla}"> 
+                        <p:dataTable  id="transferenciaTable" widgetVar="transferenciaTable" var="transferencia" value="#{transferenciasView.transferenciasLazyModel}" 
+                                      paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" rowKey="#{transferencia.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <p:column style="width:10px;text-align: center">
+                                <p:rowToggler />
+                            </p:column>
+                            <p:column headerText="Nº Referencia" style="width: 3vw;text-align: center" filterBy="#{transferencia.numReferencia}" sortBy="#{transferencia.numReferencia}">
+                                <h:outputText value="#{transferencia.numReferencia}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 12vw;">
+                                <h:outputText value="#{transferencia.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Fecha Afectacion" style="width: 3vw;text-align: center" sortBy="#{transferencia.fechaAfectacion}">
+                                <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center" sortBy="#{transferencia.fechaAcreditacion}">
+                                <h:outputText value="#{transferencia.fechaAcreditacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center" sortBy="#{transferencia.fechaAnulacion}">
+                                <h:outputText value="#{transferencia.fechaAnulacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Mes de Pago" style="width: 3vw;text-align: center" sortBy="#{transferencia.fechaAfectacion}">
+                                <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                    <f:convertDateTime pattern="MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Valor de Pago" style="width: 3vw;">
+                                <h:outputText value="#{transferencia.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 5vw;text-align: center" filterBy="#{transferencia.estadoTransferencia}">
+                                <h:outputText value="#{transferencia.estadoTransferencia}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 3vw;text-align: center" rendered="#{transferenciasView.opcionBusqueda.anio == transferenciasView.periodo?true:false}">
+                                <p:commandLink actionListener="#{transferenciasView.anularTransferenciaTotal(transferencia)}" title="Anular transferencia" process="@this" 
+                                               rendered="#{transferencia.fechaAcreditacion!=null?false:(transferencia.estadoTransferencia=='ANULADO'?false:true)}">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular la transferencia Nº #{transferencia.numReferencia} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{transferenciasView.verTransferencia(transferencia)}" title="Volver a generar archivo" process="@this" 
+                                               rendered="#{transferencia.estadoTransferencia == 'EMITIDO'? true:false}" action="#{transferenciasView.setNuevo(false)}">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #00695C;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{transferenciasView.uploadDocGeneral(transferencia)}" rendered="true"
+                                               title="SUBIR COMPROBANTE SPI" process="@this">
+                                    <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                </p:commandLink>
+                            </p:column>
+
+                            <p:rowExpansion>
+                                <br></br>
+                                <h:panelGroup id="dataRowTable" layout="block">
+                                    <p:dataTable id="rowTable" widgetVar="rowTable" var="row" value="#{transferenciasView.viewDetalle(transferencia)}"
+                                                 style="width: 100%;border: 1px solid black"                                                      
+                                                 emptyMessage="No existen requisitos registrados en este procedimiento">
+                                        <p:column headerText="No. Comprobante de Pago" style="width: 4vw;text-align: center" >
+                                            <h:outputText value="#{row.comprobantePago.numComprobante}" />
+                                        </p:column>  
+                                        <p:column headerText="No. Transferencia" style="width: 4vw;text-align: center" >
+                                            <h:outputText value="#{row.referencia}" />
+                                        </p:column>  
+                                        <p:column headerText="Identificacion Beneficiario" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.identificacion}" />
+                                        </p:column> 
+                                        <p:column headerText="Nombre Beneficiario" style="width: 10vw;">
+                                            <h:outputText value="#{row.nombreBeneficiario}" />
+                                        </p:column> 
+                                        <p:column headerText="Banco" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.institucionFinanciera.cuentaCorriente}" />
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="width: 5vw;" >
+                                            <h:outputText value="#{row.valor}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>  
+                                        <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{row.fechaAcreditacion}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{row.fechaAnulacion}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.estado}" />
+                                        </p:column> 
+                                        <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                                            <p:commandLink title="VER COMPROBANTE SPI" process="@this" actionListener="#{transferenciasView.verDocumentos(row)}"
+                                                           rendered="#{row.estado=='ACREDITADO'?true:false}">
+                                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #3399ff;"></i>
+                                            </p:commandLink>
+                                            <p:commandLink actionListener="#{transferenciasView.subirArchivo(row)}" title="SUBIR COMPROBANTE SPI">
+                                                <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                            </p:commandLink>
+                                            <p:commandLink actionListener="#{transferenciasView.anularDetalleTransferencia(row)}" title="ANULACIÓN" process="@this" 
+                                                           rendered="#{row.estado=='ANULADO'?false:row.estado=='ACREDITADO'?false:true}">
+                                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular esta transferencia" icon="fa fa-exclamation-triangle" />
+                                            </p:commandLink>
+                                        </p:column> 
+                                    </p:dataTable>
+                                </h:panelGroup> 
+
+                                <br></br>
+                            </p:rowExpansion>
+
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                    <h:panelGroup id="formularioTransferencia" layout="block" rendered="#{!transferenciasView.ocultarTabla}">
+                        <p:fieldset legend="Datos Generales:" style="margin-bottom: 10px">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:fieldset legend="Datos Transferencia:" style="margin-bottom: 10px">
+                                    <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGroup rendered="#{transferenciasView.transferencias.id == null ? true:false}">
+                                            <p:outputLabel for="@next" value="Nº de Comprobante de Pago" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="numComprobantePago" class="panelInput" readonly="false" value="#{transferenciasView.comprobantePagoBusqueda.numComprobante}"
+                                                             onkeypress="focusNextOnEnter(event, 'botonBusquedaComprobantePago')">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                                <p:commandButton title="Comprobantes de Pagos" icon="fa fa-search" id="botonBusquedaComprobantePago"
+                                                                 actionListener="#{transferenciasView.buscarComprobantePago()}"
+                                                                 process="numComprobantePago" styleClass="green-button button-group">
+                                                </p:commandButton>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoTransferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'periodoTransferencia')"
+                                                         value="#{transferenciasView.transferencias.periodo}" readonly="true" /> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha Afectación:" style="font-weight: bold"/>
+                                            <p:calendar id="fechaAfectacion"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" 
+                                                        locale="es" readonlyInput="true"
+                                                        value="#{transferenciasView.transferencias.fechaAfectacion}" style="width: 100%">
+                                                <p:ajax event="dateSelect" listener="#{transferenciasView.onDateSelect()}"/>
+                                            </p:calendar> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridMes">
+                                            <p:outputLabel for="@next" value="Mes de Pago:" style="font-weight: bold"/>
+                                            <p:inputText id="mesTransferencia" style="width: 100%;" readonly="true"
+                                                         onkeypress="focusNextOnEnter(event, 'mesTransferencia')"
+                                                         value="#{transferenciasView.transferencias.fechaAfectacion}"  >
+                                                <f:convertDateTime pattern="MM/yyyy" />
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Localidad:" style="font-weight: bold"/>
+                                            <p:inputText id="localidad" style="width: 100%;text-transform: uppercase" readonly="#{transferenciasView.transferencias.id == null ? false:true}"
+                                                         value="#{transferenciasView.transferencias.localidad}" onkeypress="focusNextOnEnter(event, 'localidad')" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+
+                                </p:fieldset>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="responsablesGrid">
+                                <p:fieldset legend="Responsable (Máxima Autoridad)" style="margin-bottom:10px">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{transferenciasView.transferencias.responsable1!=null?true:false}">
+                                            <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                            <p:inputText id="identificacion1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'identificacion1')"
+                                                         value="#{transferenciasView.transferencias.responsable1.persona.identificacion}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{transferenciasView.transferencias.responsable1!=null?false:true}">
+                                            <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="maximaAutoridad" class="panelInput" readonly="false" 
+                                                             value="#{transferenciasView.comprobantePagoBusqueda.numComprobante}"
+                                                             onkeypress="focusNextOnEnter(event, 'btnMaximaAutoridad')">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                                <p:commandButton title="Listado Rol Máxima Autoridad" icon="fa fa-search" id="btnMaximaAutoridad"
+                                                                 actionListener="#{transferenciasView.buscarResponsables(true)}"
+                                                                 process="maximaAutoridad" styleClass="green-button button-group">
+                                                </p:commandButton>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nombre" style="font-weight: bold"/>
+                                            <p:inputText id="responsable1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'responsable1')"
+                                                         value="#{transferenciasView.transferencias.responsable1.persona.nombreCompleto}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Cargo:" style="font-weight: bold"/>
+                                            <p:inputText id="cargo1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo1')"
+                                                         value="#{transferenciasView.transferencias.responsable1.distributivo.cargo.nombreCargo}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="Responsable (Tesorero)" style="margin-bottom:10px" id="responsablesGrid2">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{transferenciasView.transferencias.responsable2!=null?true:false}">
+                                            <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                            <p:inputText id="identificacion2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'identificacion2')"
+                                                         value="#{transferenciasView.transferencias.responsable2.persona.identificacion}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{transferenciasView.transferencias.responsable2!=null?false:true}">
+                                            <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="tesorero" class="panelInput" readonly="false" 
+                                                             value="#{transferenciasView.comprobantePagoBusqueda.numComprobante}"
+                                                             onkeypress="focusNextOnEnter(event, 'btnTesorero')">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                                <p:commandButton title="Listado Rol Tesorero" icon="fa fa-search" id="btnTesorero"
+                                                                 actionListener="#{transferenciasView.buscarResponsables(false)}"
+                                                                 process="tesorero" styleClass="green-button button-group">
+                                                </p:commandButton>
+                                            </div>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nombre:" style="font-weight: bold"/>
+                                            <p:inputText id="responsable2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'responsable2')"
+                                                         value="#{transferenciasView.transferencias.responsable2.persona.nombreCompleto}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Cargo:" style="font-weight: bold"/>
+                                            <p:inputText id="cargo2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo2')"
+                                                         value="#{transferenciasView.transferencias.responsable2.distributivo.cargo.nombreCargo}" readonly="true" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                <p:fieldset legend="Listado de Transferencias:">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridDescripcion">
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                            <p:inputTextarea id="detalleTransferencia" rows="7" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                             value="#{transferenciasView.transferencias.descripcion}" readonly="#{transferenciasView.transferencias.id == null ? false:true}"/> 
+                                        </p:panelGrid> 
+                                        <p:fieldset legend="Acciones Rapida del concepto del detalle de la transferencia:">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGrid columns="2" style="margin-bottom:3px" cellpadding="5">
+                                                    <p:selectOneRadio id="accionSeleccionado" value="#{transferenciasView.conceptoSeleccionado}" 
+                                                                      converter="#{utilConverter}"  layout="grid" columns="5" >
+                                                        <f:selectItem itemLabel="NINGUNO" itemValue="#{null}" />
+                                                        <f:selectItems value="#{transferenciasView.conceptoTransferencia}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                                        <p:ajax update="detalleTransferenciaTable" listener="#{transferenciasView.actualizarTabla()}"/>
+                                                    </p:selectOneRadio>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="Institución Pública Ordenante (IP):" style="margin-bottom:  10px">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCuentaBancaria">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Cte. en BCE:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaCteBCE" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'ctaCteBCE')"
+                                                         value="#{transferenciasView.transferencias.ctaCteBceIp}" maxlength="8" >
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Nombre Institución:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreInstitucion" style="width: 100%;text-transform: uppercase" readonly="true"
+                                                         value="#{transferenciasView.transferencias.nombreInstitucion}" onkeypress="focusNextOnEnter(event, 'nombreInstitucion')">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                            <p:outputLabel value="CORRESPONSAL:" style="font-weight: bold"/>
+                                            <p:selectBooleanCheckbox id="corresponsal" value="#{transferenciasView.transferencias.corresponsal}" 
+                                                                     disabled="#{transferenciasView.transferencias.id == null ? false:true}">
+                                                <p:ajax update="corresponsalGrid" listener="#{transferenciasView.activarCorresponsal()}" />
+                                            </p:selectBooleanCheckbox>
+                                        </h:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="corresponsalGrid" >
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Rotativa Pagos:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaRotativa" style="width: 100%;" maxlength="8" readonly="#{transferenciasView.camposCorresponsal}"
+                                                         value="#{transferenciasView.transferencias.ctaRotativa}" onkeypress="focusNextOnEnter(event, 'ctaRotativa')">
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Cte en BCE:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaCteBCE2" style="width: 100%;"  maxlength="8" readonly="#{transferenciasView.camposCorresponsal}"
+                                                         value="#{transferenciasView.transferencias.ctaCteBceCorresponsal}" onkeypress="focusNextOnEnter(event, 'ctaCteBCE2')">
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Nombre Corresponsal:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreCorresponsal" style="width: 100%;text-transform: uppercase" 
+                                                         readonly="#{transferenciasView.camposCorresponsal}" onkeypress="focusNextOnEnter(event, 'nombreCorresponsal')"
+                                                         value="#{transferenciasView.transferencias.nombreCorresponsal}">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                            </p:panelGrid>
+                        </p:fieldset>
+
+                        <p:dataTable  id="detalleTransferenciaTable" widgetVar="detalleTransferenciaTable" var="detalleTransferencia" value="#{transferenciasView.detalleTrasferencias}"
+                                      paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" editable="true" editMode="cell"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <p:column headerText="Cédula, RUC, Pasaporte" style="width:7vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.identificacion}" />
+                            </p:column>
+                            <p:column headerText="Referencia" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.referencia}" />
+                            </p:column>
+                            <p:column headerText="Nombre Beneficiario" style="width: 12vw;">
+                                <h:outputText value="#{detalleTransferencia.nombreBeneficiario}" />
+                            </p:column>
+                            <p:column headerText="Institución Financiera" style="width: 7vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.institucionFinanciera.cuentaCorriente}" />
+                            </p:column>
+                            <p:column headerText="Cuenta Beneficiario" style="width: 6vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.cuentaBcoBeneficiario}" />
+                            </p:column>
+                            <p:column headerText="Tipo Cuenta" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.tipoCuenta}" />
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 4vw;">
+                                <h:outputText value="#{detalleTransferencia.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Concepto" style="width: 6vw;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{detalleTransferencia.concepto}" /></f:facet>
+                                    <f:facet name="input">
+                                        <h:selectOneMenu value="#{detalleTransferencia.concepto}" style="width:100%" disabled="#{detalleTransferencia.id == null ? false:true}">
+                                            <f:selectItem itemLabel="-Seleccione-" itemValue=""/>
+                                            <f:selectItems value="#{transferenciasView.conceptoTransferencia}" var="ti" itemLabel="#{ti.texto}" itemValue="#{ti.codigo}"/>
+                                        </h:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Detalle" style="width: 12vw;">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalleTransferencia.detalle}" />
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText value="#{detalleTransferencia.detalle}" disabled="#{detalleTransferencia.id == null ? false:true}" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                        </p:dataTable>
+                        <center>
+                            <p:commandButton value="Generar SPI" icon="fa fa-save" actionListener="#{transferenciasView.OpenMenuArchivosDlg(true)}" update="transferenciaTable"
+                                             styleClass="Fs16" style="width: 100px;margin: 15px 5px" title="Guarda y genera el archivo de la transferencia" rendered="#{transferenciasView.nuevo}" /> 
+                            <p:commandButton value="Actualizar SPI" icon="fa fa-save" actionListener="#{transferenciasView.OpenMenuArchivosDlg(false)}" update="transferenciaTable"
+                                             styleClass="Fs16" style="width: 100px;margin: 15px 5px" title="Genera el archivo de la transferencia" rendered="#{!transferenciasView.nuevo}" /> 
+                            <p:commandButton value="Cancelar" icon="fa fa-remove" actionListener="#{transferenciasView.vaciarFormulario('CANCELAR')}" 
+                                             styleClass="Fs16" class="red-button" style="width: 100px;margin: 15px 5px">
+                                <p:confirm header="Confirmación" message="Los datos ingresados no se guardaran ¿Desea cancelar de todas maneras?" icon="fa fa-exclamation-triangle" />
+                            </p:commandButton> 
+                        </center>
+                    </h:panelGroup>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                        <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+                    </p:confirmDialog>  
+
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="comprobantePagoDLG" header="Comprobantes de Pago" widgetVar="comprobantePagoDLG" width="80%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobantePagoForm" style="width: 100%;" >
+
+                    <p:dataTable  id="comprobantePagoTable" widgetVar="comprobantePagoTable" var="comprobantePago" value="#{transferenciasView.comprobantePagoLazyModel}"
+                                  paginator="true" rows="10" style="width: 100%;" rowsPerPageTemplate="10,15" lazy="true" rowKey="#{comprobantePago.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado"> 
+
+                        <p:column style="width:10px">
+                            <p:rowToggler />
+                        </p:column>
+                        <p:column headerText="Nº de Comprobante" style="width: 3vw;text-align: center" filterBy="#{comprobantePago.numComprobante}">
+                            <h:outputText value="#{comprobantePago.numComprobante}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 8vw;">
+                            <h:outputText value="#{comprobantePago.detalle}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Emisión" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.fechaComprobante}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Período" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.periodo}" />
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{comprobantePago.estado}" >
+                            <h:outputText value="#{comprobantePago.estado}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar" style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{transferenciasView.seleccionarComprobantePago(comprobantePago)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+
+                        <p:rowExpansion>
+                            <br></br>
+                            <h:panelGroup id="dataRowTable" layout="block">
+                                <p:dataTable id="rowTable" widgetVar="rowTable" var="beneficiario" value="#{transferenciasView.viewDetalleBeneficiarios(comprobantePago)}"
+                                             rows="10" style="width: 100%;border: 1px solid black"                                                      
+                                             emptyMessage="No existe beneficiarios asociados a este comprobante de pago">
+                                    <p:column headerText="Cuenta Bancaria" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.cuentaBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre del Banco" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.detalleBanco.banco.nombreBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.tipoCuenta.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.beneficiario.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Nº de Transferencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.numeroTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 3vw;">
+                                        <h:outputText value="#{beneficiario.valor}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup> 
+
+                            <br></br>
+                        </p:rowExpansion>
+
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="comprobanteSPIDialog" header="Adjuntar Comprobante SPI" widgetVar="comprobanteSPIDialog" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteSPIForm" style="width: 100%;">
+                    <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:outputLabel for="@next" value="Fecha de Acreditación:"  style="font-weight: bold"/>
+                            <p:calendar id="acreeditacionFecha" pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                        mindate="#{transferenciasView.detalleTransferencia.transferencia.fechaAfectacion}"
+                                        value="#{transferenciasView.detalleTransferencia.fechaAcreditacion}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="comprobanteSPIForm"/>
+                            </p:calendar>   
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:fileUpload fileUploadListener="#{transferenciasView.handleFileUploadComprobanteSPI}" id="fileUpload"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                                  mode="advanced" dragDropSupport="false" rendered="#{transferenciasView.detalleTransferencia.fechaAcreditacion != null ? true:false}"
+                                  update="messages" />
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{transferenciasView.detalleTransferencia}"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="servidoresDlg" header="Servidores Públicos" widgetVar="servidoresDlg" width="60%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="servidoresForm" style="width: 100%;" >
+
+                    <p:dataTable  id="servidoresTable" widgetVar="servidoresTable" var="servidores" value="#{transferenciasView.servidoresList}"
+                                  paginator="true" rows="15" style="width: 100%;" rowsPerPageTemplate="15,20"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  selectionMode="single" rowKey="#{servidores.id}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado"> 
+
+                        <p:column selectionMode="multiple" style="width:2vw;text-align:center"/>
+
+                        <p:column headerText="Identificación" style="width: 4vw;text-align: center" filterBy="#{servidores.persona.identificacion}">
+                            <h:outputText value="#{servidores.persona.identificacion}"/>
+                        </p:column>
+
+                        <p:column headerText="Nombre del Servidor" style="width: 10vw;" filterBy="#{servidores.persona.nombre}">
+                            <h:outputText value="#{servidores.persona.nombreCompleto}"/>
+                        </p:column>
+
+                        <p:column headerText="Cargo del Servidor" style="width: 10vw;" filterBy="#{servidores.distributivo.cargo.nombreCargo}">
+                            <h:outputText value="#{servidores.distributivo.cargo.nombreCargo}"/>
+                        </p:column>
+
+                        <p:column headerText="Seleccionar" style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{transferenciasView.servidorSeleccionado(servidores)}" title="Seleccionar" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="menuArchivosDlg" header="Menú de archivos de Descarga" widgetVar="menuArchivosDlg" width="20%" draggable="true"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" closable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="menuArchivosForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:commandButton value="Generar SPI.zip" icon="fa fa-file-zip-o" actionListener="#{transferenciasView.generarArchivosDescargas(1)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;"/> 
+                        <p:commandButton value="Generar Archivo Proveedores.txt" icon="fa fa-file-text" actionListener="#{transferenciasView.generarArchivosDescargas(2)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{transferenciasView.activarAcciones}"/> 
+                        <p:commandButton value="Generar Reporte SPI" icon="fa fa-file-pdf-o" actionListener="#{transferenciasView.generarArchivosDescargas(3)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{transferenciasView.activarAcciones}"/>
+                        <p:commandButton value="Generar Archivo de Ventanilla" icon="fa fa-file-pdf-o" actionListener="#{transferenciasView.generarArchivosDescargas(4)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{!transferenciasView.activarAcciones and transferenciasView.transferencias.corresponsal ? false:true}"/>
+                        <p:commandButton value="Ir al Inicio" icon="fa fa-home" actionListener="#{transferenciasView.generarArchivosDescargas(5)}" 
+                                         styleClass="Fs16" style="width: 100%;" >
+                            <p:confirm header="Mensaje de Confirmación" message="¿Esta seguro desea salir?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:panelGrid>
+                </p:outputPanel>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="comprobanteSPIDialog_2" header="Adjuntar Comprobante SPI" widgetVar="comprobanteSPIDialog_2" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteSPIForm_2" style="width: 100%;">
+                    <p:fieldset>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha de Acreditación:"  style="font-weight: bold"/><br/>
+                            <p:calendar id="acreeditacionFecha_" pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"                                        
+                                        value="#{transferenciasView.fechaAcreditacion}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="comprobanteSPIForm_2"/>
+                            </p:calendar>  
+                        </h:panelGroup>
+                    </p:fieldset> 
+                    <br/>
+                    <p:fileUpload fileUploadListener="#{transferenciasView.subirDocGeneral}" id="fileUpload_2"  onstart="pbAjaxLong.start()"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar"
+                                  mode="advanced" dragDropSupport="false" rendered="#{transferenciasView.fechaAcreditacion != null ? true:false}"
+                                  />
+                    <br/>
+                    <p:progressBar id="progress1" widgetVar="pbAjaxLong" ajax="true" value="#{transferenciasView.progress2}" 
+                                   labelTemplate="{value}%" styleClass="p-mt-3" global="true" >
+                    </p:progressBar>
+                    <br/>   
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+    </ui:define>
+
+
+</ui:composition>

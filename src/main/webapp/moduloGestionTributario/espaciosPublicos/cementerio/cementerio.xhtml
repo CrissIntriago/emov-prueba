@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+     <ui:param name="tittle" value="CEMENTERIO" /> 
+    <head>
+
+        <script type="text/javascript">
+            wizardTransform();
+        </script>
+    </head>
+    <ui:define name="content">
+
+        <p:panelGrid columns="1" style="width: 100%" styleClass="ui-panelgrid-blank">
+            <div align="right">
+                <p:commandButton title="Nuevo Cementerio" icon="fa fa-plus" value="Nuevo Cementerio"  oncomplete="PF('dlgCementerio').show()" update="frmCementerioNE"/>
+            </div>    
+
+
+        </p:panelGrid>
+
+        <h:panelGroup layout="block" class="Wid100 Responsive100">
+            <h:form id="registroCementerioForm" prependId="false" enctype="multipart/form-data">
+                <p:growl id="growl" sticky="true" showDetail="true"/>
+                <h:panelGroup layout="block" class="MarRight10 MarLeft10" id="wizarContainer">
+                    <p:wizard id="wizardFlow" flowListener="#{espaciosPublicos.onFlowProcess}" nextLabel="Siguiente" backLabel="Anterior">
+                        <p:tab id="cementerios" title="Cementerios">
+                            <ui:include src="_listadoCementerio.xhtml" />
+                        </p:tab>
+                        <p:tab id="bovedas" title="Bovedas">
+                            <ui:include src="_listadoBovedas.xhtml" />
+                        </p:tab>
+                        <p:tab id="bovedas_informacion" title="Informacion">
+                            <ui:include src="_informacionBoveda.xhtml" />
+                            <ui:include src="_propietariosSepultados.xhtml" />
+                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                <p:dataTable id="dtPAB" value="#{espaciosPublicos.bovedaEntesListPropietarioAnterior}" var="pp" 
+                                             reflow="true" paginator="true" rows="5"   editable="true" editMode="cell"
+                                             paginatorPosition="top" style="width: 50%" emptyMessage="No se han agregado datos">
+                                    <f:facet name="header">
+                                        <h:panelGroup id="pnlSepultados" layout="block" class="Container Wid100 MarTop10" >
+                                            <h:panelGroup layout="block" class="Container96" >
+                                                <h:outputText value="Propietario Anterior" lang="en" style="color: white"></h:outputText>  
+                                            </h:panelGroup>
+                                        </h:panelGroup>
+                                    </f:facet>
+                                    <p:column headerText="Datos">
+                                        <h:outputText value="#{pp.ente.identificacion}"/> 
+                                        <p:spacer width="6"/>
+                                        <h:outputText value="Nombres: #{pp.ente.apellido} #{pp.ente.nombre}"  style="text-transform: uppercase"/>
+                                        <h:outputText value="Razón Social #{pp.ente.razonSocial}"  style="text-transform: uppercase"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup>
+                            <ui:include src="_fotosBovedas.xhtml" />
+                            <!--                            <ui:include src="_documentos.xhtml" />-->
+                            <p:fieldset legend="Pagos" toggleable="true">
+                                <p:dataTable id="dtTitulos" value="#{espaciosPublicos.liquidacionesBoveda}" var="titulo" 
+                                             reflow="true" paginator="true" rows="5" paginatorPosition="top" style="width: 97%; margin: auto;" 
+                                             emptyMessage="No se han agregado datos">
+
+                                    <p:column  headerText="Fecha" width="70" >
+                                        <p:outputLabel value="#{titulo.fechaIngreso}"  style="font-weight: bold;">
+                                            <f:convertDateTime pattern="dd-MM-yyyy HH:MM"/>
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column  headerText="Liquidacion" width="70" >
+                                        <p:outputLabel value="#{titulo.idLiquidacion}"  style="font-weight: bold;"/>
+                                    </p:column>
+                                    <p:column  headerText="Año" width="70" >
+                                        <p:outputLabel value="#{titulo.anio}"  style="font-weight: bold;"/>
+                                    </p:column>
+                                    <p:column headerText="Titulos" width="200" >
+                                        <p:outputLabel value="#{espaciosPublicos.descripcionRubro(titulo.renDetLiquidacionCollection)} ;" style="text-transform: uppercase; font-size: 12px"/>
+                                    </p:column>
+                                    <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacion}" filterStyle="width: 80%;">
+                                        <p:outputLabel style="font-weight: bold; font-size: 13px;" value="#{titulo.comprador.identificacion}"/>
+                                    </p:column>
+                                    <p:column headerText="Solicitante" width="250">
+                                        #{titulo.comprador.nombreCompleto}
+                                    </p:column>
+                                    <p:column headerText="Total Pago" width="60"><p:outputLabel value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+                                </p:dataTable>
+                            </p:fieldset>
+
+                            <br></br><br></br>
+                            <h:panelGroup layout="block" class="Wid100">
+                                <p:commandButton id="actualizar"  style="float: right;"
+                                                 icon="fa fa-refresh" action="#{espaciosPublicos.updateBoveda()}"
+                                                 value="Actualizar" styleClass="white Fright">
+                                    <p:confirm header="Confirmación" message="Cofirmación" icon="ui-icon-alert" />
+                                </p:commandButton>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <h:panelGroup layout="block" class="Wid100 MarBot10">
+                                        <h:outputText value="Esta Seguro de Grabar Actualizar?" style="display:block; text-align: center; padding-bottom: 5px;" styleClass="FontBold"/>
+                                    </h:panelGroup>
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                                </p:confirmDialog>
+                            </h:panelGroup>
+                        </p:tab>
+
+                    </p:wizard>
+
+                </h:panelGroup>
+                <center>
+                    <p:fieldset legend="**Criterio de Busqueda**" id="reporteCementerio">
+                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                            <center>
+                                <br></br> <br></br> 
+                                <p:outputLabel value="Fecha Desde : " style="width: 100%;"/>
+                                <p:calendar id="desde" value="#{espaciosPublicos.desdeA}" navigator="true" locale="es" pattern="dd/MM/yyyy" maxdate="sysdate" style="width: 100%;" >
+                                </p:calendar> 
+
+                                <p:spacer width="5" height="0"/>
+                                <p:outputLabel value="Fecha Hasta : " style="width: 100%;"/>
+                                <p:calendar id="hasta" value="#{espaciosPublicos.hastaA}" navigator="true" locale="es" pattern="dd/MM/yyyy" maxdate="sysdate"  style="width: 100%;" >
+                                </p:calendar> 
+                            </center>  
+                            <br></br> 
+                            <br></br> 
+                            <div align="center"> 
+                                <p:commandButton id="btnCementerio1" value="GENERAR PDF" icon="ui-icon-print" styleClass="btnStyle" actionListener="#{espaciosPublicos.generarReporteCementerio(true)}" style="float: end"/>
+                                <p:commandButton id="btnCementerio" value="GENERAR EXCEL" icon="ui-icon-print" styleClass="btnStyle" actionListener="#{espaciosPublicos.generarReporteCementerio(false)}" style="float: end"/>
+                            </div>
+                            <br></br> 
+                            <br></br> 
+                        </h:panelGroup> 
+                        <br></br>
+                    </p:fieldset>
+                </center>
+            </h:form>
+
+            <p:dialog widgetVar="dlgCementerio" position="center" header="Ingreso de Nuevo Cementerio"  
+                      appendTo="@(body)" modal="true" width="20%" resizable="false" 
+                      closable="true" closeOnEscape="true">
+                <h:form id="frmCementerioNE">
+                    <center>
+                        <h:panelGrid columns="" style="width: 100%;">
+                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                <p:outputLabel for="nombreCementerio" value="Nombre del Cementerio" class="DispBlock Wid100" 
+                                               style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                <p:inputTextarea  value="#{espaciosPublicos.cementerioNuevo.nombreCementerio}" 
+                                                  rows="4" required="true"  cols="30" id="nombreCementerio" />
+                            </h:panelGroup>
+                            <comp:decorateForm id="nivel_act" label="Area: " bind="#{espaciosPublicos.cementerioNuevo.area}" floatValidate="true" />
+                        </h:panelGrid>
+                    </center>
+                    <br/>
+                    <center style="margin-top: 10px;">
+                        <p:commandButton value="Guardar"  styleClass="btnStyle" update=":registroCementerioForm" actionListener="#{espaciosPublicos.saveCementerio()}" oncomplete="PF('dlgCementerio').hide()"/>
+                        <p:commandButton value="Cancelar" onclick="PF('dlgCementerio').hide()" styleClass="btnStyle"/>
+                    </center>
+                    <br/>
+                </h:form>
+            </p:dialog>   
+            <ui:include src="_dialogsCementerio.xhtml" />
+
+            <!--            <p:dialog widgetVar="dlgNewBoveda" position="center" header="Ingreso de Nueva Boveda"  
+                                  appendTo="@(body)" modal="true" width="50%" resizable="false" 
+                                  closable="true" closeOnEscape="true" id="dlgNewBoveda">
+                            <ui:include src="nuevasBovedas.xhtml" />
+                        </p:dialog>-->
+
+        </h:panelGroup>
+    </ui:define>
+</ui:composition>

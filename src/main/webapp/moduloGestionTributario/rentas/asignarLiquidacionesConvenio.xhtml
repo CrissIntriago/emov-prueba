@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+  Asignar liquidaciones a Convenios
+    </ui:define>
+    <ui:param name="tittle" value="ASIGNAR LIQUIDACIONES A CONVENIOS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+              
+                <center>
+                    <h:form id="frmConvenio" >
+                        <p:panel header="Iniciar convenio de pago" style="width: 100%;">
+                            <center>
+                                <h:panelGrid columns="2" styleClass="noBorder" >
+                                    <h:panelGrid columns="2" >
+                                        <h:outputText value="Deuda a financiar: " style="display: block;"/>
+                                        <p:inputText value="#{generarConvenioView.deudaTotal}" />
+
+                                    </h:panelGrid>
+                                    <p:commandButton value="Inciar Convenio" id="btn_procesar" actionListener="#{generarConvenioView.openDlgConvenio(null)}" 
+                                                     disabled="#{generarConvenioView.seleccionadas.size() == 0}" 
+                                                     styleClass="btnStyle" >
+                                        <p:confirm header="Advertencia" icon="fa fa-info"  message="¿Esta seguro de pasar a generar el convenio de pago?"/>
+                                        <p:ajax event="dialogReturn" listener="#{generarConvenioView.procesarConvenio}" update="frmConvenio"  />
+                                    </p:commandButton>
+                                </h:panelGrid>
+                            </center>
+                        </p:panel>
+                        <p:dataTable id="dtLiquidaciones" lazy="true" value="#{generarConvenioView.liquidaciones}" style="width: 100%;"
+                                     var="liq" rows="10" paginator="true" paginatorPosition="bottom" class="MarTop20" rowKey="#{liq.id}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     filterEvent="enter" widgetVar="dtLiquidaciones" selection="#{generarConvenioView.seleccionadas}">
+                            <p:ajax event="rowSelect" listener="#{generarConvenioView.onRowSelect}" update="frmConvenio" />
+                            <p:ajax event="rowUnselect" listener="#{generarConvenioView.onRowUnselect}" update="frmConvenio" />
+                            <p:ajax event="toggleSelect" listener="#{generarConvenioView.onRowToggle()}" update="frmConvenio" />
+                            <p:ajax event="rowSelectCheckbox" listener="#{generarConvenioView.onRowSelect}" update="frmConvenio" />
+                            <p:ajax event="rowUnselectCheckbox" listener="#{generarConvenioView.onRowUnselect}" update="frmConvenio" />
+                            <f:facet name="header">
+                                LISTADO DE LIQUIDACIONES 
+                            </f:facet>
+                            <p:column selectionMode="multiple" width="5%" style="text-align:center"/>
+                            <p:column headerText="Liquidacion" filterBy="#{liq.idLiquidacion}" width="10%;" filterStyle="width:70%;" style="text-align: center;">
+                                <h:outputText value="#{liq.idLiquidacion}"/>
+                            </p:column>
+                            <p:column headerText="Año" filterBy="#{liq.anio}" width="10%;" filterStyle="width:70%;" 
+                                      style="text-align: center;">
+                                <h:outputText value="#{liq.anio}" />
+                            </p:column>
+                            <p:column headerText="Identificación" filterBy="#{liq.comprador.identificacionCompleta}" width="10%;" filterStyle="width:70%;" class="TexAlCenter">
+                                <h:outputText value="#{liq.comprador.identificacionCompleta}"/>
+                            </p:column>
+                            <p:column headerText="Contribuyente" width="25%;">
+                                <h:outputText value="#{liq.comprador.nombre} #{liq.comprador.apellido}" rendered="#{liq.comprador.tipoIdentificacion.codigo eq 'C'}" style="text-transform: uppercase; padding-left: 5px;"/>
+                                <h:outputText value="#{liq.comprador.razonSocial}" rendered="#{!liq.comprador.tipoIdentificacion.codigo eq 'C'}" style="text-transform: uppercase; ; padding-left: 5px;"/>
+                            </p:column>
+                            <p:column headerText="Interes" width="10%;" style="text-align: right; padding-right: 5px;">
+                                <h:outputText value="#{generarConvenioView.calcularInteres(liq)}"/>
+                            </p:column>
+                            <p:column headerText="Valor emitido" width="10%;" style="text-align: right; padding-right: 5px;">
+                                <h:outputText value="#{liq.saldo}"/>
+                            </p:column>
+                            <p:column headerText="Total Pago" width="10%;" style="text-align: right; padding-right: 5px;">
+                                <h:outputText value="#{liq.pagoFinal}"/>
+                            </p:column>
+                            <p:column headerText="Ver" width="5%" style="text-align: center;">
+                                <p:commandLink title="#{liq.idLiquidacion}">
+                                    <p:graphicImage value="/resources/images/reporte.png" height="16"/>
+                                </p:commandLink>
+                            </p:column>
+                            <p:column headerText="Restaurar" width="5%" style="text-align: center;">
+                                <p:commandLink title="Restaurar" styleClass="btnStyle" actionListener="#{generarConvenioView.restaurarLiquidacion(liq)}" update="frmConvenio" >
+                                    <i class="fa fa-fw fa-refresh" style="font-size: 1.5em;color: #004D40"></i>
+                                    <p:confirm header="Confirmación" message="Esta Seguro de RESTAURAR LA LIQUIDACION ?" icon="ui-icon-alert" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:form>
+                </center>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

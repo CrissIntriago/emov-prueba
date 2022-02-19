@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:b="http://bootsfaces.net/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Consultar PAPP</ui:define>
+    <ui:param name="tittle" value="Consultar Plan Anual Política Públicas" />
+    <ui:define name="content">
+        <style>
+            #limpiarbtn,#comprobacion,#filtrobtn,#mostrarColumnas,#btnimprimir{
+                width: 150px;
+            }
+            #cbBusqueda{
+                margin-bottom: 1%;
+            }
+        </style>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="formTablaMain" prependId="false">
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank">
+                        <p:commandButton disabled="#{consultaPappView.bloqueoBtn}" value="Limpiar Filtros" icon="fa fa-eraser"  id="limpiarbtn"
+                                         onclick="PF('dataGeneral').clearFilters()" 
+                                         actionListener="#{consultaPappView.clearAllFilters}"
+                                         update="formTablaMain,dataGeneral">
+                        </p:commandButton>
+                        <p:commandButton disabled="#{consultaPappView.bloqueoBtn}" value="Comprobar valores"  process="@this" action="#{consultaPappView.verificadorDeValores()}"
+                                         icon="ui-icon-check-box" update="dataGeneral" id="comprobacion"
+                                         styleClass="Fs16" />
+                        <p:selectBooleanButton disabled="#{consultaPappView.bloqueoBtn}"  value="#{consultaPappView.filtroDatosNullTablaGeneralPlanes}" onLabel="Filtrado por NO APLICA" offLabel="Quitar Filtro" 
+                                               onIcon="fa fa-check" offIcon="fa fa-times" id="filtrobtn">
+                            <p:ajax update="dataGeneral" listener="#{consultaPappView.filtroDeDatosNullVistaGeneralPlanAnual()}" />
+                        </p:selectBooleanButton>
+                        <p:commandButton icon="fa fa-print" value="ImprimirPAPP" id="btnimprimir" actionListener="#{consultaPappView.imprimir(false)}"/>
+                        <p:commandButton disabled="#{consultaPappView.bloqueoBtn}" id="toggler" type="button" value="Columnas Visibles" icon="fa fa-align-justify"/>
+                        <p:columnToggler datasource="dataGeneral" trigger="toggler"/>
+                    </p:panelGrid>
+                    <div align="right" id="cbBusqueda">
+                        <h:panelGroup layout="block" id="bloque">
+
+                            <p:outputLabel value="Período:" style="font-weight: bold; font-size: 14px; width: auto;margin-right: 5px"/>
+                            <p:selectOneMenu value="#{consultaPappView.busqueda.anio}" style="width: 30%;border:1px solid #00796B;text-align: center;">
+                                <p:ajax listener="#{consultaPappView.newBusqueda()}" update="formTablaMain" />
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{consultaPappView.listaPeriodos}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </div>
+                    <div style="float:right; margin-bottom: 10px;">
+                        <div style="float:right; margin-bottom: 10px;">
+                            <h:commandLink title="Exportar Excel xls">
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>
+                                <p:dataExporter type="xlsxstream" target="dataGeneral" fileName="PAPP#{consultaPappView.busqueda.anio}" />
+                            </h:commandLink>
+                        </div>
+                    </div>
+                    <p:dataTable  id="dataGeneral" widgetVar="dataGeneral" var="item" value="#{consultaPappView.vistaGeneralPlanAnualLazy}" paginator="true" rows="10" 
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100" lazy="true"
+                                  scrollable="true" scrollWidth="100%" rowIndexVar="index" sortBy="#{item.numeroIdentificacionProgramaProyecto}"
+                                  emptyMessage="No existen datos con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            TABLA GENERAL DE LOS PLANES ANUALES - #{consultaPappView.busqueda.anio == 0 ? '20XX':consultaPappView.busqueda.anio}
+
+
+                        </f:facet>
+                        <p:column headerText="No." style="width: 15px;">
+                            <h:outputText value="#{index+1}"/>
+                        </p:column>
+<!--                        <p:column headerText="UID." style="width: 15px;">
+                            <h:outputText value="#{item.idProducto}"/>
+                        </p:column>-->
+                        <p:column headerText="Eje" filterBy="#{item.ejePlanNacional}" style="width: 150px;text-align: center;">
+                            <p:outputLabel value="#{item.ejePlanNacional == null ? 'NO APLICA':item.ejePlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Nacional" filterBy="#{item.objetivoPlanNacional}" style="width: 150px;text-align: center; ">
+                            <p:outputLabel value="#{item.objetivoPlanNacional == null ? 'NO APLICA':item.objetivoPlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Política Nacional" filterBy="#{item.politicaPlanNacional}" style="width: 150px; text-align: center;">
+                            <p:outputLabel value="#{item.politicaPlanNacional == null ? 'NO APLICA':item.politicaPlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Componente" filterBy="#{item.sistemaPlanLocal}" style="width: 150px; text-align: center;">
+                            <p:outputLabel value="#{item.sistemaPlanLocal ==  null ? 'NO APLICA':item.sistemaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Local" filterBy="#{item.objetivoPlanLocal}" style="width: 150px; text-align: center;">
+                            <p:outputLabel value="#{item.objetivoPlanLocal == null ? 'NO APLICA':item.objetivoPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Meta de Resultado" filterBy="#{item.politicaPlanLocal}" style="width: 150px; text-align: center;">
+                            <p:outputLabel value="#{item.politicaPlanLocal == null ? 'NO APLICA':item.politicaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Plan" filterBy="#{item.plan}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel id="namePlan" value="#{item.plan == null ? 'SIN DEFINIR':item.plan}"/>
+                            <p:tooltip for="namePlan" value="#{consultaPappView.obtNombrePlan(item)}" position="bottom" style="font-size: 18px; width: 500px; text-align: center">
+                            </p:tooltip>
+                        </p:column>
+                        <p:column headerText="Programa" filterBy="#{item.programa}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel id="namePrograma" value="#{item.programa == null ? 'SIN DEFINIR':item.programa}"/>
+                            <p:tooltip for="namePrograma" value="#{consultaPappView.obtNombrePrograma(item)}" position="bottom" style="font-size: 18px; width: 500px; text-align: center">
+                            </p:tooltip>
+                        </p:column>
+                        <p:column headerText="Nº de Identificación" sortBy="#{item.numeroIdentificacionProgramaProyecto}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.numeroIdentificacionProgramaProyecto == null ? 'SIN DEFINIR':item.numeroIdentificacionProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Plan, programa y/o proyecto" filterBy="#{item.nombreProgramaProyecto}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreProgramaProyecto == null ? 'SIN DEFINIR':item.nombreProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="PAI" filterBy="#{item.pai}" style="width: 100px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.pai == true ? 'SI':'NO'}"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Participativo" filterBy="#{item.presParticipativo}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.presParticipativo == true ? 'SI':'NO'}"/>
+                        </p:column>
+                        <p:column headerText="Año Presupuesto" filterBy="#{item.anioPresParticip}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.anioPresParticip == null ? 'SIN DEFINIR':item.anioPresParticip}"/>
+                        </p:column>
+                        <p:column headerText="Grupo de Atencion Prioritaria" filterBy="#{item.grupAtenPriori}" style="width: 100px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.grupAtenPriori == true ? 'SI':'NO'}"/>
+                        </p:column>
+                        <p:column headerText="Tipo Componente" filterBy="#{item.tipoComponente}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.tipoComponente == null ? 'SIN DEFINIR':item.tipoComponente}"/>
+                        </p:column>
+                        <p:column headerText="Nuevo/Arrastre" filterBy="#{item.nuevoArrastre}" style="width: 100px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.nuevoArrastre == true ? 'NUEVO':'ARRASTRE'}"/>
+                        </p:column>
+                        <p:column headerText="Actividad Operativa" filterBy="#{item.nombreActividad}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreActividad == null ? 'SIN DEFINIR':item.nombreActividad}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Operativo" filterBy="#{item.objetivoOperativo}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.objetivoOperativo == null ? 'SIN DEFINIR':item.objetivoOperativo}"/>
+                        </p:column>
+                        <p:column headerText="Descripción Meta" filterBy="#{item.descripcionMeta}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.descripcionMeta == null ? 'SIN DEFINIR':item.descripcionMeta}"/>
+                        </p:column>
+                        <p:column headerText="Medición Porcentaje" filterBy="#{item.medicionPorcentaje}" style="width: 100px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.medicionPorcentaje == true ? 'SI':'NO'}"/>
+                        </p:column>
+                        <p:column headerText="Medición Meta" filterBy="#{item.medicionMeta}" style="width: 150px;" groupRow="true">
+                            <p:outputLabel value="#{item.medicionMeta == null ? 'SIN DEFINIR':item.medicionMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Distribución Meta" filterBy="#{item.distribucionMeta}" style="width: 150px; text-align: center;" groupRow="true">
+                            <p:outputLabel value="#{item.distribucionMeta == null ? 'SIN DEFINIR':item.distribucionMeta}"/>
+                        </p:column>
+                        <p:column headerText="Enero" filterBy="#{item.eneroMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.eneroMeta == null ? 'SIN DEFINIR':item.eneroMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Febrero" filterBy="#{item.febreroMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.febreroMeta == null ? 'SIN DEFINIR':item.febreroMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Marzo" filterBy="#{item.marzoMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.marzoMeta == null ? 'SIN DEFINIR':item.marzoMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Abril" filterBy="#{item.abrilMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.abrilMeta == null ? 'SIN DEFINIR':item.abrilMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Mayo" filterBy="#{item.mayoMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.mayoMeta == null ? 'SIN DEFINIR':item.mayoMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Junio" filterBy="#{item.junioMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.junioMeta == null ? 'SIN DEFINIR':item.junioMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Julio" filterBy="#{item.julioMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.julioMeta == null ? 'SIN DEFINIR':item.julioMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Agosto" filterBy="#{item.agostoMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.agostoMeta == null ? 'SIN DEFINIR':item.agostoMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Septiembre" filterBy="#{item.septiembreMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.septiembreMeta == null ? 'SIN DEFINIR':item.septiembreMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Octubre" filterBy="#{item.octubreMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.octubreMeta == null ? 'SIN DEFINIR':item.octubreMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Noviembre" filterBy="#{item.noviembreMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.noviembreMeta == null ? 'SIN DEFINIR':item.noviembreMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Diciembre" filterBy="#{item.diciembreMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.diciembreMeta == null ? 'SIN DEFINIR':item.diciembreMeta}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Indicador Meta" filterBy="#{item.indicadorMeta}" style="width: 250px;">
+                            <p:outputLabel value="#{item.indicadorMeta == null ? 'SIN DEFINIR':item.indicadorMeta}"/>
+                        </p:column>
+                        <p:column headerText="Meta IT" style="width: 100px;">
+                            <p:outputLabel value="#{item.meta1t == null ? 0:item.meta1t}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Meta IIT" style="width: 100px;">
+                            <p:outputLabel value="#{item.meta2t == null ? 0:item.meta2t}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Meta IIIT" style="width: 100px;">
+                            <p:outputLabel value="#{item.meta3t == null ? 0:item.meta3t}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Meta IVT" style="width: 100px;">
+                            <p:outputLabel value="#{item.meta4t == null ? 0:item.meta4t}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Propio" style="width: 100px;">
+                            <p:outputLabel value="#{item.presupuestoPropio == null ? 0:item.presupuestoPropio}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Presupuesto Financiamiento" style="width: 100px;">
+                            <p:outputLabel value="#{item.presupuestoFinan == null ? 0:item.presupuestoFinan}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Unidad Responsable" filterBy="#{item.unidadResponsable}" style="width: 250px; ">
+                            <p:outputLabel value="#{item.unidadResponsable == null ? 'SIN DEFINIR':item.unidadResponsable}"/>
+                        </p:column>
+                        <p:column headerText="Monto de Actividad" filterBy="#{item.sistemaPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoActividad == null ? 'SIN DEFINIR':item.montoActividad}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Distribución" style="width: 100px; text-align: center;">
+                            <p:outputLabel value="#{item.tipoDistribucion == null ? 'SIN DEFINIR':item.tipoDistribucion}"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Enero" filterBy="#{item.enero}" style="width: 150px;">
+                            <p:outputLabel value="#{item.enero == null ? 'SIN DEFINIR':item.enero}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Febrero" filterBy="#{item.febrero}" style="width: 150px;">
+                            <p:outputLabel value="#{item.febrero == null ? 'SIN DEFINIR':item.febrero}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Marzo" filterBy="#{item.marzo}" style="width: 150px;">
+                            <p:outputLabel value="#{item.marzo == null ? 'SIN DEFINIR':item.marzo}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Abril" filterBy="#{item.abril}" style="width: 150px;">
+                            <p:outputLabel value="#{item.abril == null ? 'SIN DEFINIR':item.abril}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Mayo" filterBy="#{item.mayo}" style="width: 150px;">
+                            <p:outputLabel value="#{item.mayo == null ? 'SIN DEFINIR':item.mayo}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Junio" filterBy="#{item.junio}" style="width: 150px;">
+                            <p:outputLabel value="#{item.junio == null ? 'SIN DEFINIR':item.junio}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Julio" filterBy="#{item.julio}" style="width: 150px;">
+                            <p:outputLabel value="#{item.julio == null ? 'SIN DEFINIR':item.julio}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Agosto" filterBy="#{item.agosto}" style="width: 150px;">
+                            <p:outputLabel value="#{item.agosto == null ? 'SIN DEFINIR':item.agosto}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Septiembre" filterBy="#{item.septiembre}" style="width: 150px;">
+                            <p:outputLabel value="#{item.septiembre == null ? 'SIN DEFINIR':item.septiembre}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Octubre" filterBy="#{item.octubre}" style="width: 150px;">
+                            <p:outputLabel value="#{item.octubre == null ? 'SIN DEFINIR':item.octubre}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Noviembre" filterBy="#{item.noviembre}" style="width: 150px;">
+                            <p:outputLabel value="#{item.noviembre == null ? 'SIN DEFINIR':item.noviembre}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Presupuesto Diciembre" filterBy="#{item.diciembre}" style="width: 150px;">
+                            <p:outputLabel value="#{item.diciembre == null ? 'SIN DEFINIR':item.diciembre}" style="float: right;"/>
+                        </p:column>
+                        <p:column headerText="Cédula Presupuestaria" filterMatchMode="contains" 
+                                  style="width: 100px;text-align: center" filterBy="#{item.partida}">
+                            <h:outputText value="#{item.partida}"/>
+                        </p:column>
+                        <p:column headerText="Nombre del Producto" style="width: 200px;text-align: center" filterBy="#{item.nombreProducto}">
+                            <h:outputText value="#{item.nombreProducto}"/>
+                        </p:column>
+                        <p:column headerText="Monto Codificado" filterBy="#{item.montoReformada}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoReformada == null ? 'SIN DEFINIR':item.montoReformada}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        
+                        
+                        <p:column headerText="Cert. PAPP" style="width: 150px;">
+                            <p:outputLabel value="#{consultaPappView.getMontoSolitado(item.idProducto)}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        
+                        
+                        <p:column headerText="Saldo Cert. PAPP" style="width: 150px;">
+                            <p:outputLabel value="#{consultaPappView.getMontoDisponible(item.idProducto)}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        
+                        
+                        
+                        <p:column headerText="Monto Reserva" filterBy="#{item.reservado}"  style="width: 150px;">
+                            <p:outputLabel value="#{item.reservado}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>        
+                        <p:column headerText="Comprometido" filterBy="#{item.comprometidoFinal}"  style="width: 150px;">
+                            <p:outputLabel value="#{item.comprometidoFinal}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>        
+                        <p:column headerText="Devengado" filterBy="#{item.ejecutadoFinal}"  style="width: 150px;">
+                            <p:outputLabel value="#{item.ejecutadoFinal}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>                                
+                        <p:column headerText="Saldo Disponible"   style="width: 150px;">
+                            <p:outputLabel value="#{item.montoReformada-item.reservado}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <!--<ui:include id="ActividadesProductos"  src="/common/Dialog/DlgoConsultaPappReporte.xhtml" />-->
+        <p:dialog id="dlgActividadProductosConsulta" widgetVar="dlgActividadProductosConsulta" 
+                  modal="true" showEffect="fade" 
+                  position="center" width="60%"  height="400"
+                  hideEffect="fade" resizable="false">
+            <h:form id="formActividadProductosConsulta" prependId="false">  
+                <h:panelGroup id="dlgActividadProductosTable" layout="block">
+                    <p:dataTable value="#{consultaPappView.list}" 
+                                 id="actividadProductosTable"  widgetVar="actividadProductosTable"
+                                 paginatorPosition="bottom" var="actividadProductos" rows="15" paginator="true"  style="text-align: center"
+                                 paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                 rowsPerPageTemplate="15,25,35,45" reflow="true">
+                        <f:facet name="header">
+                            INFORMACION DEL MONTO DE ACTIVIDADES EN RELACIÓN CON SUS RESPECTIVO MONTO DE PRODUCTOS
+                        </f:facet> 
+                        <p:column headerText="Nombre de la Actividad" style="width: 30%">
+                            <h:outputText value="#{actividadProductos.actividadOperativa.nombreActividad}" />
+                        </p:column>
+                        <p:column headerText="Monto de la Actividad" style="width: 20%">
+                            <h:outputText  value="#{actividadProductos.actividadOperativa.monto}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Total de los Productos" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.montoTotalDeProductos}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Monto de Diferencia" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.diferencia}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.montoTotalDeProductos == actividadProductos.actividadOperativa.monto ? 'EQUILIBRADO':'DESEQUILIBRADO'}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

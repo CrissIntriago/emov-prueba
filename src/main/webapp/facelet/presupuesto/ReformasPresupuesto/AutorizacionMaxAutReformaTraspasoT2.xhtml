@@ -1,0 +1,579 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Listado de Reformas
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <u:titleTask task="#{reformaT2AutorizacionMaxAutView.tarea}" tramite="#{reformaT2AutorizacionMaxAutView.tramite}" />
+            </div>
+
+            <br></br>
+
+            <div class="ui-g-12">
+                <h:form prependId="false">
+                    <p:dataTable id="datarevision" widgetVar="datarevision" var="item" value="#{reformaT2AutorizacionMaxAutView.lazyReformaTraspaso}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width:4%;">
+                            <p:outputLabel value="#{item.numeracion}" />
+                        </p:column>
+
+                        <p:column headerText="Fecha Traspaso" style="width: 7%; text-align: center">
+                            <p:outputLabel value="#{item.fechaTraspasoReforma}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="Período" style="width: 7%; text-align: center">
+                            <p:outputLabel value="#{item.periodo}"/>
+                        </p:column>
+
+                        <p:column headerText="Estado" style="width: 15%; text-align: center">
+                            <p:outputLabel value="#{item.estadoReformaTramite}"/>
+                        </p:column>
+
+                        <p:column headerText="Tipo de Reforma" style="width: 10%;text-align: center">
+                            <p:outputLabel value="#{item.tipo == true ? 'TRASPASO TIPO 1':'TRASPASO TIPO 2'}"/>
+                        </p:column>
+
+                        <p:column headerText="Unidad Administrativa" style="width: 20%; text-align: center;">
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Total Incremento" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{reformaT2AutorizacionMaxAutView.getTotalIncrementoOrReduccionByReforma(item, true)}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="Total Reducción" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{reformaT2AutorizacionMaxAutView.getTotalIncrementoOrReduccionByReforma(item, false)}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="Acciones" style="width: 10%; text-align: center;">
+
+                            <p:commandLink  title="Aprobar Informe" process="@this" actionListener="#{reformaT2AutorizacionMaxAutView.dlogoObservaciones(item)}" update="datarevision" >
+                                <i class="fa fa-check-square" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                <p:confirm header="Confirmación de la Ejecución de la reforma" message="Está Seguro de ejecutar la reforma No.#{item.numeracion} ?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+
+                            <p:commandLink  title="Visualizar" process="@this"  actionListener="#{reformaT2AutorizacionMaxAutView.consultarPapp(item)}" update="formDlgVistaReforma">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+
+                        </p:column>   
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </h:form>
+            </div>
+        </div>
+
+
+
+
+        <p:dialog id="DlgVistaReforma" width="1300"  header="Reforma Traspaso Tipo 2" 
+                  widgetVar="DlgVistaReforma" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="formDlgVistaReforma"  prependId="false">
+
+                <div class="ui-g-12">
+                    <h:panelGroup id="tabRegistroDeSolicitud">
+                        <p:tabView id="tabladimnamica" prependId="false" >
+                            <p:tab title="Plan Anual Políticas Públicas" titleStyle="border-right: 2px solid #eaeaea" rendered="#{reformaT2AutorizacionMaxAutView.renderedPAPP}">
+                                <h:panelGroup id="tabPAPP">  
+                                    <p:dataTable  paginator="true"  paginatorPosition="bottom" style=" margin: 10px" rows="15"
+                                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                  rowsPerPageTemplate="10,15,20,25" rowIndexVar="inedex"  editable="true" editMode="cell"
+                                                  emptyMessage="No existen datos con el criterio de búsqueda especificado"
+                                                  id="tablaSolicitud" value="#{reformaT2AutorizacionMaxAutView.listaProducto}" var="PAPP">
+
+                                        <p:column style="width:16px">
+                                            <p:rowToggler />
+                                        </p:column>
+                                        <p:column headerText="#" style="width:10px; font-weight: bold;" >
+                                            <h:outputText value="#{inedex +1 }"/>
+                                        </p:column>
+                                        <p:column headerText="Producto" style="width: 200px;" filterBy="#{PAPP.descripcion}">
+                                            <h:outputText value="#{PAPP.descripcion}"/>
+                                        </p:column>
+                                        <p:column headerText="Monto Producto" style="width: 100px;">
+                                            <h:outputText value="#{PAPP.monto}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Unidad Responsable" style="width: 200px;">
+                                            <h:outputText value="#{PAPP.actividadOperativa.unidadResponsable.nombre}" />
+                                        </p:column>
+                                        <p:column headerText="Partida Presupuestaria" style="width: 120px;" filterBy="#{PAPP.codigoPresupuestario}">
+                                            <h:outputText value="#{PAPP.codigoPresupuestario == null ? 'S/N':PAPP.codigoPresupuestario}" />
+                                        </p:column>
+                                        <p:column headerText="Reservas Aprobadas" style="width: 110px;">
+                                            <h:outputText value="#{PAPP.reserva}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Saldo Disponible" style="width: 110px;">
+                                            <h:outputText value="#{PAPP.saldoDisponible}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Incremento" style="width: 110px;">
+                                            <h:outputText value="#{PAPP.traspasoIncremento}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Reducción" style="width: 110px;">
+                                            <h:outputText value="#{PAPP.traspasoReduccion}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Monto Reformada" style="width: 110px;">
+                                            <h:outputText value="#{PAPP.montoReformada}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+
+
+
+                                        <p:rowExpansion>
+                                            <center>
+                                                <p:dataTable id="Subta" var="subt" value="#{PAPP}" style="width:97%">
+                                                    <p:column headerText="Nombre del plan, programa, proyecto" style="width: 260px;" filterBy="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}">
+                                                        <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion == null ? 'NO APLICA':subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}" />
+                                                    </p:column>
+                                                    <p:column headerText="Nº de identificación" style="width: 100px;" >
+                                                        <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.id}" />
+                                                    </p:column>
+                                                    <p:column headerText="Plan, programa y/o proyecto" style="width: 200px;"  filterBy="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" >
+                                                        <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                                    </p:column>
+                                                    <p:column headerText="Actividad Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.nombreActividad}">
+                                                        <h:outputText value="#{subt.actividadOperativa.nombreActividad}" />
+                                                    </p:column>
+                                                    <p:column headerText="Objetivo Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.objetivoOperativo}">
+                                                        <h:outputText value="#{subt.actividadOperativa.objetivoOperativo}" />
+                                                    </p:column>
+                                                    <p:column headerText="Medición Meta" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.medicionMeta}" />
+                                                    </p:column>
+                                                    <p:column headerText="Meta Cuatrimestre 1" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre1Meta}" />
+                                                    </p:column>
+                                                    <p:column headerText="Meta Cuatrimestre 2" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre2Meta}" />
+                                                    </p:column>
+                                                    <p:column headerText="Meta Cuatrimestre 3" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre3Meta}" />
+                                                    </p:column>
+                                                    <p:column headerText="Indicador Meta" style="width: 200px;"  filterBy="#{subt.actividadOperativa.indicadorMeta}">
+                                                        <h:outputText value="#{subt.actividadOperativa.indicadorMeta}" />
+                                                    </p:column>
+                                                    <p:column headerText="Monto Actividad" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.monto}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Presupuesto Cuatrimestre 1" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre1Actividad}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Presupuesto Cuatrimestre 2" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre2Actividad}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Presupuesto Cuatrimestre 3" style="width: 100px;">
+                                                        <h:outputText value="#{subt.actividadOperativa.cuatrimestre3Actividad}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </p:column>
+                                                    <p:column headerText="Item Presupuestario" style="width: 200px;">
+                                                        <h:outputText value="#{subt.itemPresupuestario == null ? 'Sin definir':subt.itemPresupuestario.codigo}" />
+                                                    </p:column>
+                                                    <p:column headerText="Estructura Programática" style="width: 200px;">
+                                                        <h:outputText value="#{subt.estructuraProgramatica == null ? 'Sin definir':subt.estructuraProgramatica.codigo}" />
+                                                    </p:column>
+                                                    <p:column headerText="Fuente" style="width: 200px;" filterBy="#{item.fuente.id}">
+                                                        <h:outputText value="#{subt.fuente == null ? 'Sin definir':subt.fuente.nombre}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Tipo Fuente" style="width: 200px;">
+                                                        <h:outputText value="#{subt.fuente == null ? 0:subt.fuente.tipoFuente.orden} - #{subt.fuente == null ? 'Sin Fuente':subt.fuente.tipoFuente.texto}" style="text-align: left"/>
+                                                    </p:column>
+                                                    <p:column headerText="Partida Presupuestaria" style="width: 200px;">
+                                                        <h:outputText value="#{subt.codigoPresupuestario == null ? 'S/Partida':subt.codigoPresupuestario}" id="ini"/>
+                                                    </p:column>
+                                                    <p:column headerText="Período" style="width: 200px;">
+                                                        <h:outputText value="#{subt.periodo}" />
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </center>
+                                        </p:rowExpansion>
+
+                                    </p:dataTable>
+                                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                    </p:confirmDialog>
+                                </h:panelGroup>
+                            </p:tab>
+
+                            <p:tab title="Plan Distributivo General" titleStyle="border-right: 2px solid #eaeaea" rendered="#{reformaT2AutorizacionMaxAutView.renderedDistributivo}"> 
+                                <h:panelGroup id="tabPD">
+                                    <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 10px"
+                                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 rowsPerPageTemplate="10,15,20,25,50,100" rowIndexVar="index" editable="true" editMode="cell"
+                                                 emptyMessage="No existen datos con el criterio de búsqueda especificado" 
+                                                 id="tablaSolicitud2" value="#{reformaT2AutorizacionMaxAutView.listaDistributivo}" var="item">
+                                        <p:column headerText="#" style="font-weight: bold; width: 3%; font-size: 12px; text-align: center" >
+                                            <h:outputText value="#{index +1 }"/>
+                                        </p:column>
+                                        <p:column headerText="CÉDULA SERVIDOR" style="width: 80px; font-size: 13px; text-align: center">
+                                            <h:outputText value="#{item.servidorPublico.persona.identificacion}"/>
+                                        </p:column>
+                                        <p:column headerText="NOMBRE SERVIDOR" style="width: 80px; font-weight: bold; font-size: 13px">
+                                            <h:outputText value="#{item.servidorPublico.persona.nombreCompleto == null?'VACANTE':item.servidorPublico.persona.nombreCompleto.toUpperCase()}"/>
+                                        </p:column>
+                                        <p:column headerText="CARGO" style="width: 90px; font-size: 13px" >
+                                            <h:outputText value="#{item.cargo.nombreCargo}"/>
+                                        </p:column>
+                                        <p:column headerText="VIGENCIA DESDE" style="width: 70px;  font-size: 13px; text-align: center">
+                                            <h:outputText value="#{item.vigenciaDesde}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy" />
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="VIGENCIA HASTA" style="width: 70px;  font-size: 13px; text-align: center">
+                                            <h:outputText value="#{item.vigenciaHasta == null?'NO HAY FECHA CADUCIDAD':item.vigenciaHasta}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy" />
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="UNIDAD" style="width: 90px;  font-size: 13px" >
+                                            <h:outputText value="#{item.unidadAdministrativa.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="SUPERVISA" style="width: 90px;  font-size: 13px" >
+                                            <h:outputText value="#{item.unidadAdministrativa.padre.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="TIPO DE UNIDAD" style="width: 90px; font-size: 13px" >
+                                            <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.descripcion}"/>
+                                        </p:column>
+
+
+                                        <p:column headerText="Acciones" style="width: 60px; text-align: center">
+                                            <p:commandLink  title="ver" process="@this" actionListener="#{reformaT2AutorizacionMaxAutView.listaVisualizacion(item, true)}">
+                                                <i class="fa fa-search" style="font-size: 1.5em; color: #0D47A1;"></i>
+                                            </p:commandLink>
+
+                                        </p:column>
+
+                                    </p:dataTable>
+                                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                    </p:confirmDialog>
+                                </h:panelGroup>
+                            </p:tab>
+
+                            <p:tab title="Plan Distributivo Anexo" titleStyle="border-right: 2px solid #eaeaea" rendered="#{reformaT2AutorizacionMaxAutView.renderedDistributivoAnexo}"> 
+                                <h:panelGroup id="tabPDA">
+                                    <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 10px"
+                                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 rowsPerPageTemplate="10,15,20,25,50" rowIndexVar="index" editable="true" editMode="cell"
+                                                 emptyMessage="No existen datos con el criterio de búsqueda especificado" 
+                                                 id="tablaSolicitudPDA" value="#{reformaT2AutorizacionMaxAutView.listaPartidaDistributivoAnexo}" var="itempda">
+
+                                        <p:column headerText="#" style="width:10px; font-weight: bold;" >
+                                            <h:outputText value="#{index +1 }"/>
+                                        </p:column>
+
+                                        <p:column headerText="Tipo" style="width: 150px;" filterBy="#{itempda.distributivoAnexo.valorParametrizado.tipo}">
+                                            <h:outputText value="#{itempda.distributivoAnexo.valorParametrizado.tipo}"/>
+                                        </p:column>
+                                        <p:column headerText="Descripción" style="width: 20%;" filterBy="#{itempda.distributivoAnexo.nombre}" filterMatchMode="contains">
+                                            <h:outputText value="#{itempda.distributivoAnexo.nombre}" />
+                                        </p:column> 
+                                        <p:column headerText="Monto" style="width: 100px;">
+                                            <h:outputText value="#{itempda.monto}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+
+                                        <p:column headerText="Partida Presupuestaria" style="width: 105px; text-align: center" >
+                                            <h:outputText value="#{itempda.partidaAp == null ? 'S/N':itempda.partidaAp}" />
+                                        </p:column>
+                                        <p:column headerText="Reserva" style="width: 100px;">
+                                            <h:outputText value="#{itempda.reserva}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Saldo Disponible" style="width: 100px;">
+                                            <h:outputText value="#{itempda.monto-itempda.reserva}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Incremento" style="width: 100px;">
+                                            <h:outputText value="#{itempda.traspasoIncremento}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Reducción" style="width: 100px;">
+                                            <h:outputText value="#{itempda.traspasoReduccion}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Monto Reformada" style="width: 100px;">
+                                            <h:outputText value="#{itempda.reformaCodificado}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+
+                                    </p:dataTable>
+                                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                    </p:confirmDialog>
+                                </h:panelGroup>
+                            </p:tab>
+
+                            <p:tab title="Partida Directa" titleStyle="border-right: 2px solid #eaeaea" rendered="#{reformaT2AutorizacionMaxAutView.renderedPartidaDirecta}"> 
+                                <h:panelGroup id="tabPDI">
+                                    <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 10px"
+                                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 rowsPerPageTemplate="10,15,20,25" rowIndexVar="index" editable="true" editMode="cell"
+                                                 emptyMessage="No existen datos con el criterio de búsqueda especificado" 
+                                                 id="tablaSolicitudPDI" value="#{reformaT2AutorizacionMaxAutView.listaProformaPresupuestoPlanificado}" var="item">
+
+                                        <p:column headerText="No." style="width: 20px;">
+                                            <h:outputText value="#{index+1}" />
+                                        </p:column>
+                                        <p:column headerText="Estructura Programática"  style="width: 20%;">
+                                            <h:outputText value="#{item.estructuraProgramatica.descripcion}" />
+                                        </p:column>
+                                        <p:column  headerText=" Partida Presupuestaria" style="width: 20%;text-align: center">
+                                            <p:outputLabel value="#{item.partidaPresupuestaria}" />
+                                        </p:column>
+                                        <p:column  headerText="Item Presupuestario"  style="width: 30%;">
+                                            <h:outputText value="#{item.itemPresupuestario.descripcion}" />
+                                        </p:column>
+                                        <p:column  headerText="Tipo" style="width: 10%;text-align: center">
+                                            <p:outputLabel value="#{item.codigo}" />
+                                        </p:column>
+                                        <p:column  headerText="Período" style="width: 10%;text-align: center" >
+                                            <p:outputLabel value="#{item.periodo}"/>
+                                        </p:column>
+                                        <p:column  headerText="Valor asignado" style="width: 20%;">
+                                            <p:outputLabel value="#{item.valor}" style="float: right" >
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:outputLabel>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Incremento" style="width: 110px;">
+                                            <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Traspaso Reducción" style="width: 110px;">
+                                            <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Monto Reformada" style="width: 110px;">
+                                            <h:outputText value="#{item.reformaCodificado}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>
+
+                                    </p:dataTable>
+                                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                    </p:confirmDialog>
+                                </h:panelGroup>
+                            </p:tab>
+
+                        </p:tabView>
+                    </h:panelGroup>
+                </div>
+
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlgpartidasDistributivosvista" width="1300"  header="Partidas Presupuestarias" 
+                  widgetVar="DlgpartidasDistributivosvista" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">  
+            <h:form id="formDlgpartidasDistributivosvista"  prependId="false">
+                <p:panel  style="text-align: left; ">
+                    <p:panelGrid columns="2" layout="grid" style="font-size: 12px; "  styleClass="ui-panelgrid-blank form-group">
+
+                        <!--                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                                    <p:outputLabel value="RMU: " class="FontBold"/>
+                                                    <p:outputLabel value="# {reformaT2AutorizacionMaxAutView.rmu}">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </p:outputLabel>  
+                                                </h:panelGroup>-->
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Unidad: " class="FontBold"/>
+                            <p:outputLabel value="#{reformaT2AutorizacionMaxAutView.dataView.unidadAdministrativa.nombre}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Cargo: " class="FontBold"/>
+                            <p:outputLabel value="#{reformaT2AutorizacionMaxAutView.dataView.cargo.nombreCargo}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+
+                    </p:panelGrid>
+                </p:panel>
+                <p:dataTable  paginator="true" id="listavistaDistributivo" widgetVar="listavistaDistributivo" paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="10,15,20,25" scrollable="true"    
+                              editable="true" editMode="cell" value="#{reformaT2AutorizacionMaxAutView.listaVista}" var="item4"
+                              emptyMessage="No existen datos con el criterio de búsqueda especificado"  >
+
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+
+                    <p:column headerText="Tipo" style="width: 20%; text-align: justify">
+                        <h:outputText value="#{item4.distributivo.valoresParametrizados.tipo.texto}" />
+                    </p:column> 
+
+                    <p:column headerText="Monto" style="width: 7%;" >
+                        <h:outputText value="#{item4.distributivo.valorResultante}"  style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Saldo Disponible" style="width: 7%; " >
+                        <h:outputText value="#{item3.monto-item3.reserva}"  style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Reservas" style="width: 7%; " >
+                        <h:outputText value="#{item4.reserva}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Item" style="width: 10%;">
+                        <h:outputText value="#{item4.itemAp.codigo}" />
+                    </p:column>
+
+                    <p:column headerText="Estructura" style="width: 10%;">
+                        <h:outputText value="#{item4.estructuraAp.codigo}" />
+                    </p:column>
+
+                    <p:column headerText="Fuente" style="width: 7%;">
+                        <h:outputText value="#{item4.fuenteAp.tipoFuente.orden}" />
+                    </p:column>
+
+                    <p:column headerText="Partida" style="width: 10%; text-align: center">
+                        <h:outputText value="#{item4.partidaAp}" />
+                    </p:column>
+
+                    <p:column headerText="Traspaso Incremento" style="width: 10%; ">
+                        <h:outputText value="#{item4.traspasoIncremento}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Traspaso Reducción" style="width: 10%;">
+                        <h:outputText value="#{item4.traspasoReduccion}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Monto Codificado" style="width: 10%; ">
+                        <h:outputText value="#{item4.reformaCodificado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="800" id="dlogoCodigoRepetidos"    widgetVar="dlogoCodigoRepetidos" modal="true" showEffect="explode" hideEffect="explode" >
+
+            <h:form prependId="false" id="dlogoPartidasRepetidas">
+                <p:dataGrid var="data" value="#{reformaT2AutorizacionMaxAutView.showCodigoRepetidosList}" columns="3" layout="grid"
+                            rows="10" paginator="true" id="cars" paginatorPosition="bottom"
+                            paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                            rowsPerPageTemplate="5,12,20">
+
+                    <f:facet name="header">
+                        Codigos Repetidos
+                    </f:facet>
+
+                    <p:panel header="PARTIDA ==> #{data.partidaPresupuestaria}" style="font-weight: bold;">
+                        <h:panelGrid columns="1" style="width:100%">
+
+                            <h:outputText value="TIPO: #{data.codigo}" />
+
+
+                            <h:outputText value="ITEM: #{data.itemPresupuestario.codigo}" style="text-align:left" />
+                            <h:outputText value="ESTRUCTURA: #{data.estructuraProgramatica.codigo}" style="text-align:left"/>
+
+                            <h:outputText value="TIPO FUENTE: #{data.fuenteDirecta.orden}" style="text-align:left" />
+
+
+
+
+                        </h:panelGrid>
+                    </p:panel>
+
+                </p:dataGrid>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{reformaT2AutorizacionMaxAutView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{reformaT2AutorizacionMaxAutView.completarTarea(2)}" rendered="#{reformaT2AutorizacionMaxAutView.btnAprobar}" 
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Rechazar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{reformaT2AutorizacionMaxAutView.completarTarea(0)}" rendered="#{reformaT2AutorizacionMaxAutView.btnRechazar}" 
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

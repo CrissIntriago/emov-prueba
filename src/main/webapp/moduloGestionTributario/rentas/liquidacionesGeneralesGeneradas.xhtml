@@ -1,0 +1,253 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Liquidaciones de Rentas
+    </ui:define>
+    <ui:param name="tittle" value="LISTADO DE LIQUIDACIONES DE RENTAS" />
+    <ui:define name="content">
+        <style type="text/css">
+            .validado{
+                background-color: rgba(62, 171, 241,0.1) !important;
+                font-weight: bold;
+
+            }
+            .sinValidar{
+                background: rgba(128, 27, 5,0.5) !important;
+            }
+
+            .validado,.sinValidar{
+                padding: 20px;
+                border:1px solid;
+                border-radius: 10px 10px 10px 10px;
+            }       
+        </style>
+
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="mainForm">
+                    <center>
+                        <br/><br/><br/>
+                        <h:panelGroup layout="block">
+                            <span class="validado">Validado</span>
+                            <span class="sinValidar">Sin validar</span>
+                        </h:panelGroup>
+                        <br/><br/><br/>
+                    </center>
+
+                    <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true"  rows="10" paginatorPosition="top"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{titulosRentasGenerado.liquidacionesLazy}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                 rowStyleClass="#{titulo.validada ==true ? 'validado' : 'sinValidar'}"
+                                 rowsPerPageTemplate="10,15,20,25,30" 
+                                 selectionMode="single" rowKey="#{titulo.id}" selection="#{titulosRentasGenerado.liquidacion}" filterEvent="enter">
+
+                        <p:ajax event="rowSelect" update="mainForm:opLiquidacionesEmitidas"/>
+                        <p:column  headerText="Prefijo" width="50" filterBy="#{titulo.tipoLiquidacion.prefijo}" filterStyle="width: 90%;">
+                            <h:outputText value="#{titulo.tipoLiquidacion.prefijo}" />
+                        </p:column>
+                        <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                            <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                        </p:column>
+
+                        <p:column  headerText="IId_Liquidación" width="200" filterBy="#{titulo.idLiquidacion}" >
+                            <h:outputText value="#{titulo.idLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="No. Liq." width="70" filterBy="#{titulo.numLiquidacion}" sortBy="#{titulo.numLiquidacion}" filterStyle="width: 90%;">
+                            <h:outputText value="#{titulo.numLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 90%;">
+                            <h:outputText value="#{titulo.anio}"/>
+                        </p:column>
+
+                        <p:column headerText="Clave Cat." width="120" >                           
+                            <h:outputText value="#{titulo.predio.claveCat}" />
+                        </p:column>
+
+                        <p:column headerText="Num. Local" width="120" >                           
+                            <h:outputText value="#{titulo.localComercial.numLocal}" />
+                        </p:column>
+
+                        <p:column headerText="Nro.Predio" width="80" >                           
+                            <h:outputText value="#{titulo.predio.numPredio}" />
+                        </p:column>
+                        <p:column headerText="Validador" width="100" >
+                            <h:outputText value="#{titulo.usuarioValida eq null or titulo.usuarioValida eq ''?'SYSTEM':titulo.usuarioValida}" />
+                        </p:column>
+                        <p:column headerText="Fecha emision" width="200" >
+                            <h:outputText value="#{titulo.fechaIngreso}" >
+                                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacionCompleta}" filterStyle="width: 90%;">                            
+                            <h:outputText  value="#{titulo.comprador.identificacionCompleta}" />
+                        </p:column>
+                        <p:column headerText="Solicitante" width="250">                            
+                            <h:outputText  value="#{titulo.comprador ne null?titulo.comprador.nombreCompleto: (titulo.observacion.contains('|')
+                                                    ?titulo.observacion.substring(0,titulo.observacion.indexOf('|')):titulo.nombreComprador)}"/>
+                        </p:column>
+
+                        <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+
+                        <p:column headerText="Estado" width="65" filterBy="#{titulo.estadoLiquidacion.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{ !titulo.validada ? 'Sin validar' : titulo.estadoLiquidacion.descripcion}" style="font-weight: bold;"/>
+                        </p:column>
+
+                        <p:column headerText="****" width="65" style="text-align: center;">
+
+                            <p:commandLink actionListener="#{titulosRentasGenerado.imprimir(titulo)}" title="#{titulo.idLiquidacion}" process="@this" >
+
+                                <i class="fa fa-fw fa-print" style="font-size: 1.5em;" />
+                            </p:commandLink>
+                        </p:column>
+
+
+
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                            <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                        </p:confirmDialog>
+
+                    </p:dataTable>
+                    <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones" rendered="false">
+                        <p:menuitem value="Editar Comprador" icon="ui-icon-pencil" oncomplete="PF('dlgNombCont').show();" update="formNombCont"  process="@this" />
+                        <p:menuitem value="Editar Vendedor" icon="ui-icon-pencil" oncomplete="PF('dlgNombVendedor').show();" update="formNombVendedor"  process="@this" />
+                        <p:menuitem value="Editar Observacion" icon="ui-icon-pencil" oncomplete="PF('dlgObservacion').show();" update="formObservacion"  process="@this" />
+                    </p:contextMenu>
+                </h:form>
+
+                <p:dialog header="Editar nombre del Comprador" widgetVar="dlgNombCont" resizable="false" closeOnEscape="true" modal="true" width="70%" position="center">
+                    <h:form id="formNombCont">
+                        <center>
+                            <p:tabView  id="tabEditEnte">
+                                <p:tab title="Editar nombre">
+                                    <p:panelGrid columns="2"  style="width: 100%" >
+                                        <p:panelGrid>
+                                            <p:outputLabel  value="Liquidacion: #{titulosRentasGenerado.liquidacion.tipoLiquidacion.nombreTitulo}: #{titulosRentasGenerado.liquidacion.numLiquidacion} Año:  #{titulosRentasGenerado.liquidacion.anio}" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" /><br></br>
+
+                                            <p:outputLabel for="descripcion" value="Contribuyente:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            <p:inputTextarea rows="4" cols="40" id="descripcion" readonly="true"
+                                                             value="#{titulosRentasGenerado.liquidacion.comprador.identificacionGenerada}-#{titulosRentasGenerado.liquidacion.comprador.apellido} #{titulosRentasGenerado.liquidacion.comprador.nombre} #{titulosRentasGenerado.liquidacion.comprador.razonSocial} #{titulosRentasGenerado.liquidacion.nombreComprador}"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid>
+                                            <p:dataTable var="s" value="#{titulosRentasGenerado.solicitantes}" style="width: 95%;text-align: center;" lazy="true"
+                                                         paginator="true" rows="5" filterEvent="enter" paginatorPosition="top"
+                                                         selection="#{titulosRentasGenerado.comprador}" rowKey="#{s.id}">
+                                                <p:column headerText="*" selectionMode="single"  />
+                                                <p:column headerText="CI/RUC" sortBy="#{s.identificacionCompleta}" width="150" filterBy="#{s.identificacionCompleta}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.identificacionCompleta}"/>
+                                                </p:column>
+                                                <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                                <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                                <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <br></br>
+                                    <p:commandButton value="Aceptar"  actionListener="#{titulosRentasGenerado.actualizarComprador()}" styleClass="btnStyle" style="width: auto;" icon="fa fa-save">
+                                        <p:confirm header="Confirmacion" message="Está seguro/a que desea modificar el Comprador?" icon="ui-icon-alert" />
+                                    </p:commandButton>
+                                    <p:commandButton value="Cancelar" onclick="PF('dlgNombCont').hide();" styleClass="btnStyle" style="width: auto;" icon="fa fa-close"/>
+                                </p:tab>
+                            </p:tabView>
+                        </center>
+                    </h:form>
+                </p:dialog>
+
+                <p:dialog header="Editar nombre del Vendedor" widgetVar="dlgNombVendedor" resizable="false" closeOnEscape="true" modal="true" width="70%" position="center">
+                    <h:form id="formNombVendedor">
+                        <center>
+                            <p:tabView  id="tabEditEnte">
+                                <p:tab title="Editar nombre">
+                                    <p:panelGrid columns="2"  style="width: 100%" >
+                                        <p:panelGrid>
+                                            <p:outputLabel  value="Liquidacion: #{titulosRentasGenerado.liquidacion.tipoLiquidacion.nombreTitulo}: #{titulosRentasGenerado.liquidacion.numLiquidacion} Año:  #{titulosRentasGenerado.liquidacion.anio}" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" /><br></br>
+
+                                            <p:outputLabel for="descripcion" value="Contribuyente:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            <p:inputTextarea rows="4" cols="40" id="descripcion" readonly="true"
+                                                             value="#{titulosRentasGenerado.liquidacion.vendedor.identificacionGenerada}-#{titulosRentasGenerado.liquidacion.vendedor.apellido} #{titulosRentasGenerado.liquidacion.vendedor.nombre} #{titulosRentasGenerado.liquidacion.vendedor.razonSocial}"/>
+
+                                        </p:panelGrid>
+                                        <p:panelGrid>
+                                            <p:dataTable var="s" value="#{titulosRentasGenerado.solicitantes}" style="width: 95%;text-align: center;" lazy="true"
+                                                         paginator="true" rows="5" filterEvent="enter" 
+                                                         selection="#{titulosRentasGenerado.vendedor}" rowKey="#{s.id}">
+                                                <p:column headerText="*" selectionMode="single"  />
+                                                <p:column headerText="CI/RUC" sortBy="#{s.identificacionGenerada}" width="150" filterBy="#{s.identificacionGenerada}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.identificacionGenerada}"/>
+                                                </p:column>
+                                                <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                                <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                                <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 90%;">
+                                                    <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <br></br>
+                                    <p:commandButton value="Aceptar"  actionListener="#{titulosRentasGenerado.actualizarVendedor()}" styleClass="btnStyle" style="width: auto;" icon="fa fa-save">
+                                        <p:confirm header="Confirmacion" message="Está seguro/a que desea modificar el Vendedor?" icon="ui-icon-alert" />
+                                    </p:commandButton>
+                                    <p:commandButton value="Cancelar" onclick="PF('dlgNombVendedor').hide();" styleClass="btnStyle" style="width: auto;" icon="fa fa-close"/>
+                                </p:tab>
+                            </p:tabView>
+                        </center>
+                    </h:form>
+                </p:dialog>
+
+                <p:dialog header="Editar Observacion" widgetVar="dlgObservacion" resizable="false" closeOnEscape="true" modal="true" width="70%" position="center">
+                    <h:form id="formObservacion">
+                        <center>
+                            <p:tabView  id="tabEditEnte">
+                                <p:tab title="Editar nombre">
+                                    <h:panelGrid columns="1" style="width: 100%" >
+                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                            <p:outputLabel  value="Liquidacion: #{titulosRentasGenerado.liquidacion.tipoLiquidacion.nombreTitulo}: #{titulosRentasGenerado.liquidacion.numLiquidacion} Año:  #{titulosRentasGenerado.liquidacion.anio}" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" /><br></br>
+
+                                            <p:outputLabel for="descripcion" value="Contribuyente:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            <p:inputTextarea rows="4" cols="50" id="descripcion"
+                                                             value="#{titulosRentasGenerado.liquidacion.observacion}"/>
+
+                                        </h:panelGroup>
+
+                                    </h:panelGrid>
+
+                                    <br></br>
+                                    <p:commandButton value="Aceptar"  actionListener="#{titulosRentasGenerado.actualizarLiquidacion()}" styleClass="btnStyle" style="width: auto;" icon="fa fa-save">
+                                        <p:confirm header="Confirmacion" message="Está seguro/a que desea modificar la Observacion?" icon="ui-icon-alert" />
+                                    </p:commandButton>
+                                    <p:commandButton value="Cancelar" onclick="PF('dlgObservacion').hide();" styleClass="btnStyle" style="width: auto;" icon="fa fa-close"/>
+                                </p:tab>
+                            </p:tabView>
+                        </center>
+                    </h:form>
+                </p:dialog>
+
+
+
+                <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+                    <h:form id="formDetEmision">
+                        <!--<dialog:detalleLiquidacion liquidacion="# {liquidacionView.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />-->
+                        <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+                    </h:form>
+                </p:dialog>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

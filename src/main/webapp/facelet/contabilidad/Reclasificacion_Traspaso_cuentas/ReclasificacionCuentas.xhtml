@@ -1,0 +1,219 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Reclasificación de Cuentas
+    </ui:define>
+    <ui:param name="tittle" value="RECLASIFICACIÓN DE CUENTAS"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="formReclasificacion" layout="block">
+                        <div class="ui-g-6" >
+                            <p:fieldset legend="Rango de consulta para la Reclasificación" style="margin-bottom: 20px;" id="fieldMenu">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:outputLabel for="@next" value="Reclasificar De:" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="reclasificacionDe" value="#{reclasificacionCuentasView.opcionBusqueda.anio}">
+                                            <f:selectItem itemLabel="Seleccionar Período" itemValue="#{null}" noSelectionOption="true"/>
+                                            <f:selectItems value="#{reclasificacionCuentasView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                            <p:ajax update="reclasificacionA" listener="#{reclasificacionCuentasView.actualizarGridConsulta()}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:outputLabel for="@next" value="Reclasificar A:" style="font-weight: bold"/>
+                                        <p:inputText id="reclasificacionA" class="panelInput" readonly="true" value="#{reclasificacionCuentasView.opcionBusqueda.anioSiguiente}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:commandButton value="CONSULTAR" process="@this" actionListener="#{reclasificacionCuentasView.consultar()}"
+                                                         icon="fa fa-search" styleClass="Fs16" style="width:100%;"/> 
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-6" >
+                            <p:fieldset legend="Cuadro de Mensajes" style="margin-bottom: 20px;" id="fieldMensajes">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+
+                                    <p:staticMessage severity="info" summary="INFO!" rendered="#{reclasificacionCuentasView.mensajeCorrecto}"
+                                                     detail="LOS PARAMETOS DE CONSULTA ESTAN CORRECTO, PUEDE SEGUIR CON EL PROCESO DE RECLASIFICACION" />
+
+                                    <p:staticMessage severity="error" summary="ERROR!" rendered="#{reclasificacionCuentasView.mensajeError}"
+                                                     detail="NO SE PUEDE REALIZAR LA CONSULTA, REVISE LA INFORMACION DEL RANGO DE RECLASIFICACION" />
+
+                                    <p:staticMessage severity="warn" summary="AVISO NO.1!" rendered="#{reclasificacionCuentasView.mensajeAviso1}"
+                                                     detail="EL PERÍODO #{reclasificacionCuentasView.opcionBusqueda.anio} AUN NO SE ENCUENTRA TOTALMENTE CERRADO" />
+
+                                    <p:staticMessage severity="warn" summary="AVISO NO.2!" rendered="#{reclasificacionCuentasView.mensajeAviso2}"
+                                                     detail="EL PERÍODO #{reclasificacionCuentasView.opcionBusqueda.anio} YA FUE RECLASIFICADO" />
+
+                                    <p:staticMessage severity="warn" summary="AVISO NO.3!" rendered="#{reclasificacionCuentasView.mensajeAviso3}"
+                                                     detail="NO ESTA CREADO EL NUEVO PERÍODO PARA REALIZAR LA RECLASIFICACION" />
+
+                                    <p:staticMessage severity="warn" summary="AVISO NO.4!" rendered="#{reclasificacionCuentasView.mensajeAviso4}"
+                                                     detail="NO HAY CUENTAS CONTABLES PARA EL PERÍODO #{reclasificacionCuentasView.opcionBusqueda.anioSiguiente}"/>
+                                </p:panelGrid>
+
+                                <center>
+                                    <p:commandButton value="CARGAR DATOS" process="@this" rendered="#{reclasificacionCuentasView.botonCargarDatos}"
+                                                     icon="fa fa-plus" actionListener="#{reclasificacionCuentasView.cargarDatos()}"
+                                                     styleClass="Fs16" style="width: auto;margin-bottom: 13px"/> 
+                                    <p:commandButton value="EDITAR DATOS" process="@this" rendered="#{reclasificacionCuentasView.editarDatos}"
+                                                     icon="fa fa-plus" actionListener="#{reclasificacionCuentasView.editarDatos()}"
+                                                     styleClass="Fs16" style="width: auto;margin-bottom: 13px"/> 
+                                </center>
+
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-12" >
+                            <p:commandButton value="GUARDAR" icon="fa fa-save" actionListener="#{reclasificacionCuentasView.guardarReclasificaciones()}" update="formReclasificacion"
+                                             styleClass="Fs16" style="width: 90px; margin: 15px 0px;" rendered="#{reclasificacionCuentasView.tablaEditar}"/> 
+
+                            <p:commandButton value="CANCELAR" icon="fa fa-remove" actionListener="#{reclasificacionCuentasView.confirmarCancelar('CANCELAR')}" 
+                                             styleClass="Fs16" style="width: 90px; margin: 15px;" rendered="#{reclasificacionCuentasView.tablaEditar}">
+                                <p:confirm header="Confirmación" message="Los datos ingresados no se guardaran ¿Desea cancelar los cambios?" icon="fa fa-exclamation-triangle" />
+                            </p:commandButton> 
+                            <p:dataTable  id="reclasificacionTableView" widgetVar="reclasificacionTableView" var="reclasificacion" value="#{reclasificacionCuentasView.reclasificacioCuentasLazy}" 
+                                          paginator="true" rows="40" style="width: 100%;" rendered="#{!reclasificacionCuentasView.tablaEditar}"
+                                          paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                          paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          rowsPerPageTemplate="40,50,100" lazy="true" rowKey="#{reclasificacion.id}" 
+                                          emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    CUENTAS CONTABLES A RECLASIFICAR
+                                </f:facet>
+                                <p:column headerText="Código Contable" style="width: 4vw;" filterBy="#{reclasificacion.cuentaContableAnterior.codigo}">
+                                    <h:outputText value="#{reclasificacion.cuentaContableAnterior.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre de la Cuenta" style="width: 12vw;" filterBy="#{reclasificacion.cuentaContableAnterior.nombre}">
+                                    <h:outputText value="#{reclasificacion.cuentaContableAnterior.nombre}" />
+                                </p:column>
+                                <p:column headerText="Saldo Debe" style="width: 4vw;text-align: center">
+                                    <h:outputText value="#{reclasificacion.saldoDebe}" style="float: right"> 
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Saldo Haber" style="width: 4vw;text-align: center">
+                                    <h:outputText value="#{reclasificacion.saldoHaber}" style="float: right"> 
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Reclasificar" style="width: 3vw;text-align: center" filterBy="#{reclasificacion.reclasificar}" >
+                                    <f:facet name="filter">
+
+                                        <p:selectOneMenu onchange="PF('reclasificacionTableView').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItem itemLabel="Sin reclasificar" itemValue="false" />
+                                            <f:selectItem itemLabel="Reclasificados" itemValue="true" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{reclasificacion.reclasificar==true?'RECLASIFICAR':''}" /> 
+                                </p:column> 
+                                <p:column headerText="Código Contable" style="width: 4vw;" filterBy="#{reclasificacion.cuentaContableNueva.codigo}">
+                                    <h:outputText value="#{reclasificacion.cuentaContableNueva.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre de la Cuenta" style="width: 12vw;" filterBy="#{reclasificacion.cuentaContableNueva.nombre}">
+                                    <h:outputText value="#{reclasificacion.cuentaContableNueva.nombre}" />
+                                </p:column>
+                            </p:dataTable>
+                            <p:dataTable  id="reclasificacionTable" widgetVar="reclasificacionTable" var="reclasificacion" value="#{reclasificacionCuentasView.reclasificacionCuentasList}" 
+                                          paginator="true" rows="40" style="width: 100%;" rendered="#{reclasificacionCuentasView.tablaEditar}"
+                                          paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                          paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          rowsPerPageTemplate="40,50,100" lazy="true" rowKey="#{reclasificacion.cuentaContableAnterior}"
+                                          emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    CUENTAS CONTABLES A RECLASIFICAR
+                                </f:facet>
+                                <p:column headerText="Código Contable" style="width: 4vw;" >
+                                    <h:outputText value="#{reclasificacion.cuentaContableAnterior.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre de la Cuenta" style="width: 12vw;" >
+                                    <h:outputText value="#{reclasificacion.cuentaContableAnterior.nombre}" />
+                                </p:column>
+                                <p:column headerText="Saldo Debe" style="width: 4vw;text-align: center">
+                                    <h:outputText value="#{reclasificacion.saldoDebe}" style="float: right"> 
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Saldo Haber" style="width: 4vw;text-align: center">
+                                    <h:outputText value="#{reclasificacion.saldoHaber}" style="float: right"> 
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Reclasificar" style="width: 2vw;text-align: center">
+                                    <p:selectBooleanCheckbox value="#{reclasificacion.reclasificar}">
+                                        <p:ajax update="reclasificacionTable" listener="#{reclasificacionCuentasView.openDlgCuentas(reclasificacion)}"/>
+                                    </p:selectBooleanCheckbox>
+                                </p:column> 
+                                <p:column headerText="Código Contable" style="width: 4vw;" >
+                                    <h:outputText value="#{reclasificacion.cuentaContableNueva.codigo}" />
+                                </p:column>
+                                <p:column headerText="Nombre de la Cuenta" style="width: 12vw;" >
+                                    <h:outputText value="#{reclasificacion.cuentaContableNueva.nombre}" />
+                                </p:column>
+
+                            </p:dataTable> 
+                        </div>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="cuentasContablesAllDLG" header="Cuentas Contables del #{reclasificacionCuentasView.opcionBusqueda.anioSiguiente}" widgetVar="cuentasContablesAllDLG" width="40%" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <p:ajax event="close" update="reclasificacionTable" listener="#{reclasificacionCuentasView.closeDlgCuentaContable(false)}" />
+            <h:form prependId="false">
+
+                <p:outputPanel id="cuentasContablesAllForm" style="width: 100%;" >
+                    <p:dataTable  id="cuentasContablesAllTable" widgetVar="cuentasContablesAllTable" var="cuentasContablesAll" 
+                                  value="#{reclasificacionCuentasView.cuentaContableLazyModel}" paginator="false" 
+                                  style="width: 100%;" scrollable="true" scrollHeight="350" rows="30000"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  lazy="true" selectionMode="single" rowKey="#{cuentasContablesAll.id}" selection="#{reclasificacionCuentasView.cuentaContableSeleccionado}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <p:ajax event="rowSelect" listener="#{reclasificacionCuentasView.añadirCuentaContable()}" process="@this"/>
+                        <p:column headerText="Código de la Cuenta" style="width: 3vw;" filterBy="#{cuentasContablesAll.codigo}">
+                            <h:outputText value="#{cuentasContablesAll.codigo}" />
+                        </p:column>
+
+                        <p:column headerText="Nombres de la Cuenta" style="width: 12vw;" filterBy="#{cuentasContablesAll.nombre}">
+                            <h:outputText value="#{cuentasContablesAll.nombre}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="mensajeConfirmacion" header="MENSAJE" widgetVar="mensajeConfirmacion" width="20%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <p:ajax event="close" update="reclasificacionTable" listener="#{reclasificacionCuentasView.closeDlgCuentaContable(true)}" />
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteTransferenciaForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:outputLabel value="¿DESEA QUITAR LA RECLASIFICACION?" style="font-weight: bold"/>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandButton value="SI" icon="fa fa-check" actionListener="#{reclasificacionCuentasView.quitarReclasificacion(true)}"
+                                         styleClass="Fs16" style="width: 50px; margin: 15px "/> 
+
+                        <p:commandButton value="NO" icon="fa fa-remove" actionListener="#{reclasificacionCuentasView.quitarReclasificacion(false)}" 
+                                         styleClass="Fs16" style="width: 50px; margin: 15px"/> 
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

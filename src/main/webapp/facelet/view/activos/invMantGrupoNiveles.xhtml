@@ -1,0 +1,256 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Mantenimiento Grupos Inventario
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO GRUPOS INVENTARIO"/>
+    <ui:define name="content">
+        <style type="text/css">
+            .grupo {
+                background-color: #DCEDC8 !important;
+                background-image: none !important;
+                color: #000000 !important;
+                text-align: center;
+            }
+            .subgrupo {
+                background-image: none !important;
+                color: #000000 !important;
+                margin-left: 10px;
+            }
+        </style>
+
+        <div class="ui-g ui-fluid">
+            <h:form id="formArea" prependId="false">
+                <p:commandButton icon="fa fa-plus" value="NUEVA ÁREA" actionListener="#{grupoNivelesView.frmArea(null)}" 
+                                 update="formA" style="width: auto; margin-bottom: 10px;"/>
+                <br></br>
+                <p:dataTable   expandableRowGroups="true" id="dtListaArea" var="a"  rows="10"  style="text-align: left;" 
+                               paginator="true" paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                               paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                               rowsPerPageTemplate="10,20,30,50,100" lazy="true" value="#{grupoNivelesView.lazyGrupoNiveles}"> 
+                    <f:facet name="header">
+                        LISTADO DE ÁREAS
+                    </f:facet>
+                    <p:column style="width:2%">
+                        <p:rowToggler  />
+                    </p:column>
+                    <p:column groupRow="true" headerText="Código " style="width: 5%; " >
+                        <h:outputText  value="#{a.codigo}" />
+                    </p:column>
+                    <p:column headerText="Nombre" style="width: 20%; " filterBy="#{a.nombre}">
+                        <div style="align-content: flex-start">
+                            <h:outputText value="#{a.nombre}" />
+                        </div>
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 20%; " filterBy="#{a.descripcion}">
+                        <h:outputText value="#{a.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                        <p:spacer width="10" />
+                        <p:commandLink class="btnTranparent" title="Nuevo Grupo" 
+                                       actionListener="#{grupoNivelesView.frmGrupo(null, a)}" 
+                                       update="formG" >
+                            <i class="fa fa-plus new" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                        </p:commandLink>
+                        <p:spacer width="10"/>
+                        <p:commandLink  class="btnTranparent" title="Editar" 
+                                        actionListener="#{grupoNivelesView.frmArea(a)}" 
+                                        update="DlgArea" >
+                            <i class="fa fa-edit edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                        </p:commandLink>
+                        <p:spacer width="10"/>
+                        <p:commandLink  class="btnTranparent" title="Eliminar" 
+                                        actionListener="#{grupoNivelesView.eliminar(a)}" update="formArea">
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el Área?"  
+                                       icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>
+                    </p:column>
+                    <p:rowExpansion >
+                        <p:treeTable  value="#{a.nodeMenus}" var="item1" id="menusModulo" paginator="true" rows="10" rowStyleClass="#{item1.nivel.orden eq 2 ? 'grupo' :null} #{item1.nivel.orden eq 3 ? 'subgrupo':null}"
+                                      paginatorAlwaysVisible="false" paginatorPosition="top"  selectionMode="single" >
+                            <p:column headerText="" width="2%" style="border: #ffffff">
+                            </p:column>
+                            <p:column headerText="Código" width="5%">
+                                <i style="font-size: 1.5em; color: black;" />
+                                <center><h:outputText value="#{item1.nivel.orden eq 2 ? 'GRUPO -':null} #{item1.codigo}"/></center>
+                            </p:column>
+                            <p:column headerText="Nombre" width="20%" style="align-items: flex-start" filterBy="#{item1.nombre}">
+                                <h:outputText value="#{item1.nombre}" />
+                            </p:column>
+                            <p:column headerText="Descripción" width="20%" filterBy="#{item1.descripcion}">
+                                <h:outputText value="#{item1.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                                <p:spacer width="10" />
+                                <p:commandLink rendered="#{!grupoNivelesView.verificarSubGrupo(item1)}" class="btnTranparent" title="Nuevo SubGrupo" 
+                                               actionListener="#{grupoNivelesView.frmSubGrupo(null, item1)}" 
+                                               update="formS,menusModulo" >
+                                    <i class="fa fa-plus new" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  class="btnTranparent" title="Editar Grupo" rendered="#{!grupoNivelesView.verificarSubGrupo(item1)}"
+                                                actionListener="#{grupoNivelesView.frmGrupo(item1, null)}" update="DlgGrupo">
+                                    <i class="fa fa-edit edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  class="btnTranparent" title="Editar Sub" rendered="#{grupoNivelesView.verificarSubGrupo(item1)}"
+                                                actionListener="#{grupoNivelesView.frmSubGrupo(item1, item1)}" update= "DlgSubGrupo">
+                                    <i class="fa fa-edit edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink class="btnTranparent" title="Eliminar" 
+                                    actionListener="#{grupoNivelesView.eliminar(item1)}" update="formArea" >
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar el registro?"  
+                                               icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                            </p:column>
+                        </p:treeTable>
+                    </p:rowExpansion>
+                </p:dataTable>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+
+
+            <p:dialog width="450" id="DlgArea"  header="MANTENIMIENTO DE ÁREA" widgetVar="DlgArea" modal="true" 
+                      showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="formA">
+                    <div class="ui-g">
+                        <div class="ui-g-12">
+                            <div class="card card-w-title">
+                                <center>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank">
+                                        <p:panelGrid  columns="1"   >
+                                            <p:outputLabel for="nombre" value="Nombre:" />
+                                            <p:inputText id="nombre" value="#{grupoNivelesView.grupoNiveles.nombre}" 
+                                                         required="true" style="width: 300px;" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Descripción:" for="descripcion" />
+                                            <p:inputTextarea id="descripcion" rows="3" cols="30" autoResize="false" required="true" style="width: 300px;" 
+                                                             value="#{grupoNivelesView.grupoNiveles.descripcion}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </center>
+                                <p:spacer width="10" />
+                                <div style="width: auto; text-align: center;"> 
+                                    <p:spacer width="10" />
+                                    <p:commandButton title="Guardar" icon="fa fa-save" value="GUARDAR" style="width: 150px" 
+                                                     actionListener="#{grupoNivelesView.saveArea()}"  
+                                                     rendered="#{grupoNivelesView.nuevo}" update="formArea,formA"/>
+
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Editar"
+                                                     actionListener="#{grupoNivelesView.editar()}"
+                                                     icon="fa fa-edit" update="formArea"
+                                                     style="width: auto; margin-bottom: 15px;"
+                                                     rendered="#{!grupoNivelesView.nuevo}">
+                                    </p:commandButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog width="400" id="DlgGrupo"  header="MANTENIMIENTO DE GRUPO" widgetVar="DlgGrupo" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="formG" prependId="false"> 
+                    <div class="ui-g">
+                        <div class="ui-g-12">
+                            <div class="card card-w-title">
+                                <p:spacer height="30"/>
+                                <center>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:panelGrid  columns="1"   >
+                                            <p:outputLabel value="Nombre:" for="nombre" />
+                                            <p:inputText id="nombre" value="#{grupoNivelesView.grupoNiveles.nombre}" style="width: 250px;"
+                                                         required="true" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Descripción:" />
+                                            <p:inputTextarea id="descripcion" rows="3" cols="30" autoResize="false" onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                                             style="width: 250px;" value="#{grupoNivelesView.grupoNiveles.descripcion}"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Área:" />
+                                            <p:inputText value="#{grupoNivelesView.grupoNiveles.padre.nombre}" disabled="true" style="width: 250px"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </center>
+                                <p:spacer height="50"/>
+                                <div style="width: auto; text-align: center;">
+                                    <p:commandButton title="Guardar" icon="fa fa-save" value="GUARDAR" style="width: 150px"
+                                                     actionListener="#{grupoNivelesView.saveGrupo()}" update="formArea,formG" rendered="#{grupoNivelesView.nuevo}"/>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Editar"
+                                                     actionListener="#{grupoNivelesView.editar()}"
+                                                     icon="fa fa-edit" update="formArea"
+                                                     style="width: auto; margin-bottom: 15px;"
+                                                     rendered="#{!grupoNivelesView.nuevo}">
+                                    </p:commandButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog id="DlgSubGrupo"  header="MANTENIMIENTO DE SUBGRUPO" widgetVar="DlgSubGrupo" 
+                      modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="formS" prependId="false">
+                    <div class="ui-g">
+                        <div class="ui-g-12">
+                            <div class="card card-w-title">
+                                <center>
+                                    <p:spacer height="20"/>
+                                    <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank">
+                                        <p:panelGrid  columns="1"   >
+                                            <p:outputLabel value="Nombre:"  />
+                                            <p:inputText value="#{grupoNivelesView.grupoNiveles.nombre}" style="width: 250px;"
+                                                         required="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Descripción:" />
+                                            <p:inputTextarea  rows="3" cols="30" autoResize="false"  
+                                                              style="width: 250px;" value="#{grupoNivelesView.grupoNiveles.descripcion}"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Área:" />
+                                            <p:inputText value="#{grupoNivelesView.grupoNiveles.padre.padre.nombre}" disabled="true" style="width: 250px"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Grupo:" />
+                                            <p:inputText style="width: 250px;" value="#{grupoNivelesView.grupoNiveles.padre.nombre}" 
+                                                         disabled="true"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </center>
+                                <p:spacer height="40"/>
+                                <div style="width: auto; text-align: center;">
+                                    <p:commandButton value="GUARDAR"  actionListener="#{grupoNivelesView.saveSubGrupo()}"
+                                                     icon="ui-icon-save"  update="formArea,formS" style="width: 150px"
+                                                     rendered="#{grupoNivelesView.nuevo}"/>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Editar"
+                                                     actionListener="#{grupoNivelesView.editar()}"
+                                                     icon="fa fa-edit" update="formArea,formS"
+                                                     style="width: auto; margin-bottom: 15px;"
+                                                     rendered="#{!grupoNivelesView.nuevo}">
+                                    </p:commandButton>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </h:form>
+            </p:dialog>
+        </div>
+    </ui:define>
+</ui:composition>

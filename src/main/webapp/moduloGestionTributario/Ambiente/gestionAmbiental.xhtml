@@ -1,0 +1,678 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="Gestión Ambiental | Generar Liquidación" /> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">          
+
+                <h:form id="mainForm">
+                    <p:tabView id="tvRecaudaciones">
+                        <p:ajax event="tabChange" listener="#{gestionAmbientalView.onChangeTab}"/>
+                        <p:tab id="cobroGenerales"  title="Certificados">
+
+                            <p:panel id="panelInfoAdc" header="INFORMACION" style=" height: 200px;" >
+                                <h:panelGrid style="width: 100%;" styleClass="ui-panelgrid-blank" columns="4" >
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" >
+                                            <p:outputLabel  value="CI/RUC:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" >
+                                            <p:inputText value="#{gestionAmbientalView.ciRucCobros}" size="20" />
+                                            <!--<p:inputText value="#{gestionAmbientalView.cobrosGenerales.comprador.identificacion}" rendered="false" readonly="true"/>-->
+                                            <p:spacer width="10" />
+                                            <p:commandLink title="Buscar" actionListener="#{gestionAmbientalView.showDlgEntes(1)}" update="panelInfoAdc" styleClass="btnStyle">
+                                                <p:graphicImage value="/resources/images/buscar.png"  height="20" width="20"/>
+                                            </p:commandLink>
+                                            <p:commandLink title="Limpiar" actionListener="#{gestionAmbientalView.limpiarDatosContribuyente()}" update="panelInfoAdc" styleClass="btnStyle">
+                                                <p:graphicImage value="/resources/images/refres.png"  height="20" width="20"/>
+                                            </p:commandLink>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel  value="Nombres/Razon Social: " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+
+                                        <p:inputText value="#{gestionAmbientalView.cobrosGenerales.comprador.nombreCompleto}" rendered="#{gestionAmbientalView.cobrosGenerales.comprador != null}" size="65" readonly="true"/>
+                                        <p:inputText value="#{gestionAmbientalView.cobrosGenerales.nombreComprador}"
+                                                     rendered="#{gestionAmbientalView.cobrosGenerales.comprador == null}" style="width: 100%; font-size: 14px; font-weight: bold;" readonly="true"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel  value="Ubicacion: " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                        <p:inputText value="#{gestionAmbientalView.catPlanificacionTitulos.ubicacion}" style="width: 100%; font-size: 14px; font-weight: bold;"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel  value="Veces" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                        <p:inputText value="#{gestionAmbientalView.catPlanificacionTitulos.veces}" style="width: 100%; font-size: 14px; font-weight: bold;">
+                                            <p:keyFilter mask="num"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+
+
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                        <p:outputLabel  value="Toneladas del Vehiculos" class="DispBlock Wid100" 
+                                                        style="font-weight: bolder !important; margin-bottom: 0px;" />
+
+                                        <p:inputText  value="#{gestionAmbientalView.catPlanificacionTitulos.toneladas}"  
+                                                      style="width: 100%; font-size: 14px; font-weight: bold; ">
+                                            <p:keyFilter mask="num"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+
+
+                                    <p:panelGrid columns="1">
+                                        <p:commandButton value="Añadir" icon="fa fa-plus" actionListener="#{gestionAmbientalView.calViajes()}" update="mainForm:tvRecaudaciones:dtCalculos"/>
+                                    </p:panelGrid>
+                                </h:panelGrid>
+
+                            </p:panel>
+
+                            <br></br>
+                            <p:panelGrid columns="2" columnClasses="ui-g-6, ui-g-6"  >
+                                <p:panelGrid columns="1" style="width: 100%;" styleClass="ui-panelgrid-blank ui-fluid" >
+                                    <center>
+                                        <h2>TIPOS DE LIQUIDACIONES</h2>
+                                    </center>
+
+                                    <p:tree value="#{gestionAmbientalView.root2}" var="node" dynamic="true" selectionMode="single" 
+                                            selection="#{gestionAmbientalView.selectedNode}" class="noBorder" 
+                                            style="font-weight: bold; height:auto; overflow: auto; font-size: 13px; " 
+                                            rendered="#{userSession.userId ne 110}">
+                                        <p:ajax event="select" listener="#{gestionAmbientalView.onNodeSelectAmbiente}" process="mainForm:tvRecaudaciones:panelInfoAdc"
+                                                update="mainForm:tvRecaudaciones:dtRubros"/>
+                                        <p:treeNode><h:outputText value="#{node.id} - #{node.nombreTransaccion}" /></p:treeNode>
+                                    </p:tree> 
+
+                                    <p:dataTable id="dtCalculos" var="cal" value="#{gestionAmbientalView.listaCalculos}"
+                                                 style="text-align: center; width: 70%; margin: auto;" rowIndexVar="index"
+                                                 emptyMessage="no hay data" scrollable="true" scrollHeight="140">
+                                        <f:facet name="header">Calculos</f:facet>                                        
+
+                                        <p:column headerText="Veces" width="15%" style="text-align: left; font-weight: bold;">#{cal.veces} </p:column>
+                                        <p:column headerText="Valor X Tonelada" width="15%"> #{cal.valorTonelada} </p:column>
+                                        <p:column headerText="Total" width="15%"> #{cal.total} </p:column>
+                                        <p:column headerText="****" width="15%">  
+                                            <p:commandButton icon="fa fa-close" 
+                                                             actionListener="#{gestionAmbientalView.eliminarListaCan(index)}" update="mainForm:tvRecaudaciones:dtCalculos"/>
+                                        </p:column>
+                                    </p:dataTable>
+
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" style="width: 100%;" styleClass="ui-panelgrid-blank ui-fluid"  >
+
+                                    <p:dataTable id="dtRubros" var="rubro" value="#{gestionAmbientalView.cobrosGenerales.tipoLiquidacion.renRubrosLiquidacionCollection}"
+                                                 selectionMode="single" rendered="#{userSession.userId ne 110}" 
+                                                 selection="#{gestionAmbientalView.rubroSelect}" rowKey="#{rubro.id}" style="text-align: center;"
+                                                 emptyMessage="Item no posee rubros." scrollable="true" scrollHeight="140">
+                                        <f:facet name="header">RUBROS POR TITULOS</f:facet>
+                                        <p:ajax event="rowSelect" listener="#{gestionAmbientalView.onRowSelect()}"/>
+                                        <p:column headerText="Id" width="10%"> #{rubro.id} </p:column>
+                                        <p:column headerText="Descripcion" style="text-align: left; font-weight: bold;">#{rubro.descripcion} </p:column>
+                                        <p:column headerText="Valor" width="15%"> #{rubro.valor} </p:column>
+
+                                    </p:dataTable>
+
+                                    <div id="panelDetalle" >
+
+
+                                        <p:dataTable id="dtDetalle" var="det" value="#{gestionAmbientalView.rubrosSeleccionado}" scrollable="true"
+                                                     scrollHeight="140" style="text-align: center;height:auto" rowIndexVar="index" 
+                                                     rendered="#{userSession.userId ne 110}"
+
+                                                     emptyMessage="Sin elementos seleccionados...">
+                                            <f:facet name="header">
+                                                DETALLE DE TRANSACCION
+                                            </f:facet>
+                                            <p:column headerText="Descripcion" style="text-align: left;"> #{det.descripcion} </p:column>
+                                            <p:column headerText="Cantidad" width="75"><p:outputLabel value="#{det.cantidad}" /></p:column>
+                                            <p:column headerText="Total" width="100"><h:outputText value="#{det.valorTotal}">
+                                                    <f:convertNumber pattern="#0.00" locale="pt_BR"/></h:outputText></p:column>
+                                            <p:column headerText="Del." width="35">
+                                                <p:commandLink update="dtDetalle" actionListener="#{gestionAmbientalView.deleteRubrosDetalle(index)}">
+                                                    <p:graphicImage value="/resources/images/delete.png" height="16"/>   
+                                                </p:commandLink>
+                                            </p:column>
+                                        </p:dataTable>
+                                        <h:panelGrid columns="2" styleClass="noBorder" style="margin: 0 auto;">
+                                            <p:outputLabel value="Valor Total: $" style="font-weight: bold; font-size: 14px;"/>
+                                            <p:inputText value="#{gestionAmbientalView.cobrosGenerales.totalPago}" readonly="true" style="font-weight: bold; font-size: 14px;"/>
+                                            <br></br>
+                                        </h:panelGrid>
+                                        <h:panelGrid style="width: 100%;" styleClass="noBorder" columns="2">
+                                            <h:panelGroup layout="block" >
+                                                <p:outputLabel  value="Observacion:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" >
+                                                <p:inputTextarea value="#{gestionAmbientalView.cobrosGenerales.observacion}" rows="3" style="width: 95%; font-size: 14px; font-weight: bold;"/>
+                                            </h:panelGroup>
+                                        </h:panelGrid>
+                                        <br></br>
+                                        <h:panelGrid columns="2" styleClass="noBorder" style="margin: 0 auto;">
+                                            <p:commandButton value="Ingresar" styleClass="btnStyle" icon="ui-icon-circle-arrow-e" style="font-size: 13px;" actionListener="#{gestionAmbientalView.seleccionarLiquidacion()}">
+                                                <p:confirm header="Advertencia" message="Esta Seguro de Continuar?" icon="ui-icon-alert" />
+                                            </p:commandButton>    
+                                            <br></br>
+                                        </h:panelGrid>
+                                    </div>
+
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <div style="clear: both"/>
+                        </p:tab>
+                        <p:tab id="tituloCredito" title="Certificados Generados">
+                            <!--                            <p:fieldset legend="Reporte" toggleable="true">
+                                                            <h:panelGroup id="pGFiltros" layout="block" class="Container Wid100 MarTop10">
+                                                                <h:panelGroup layout="block" class="Container50" >
+                                                                    <h:panelGrid columns="1">
+                                                                        <h:panelGroup layout="block">
+                                                                            <h:outputText value="Desde "  style="font-weight: bolder"/><br/>
+                                                                            <p:calendar value="#{gestionAmbientalView.desde}"
+                                                                                        maxdate="sysdate" style="width: 190px;" navigator="true" yearRange="c-100:c" pattern="dd/MM/yyyy" mask="true" />    
+                                                                        </h:panelGroup>
+                                                                        <h:panelGroup layout="block">
+                                                                            <h:outputText value="Hasta "  style="font-weight: bolder"/><br/>
+                                                                            <p:calendar value="#{gestionAmbientalView.hasta}" maxdate="sysdate" style="width: 190px;" navigator="true" yearRange="c-100:c" pattern="dd/MM/yyyy" mask="true" />
+                                                                        </h:panelGroup>    
+                                                                    </h:panelGrid>
+                                                                </h:panelGroup>
+                                                                <h:panelGroup layout="block" class="Container50" >
+                                                                    <h:panelGrid columns="1">
+                                                                        <h:panelGroup layout="block">
+                                                                            <h:outputText value="Elija el departamento"  style="font-weight: bolder"/><br/>
+                                                                            <p:selectOneMenu value="#{gestionAmbientalView.departamento}" style="width: 220px;" converter="entityConverter">
+                                                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                                                                                <f:selectItems value="#{gestionAmbientalView.deps}" var="dep" itemLabel="#{dep.nombre}" itemValue="#{dep}"/>
+                                                                                <p:ajax  listener="#{gestionAmbientalView.cargarUsuariosDepartamento()}" update="usuariosDep, btnImprimir"/>
+                                                                            </p:selectOneMenu>
+                            
+                                                                        </h:panelGroup>
+                                                                        <h:panelGroup layout="block">
+                                                                            <h:outputText value="Elija el Usuario"  style="font-weight: bolder"/><br/>
+                                                                            <p:selectOneMenu id="usuariosDep" value="#{gestionAmbientalView.usuario}" effect="fade" converter="entityConverter" disabled="#{gestionAmbientalView.departamento eq null}">
+                                                                                <f:selectItem itemLabel="TODOS..." itemValue="#{null}"/>
+                                                                                <f:selectItems value="#{gestionAmbientalView.usuarios}" var="director1" itemLabel="#{director1.usuario}-#{director1.ente.apellido}#{director1.ente.nombre}" itemValue="#{director1}"/>
+                                                                            </p:selectOneMenu>                                            
+                                                                        </h:panelGroup>
+                                                                    </h:panelGrid>
+                                                                </h:panelGroup>
+                            
+                                                                <br></br><br></br>
+                                                                <center>
+                                                                    <p:commandButton id="btnImprimir" value="Imprimir" actionListener="#{gestionAmbientalView.imprimirReporteTramites()}" disabled="#{gestionAmbientalView.departamento eq null}"/>    
+                                                                </center>
+                                                            </h:panelGroup>
+                                                            <br></br>   
+                                                        </p:fieldset>-->
+                            <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         value="#{gestionAmbientalView.liquidacionesLazy}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"                                        
+                                         filterEvent="enter">
+                                <p:ajax event="rowSelect" update="mainForm:tvRecaudaciones:opLiquidacionesEmitidas"/>
+                                <p:column  headerText="Fecha" width="70" >
+                                    <p:outputLabel value="#{titulo.fechaIngreso}"  style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column  headerText="Tipo Liquidación" width="250" filterBy="#{titulo.tipoLiquidacion.nombreTransaccion}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.tipoLiquidacion.nombreTransaccion}" style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column  headerText="Id Liquidación" width="250" filterBy="#{titulo.idLiquidacion}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.idLiquidacion}" style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column  headerText="Año" width="250" filterBy="#{titulo.anio}" filterMatchMode="exact">
+                                    <p:outputLabel value="#{titulo.anio}" style="font-weight: bold;"/>
+                                </p:column>
+
+
+                                <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacion}" filterStyle="width: 80%;">
+                                    <p:outputLabel style="font-weight: bold; font-size: 13px;" value="#{titulo.comprador.identificacion}"/>
+                                </p:column>
+                                <p:column headerText="Solicitante" width="250" filterBy="#{titulo.comprador.nombreCompleto}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.comprador.nombreCompleto}" />
+                                </p:column>
+                                <p:column headerText="Valor" width="60"><p:outputLabel value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>                              
+                                <p:column headerText="Estado" width="65" filterBy="#{titulo.estadoLiquidacion.descripcion}" filterMatchMode="contains">
+                                    <h:outputText value="#{titulo.estadoLiquidacion.descripcion}" style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column headerText="Acciones" width="110" >
+                                    <p:commandLink actionListener="#{gestionAmbientalView.imprimir(titulo)}" title="#{titulo.idLiquidacion}" >
+                                        <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px;color: blue;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                                <p:spacer width="10"/>
+                                <p:column headerText="PERMISO" width="110" rendered="false" >
+                                    <p:commandLink actionListener="#{gestionAmbientalView.imprimirPermiso(titulo)}" title="#{titulo.idLiquidacion}" 
+                                                   disabled="#{!gestionAmbientalView.renderPlanificacion}" >
+                                        <p:graphicImage value="/resources/images/reporte.png" height="16"/>
+                                    </p:commandLink>
+                                </p:column>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                    <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                                </p:confirmDialog>
+                            </p:dataTable>
+                            <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones" rendered="false">
+                                <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgEditPermiso').show();" update="formPermiso"  process="@this" actionListener="#{gestionAmbientalView.editarPermisoAmbiental()}"/>
+                            </p:contextMenu>
+                        </p:tab>
+                    </p:tabView>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                    </p:confirmDialog>
+                </h:form>
+
+            </div>
+        </div>
+        <p:dialog widgetVar="dlgReportesRecaudador" header="Reportes Recaudador" resizable="false" modal="true" position="center" height="350">
+            <h:form id="reporteRecaudaciones">
+                <h:outputText value="Fecha cierre: " style="font-weight: bolder;font-size: 14px"/>
+                <p:calendar value="#{gestionAmbientalView.fechaCierre}" navigator="true"/>
+                <p:panelGrid styleClass="noBorder" columns="1" style="width: 100%;text-align: center">
+                    <h:outputText value="#{gestionAmbientalView.tipoReporte eq 1?'Cierre de Caja':gestionAmbientalView.tipoReporte eq 2?'Recaudaciones Por Transaccion': gestionAmbientalView.tipoReporte eq 3?'Resumen Cheques':''}" style="font-weight: bolder;font-size: 14px"/>
+                    <h:outputText value="Fecha Reporte: " style="font-weight: bolder;font-size: 14px"/>
+                    <p:calendar value="#{gestionAmbientalView.fechaReporte}" mode="inline" />
+                    <p:commandButton value="Generar Reporte" icon="ui-icon-print" styleClass="btnStyle" actionListener="#{gestionAmbientalView.generarReporteCajero()}" style="float: end"/>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Detalle Pago" widgetVar="dlgDetallePago" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetPago">
+                <p:panelGrid style="width: 100%;">
+                    <p:row>
+                        <p:column>
+                            <p:outputLabel value="N. Liquidacion"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.numLiquidacion}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Tipo de Pago"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.tipoLiquidacion.prefijo} - #{gestionAmbientalView.liquidacion.tipoLiquidacion.nombreTitulo}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Solicitante"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.comprador.identificacion}-#{gestionAmbientalView.liquidacion.comprador.apellido} #{gestionAmbientalView.liquidacion.comprador.nombre} #{gestionAmbientalView.liquidacion.comprador.razonSocial} #{gestionAmbientalView.liquidacion.comprador.nombreComercial}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                    </p:row>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Aceptar" styleClass="btnStyle" oncomplete="PF('dlgComprobante').hide();" icon="ui-icon-circle-close"/>
+                </center>
+                <p:outputLabel value="Total a pagar: #{gestionAmbientalView.liquidacion.totalPago}" style="font-size: 14px; font-weight: bold"/>
+                <br/>
+<!--                <dialog:detallePago liquidacion="#{gestionAmbientalView.liquidacion}"/>-->
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetallePago').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{gestionAmbientalView.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgSolicitante" header="LISTADO DE CONTRIBUYENTES" appendTo="@(body)" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="frmSolicitante">
+                <h:panelGroup layout="block" id="wizarContainer1" class="Container Wid100 MarTop10" >
+                    <h:panelGroup layout="block" class="Container90" >
+                        <h1 class="BigTopic Fs16">Contribuyentes</h1>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="Container10" >
+                        <p:commandLink title="Nuevo" actionListener="#{gestionAmbientalView.nuevoCliente()}" >
+                            <p:graphicImage value="/resources/images/contribuyentes.jpg" width="45" height="45"/>
+                        </p:commandLink><br/>
+                        <p:outputLabel value="Nuevo" style="font-size: 13px; font-weight: bolder; padding: 0px; "/>    
+                    </h:panelGroup>
+                </h:panelGroup>
+                <hr></hr>
+                <div align="center">
+                    <p:dataTable var="s" value="#{gestionAmbientalView.solicitantes}" style="width: 98%;text-align: center;" lazy="true" 
+                                 paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                                 selection="#{gestionAmbientalView.cobrosGenerales.comprador}" rowKey="#{s.id}">
+                        <p:ajax event="rowSelect" update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowUnselect"  update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowSelectRadio"  update="frmSolicitante:btnSeleccionar" />
+                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                        <p:column headerText="CI/RUC" sortBy="#{s.identificacion}" width="150" filterBy="#{s.identificacion}" filterStyle="width: 90%;">
+                            <h:outputText value="#{s.identificacion}"/>
+                        </p:column>
+                        <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+                <br></br>
+                <center>
+                    <p:commandButton id="btnSeleccionar" value="Seleccionar" 
+                                     icon="ui-icon-plus" 
+                                     actionListener="#{gestionAmbientalView.seleccionar()}"
+                                     style="height: 30px"
+                                     disabled="#{gestionAmbientalView.cobrosGenerales.comprador.id eq null}"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgComprobante" widgetVar="dlgComprobante" header="Comprobante de Pago" appendTo="@(body)" width="75%" responsive="true" closable="true" closeOnEscape="true" position="center" modal="true" resizable="false">
+            <h:form id="frmComprobante">
+                <p:panelGrid style="width: 100%;">
+                    <p:row>
+                        <p:column>
+                            <p:outputLabel value="N. Liquidacion"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.numLiquidacion}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Tipo de Pago"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.tipoLiquidacion.prefijo} - #{gestionAmbientalView.liquidacion.tipoLiquidacion.nombreTitulo}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Solicitante"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.comprador.identificacion}-#{gestionAmbientalView.liquidacion.comprador.apellido} #{gestionAmbientalView.liquidacion.comprador.nombre} #{gestionAmbientalView.liquidacion.comprador.razonSocial} #{gestionAmbientalView.liquidacion.comprador.nombreComercial}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                    </p:row>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Aceptar" styleClass="btnStyle" oncomplete="PF('dlgComprobante').hide();" icon="ui-icon-circle-close"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgEditContribuyente" widgetVar="dlgEditContribuyente" header="Edicion de Contribuyente" appendTo="@(body)" width="75%" responsive="true" closable="true" closeOnEscape="true" modal="true" resizable="false">
+            <h:form id="frmEditContribuyente">
+                <p:panelGrid style="width: 100%;">
+                    <p:row>
+                        <p:column>
+                            <p:outputLabel value="N. Liquidacion"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.numLiquidacion}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="N. Comprobante"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.numComprobante}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Tipo de Pago"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.tipoLiquidacion.prefijo} - #{gestionAmbientalView.liquidacion.tipoLiquidacion.nombreTitulo}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Valor"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.totalPago}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                    </p:row>
+                    <p:row>
+                        <p:column>
+                            <p:outputLabel value="SOLICITANTE: " style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column colspan="3">
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.comprador.identificacion}-#{gestionAmbientalView.liquidacion.comprador.apellido} #{gestionAmbientalView.liquidacion.comprador.nombre} #{gestionAmbientalView.liquidacion.comprador.razonSocial} #{gestionAmbientalView.liquidacion.comprador.nombreComercial}" style="font-weight: bold; font-size: 12px;"/>
+                            <p:spacer width="15"/>
+                            <p:commandButton value="Buscar" oncomplete="PF('dlgSolicitante').show();" update="frmSolicitante"/>
+                        </p:column>
+                    </p:row>
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Guardar Cambios" actionListener="#{gestionAmbientalView.actualizarLiquidacion()}" oncomplete="PF('dlgEditContribuyente').hide();" styleClass="btnStyle" update="mainForm:tvRecaudaciones:dtLiquidaciones"/>
+                    <p:spacer width="25"/>
+                    <p:commandButton value="Cancelar" styleClass="btnStyle" oncomplete="PF('dlgEditContribuyente').hide();"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgAnulacion" widgetVar="dlgAnulacion" header="Anular Liquidacion" appendTo="@(body)" width="75%" responsive="true" closable="true" closeOnEscape="true" position="center" modal="true" resizable="false">
+            <h:form id="frmAnulacion">
+                <p:panelGrid style="width: 100%;">
+                    <p:row>
+                        <p:column colspan="4"><p:outputLabel value="DETALLE DEL TITULO DE CREDITO QUE SE VA A ANULAR" style="font-weight: bold; font-size: 12px;"/></p:column>
+                    </p:row>
+                    <p:row>
+                        <p:column>
+                            <p:outputLabel value="Liquidacion"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.idLiquidacion}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Valor"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.totalPago}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Tipo de Pago"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.tipoLiquidacion.prefijo} - #{gestionAmbientalView.liquidacion.tipoLiquidacion.nombreTitulo}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                        <p:column>
+                            <p:outputLabel value="Solicitante"/><br/>
+                            <p:outputLabel value="#{gestionAmbientalView.liquidacion.comprador.identificacion}-#{gestionAmbientalView.liquidacion.comprador.apellido} #{gestionAmbientalView.liquidacion.comprador.nombre} #{gestionAmbientalView.liquidacion.comprador.razonSocial} #{gestionAmbientalView.liquidacion.comprador.nombreComercial}" style="font-weight: bold; font-size: 12px;"/>
+                        </p:column>
+                    </p:row>
+                </p:panelGrid><br/>
+                <center>
+                    <p:commandButton value="Anular" styleClass="btnStyle" actionListener="#{gestionAmbientalView.anularTituloReporte()}" oncomplete="PF('dlgAnulacion').hide();" update="mainForm:tvRecaudaciones:dtLiquidaciones">
+                        <p:confirm header="Confirmación" message="Realizar la anulacion?" icon="ui-icon-alert" />
+                    </p:commandButton>
+                    <p:spacer width="25"/>
+                    <p:commandButton value="Cancelar" styleClass="btnStyle" oncomplete="PF('dlgAnulacion').hide();"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog widgetVar="dlgValorRubro" header="Detalle del rubro" resizable="false" modal="true">
+            <h:form id="formValores">
+                <!--CALCULO CON CANTIDADES EMPLEADOS
+                    INICIO
+                -->
+                <!--                <h:panelGrid  styleClass="noBorder" columns="4">
+                                    <p:outputLabel value="# Empleados" style="font-weight: bolder;" />
+                                    <p:selectBooleanCheckbox value="#{gestionAmbientalView.calculoEmpleados}" >
+                                        <p:ajax update="cant_rubro" />
+                                    </p:selectBooleanCheckbox>
+                                    <p:outputLabel value="Calcula 10%" style="font-weight: bolder;" />
+                                    <p:selectBooleanCheckbox value="#{gestionAmbientalView.calculo10Porciento}" />
+                
+                                </h:panelGrid>-->
+                <!--FIN-->
+                <h:panelGrid styleClass="noBorder" columns="2"> 
+                    <p:outputLabel value="Año" style="font-weight: bolder;" />
+                    <p:inputText id="anio_liq" value="#{gestionAmbientalView.rubroSelect.anio}" 
+                                 onkeypress="validateFloatValueAndFocusNext(event, 'formValores:cant_rubro_input')" >
+                        <p:keyFilter mask="num"/>
+                    </p:inputText>
+                    <p:outputLabel value="Cantidad:" style="font-weight: bolder;" />
+                    <p:inputNumber id="cant_rubro" value="#{gestionAmbientalView.rubroSelect.cantidad}" decimalPlaces="0" 
+                                   onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" />
+                    <!--
+                                        <p:outputLabel value="Valor Càlculo" style="font-weight: bolder;"  />
+                                        <p:inputNumber id="valor_calculo_rubro" value="#{gestionAmbientalView.rubroSelect.valorCalculo}" decimalPlaces="2" 
+                                                       onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" ></p:inputNumber>
+                                        <p:outputLabel value="Valor Porcentual:" style="font-weight: bolder;" />
+                                        <p:inputNumber id="valor_rubro" value="#{gestionAmbientalView.rubroSelect.valor}" decimalPlaces="2" onkeypress="focusNextOnEnter(event, 'formValores:btn_detalle_rubro')">
+                                        </p:inputNumber>-->
+                </h:panelGrid>
+                <center style="margin-top: 10px; margin-bottom: 10px;">
+                    <p:commandButton id="btn_detalle_rubro" value="Aceptar" styleClass="btnStyle" icon="ui-icon-check" actionListener="#{gestionAmbientalView.guardaRubro()}"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog widgetVar="dlgNumeroLiquidacion" header="Codigo de liquidacion generado" resizable="false" modal="true">
+            <h:form id="formLiq">
+
+                <h:panelGrid styleClass="noBorder" columns="1" >
+                    <p:outputLabel value="#{gestionAmbientalView.liquidacion.idLiquidacion} " style="font-weight: bold; font-size: 25px; text-align: center;" />
+                </h:panelGrid>
+
+                <center>
+                    <p:commandButton value="Imprimir" styleClass="btnStyle" oncomplete="PF('dlgNumeroLiquidacion').hide();" actionListener="#{gestionAmbientalView.imprimirCertificadoPlanificacion()}" update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgEspeciesDisp" header="Especies Disponibles" resizable="false" modal="true">
+            <h:form id="formEspecies">
+                <p:panelGrid styleClass="noBorder" columns="4" style="font-size: 16px;">
+                    Cantidad:
+                    <p:inputNumber value="#{gestionAmbientalView.rubroSelect.cantidad}" decimalPlaces="0">
+                        <p:ajax event="change" update="formEspecies" listener="#{gestionAmbientalView.updateValoresEspecies()}"/>
+                    </p:inputNumber>
+                    Disponibles:
+                    <p:inputText value="#{gestionAmbientalView.acta.disponibles}"  readonly="true" style="background-color: #fce1b1"/>
+                    Desde:
+                    <p:inputText value="#{gestionAmbientalView.acta.desdeTemp}" readonly="true" style="background-color: #fce1b1"/>
+                    Hasta:
+                    <p:inputText value="#{gestionAmbientalView.acta.hastaTemp}" readonly="true" style="background-color: #fce1b1"/>
+                    V.Uni.:
+                    <p:inputNumber value="#{gestionAmbientalView.rubroSelect.valor}" decimalPlaces="2"/>
+                    V.Total:
+                    <p:inputNumber value="#{gestionAmbientalView.rubroSelect.valorTotal}" decimalPlaces="2"/>
+                </p:panelGrid>
+                <div align="center">
+                    <p:commandButton value="Aceptar" styleClass="btnStyle" icon="ui-icon-check" actionListener="#{gestionAmbientalView.guardaRubro()}"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Seleccionar Predio" widgetVar="selPredio" modal="true" resizable="false" width="75%" height="30%">
+            <h:form id="formPredSel">
+                <p:tabView>
+                    <p:tab title="Predios del Contribuyente">
+                        <p:dataTable id="dtSelPred" paginator="true" style="text-align: center;" emptyMessage="No se encontro Predios" filterEvent="enter"
+                                     rows="10" value="#{gestionAmbientalView.propiedades}" var="pl" paginatorPosition="top">
+                            <p:column headerText="# Predio" filterBy="#{pl.numPredio}" filterStyle="width: 90%" width="100">
+                                <p:outputLabel value="#{pl.numPredio}"/>
+                            </p:column>
+                            <p:column headerText="Cod. Predial" width="200">
+                                <p:outputLabel value="#{pl.codigoPredialCompleto}"/>
+                            </p:column>
+                            <p:column headerText="Cod. Anterior" width="200" filterBy="#{pl.predialant}" filterStyle="width: 90%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl.predialant}"/>
+                            </p:column>
+                            <p:column headerText="Ubicacion">
+                                <p:outputLabel value="#{pl.calle}"/>
+                            </p:column>
+                            <p:column headerText="MZ" filterBy="#{pl.mz}" width="50" filterStyle="width: 80%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl.mz}"/>
+                            </p:column>
+                            <p:column headerText="SL" filterBy="#{pl.solar}" width="50" filterStyle="width: 80%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl.solar}"/>
+                            </p:column>
+                            <p:column headerText="Selec." width="50">
+                                <p:commandLink actionListener="#{gestionAmbientalView.seleccionaPredio(pl)}">
+                                    <p:graphicImage value="/resources/images/ir.png" height="16"/>   
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>    
+                    <p:tab title="Listado de Predios">
+                        <p:dataTable id="dtSelPredLazy" paginator="true" lazy="false" style="text-align: center;" emptyMessage="No se encontro Predios" filterEvent="enter"
+                                     rows="10" value="#{gestionAmbientalView.catPredioLazy}" var="pl1" paginatorPosition="top">
+                            <p:column headerText="# Predio" filterBy="#{pl.numPredio}" filterStyle="width: 90%" width="100">
+                                <p:outputLabel value="#{pl1.numPredio}"/>
+                            </p:column>
+                            <p:column headerText="Cod. Predial">
+                                <p:outputLabel value="#{pl1.codigoPredialCompleto}"/>
+                            </p:column>
+                            <p:column headerText="Cod. Anterior" width="200" filterBy="#{pl1.predialant}" filterStyle="width: 90%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl1.predialant}"/>
+                            </p:column>
+                            <p:column headerText="Ubicacion">
+                                <p:outputLabel value="#{pl1.calle}"/>
+                            </p:column>
+                            <p:column headerText="MZ" filterBy="#{pl1.mz}" width="50" filterStyle="width: 80%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl1.mz}"/>
+                            </p:column>
+                            <p:column headerText="SL" filterBy="#{pl1.solar}" width="50" filterStyle="width: 80%" filterMatchMode="exact">
+                                <p:outputLabel value="#{pl1.solar}"/>
+                            </p:column>
+                            <p:column headerText="Selec." width="50">
+                                <p:commandLink actionListener="#{gestionAmbientalView.seleccionaPredio(pl1)}">
+                                    <p:graphicImage value="/resources/images/ir.png" height="16"/>   
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>    
+                </p:tabView>
+                <br></br>
+            </h:form>
+        </p:dialog>
+
+
+
+
+        <p:dialog widgetVar="dlgEditPermiso" header="Edicion" resizable="false" modal="true">
+            <h:form id="formPermiso">
+                <h:panelGrid  columns="2" style="font-size: 16px;" styleClass="noBorder">
+                    <h:panelGroup layout="block" >
+                        <p:outputLabel  value="Ubicacion: " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" >
+                        <p:inputTextarea  value="#{gestionAmbientalView.departamentoDetalleTitulosGetionAmbiental.ubicacion}" rows="3" style="width: 95%; font-size: 14px; font-weight: bold;"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"  >
+                        <p:outputLabel  value="Tipo Establecimiento" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"  >
+                        <p:inputTextarea  value="#{gestionAmbientalView.departamentoDetalleTitulosGetionAmbiental.tipoEstablecimiento}" rows="3" style="width: 95%; font-size: 14px; font-weight: bold;"/>
+                    </h:panelGroup>
+                </h:panelGrid>
+                <h:panelGrid style="width: 100%;" styleClass="noBorder" columns="6" >
+                    <h:panelGroup layout="block"  >
+                        <p:outputLabel  value="Categorìa" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" >
+                        <p:selectOneMenu value="#{gestionAmbientalView.departamentoDetalleTitulosGetionAmbiental.categoriaEstablecimiento}" style="width: 50%">
+                            <f:selectItem itemLabel="OTROS" itemValue="OTROS" />
+                            <f:selectItem itemLabel="INDUSTRIAL" itemValue="INDUSTRIAL"/>
+                            <f:selectItem itemLabel="COMERCIAL" itemValue="COMERCIAL"/>
+                            <f:selectItem itemLabel="SERVICIOS" itemValue="SERVICIOS"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"  >
+                        <p:outputLabel  value="P. Admin." class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" >
+                        <p:inputNumber id="total_adminis" value="#{gestionAmbientalView.departamentoDetalleTitulosGetionAmbiental.totalPersonalAdministrativo}" decimalPlaces="0" 
+                                       onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"  >
+                        <p:outputLabel  value="P. Ope." class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block"  >
+                        <p:inputNumber id="total_operativo" value="#{gestionAmbientalView.departamentoDetalleTitulosGetionAmbiental.totalPersonalOperativo}" decimalPlaces="0" 
+                                       onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" />
+                    </h:panelGroup>
+                </h:panelGrid>
+                <br></br>
+                <div align="center">
+                    <p:commandButton value="Aceptar" styleClass="btnStyle" icon="ui-icon-check" actionListener="#{gestionAmbientalView.saveEditPermiso()}"
+                                     oncomplete="PF('dlgEditPermiso').hide();"  update="mainForm"/>
+                </div>
+            </h:form>
+        </p:dialog>
+
+
+
+
+        <script>
+            $(document).ready(function () {
+                //attach click event to button
+                $("#formValores [type='reset']").click(function () {
+                    $("#formValores [name='valorMain']").focus();
+                });
+            });
+        </script>
+
+    </ui:define>
+</ui:composition>

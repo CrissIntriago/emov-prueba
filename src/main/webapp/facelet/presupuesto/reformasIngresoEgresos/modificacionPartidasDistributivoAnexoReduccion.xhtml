@@ -1,0 +1,513 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Partidas Distributivo Anexo</ui:define> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">  
+            <div class="ui-g-12">
+                <comp:titleTask task="#{asignaPartDistAnexoReduccionView.tarea}" tramite="#{asignaPartDistAnexoReduccionView.tramite}" /> 
+            </div>
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formPanelesFistributivo">
+                    <p:fieldset legend="Opciones" >
+                        <p:commandButton disabled="#{asignaPartDistAnexoReduccionView.enbaledReforma}" value="Reformas"   actionListener="#{asignaPartDistAnexoReduccionView.showPanel1()}"
+                                         icon="fa fa-check" style="width: 10%;" update="formPanelesFistributivo,fmReformaGlobal,formAnexoData"/> 
+                    </p:fieldset>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformaGlobal">
+                    <p:panel rendered="#{asignaPartDistAnexoReduccionView.panelReforma}">
+                        <p:dataTable id="dataIngresoEgresoReorma" widgetVar="dataIngresoEgresoReorma" var="item" value="#{asignaPartDistAnexoReduccionView.lazyReforma}" 
+                                     paginator="true" rows="30" style="width: 100%;" paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="30,40,50,100" lazy="true"  rowIndexVar="index"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <p:column headerText="No.REFORMA" style="text-align: center;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO" style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="SALDO DISPONIBLE" style="text-align: center;">
+                                <p:outputLabel style="float: right;" value="#{asignaPartDistAnexoReduccionView.mostrarValorPrincipal(item)}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto}" />   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 15%;text-align: center;">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}"   title="Asigna #{item.tipo==true?'SuplementO':'Reduccion'}"
+                                               process="@this"  actionListener="#{asignaPartDistAnexoReduccionView.registrarDistributivoAnexo(item)}"
+                                               update="formPanelesFistributivo,fmReformaGlobal,formAnexoData" >
+                                    <i class="fa fa-money" style="margin: 10px 10px 10px 10px;font-size: 1.5em"></i>
+                                </p:commandLink>
+                                <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this"  
+                                                actionListener="#{asignaPartDistAnexoReduccionView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12" >
+                <h:form prependId="false" id="formAnexoData">
+
+                    <p:fieldset legend="DISTRIBUTIVO" toggleable="true" rendered="#{asignaPartDistAnexoReduccionView.panelData}" collapsed="false" >
+                        <p:panel  rendered="#{asignaPartDistAnexoReduccionView.panelData}"  style="text-align: left; font-size: 12px;" id="panelDistributivoCupo">
+                            <p:panelGrid columns="2" layout="grid" style="font-size: 12px;"  styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">
+                                    <p:outputLabel  value="Monto Disponible: " class="FontBold"/>
+                                    <p:outputLabel value="#{asignaPartDistAnexoReduccionView.totalCupoD}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                                <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">
+                                    <p:outputLabel  value="Monto que se ha Reducido: " class="FontBold"/>
+                                    <p:outputLabel value="#{asignaPartDistAnexoReduccionView.cupoAsignadoD}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:panel>
+
+                        <p:panel rendered="#{asignaPartDistAnexoReduccionView.panelData}">
+                            <p:dataTable    value="#{asignaPartDistAnexoReduccionView.lazyRubros}"  id="listaDistributivoAnexo" widgetVar="listaDistributivoAnexo"  
+                                            paginatorPosition="bottom" var="cargo" rows="20" paginator="true"   rowIndexVar="index" lazy="true"
+                                            paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                            rowsPerPageTemplate="20,25,35,50"  editable="true" editMode="cell" scrollable="true"
+                                            currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                            emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    DISTRIBUTIVO DEL PERÍODO #{asignaPartDistAnexoReduccionView.periodo}
+                                </f:facet>
+
+<!--                                <p:ajax event="rowToggle" listener="#{asignaPartDistAnexoReduccionView.loadingRubros(cargo)}" update="lista"/>-->
+
+                                <p:column headerText="Nombre" style="width: 20%;" filterBy="#{cargo.nombreCargo}" filterMatchMode="contains">
+                                    <h:outputText value="#{cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Código" style="width: 10%;" filterBy="#{cargo.codigo}" filterMatchMode="contains">
+                                    <h:outputText value="#{cargo.codigo}" />
+                                </p:column>                                      
+                                <p:column headerText="Unidad administrativa" style="width: 13%;" filterBy="#{cargo.idUnidad.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{cargo.idUnidad.nombre}" />
+                                </p:column>                                      
+                                <p:column headerText="Regimen laboral" style="width: 13%;" filterBy="#{cargo.idRegimen.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{cargo.idRegimen.nombre}" />
+                                </p:column>                                      
+                                <p:column headerText="Grupo organizacional" style="width: 13%;" filterBy="#{cargo.idGrupo.grupoOrganizacional}" filterMatchMode="contains">
+                                    <h:outputText value="#{cargo.idGrupo.grupoOrganizacional}" />
+                                </p:column>
+                                <p:column headerText="Activo" style="width: 7%;text-align: center" filterBy="#{cargo.activo}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaDistributivo').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{cargo.activo?'SI':'NO'}" />
+                                </p:column>
+                                <p:column headerText="Asignado" style="width: 7%;text-align: center" filterBy="#{cargo.asignado}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaDistributivo').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{cargo.asignado?'SI':'NO'}" />
+                                </p:column>
+                                <p:column headerText="Tipo" style="width: 7%;text-align: center" filterBy="#{cargo.idCatalogoItem}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaDistributivo').filter()" converter="#{utilConverter}" style="width: 100%">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{thPartidaPresupuestariaView.listTipoCargo}" var="n" itemLabel="#{n.texto}" itemValue="#{n}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{cargo.idCatalogoItem.texto}" />
+                                </p:column>
+
+                                <p:column headerText="Acciones" style="width: 60px">
+                                    <p:commandLink  title="Reducción" process="@this" actionListener="#{asignaPartDistAnexoReduccionView.abriDlgoPartidasPresupuestariaDistributiov(cargo)}">
+                                        <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink  title="ver" process="@this" actionListener="#{asignaPartDistAnexoReduccionView.listaVisualizacion(cargo)}">
+                                        <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+
+                                </p:column>
+
+
+                               
+                            </p:dataTable>
+                        </p:panel>
+                    </p:fieldset >
+
+                    <p:fieldset legend="DISTRIBUTIVO ANEXO" toggleable="true" rendered="#{asignaPartDistAnexoReduccionView.panelData}"  collapsed="true" >
+
+
+                        <p:panel  rendered="#{asignaPartDistAnexoReduccionView.panelData}"  style="text-align: left; font-size: 12px;" id="panelAnexo">
+                            <p:panelGrid columns="2" layout="grid" style="font-size: 12px;"  styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">
+                                    <p:outputLabel  value="Monto Disponible: " class="FontBold"/>
+                                    <p:outputLabel value="#{asignaPartDistAnexoReduccionView.totalCupoDA eq null?'NO HAY CUPO':asignaPartDistAnexoReduccionView.totalCupoDA}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                                <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">
+                                    <p:outputLabel  value="Monto que se ha Reducido: " class="FontBold"/>
+                                    <p:outputLabel value="#{asignaPartDistAnexoReduccionView.cupoAsignado eq null?'NO HAY CUPO':asignaPartDistAnexoReduccionView.cupoAsignado}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:panel>
+
+                        <p:panel rendered="#{asignaPartDistAnexoReduccionView.panelData}" >
+
+
+                            <p:dataTable  paginator="true" id="listaanexo"  paginatorPosition="bottom" style="text-align: center; margin: 20px" rows="10"
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          rowsPerPageTemplate="10,15,20,25" scrollable="true"  widgetVar="listaanexo"  editable="true" editMode="cell"
+                                          emptyMessage="No existen cuentas con el criterio de busqueda especificado"  
+                                          value="#{asignaPartDistAnexoReduccionView.lazyRubrosAnexo}" var="item3" >
+                                <f:facet name="header">
+                                    Rubros
+                                </f:facet>
+                                <p:column headerText="Tipo" style="width: 20%; text-align: justify" filterMatchMode="contains" filterBy="#{item3.idRubro.nombre}">
+                                    <h:outputText value="#{item3.idRubro.nombre}" />
+                                </p:column> 
+
+                                <p:column headerText="Monto" style="width: 10%;" filterBy="#{item3.monto}">
+                                    <h:outputText value="#{item3.monto}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Reserva" style="width: 5%; text-align: right;" filterBy="#{item3.reserva}">
+                                    <h:outputText value="#{item3.reserva}" >
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Item" style="width: 10%;text-align: center;" filterMatchMode="contains" filterBy="#{item3.idPresupuesto.codigo}">
+                                    <h:outputText value="#{item3.idPresupuesto.codigo}" />
+
+                                </p:column>
+
+                                <p:column headerText="Estructura" style="width: 10%;text-align: center;" filterMatchMode="contains" filterBy="#{item3.idEstructura.codigo}">
+                                    <h:outputText value="#{item3.idEstructura.codigo}" />
+                                </p:column>
+
+
+                                <p:column headerText="Fuente" style="width: 10%;text-align: center;" filterMatchMode="contains" filterBy="#{item3.idFuente.codFuente}">
+                                    <h:outputText value="#{item3.idFuente.codFuente}" />
+                                </p:column>
+
+
+                                <p:column headerText="Partida" style="width: 10%; text-align: center;" filterMatchMode="contains" filterBy="#{item3.partidaPresupuestaria}">
+                                    <h:outputText value="#{item3.partidaPresupuestaria}" />
+                                </p:column>
+
+                                <p:column  headerText="Suplemento" style="width: 10%;" filterBy="#{item3.reformaSuplemento}">
+                                    <h:outputText value="#{item3.reformaSuplemento}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>                                   
+
+                                </p:column>
+
+                                <p:column    headerText="Reducción" style="width: 10%;" filterBy="#{item3.reformaReduccion}">           
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item3.reformaReduccion}" style="float: right;"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item3.reformaReduccion}"  >
+
+                                                <p:ajax  event="change" listener="#{asignaPartDistAnexoReduccionView.cellEditReduccion(item3)}" 
+                                                         update="listaanexo,panelAnexo"/>
+                                            </p:inputNumber>
+
+                                        </f:facet>
+                                    </p:cellEditor>                           
+                                </p:column>
+
+                                <p:column   headerText="Monto Codificado" style="width: 10%;" filterBy="#{item3.reformaCodificado}">
+
+                                    <h:outputText value="#{item3.reformaCodificado==null?0:item3.reformaCodificado}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </p:panel>
+
+                    </p:fieldset>
+
+                </h:form>
+            </div>
+        </div>
+
+
+
+
+
+        <p:dialog id="DlogopartidasDistributivos" width="1200"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivos" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="formDlogopartidasDistributivos"  prependId="false">
+
+                <p:panel  style="text-align: left; ">
+                    <p:panelGrid columns="3" layout="grid" style="font-size: 12px; "  styleClass="ui-panelgrid-blank form-group">
+
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Cupo: " class="FontBold"/>
+                            <p:outputLabel value="#{asignaPartDistAnexoReduccionView.totalCupoD==null?'NO TIENE CUPO':asignaPartDistAnexoReduccionView.totalCupoD}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Cupo Asignado: " class="FontBold"/>
+                            <p:outputLabel value="#{asignaPartDistAnexoReduccionView.cupoAsignadoD==null?'NO TIENE CUPO':asignaPartDistAnexoReduccionView.cupoAsignadoD}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <!--                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                                    <p:outputLabel value="RMU: " class="FontBold"/>
+                                                    <p:outputLabel value="#{asignaPartDistAnexoReduccionView.rmu}">
+                                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                    </p:outputLabel>  
+                                                </h:panelGroup>-->
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Unidad: " class="FontBold"/>
+                            <p:outputLabel value="#{asignaPartDistAnexoReduccionView.mostrarData.idUnidad.nombre}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                            <p:outputLabel value="Cargo: " class="FontBold"/>
+                            <p:outputLabel value="#{asignaPartDistAnexoReduccionView.mostrarData.nombreCargo}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panel>
+                <p:dataTable  paginator="true" id="lista"  paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"  widgetVar="lista"  editable="true" editMode="cell"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" rowStyleClass="#{itemrubros1.partidaPresupuestaria.isEmpty()||itemrubros1.partidaPresupuestaria==null? 'condicion1':'condicion2'}"
+                              value="#{asignaPartDistAnexoReduccionView.listaPartidasdistributivo}" var="itemrubros1" >
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+                    <p:column headerText="Tipo" style="width: 20%; text-align: justify">
+                        <h:outputText value="#{itemrubros1.idRubro.nombre}" />
+                    </p:column> 
+
+                    <p:column headerText="Monto" style="width: 10%;" >
+                        <h:outputText value="#{itemrubros1.monto}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    
+                    <p:column headerText="Reserva" style="width: 10%;" >
+                        <h:outputText value="#{itemrubros1.reserva}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+
+                    <p:column headerText="Item" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{itemrubros1.idPresupuesto.codigo}" />
+
+                    </p:column>
+
+                    <p:column headerText="Estructura" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{itemrubros1.idEstructura.codigo}" />
+                    </p:column>
+
+
+                    <p:column headerText="Fuente" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{itemrubros1.idFuente.codFuente}" />
+                    </p:column>
+
+
+                    <p:column headerText="Partida" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{itemrubros1.partidaPresupuestaria}" />
+                    </p:column>
+
+                    <p:column rendered="#{asignaPartDistAnexoReduccionView.columnaSuplemento}"  headerText="Suplemento">                        
+                        <h:outputText value="#{itemrubros1.reformaSuplemento}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>                       
+                    </p:column>
+                    <p:column    headerText="Reducción">
+                        <p:cellEditor disabled="#{itemrubros1.monto.doubleValue()==0?true:false}" >
+                            <f:facet name="input">
+                                <p:inputNumber id="valorReduccion"
+                                               value="#{itemrubros1.reformaReduccion}" style="width:100%;">
+                                    <p:ajax event="change" listener="#{asignaPartDistAnexoReduccionView.cellEditReduccion(itemrubros1)}" update="lista,formDlogopartidasDistributivos,panelDistributivoCupo"   />
+                                </p:inputNumber>
+                            </f:facet>
+                            <f:facet name="output"> 
+                                <h:outputText value="#{itemrubros1.reformaReduccion}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column   headerText="Monto Codificado">
+                        <h:outputText value="#{itemrubros1.reformaCodificado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="DlogopartidasDistributivosvista" width="1200"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivosvista" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">  
+            <h:form id="formDlogopartidasDistributivosvista"  prependId="false">
+                <p:panelGrid columns="3" layout="grid" style="font-size: 12px;"  styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                        <p:outputLabel value="Unidad: " class="FontBold"/>
+                        <p:outputLabel value="#{asignaPartDistAnexoReduccionView.dataView.idUnidad.nombre}">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                        <p:outputLabel value="Cargo: " class="FontBold"/>
+                        <p:outputLabel value="#{asignaPartDistAnexoReduccionView.dataView.nombreCargo}">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                    <!--                    <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;" >
+                                            <p:outputLabel value="RMU: " class="FontBold"/>
+                                            <p:outputLabel value="#{asignaPartDistAnexoReduccionView.rmu}">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:outputLabel>  
+                    
+                                        </h:panelGroup>-->
+
+                </p:panelGrid>
+
+                <p:dataTable  paginator="true" id="listavistaDistributivo" widgetVar="listavistaDistributivo" paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"    editable="true" editMode="cell"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" value="#{asignaPartDistAnexoReduccionView.listaVista}" var="item4" >
+
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+
+                    <p:column headerText="Tipo" style="width: 20%; text-align: justify">
+                        <h:outputText value="#{item4.idRubro.nombre}" />
+                    </p:column> 
+
+                    <p:column headerText="monto" style="width: 5%;" >
+                        <h:outputText value="#{item4.reformaCodificado}" style="float: right;" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Item" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{item4.idPresupuesto.codigo}" />
+
+                    </p:column>
+
+                    <p:column headerText="Estructura" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{item4.idEstructura.codigo}" />
+                    </p:column>
+
+
+                    <p:column headerText="Fuente" style="width: 10%;text-align: center;">
+                        <h:outputText value="#{item4.idFuente.codFuente}" />
+                    </p:column>
+
+
+                    <p:column headerText="Partida" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item4.partidaPresupuestaria}" />
+                    </p:column>
+
+                    <p:column   headerText="Suplemento">
+
+                        <h:outputText value="#{item4.reformaSuplemento}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+
+                    </p:column>
+                    <p:column   headerText="Reducción">
+
+
+                        <h:outputText value="#{item4.reformaReduccion}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+
+                    </p:column>
+                    <p:column   headerText="Monto Codificado">
+                        <h:outputText value="#{item4.reformaCodificado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{asignaPartDistAnexoReduccionView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{asignaPartDistAnexoReduccionView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

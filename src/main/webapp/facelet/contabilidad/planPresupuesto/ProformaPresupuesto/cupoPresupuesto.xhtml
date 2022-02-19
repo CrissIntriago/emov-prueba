@@ -1,0 +1,208 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Cupos Presupuesto</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <comp:titleTask task="#{cupoPresupuestoView.tarea}" tramite="#{cupoPresupuestoView.tramite}" />    
+            </div>
+
+            <div class="ui-g-12 ui-md-6">
+                <h:form prependId="false" id="formPadre">
+                    <div class="ui-inputgroup">
+                        <p:outputLabel value="Período: " style="font-weight: bold; margin-right: 1%;"/>
+                        <p:selectOneMenu value="#{cupoPresupuestoView.periodo}" style="border: 1px solid; width: 20%;text-align: center; padding: 2px 2px 2px 2px;">
+                            <f:selectItems value="#{cupoPresupuestoView.masterList}" var="item" itemLabel="#{item.anio}" itemValue="#{item.anio}" />
+                        </p:selectOneMenu>
+                        <p:commandButton icon="fa fa-search"  actionListener="#{cupoPresupuestoView.buscar()}" style="border-radius: 0px 5px 5px 0px"  update="fmCuerpo" /> 
+                    </div>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmCuerpo">
+                    <p:separator/>
+                    <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" id="totaleCupos" >
+                        <p:panelGrid columns="1">
+                            <p:outputLabel style="font-size: 18px; margin-top: 2%;" value="Cupo Asignado:"/>
+                            <p:outputLabel style="font-size: 18px;margin-top: 2%; font-weight: bold;" value="#{cupoPresupuestoView.cupoAsignado}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:outputLabel style="font-size: 18px; margin-top: 2%;" value="Cupo Registrado:"/>
+                            <p:outputLabel style="font-size: 18px;margin-top: 2%; font-weight: bold;" value="#{cupoPresupuestoView.totalCupo}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:commandButton   value="Completar Tarea" icon="fa fa-check-square-o" disabled="#{cupoPresupuestoView.bloqueo}"
+                                               actionListener="#{cupoPresupuestoView.abriDlogo()}" style="width: auto;background: #0081cb"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+
+                    <p:separator/>
+
+                    <p:tabView prependId="false" id="formDatosCupos">
+                        <p:tab title="PLAN ANUAL PROGRAMA PROYECTOS" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable id="dataUn" widgetVar="dataUn" var="item" paginator="true" rows="50"  paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="20,30,40,50,100" value="#{cupoPresupuestoView.lazyUnidades}" editable="true" editMode="cell"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                                <f:facet name="header">
+                                    Cupo Presupuesto #{cupoPresupuestoView.periodo}
+                                </f:facet>
+
+                                <p:column headerText="Nombre" sortBy="#{item.unidadAdministrativa.nombre}" filterBy="#{item.unidadAdministrativa.nombre}" style="width: 20%;">
+                                    <h:outputText value="#{item.unidadAdministrativa.nombre.toUpperCase()}" />
+                                </p:column>
+                                <p:column filterBy="#{item.unidadAdministrativa.padre.nombre}" headerText="Supervisa"  style="width: 20%;">
+
+                                    <h:outputText value="#{item.unidadAdministrativa.padre.nombre==null?'ENTIDAD':item.unidadAdministrativa.padre.nombre}" />
+                                </p:column>
+
+
+                                <p:column filterBy="#{item.unidadAdministrativa.tipoUnidad.texto}" headerText="Tipo de Unidad"  style="width: 10%;">
+
+                                    <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.texto}" />
+                                </p:column>
+
+                                <p:column headerText="Cupo" style="width: 8%;">
+                                    <p:cellEditor disabled="#{cupoPresupuestoView.bloqueo}">
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.montoCupo}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item.montoCupo}" style="width:96%" >
+                                                <p:ajax event="change" listener="#{cupoPresupuestoView.asingarCupo(item)}" update="dataUn,totaleCupos" />
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column> 
+
+                                <p:column headerText="Período" style="width: 5%; text-align: center;">
+                                    <p:outputLabel value="#{item.periodo}"/>
+                                </p:column>
+                                <p:column headerText="Reponsable" style="width: 10%; text-align: center;">
+                                    <p:cellEditor disabled="#{cupoPresupuestoView.bloqueo==true or item.montoCupo.doubleValue()==0?true:false}">
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.responsable}" > 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:selectOneMenu value="#{item.responsable}" 
+                                                             style="width:160px"  >
+                                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems  value="#{cupoPresupuestoView.filtrarLista(item)}" var="n" itemLabel="#{n}" itemValue="#{n}" />
+                                                <p:ajax event="change" listener="#{cupoPresupuestoView.editarResponsable(item)}" update="dataUn,totaleCupos" />
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                    </p:cellEditor>
+
+
+                                </p:column>
+
+
+                            </p:dataTable>
+
+                        </p:tab>
+
+                        <p:tab title="DISTRIBUTIVO - DISTRIBUTIVO ANEEXO - PARTIDAS DIRECTAS" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable id="dataOtros" widgetVar="dataOtros" var="data" paginator="true" rows="20"  paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="20,30,40,50,100" value="#{cupoPresupuestoView.lazyOtros}" editable="true" editMode="cell"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado"   >
+                                <f:facet name="header">
+                                    Cupo Presupuesto #{cupoPresupuestoView.periodo}
+
+                                </f:facet>
+
+                                <p:column>
+                                    <p:outputLabel value="#{data.otros=='PD'?'PARTIDAS DIRECTAS':''}"/>
+                                    <p:outputLabel value="#{data.otros=='D'?'DISTRIBUTIVO':''}"/>
+                                    <p:outputLabel value="#{data.otros=='DA'?'DISTRIBUTIVO ANEXO':''}"/>
+                                </p:column>
+
+                                <p:column headerText="Cupo" style="width: 8%;">
+                                    <p:cellEditor >
+                                        <f:facet name="output">
+                                            <h:outputText value="#{data.montoCupo}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{data.montoCupo}" style="width:96%" >
+                                                <p:ajax event="change" listener="#{cupoPresupuestoView.asingarCupo(data)}" update="dataOtros,totaleCupos"/> 
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column> 
+
+                                <p:column headerText="Período" style="width: 50px; text-align: center;">
+                                    <p:outputLabel value="#{data.periodo}"/>
+                                </p:column>
+                            </p:dataTable>
+
+                        </p:tab>
+
+
+                    </p:tabView>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="dlgresponsables" widgetVar="dlgresponsables" modal="true" width="1000"  header="Usuarios asignados de una vez">
+            <h:form id="frmDlgresponsables">
+                <p:dataGrid value="#{cupoPresupuestoView.verificacionUser}" columns="4" layout="grid" paginatorPosition="bottom"
+                            rows="12" paginator="true" id="datos" var="item"
+                            paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                            rowsPerPageTemplate="6,12,16">                  
+                    <p:panel header="#{item.userNameResponsable}"  style="text-align:center" >
+                        <h:panelGrid columns="1" style="width:100%; text-align: justify;" class="FontBold">
+                            <h:outputText value="CATEGORIA: #{item.responsable.toUpperCase()}" class="FontBold"/>
+                            <p:outputLabel value="UNIDAD:  #{item.unidadAdministrativa.nombre.toUpperCase()}" class="FontBold"/>
+                        </h:panelGrid>
+                    </p:panel>
+                </p:dataGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{cupoPresupuestoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{cupoPresupuestoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

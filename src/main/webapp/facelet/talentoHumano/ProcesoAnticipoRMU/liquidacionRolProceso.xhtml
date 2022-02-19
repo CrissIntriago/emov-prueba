@@ -1,0 +1,383 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Liquidación de Rol</ui:define>
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid" style="width: 79.2%;margin-left: 10%">
+                <u:titleTask task="#{liquidacionProcesoView.tarea}" tramite="#{liquidacionProcesoView.tramite}" />
+            </div>
+            <div class="ui-g ui-fluid" >
+                <div class="ui-g-12">
+                    <p:outputPanel id="fomInfo">                        
+                        <p:fieldset id="fieldsetLiquidacion" 
+                                    style="width: 79.2%;margin-left: 10%">
+                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:fieldset legend="Cabecera del rol" id="fieldsetRol">
+                                    <p:panelGrid columns="4" layout="grid" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="Período:" for="periodo" />
+                                            <p:selectOneMenu id="periodo" style="width: 100%;"
+                                                             value="#{liquidacionProcesoView.busqueda.anio}">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                              noSelectionOption="true" />
+                                                <f:selectItems value="#{liquidacionProcesoView.periodos}"
+                                                               var="periodo"
+                                                               itemLabel="#{periodo.anio}"
+                                                               itemValue="#{periodo.anio}"/>
+                                                <p:ajax  listener="#{liquidacionProcesoView.actulizarRoles()}" update="rolSeleccionado"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="Rol: " for="@next"/>
+                                            <p:selectOneMenu id="rolSeleccionado" value="#{liquidacionProcesoView.rolSeleccionado}"
+                                                             converter="#{utilConverter}"
+                                                             filter="true" filterMatchMode="contains"
+                                                             style="width: 100%;" panelStyle="width:100px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{liquidacionProcesoView.listaRol}"
+                                                               var="m"
+                                                               itemLabel="#{m.descripcion}"
+                                                               itemValue="#{m}"/>
+                                                <p:ajax update="tipoRol,estadoRol,mesRol,formMain,tabViewLiquidacion:tabDetalle" listener="#{liquidacionProcesoView.liquidarRol()}"
+                                                        process="@this"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="Tipo Rol" for="tipoRol"/>
+                                            <p:inputText id="tipoRol" value="#{liquidacionProcesoView.rolSeleccionado.descripcion}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'mesRol')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="Mes Rol" for="mesRol"/>
+                                            <p:inputText id="mesRol" value="#{liquidacionProcesoView.rolSeleccionado.mes.descripcion}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'estadoRol')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="Estado Rol" for="estadoRol"/>
+                                            <p:inputText id="estadoRol" value="#{liquidacionProcesoView.rolSeleccionado.estadoAprobacion.texto}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'cedula')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid> 
+                                </p:fieldset>
+                                <p:fieldset legend="Datos del Funcionario" id="fieldsetDatos" >                                        
+                                    <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelInform" >
+                                            <p:outputLabel value="Cédula " for="cedula" style="font-weight: bold;"/>
+                                            <p:inputText id="cedula" value="#{liquidacionProcesoView.cedula}" class="panelInput"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombre_input')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Nombre" for="nombre"/>
+                                            <p:inputText id="nombre" value="#{liquidacionProcesoView.liquidacionRol.rolPago.servidor.persona.nombreCompleto}"
+                                                         readonly="true"
+                                                         onkeypress="focusNextOnEnter(event, 'sueldo_input')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Sueldo Base" for="sueldo"/>
+                                            <p:inputNumber id="sueldo"  decimalSeparator="." thousandSeparator=","
+                                                           value="#{liquidacionProcesoView.liquidacionRol.rmu.remuneracionDolares}" 
+                                                           inputStyle="text-align:right" readonly="true" onkeypress="focusNextOnEnter(event, 'cargo')">
+                                            </p:inputNumber>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Cargo" for="cargo"/>
+                                            <p:inputText id="cargo" value="#{liquidacionProcesoView.liquidacionRol.rolPago.servidor.distributivo.cargo.nombreCargo}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'tipo')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Tipo: " for="tipo"/>
+                                            <p:inputText id="tipo" value="#{liquidacionProcesoView.liquidacionRol.rolPago.servidor.distributivo.regimen.nombre}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'dependencia')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Dependencia: " for="dependencia"/>
+                                            <p:inputText id="dependencia" value="#{liquidacionProcesoView.liquidacionRol.rolPago.servidor.distributivo.unidadAdministrativa.nombre}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'fechaContranto')">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Fecha de Contrato: " for="fechaContranto"/>
+                                            <p:inputText id="fechaContranto" value="#{liquidacionProcesoView.liquidacionRol.rolPago.servidor.fechaIngreso}"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'sueldoNeto')">
+                                                <f:convertDateTime pattern="yyyy/MM/dd" />
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel value="Neto a Recibir" for="sueldoNeto"/>
+                                            <p:inputNumber id="sueldoNeto"  decimalSeparator="." thousandSeparator=","
+                                                           value="#{liquidacionProcesoView.liquidacionRol.netoRecibir}" 
+                                                           inputStyle="text-align:right;;font-weight: bold;font-size: 12px" readonly="true" onkeypress="focusNextOnEnter(event, 'cargo')">
+                                            </p:inputNumber>
+                                        </h:panelGroup>
+                                    </p:panelGrid>                                        
+                                </p:fieldset>
+                                <p:fieldset legend="Rubros Asociados con el Funcionario" id="fieldsetdataTable">
+                                    <p:commandButton value="Agregar Rubro" 
+                                                     style="width: 150px;margin: 10px 0px"
+                                                     actionListener="#{liquidacionProcesoView.agregarRubroAnexo()}"
+                                                     disabled="#{liquidacionProcesoView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                                 liquidacionProcesoView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol'}"
+                                                     id="agregarRubro"
+                                                     icon="ui-icon-plus"
+                                                     styleClass="Fs16" update="frmRubroA"
+                                                     process="@form"/>
+                                    <p:dataTable id="dtRubro" widgetVar="dtRubro" var="rubro"
+                                                 paginator="true"
+                                                 rowsPerPageTemplate="10,15,20,60,100"
+                                                 value="#{liquidacionProcesoView.listaLiquidarDAO}"
+                                                 editable="true" editMode="cell"
+                                                 paginatorPosition="bottom"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 rows="10" emptyMessage="No existen criterio de busqueda especificado">
+                                        <p:column headerText="Detalle" style="width: 20%;  font-size: 12px;">
+                                            <h:outputText value="#{rubro.valorAsignacion.valorParametrizable.tipo.texto}"/>
+                                        </p:column>
+                                        <p:column headerText="Tipo" style="width: 10%;  font-size: 12px;text-align: center">
+                                            <h:outputText value="#{rubro.valorAsignacion.valorParametrizable.clasificacion.texto}"/>
+                                        </p:column>
+                                        <p:column headerText="Partida" style="width: 10%;  font-size: 12px;text-align: center">
+                                            <h:outputText value="#{rubro.valorAsignacion.partidaAp}"/>
+                                        </p:column>
+                                        <p:column headerText="Cta. Contable" style="width: 30%;  font-size: 12px;">
+                                            <h:outputText value="#{rubro.valorAsignacion.cuentaContable.codigo}.-#{rubro.valorAsignacion.cuentaContable.nombre}"/>
+                                        </p:column>
+                                        <p:column headerText="Monto" style="width: 10%;  font-size: 12px;">
+                                            <p:inputNumber value="#{liquidacionProcesoView.egresoNegativo(rubro)}#{rubro.valorRubro}" readonly="true" inputStyle="text-align: right"
+                                                           decimalSeparator="." thousandSeparator=","/>
+                                        </p:column>
+                                    </p:dataTable> 
+                                </p:fieldset>                               
+                                <p:outputPanel style="margin-top: 25px;">
+                                    <center>
+                                        <p:commandButton value="Guardar" 
+                                                         id="btnGuardar"
+                                                         disabled="#{liquidacionProcesoView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                                     liquidacionProcesoView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol'}"
+                                                         actionListener="#{liquidacionProcesoView.guardar()}"
+                                                         icon="ui-icon-save" style="width: 150px; margin-bottom: 15px;"
+                                                         styleClass="Fs16" update="formMain"
+                                                         process="@form"/>
+                                        <p:commandButton value="Cancelar" 
+                                                         actionListener="#{liquidacionProcesoView.cancelar()}"
+                                                         icon="ui-icon-clear"
+                                                         style="width: 150px; margin-left: 15px;" process="@this"
+                                                         styleClass="red-btn" update="formMain"/>
+                                        <p:commandButton value="Rol Resumido"
+                                                         icon="ui-icon-print"
+                                                         actionListener="#{liquidacionProcesoView.impresionResumenRol()}"
+                                                         process="@this"
+                                                         styleClass="Fs16" style="width: 150px;margin-left: 15px; margin-bottom: 15px;"/>
+                                        <p:commandButton value="Reporte Rol"
+                                                         icon="ui-icon-print"
+                                                         process="@this"
+                                                         actionListener="#{liquidacionProcesoView.impresionDetalleRol()}"
+                                                         styleClass="Fs16" style="width: 150px;margin-left: 15px; margin-bottom: 15px;"/>
+                                        <p:commandButton value="Rol General"
+                                                         icon="ui-icon-print"
+                                                         process="@this"
+                                                         actionListener="#{liquidacionProcesoView.impresionRoGenerall()}"
+                                                         styleClass="Fs16" style="width: 150px;margin-left: 15px; margin-bottom: 15px;"/>
+                                    </center>
+                                </p:outputPanel>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <br></br>x
+                    <p:outputPanel id="outputTab">
+                        <p:tabView style="width: 81.5%;margin-left: 10%" id="tabViewLiquidacion">
+                            <p:tab title="Detalle Rol" id="tabDetalle">
+                                <p:commandButton value="Enviar Trámite" 
+                                                 actionListener="#{liquidacionProcesoView.abriDlogo()}"
+                                                 icon="fa fa-external-link" style="width: 150px;margin: 10px 0px;background: #0081cb;"
+                                                 update="formMain" rendered="#{liquidacionProcesoView.enviarTramite}"
+                                                 process="@this">
+                                    <p:confirm header="Confirmación de eliminación" message="¿Esta seguro que desea enviar tramite?" 
+                                               icon="fa fa-exclamation-triangle" />
+                                </p:commandButton>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+                                <p:dataTable id="dtLiquidacion" widgetVar="dtLiquidacion" var="liq"
+                                             value="#{liquidacionProcesoView.lazy}"
+                                             editable="true" lazy="true"
+                                             selection="#{liquidacionProcesoView.liquidacionRol}" selectionMode="single" rowKey="#{liq.id}"
+                                             paginator="true"
+                                             rowsPerPageTemplate="10,15,20,60,100"
+                                             paginatorPosition="bottom"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             rows="10" emptyMessage="No existen criterio de busqueda especificado">
+                                    <f:facet  name="header"> 
+                                        Roles de Pago
+                                    </f:facet>
+                                    <p:column headerText="C.I Servidor" style="width: 10%;  font-size: 12px;text-align: center" filterBy="#{liq.rolPago.servidor.persona.identificacion}">
+                                        <h:outputText value="#{liq.rolPago.servidor.persona.identificacion}" style="text-align: center"/>
+                                    </p:column>
+                                    <p:column headerText="Nombre Servidsor" style="width: 35%;  font-size: 12px;" filterBy="#{liq.rolPago.servidor.persona.nombreCompleto}">
+                                        <h:outputText value="#{liq.rolPago.servidor.persona.nombreCompleto}"/>
+                                    </p:column>
+                                    <p:column headerText="Toltal Ingreso" style="width: 10%;  font-size: 12px">
+                                        <p:inputNumber value="#{liq.totalIngreso}" readonly="true" inputStyle="text-align: right"
+                                                       decimalSeparator="." thousandSeparator=","/>
+                                    </p:column>
+                                    <p:column headerText="Toltal Egreso" style="width: 10%;  font-size: 12px">
+                                        <p:inputNumber value="-#{liq.totalEgreso}" readonly="true" inputStyle="text-align: right"
+                                                       decimalSeparator="." thousandSeparator=","/>
+                                    </p:column>
+                                    <p:column headerText="Neto a Recibir" style="width: 10%;  font-size: 12px;font-weight: bold">
+                                        <p:inputNumber value="#{liq.netoRecibir}" readonly="true" inputStyle="text-align: right;font-weight: bold"
+                                                       decimalSeparator="." thousandSeparator=","/>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="width: 8%;text-align: center">
+                                        <p:commandLink update="formMain" 
+                                                       actionListener="#{liquidacionProcesoView.editar(liq)}"
+                                                       title="Visualizar Rol" process="@this">
+                                            <i class="fa fa-search newi" style="font-size: 20px"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="Eliminar"
+                                                       actionListener="#{liquidacionProcesoView.eliminar(liq)}"
+                                                       rendered="#{liquidacionProcesoView.rolSeleccionado.estadoAprobacion.codigo=='registrado-rol'}"
+                                                       update="formMain"
+                                                       process="@this">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                        <p:commandLink title="Impresion de Rol"
+                                                       actionListener="#{liquidacionProcesoView.impresionRoles(liq)}"
+                                                       process="@form">
+                                            <i class="fa fa-fw fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        </p:commandLink>
+                                    </p:column> 
+                                    <p:columnGroup type="footer">
+                                        <p:row>
+                                            <p:column colspan="2" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total:" />
+                                            <p:column footerText="$#{liquidacionProcesoView.totalIngreso}" style="text-align: right; font-weight: bold;font-size: 12px"/>
+                                            <p:column footerText="$-#{liquidacionProcesoView.totalEgreso}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                            <p:column footerText="$#{liquidacionProcesoView.totalNeto}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                            <p:column footerText="" style="text-align: right"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable> 
+                            </p:tab>
+                            <p:tab id="tabDoc" title="Adjunta de Documentos">
+                                <p:commandButton actionListener="#{liquidacionProcesoView.adjuntarDocumento()}"
+                                                 value="Subir Archivo"
+                                                 icon="fa fa-fw fa-cloud-upload" 
+                                                 process="@this"
+                                                 style="width: 150px;margin: 10px 0px"/>
+                                <u:documents entiti="#{liquidacionProcesoView.tramite}" showDelete="true" id="doc"/>                                 
+                            </p:tab>
+                        </p:tabView>
+                    </p:outputPanel>
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id ="dlgRubroAne" header="Fomulario de Rubro Anexo" widgetVar="dlgRubroAne" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="350" >
+            <h:form prependId="false" id="frmRubroA" style="width: 100%;">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formBanco" >                                
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:selectOneMenu id="rubroAnexo" value="#{liquidacionProcesoView.rubroAnexoSeleccionado}"
+                                                         converter="#{utilConverter}"
+                                                         filter="true" filterMatchMode="contains"
+                                                         style="width: 100%;" panelStyle="width:22%">
+                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{liquidacionProcesoView.listaValoresRolesAnexos}"
+                                                           var="va"
+                                                           itemLabel="#{va.valorParametrizable.nombre}"
+                                                           itemValue="#{va}"/>
+                                            <p:ajax update="nombreRub"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:outputLabel for="nombreRub" value="Cuenta Contable " style="width: 100%;"/>
+                                        <p:inputText id="nombreRub" value="#{liquidacionProcesoView.liquidacionDAO.valorAsignacion.cuentaContable.nombre}" style="width: 100%"
+                                                     readonly="true" onkeyup="javascript:this..value = this.value.toUpperCase();"></p:inputText>
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="montoRubro" value="Monto " style="width: 100%;"/>
+                                        <p:inputNumber id="montoRubro" class="panelInput"  required="true" inputStyle="width: 100%"
+                                                       maxlength="15" value="#{liquidacionProcesoView.liquidacionDAO.valorRubro}" style="width: 100%"
+                                                       decimalSeparator="." thousandSeparator=",">
+                                        </p:inputNumber>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>                               
+                            </p:outputPanel>
+
+                            <center>
+                                <p:commandButton id="buscar" update="frmRubroA"
+                                                 icon="fa fa-save" 
+                                                 actionListener="#{liquidacionProcesoView.guardarRubro()}"
+                                                 process="@form"
+                                                 style="margin-top: 10px"/>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+
+        </p:dialog>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{liquidacionProcesoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{liquidacionProcesoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        <p:dialog id="requisitoDialog" header="Adjuntar archivos de requitos" widgetVar="requisitoDialog" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form id="requisitoDialogForm" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:fileUpload fileUploadListener="#{liquidacionProcesoView.handleFileUploadInformeTec}" 
+                                          uploadLabel="Subir" cancelLabel="Eliminar" fileLimitMessage="Solo puede subir 1" label="Seleccionar" 
+                                          mode="advanced" dragDropSupport="false"
+                                          update="messages,formMain:outputTab"/>
+                        </div>
+                    </div>
+                </div>
+            </h:form> 
+        </p:dialog>
+    </ui:define>
+</ui:composition>
+

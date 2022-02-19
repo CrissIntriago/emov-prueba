@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Titulos Prediales
+    </ui:define>
+    <ui:param name="tittle" value="Juicios Ingresados" />
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <div class="ui-g">
+                <div class="ui-g-12">
+                    <center>
+                        <h1>Titulos Prediales</h1>
+                    </center>
+                </div>
+                <div class="ui-g-1">
+                    <p:commandButton value="Anular Emisiones Seleccionadas"
+                                     actionListener="#{tituloPredialMB.openDialog()}"
+                                     icon="fa fa-fw fa-trash" style="font-weight: bolder;"/>
+                </div>
+                <div class="ui-g-1">
+                    <p:commandButton value="Pago Indebido"  oncomplete="PF('dlgPagoIndebido').show()"
+                                     icon="fa fa-fw fa-random"  style="font-weight: bolder;"/>
+                </div>
+                <div class="ui-g-12">
+                    <p:dataTable id="dtPagos"  paginator="true" lazy="true" rows="20"  rowsPerPageTemplate="10,20,50,100"
+                                 paginatorPosition="bottom" style="text-align: center;" 
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{tituloPredialMB.liquidacionesLazy}" var="liquidacion1"
+                                 rowKey="#{liquidacion1.id}" selection="#{tituloPredialMB.liquidacionseleccionadas}"  
+                                 emptyMessage="No se encontraron elementos..." >
+                        <f:facet name="header">Lista de titulos </f:facet>
+                        <p:column selectionMode="multiple" style="width:5%;text-align:center" />
+                        <p:column headerText="Estado" style="width: 5%; text-align:center" filterMatchMode="exact" filterBy="#{liquidacion1.estadoLiquidacion}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dtPagos').filter()" styleClass="custom-filter">
+                                    <f:selectItem itemLabel="All" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{tituloPredialMB.estadoLiquidacion}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{liquidacion1.estadoLiquidacion.descripcion}" id="estado" />
+                        </p:column>
+                        <p:column headerText="Clave Catastral" width="10%" filterBy="#{liquidacion1.claveCatastralRural}">
+                            <p:outputLabel value="#{liquidacion1.claveCatastralRural}" id="claveCatPred" />
+                            <p:tooltip for="claveCatPred">
+                                <p:outputLabel value="Clave Anterior: #{liquidacion1.predio.predialant}"/><br/>
+                                <p:outputLabel value="Mat. Inmobiliaria: #{liquidacion1.predio.numPredio}"/>
+                            </p:tooltip>
+                        </p:column>
+                        <p:column headerText="Comprobante" width="8%" filterBy="#{liquidacion1.numComprobante}" sortBy="#{liquidacion1.numComprobante}" filterStyle="width: 20">
+                            <p:outputLabel value="#{liquidacion1.numComprobante}" style="font-weight: bold; font-size: 13px;" id="comprobanteLiq"/>
+                            <p:tooltip for="comprobanteLiq">
+                                <p:outputLabel value="Observación: #{liquidacion1.observacion}"/>
+                            </p:tooltip>
+                        </p:column>
+                        <p:column headerText="Id-Liquidación" width="8%" filterBy="#{liquidacion1.idLiquidacion}"  filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion1.idLiquidacion}" style="font-weight: bold;"/></p:column>
+                        <p:column headerText="Año" filterBy="#{liquidacion1.anio}" width="5%" filterStyle="width: 95%;"><p:outputLabel value="#{liquidacion1.anio}"/></p:column>
+                        <p:column headerText="C.I / RUC" filterBy="#{liquidacion1.comprador.identificacion}" width="10%">
+                            <p:outputLabel value="#{liquidacion1.comprador.identificacion}"/>
+                        </p:column>
+                        <p:column headerText="Contribuyente" width="24%">
+                            <p:outputLabel value="#{liquidacion1.nombreComprador}"/>
+                        </p:column>
+                        <p:column headerText="Avaluo" style="text-align: center;" width="10%">
+                            <h:outputText value="#{liquidacion1.avaluoMunicipal}">
+                                <f:convertNumber pattern="$ #,##0.00" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Emisión" style="text-align: center;" width="10%">
+                            <h:outputText value="#{liquidacion1.totalPago}">
+                                <f:convertNumber pattern="$ #,##0.00" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Descargar Documento" style="text-align: center;" width="5%" >
+                            <p:commandLink rendered="#{liquidacion1.estadoLiquidacion.id eq 4}" actionListener="#{tituloPredialMB.descargarDocumento(liquidacion1)}" >
+                                <i class="fa fa-fw fa-file-pdf-o" style="font-size: 1.5em"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </div>
+            </div>
+        </h:form>
+        <!--        <p:dialog widgetVar="dlgAddCem" header="Agregar Valor de CEM"
+                          height="200" width="250" responsive="true" closable="true" closeOnEscape="true"
+                          modal="true" appendTo="@(body)" >
+        
+                    <h:form id="frmCEMValor">
+                        <center>
+                            <h:panelGrid columns="1">
+                                <h:panelGroup layout="block">
+                                    <p:outputLabel value="CEM Parques y Plazas" style="text-align: center; font-weight: bolder"/><br/>
+                                    <p:inputText value="#{ingresoTituloPredial.cemParquesPlazas}" style="text-align: center; "/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block">
+                                    <p:outputLabel value="CEM Alcantarillados" style="text-align: center; font-weight: bolder"/><br/>
+                                    <p:inputText value="#{ingresoTituloPredial.cemAlcantarillado}" style="text-align: center; " />
+                                </h:panelGroup>
+                            </h:panelGrid>
+                        </center>
+        
+                        <br/><br/>
+                        <center>
+                            <p:commandButton value="Aceptar"
+                                             process="@form" actionListener="#{tituloPredialMB.addCem()}" update="mainForm"  />
+                        </center>
+                    </h:form>
+                </p:dialog>-->
+
+        <p:dialog widgetVar="dlgAnular" header="Escribir Observaciones para Anular la Emision" height="480" width="500" responsive="true" closable="true" closeOnEscape="true"
+                  modal="true" appendTo="@(body)" >
+            <h:form id="frmAnular">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <center>
+                            <p:outputLabel value="Seleccione el Documento a Adjuntar"
+                                           style="font-size: 18px; font-weight: bold;" />
+                        </center>
+                    </div>
+                </div>
+                <p:fileUpload fileUploadListener="#{tituloPredialMB.upload(file)}"
+                              multiple="false" mode="advanced"
+                              uploadLabel="Subir" cancelLabel="Cancelar"
+                              label="Seleccionar" skinSimple="true" 
+                              sizeLimit="350000000" sequential="true"
+                              allowTypes="/(\.|\/)(pdf|xlsx|docx|xls|doc)$/" />
+
+<!--                <p:dataTable id="dtDocumentosAnexos"  value="#{tituloPredialMB.geDocumentosList}" var="pp" reflow="true"
+                             paginator="true" rows="5" paginatorPosition="top" style="width: 100%"
+                             emptyMessage="No existen documentos Asociados">
+                    <p:column headerText="Fecha Creacion">
+                        <h:outputText value="#{pp.fechaCreacion}"/>
+                    </p:column>
+                    <p:column headerText="Descripcion">
+                        <h:outputText value="#{pp.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Tipo Archivo">
+                        <h:outputText value="#{pp.descripcion}" />
+
+                    </p:column>
+                    <p:column headerText="Accion" style="text-align: center" >
+
+                        <p:commandLink actionListener="#{tituloPredialMB.inactivarDocumento(pp)}" update="frmAnular">
+                            <i class="fa fa-fw fa-trash" style="font-size: 1.5em"></i>
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>-->
+                <br></br>
+                <center>
+                    <h:panelGrid columns="8">
+                        <p:inputTextarea id="obsservacion21" value="#{tituloPredialMB.observacion}" placeholder="Ingrese una Observacion"
+                                         rows="10" cols="50" style="width: 98%; text-transform: uppercase" />
+                    </h:panelGrid>
+
+                    <p:commandButton value="Aceptar"
+                                     process="@form" actionListener="#{tituloPredialMB.anularLiquidacion()}"
+                                     update="mainForm" icon="fa fa-fw fa-save" />
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:dialog widgetVar="dlgPagoIndebido" header="Pago Indebido"
+                  height="250" width="400" responsive="true" closable="true" closeOnEscape="true"
+                  modal="true" appendTo="@(body)" >
+
+            <h:form id="frmPagoIndebido">
+                <center>
+                    <p:panelGrid columns="1">
+                        <p:inputTextarea id="obsservacion21" value="#{tituloPredialMB.observacion}"
+                                         rows="10" cols="50" style="width: 98%; text-transform: uppercase" />
+                    </p:panelGrid>
+                    <br></br>
+                    <p:commandButton value="Aceptar"
+                                     process="@form" actionListener="#{tituloPredialMB.anularLiquidacionPagoIndebido()}"
+                                     oncomplete="PF('dlgPagoIndebido').hide();" />
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

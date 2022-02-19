@@ -1,0 +1,309 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Consulta de Servicios</ui:define>
+    <ui:param name="tittle" value="Consulta de Trámites" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="formMain" prependId="false">
+                    <div class="ui-g-12">
+                        <p:outputPanel rendered="#{!consultaServicioMB.verDetalle}">
+                            <p:dataTable var="task" value="#{consultaServicioMB.lazySolicitud}" paginator="true" rows="20"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         emptyMessage="No existen datos con los parámetros especificados"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="10,20,50,100" id="taskGrid" widgetVar="taskGrid" lazy="true"
+                                         style="width: 100%" rowIndexVar="i"
+                                         paginatorPosition="bottom">
+                                <p:column headerText="**" width="30">
+                                    <center>
+                                        <h:outputText value="#{i + 1}" />
+                                    </center>
+                                </p:column>
+                                <p:column style="width: 15%;text-align: center" headerText="Secuencia" filterBy="#{task.tramite.codigo}">
+                                    <h:outputText value="#{task.tramite.codigo}"/>
+                                </p:column>
+                                <p:column style="width: 32%" headerText="Dirección" filterBy="#{task.servicioTipo.servicio.departamento.nombre}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('taskGrid').filter()" styleClass="custom-filter"
+                                                         filterMatchMode="contains" filter="true"
+                                                         style="min-width:100% !important; max-width: 0 !important" autoWidth="false">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{consultaServicioMB.departamentos}" var="depa"
+                                                           itemLabel="#{depa.nombre}" itemValue="#{depa.nombre}" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{task.servicioTipo.servicio.departamento.nombre}"/>
+                                </p:column>
+                                <p:column style="width: 32%" headerText="Tipo Trámite" filterBy="#{task.servicioTipo.servicio.nombre}">
+                                    <h:outputText value="#{task.servicioTipo.servicio.nombre}"/>
+                                </p:column>
+                                <p:column style="width: 32%" headerText="Solicitante" filterBy="#{task.enteSolicitante.nombreCompleto}">
+                                    <h:outputText value="#{task.enteSolicitante.nombreCompleto}"/>
+                                </p:column>
+                                <p:column style="width: 15%; text-align: center" headerText="Fecha Ingreso">
+                                    <h:outputText value="#{task.fechaCreacion}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy HH:mm"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column style="width: 15%;text-align: center" headerText="Pendiente de Pago" filterBy="#{task.pendientePago}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('taskGrid').filter()"
+                                                         styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue="" />
+                                            <f:selectItem itemLabel="Sí" itemValue="true" />
+                                            <f:selectItem itemLabel="No" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{task.pendientePago? 'Sí':'No'}"/>
+                                </p:column>
+                                <p:column style="width: 15%" headerText="Acciones">
+                                    <center>
+                                        <p:commandLink actionListener="#{consultaServicioMB.imprimirTicket(task)}" 
+                                                       style="margin-right: 5px" title="Reemprimir Ticket">
+                                            <i class="fa fa-fw fa-file-pdf-o" style="font-size: 20px"></i>
+                                        </p:commandLink>
+                                        <p:commandLink class="ver" actionListener="#{consultaServicioMB.visualizarDetalle(true, task)}" 
+                                                       title="Ver información y estado del trámite" update="formMain">
+                                            <i class="fa fa-eye" style="font-size: 20px"></i>
+                                        </p:commandLink>
+                                    </center>
+                                </p:column>
+                            </p:dataTable>
+                        </p:outputPanel>
+                        <p:outputPanel id="panelDetalle" rendered="#{consultaServicioMB.verDetalle}">
+                            <p:outputPanel rendered="#{consultaServicioMB.solicitudServicios.enObservacion and !generaLiquidacionVUMB.solicitudServicios.pendientePago}">
+                                <div class="card" style="padding: 20px; "> 
+                                    <p:outputLabel value="!👋 Hola #{userSession.nameUser} Bienvenido! el trámite está pendiente hasta que se corrigan los documentos con errores 👀.️" 
+                                                   style="font-weight: bold"/>
+                                </div>
+                            </p:outputPanel>
+                            <p:outputPanel rendered="#{consultaServicioMB.solicitudServicios.enObservacion and generaLiquidacionVUMB.solicitudServicios.pendientePago}" >
+                                <div class="card" style="padding: 20px; "> 
+                                    <p:outputLabel value="!👋 Hola #{userSession.nameUser} Bienvenido! el trámite no puede continuar hasta que se paguen todas los pagos 👀.️" 
+                                                   style="font-weight: bold"/>
+                                </div>
+                            </p:outputPanel>
+                            <div class="ui-g">
+                                <div class="ui-g-12 ui-md-4 ui-lg-4 ">
+                                    <div class="card">
+                                        <div class="p-grid p-justify-between">
+                                            <div class="p-col-8">
+                                                <p:outputLabel value="✒ #{consultaServicioMB.solicitudServicios.servicioTipo.servicio.nombre}" 
+                                                               style="font-weight: bold"/><br/>
+                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.tramite.tipoTramite.descripcion}"/><br/><br/>
+                                                <p:outputLabel value="Información"  style="font-weight: bold"/>
+                                            </div>
+                                            <div class="p-col-4" style="text-align: right">
+                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.tramite.codigo}" style="font-weight: bold;"/><br/>
+                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.tramite.fechaIngreso}">
+                                                    <f:convertDateTime pattern="yyyy/MM/dd HH:mm:ss" />
+                                                </p:outputLabel>
+                                            </div>
+                                        </div>
+                                        <div class="p-grid">
+                                            <div class="p-col">
+                                                <div class="box p-shadow-1 box-info">
+                                                    <div class="p-grid p-justify-between">
+                                                        <div class="p-col-10">
+                                                            <p:outputLabel value="👨🏽 👩🏽‍🦱 Solicitante" style="font-weight: bold;"/><br/>
+                                                            <p:outputLabel value="#{consultaServicioMB.solicitudServicios.enteSolicitante.nombreCompleto}"/><br/>
+                                                            <p:outputLabel value="#{consultaServicioMB.solicitudServicios.enteSolicitante.identificacionCompleta}"
+                                                                           style="color:#4f8eec"/><br/>
+                                                            <p:outputLabel value="📱 #{consultaServicioMB.solicitudServicios.enteSolicitante.celular}"/><br/>
+                                                            <p:outputLabel value="🏡 #{consultaServicioMB.solicitudServicios.enteSolicitante.direccion}"/><br/>
+                                                            <p:outputLabel value="📧 #{consultaServicioMB.solicitudServicios.enteSolicitante.email}"/>
+                                                        </div>
+                                                        <div class="p-col-2" style="text-align: right">
+                                                            <p:outputLabel value="#{consultaServicioMB.solicitudServicios.tipoContribuyente}" style="font-weight: bold;"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <p:outputPanel rendered="#{consultaServicioMB.solicitudServicios.predio ne null}">
+                                            <div class="p-grid">
+                                                <div class="p-col">
+                                                    <div class="box p-shadow-1 box-info">
+                                                        <div class="p-grid p-justify-between">
+                                                            <div class="p-col-8">
+                                                                <p:outputLabel value="🏘 Predio #{consultaServicioMB.solicitudServicios.predio.tipoPredio eq 'U'? 'Urbano':'Rural'}" style="font-weight: bold;"/><br/>
+                                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.predio.nombrePropietarios}"
+                                                                               rendered="#{consultaServicioMB.solicitudServicios.predio ne null}"/><br/>
+                                                                <p:outputLabel value="Clave Catastral: " style="font-weight: bold;" 
+                                                                               rendered="#{consultaServicioMB.solicitudServicios.predio ne null}"/>
+                                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.predio.claveCat}"
+                                                                               rendered="#{consultaServicioMB.solicitudServicios.predio ne null}"/><br/>
+                                                                <p:outputLabel value="Dirección: " rendered="#{consultaServicioMB.solicitudServicios.predio ne null}"
+                                                                               style="font-weight: bold;"/>
+                                                                <p:outputLabel value="#{consultaServicioMB.solicitudServicios.predio.direccion}"
+                                                                               rendered="#{consultaServicioMB.solicitudServicios.predio ne null}"/>
+                                                            </div>
+                                                            <div class="p-col-4" style="text-align: right">
+                                                                <p:outputLabel value="Num Predio: #{consultaServicioMB.solicitudServicios.predio.numPredio}" style="font-weight: bold;"/>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </p:outputPanel>
+
+                                        <div class="p-grid">
+                                            <div class="p-col">
+                                                <div class="box p-shadow-1 box-info">
+                                                    <p:outputLabel value="📃 Asunto"
+                                                                   style="font-weight: bold;"/><br/>
+                                                    <p:outputLabel value="#{consultaServicioMB.solicitudServicios.descripcionInconveniente}"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="p-grid">
+                                            <div class="p-col">
+                                                <div class="box p-shadow-1 box-info">
+                                                    <p:outputLabel value="👀 Última Observación"
+                                                                   style="font-weight: bold;"/><br/>
+                                                    <p:outputLabel value="#{consultaServicioMB.ultimaObservacion.observacion}"/>
+                                                </div>
+                                            </div>
+                                        </div><br/>
+                                        <div class="p-grid">
+                                            <div class="p-col">
+                                                <p:outputLabel value="🧑🏽‍💻 Ingresado por: #{consultaServicioMB.solicitudServicios.usuarioIngreso.usuario}"
+                                                               style="font-weight: bold;"/>
+                                            </div>
+                                        </div><br/>
+                                        <center>
+                                            <p:commandButton value="Regresar" update="formMain" style="width: auto"
+                                                             icon="fa fa-arrow-left"
+                                                             actionListener="#{consultaServicioMB.visualizarDetalle(false, null)}" />
+                                        </center>
+                                    </div>
+                                </div>
+                                <div class="ui-g-12 ui-md-8 ui-lg-8">
+                                    <div class="card">
+                                        <p:outputLabel value="📑 Documentación, Requisitos y Observaciones" style="font-weight: bold"/><br/><br/>
+                                        <p:tabView>
+                                            <p:tab title="Documentos Corregir" titleStyle="border-right: 2px solid #808080" 
+                                                   rendered="#{not empty consultaServicioMB.requisitosErrores}">
+                                                <p:outputPanel rendered="#{consultaServicioMB.solicitudServicios.enObservacion}" style="margin-top: 10px">
+                                                    <div class="card" style="padding: 20px; "> 
+                                                        <p:outputLabel value="!👋 Hola #{userSession.nameUser} Realice la notificación de la corrección de los documentos 👀.️" 
+                                                                       style="font-weight: bold"/>
+                                                    </div>
+                                                </p:outputPanel>
+                                                <p:commandButton value="Notificar Corrección" icon="fa fa-exclamation-circle" 
+                                                                 rendered="#{consultaServicioMB.solicitudServicios.enObservacion}" style="margin-bottom: 10px;width: auto"
+                                                                 actionListener="#{consultaServicioMB.notificarCorreccion()}"/>
+                                                <p:dataTable value="#{consultaServicioMB.requisitosErrores}" var="item" rows="10" 
+                                                             paginator="true" paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                                             rowsPerPageTemplate="10,15,20"
+                                                             emptyMessage="No existen datos">
+                                                    <p:column headerText="Requisito">
+                                                        <p:outputLabel value="#{item.servicioRequisito.nombre}"/><br/>
+                                                        <p:outputLabel value="#{item.solicitudDocumento.nombreArchivo}" rendered="#{item.solicitudDocumento ne null}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Requerido" style="width: 10%; text-align: center">
+                                                        <p:outputLabel value="#{item.servicioRequisito.opcional? 'No':'Sí'}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Entregado" style="width: 10%; text-align: center">
+                                                        <p:outputLabel value="#{item.entregado? 'Sí':'No'}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Corrección / Corregido" style="width: 15%; text-align: center">
+                                                        <p:outputLabel value="#{item.correccion? 'Sí':'No'} / #{item.corregido? 'Sí':'No'}"/>
+                                                    </p:column>                                                   
+                                                    <p:column headerText="Acciones" style="width: 20%; text-align: center">
+                                                        <center>
+                                                            <p:commandLink title="Subir Documento" class="green-btn" style="margin-right: 5px"
+                                                                           actionListener="#{consultaServicioMB.abrirDialogDocumento(item)}">
+                                                                <i class="fa fa-plus" style="font-size: 20px;color: green" />
+                                                            </p:commandLink>
+                                                            <p:commandLink title="Visualizar" class="green-btn" style="margin-right: 5px"
+                                                                           rendered="#{item.solicitudDocumento ne null}">
+                                                                <i class="fa fa-eye" style="font-size: 20px;" />
+                                                            </p:commandLink>
+                                                            <p:commandLink title="Eliminar" class="green-btn" style="margin-right: 5px"
+                                                                           actionListener="#{consultaServicioMB.borrarDocumento(item)}"
+                                                                           rendered="#{item.solicitudDocumento ne null}">
+                                                                <i class="fa fa-trash" style="font-size: 20px;color: red" />
+                                                                <p:confirm message="Esta seguro de eliminar el archivo" />
+                                                            </p:commandLink>
+                                                        </center>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:tab>
+                                            <p:tab title="Documentos"  titleStyle="border-right: 2px solid #808080">
+                                                <br/>
+                                                <u:documents entiti="#{consultaServicioMB.solicitudServicios.tramite}"/>
+                                            </p:tab>
+                                            <p:tab title="Requisitos"  titleStyle="border-right: 2px solid #808080"><br/>
+                                                <p:dataTable value="#{consultaServicioMB.registroRequisitos}" var="item" rows="10" 
+                                                             paginator="true" paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                                             rowsPerPageTemplate="10,15,20"
+                                                             emptyMessage="No existen datos">
+                                                    <p:column headerText="Requisito">
+                                                        <p:outputLabel value="#{item.servicioRequisito.nombre}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Requerido" style="width: 10%; text-align: center">
+                                                        <p:outputLabel value="#{item.servicioRequisito.opcional? 'No':'Sí'}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Entregado" style="width: 10%; text-align: center">
+                                                        <p:outputLabel value="#{item.entregado? 'Sí':'No'}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Corrección / Corregido" style="width: 15%; text-align: center">
+                                                        <p:outputLabel value="#{item.correccion? 'Sí':'No'} / #{item.corregido? 'Sí':'No'}"/>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:tab>
+                                            <p:tab title="Observaciones"  titleStyle="border-right: 2px solid #808080">
+                                                <br/>
+                                                <p:dataTable value="#{consultaServicioMB.solicitudServicios.tramite.observaciones}" emptyMessage="Sin elementos..."
+                                                             var="obs" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                                                    <p:column headerText="Tarea" width="150">
+                                                        <p:outputLabel value="#{obs.tarea}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Observacion">
+                                                        <p:outputLabel value="#{obs.observacion}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Usuario" width="100">
+                                                        <p:outputLabel value="#{obs.userCre}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Fecha" width="14%">
+                                                        <p:outputLabel value="#{obs.fecCre}">
+                                                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                                        </p:outputLabel>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:tab>
+                                        </p:tabView>
+                                    </div>
+                                </div>
+                            </div>
+                        </p:outputPanel>
+                    </div>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="DlgoDocumento" width="700" header="Subir documentos"
+                  widgetVar="DlgoDocumento" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDocumento" prependId="false">
+                <p:outputLabel value="Tramite: #{consultaServicioMB.solicitudServicios.servicioTipo.servicio.nombre}" style="font-weight: bold"/><br/>
+                <p:outputLabel value="Requisito: #{consultaServicioMB.registroSolicitudRequisito.servicioRequisito.nombre}" style="font-weight: bold"/><br/>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="panelDocumento">
+                    <p:outputLabel value="Ingresar documentos" style="font-weight: bold"/>
+                    <p:fileUpload fileUploadListener="#{consultaServicioMB.handleFileUpload}"  style="width: 100%" accept=".pdf"
+                                  skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false"
+                                  messageTemplate="Solo puede subir archivos PDF"
+                                  label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" update="panelDocumento" previewWidth="60" />
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

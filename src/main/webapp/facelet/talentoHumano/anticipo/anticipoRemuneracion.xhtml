@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Anticipo de Remuneración </ui:define>
+    <ui:param name="tittle" value="Anticipos de Remuneración" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:graphicImage value="/resources/icons/dinero.png"  width="42" height="55"          
+                                        style="margin-left:10px ;  width: auto;"/>
+                    </p:panelGrid>
+                    <br></br>
+                    <p:outputPanel id="fomInfo">
+                        <h:panelGroup id="dattableAnt" layout="block">
+                            <p:dataTable id="dataTableAnticipos" widgetVar="dataTableAnticipos" 
+                                         var="anticipo" value="#{anticipoSinProceso.lazy}" 
+                                         paginator="true" rows="25"
+                                         paginatorPosition="bottom"
+                                         rowIndexVar="num"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="25,50,100" lazy="true"
+                                         emptyMessage="No existe el criterio de búsqueda especificado" >
+                                <p:column headerText="N°" style="width: 3%;text-align: center">
+                                    <h:outputText value="#{num+1}"/>
+                                </p:column> 
+                                <p:column headerText="Nombre Servidor" style="text-align: center" filterBy="#{anticipo.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                    <h:outputText value="#{anticipo.servidor.persona.nombreCompleltoSql}"/>
+                                </p:column>                                
+                                <p:column headerText="Cargo" style="text-align: center;width: 10%" filterBy="#{anticipo.distributivo.cargo.nombreCargo}" filterMatchMode="contains">
+                                    <h:outputText value="#{anticipo.distributivo.cargo.nombreCargo}"/>
+                                </p:column>                                
+                                <p:column headerText="Monto Anticipo" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{anticipo.montoAnticipo}"/>
+                                </p:column>                                
+                                <p:column headerText="N° de Cuotas" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{anticipo.numeroCuota}" />
+                                </p:column>
+                                <p:column headerText="Valor Diciembre" style="text-align: center;width: 10%">
+                                    <h:outputText value="#{anticipo.valorDiciembre}" />
+                                </p:column>
+                                <p:column headerText="Estado" style="text-align: center;width: 8%">
+                                    <h:outputText value="#{anticipo.estadoAnticipo}" />
+                                </p:column>
+                                <p:column headerText="Fecha Registro" style="text-align: center;width: 8%">
+                                    <h:outputText value="#{anticipo.fechaAnticipo}" >
+                                        <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Cta. Contable" style="text-align: center">
+                                    <h:outputText value="#{anticipo.cuentaContable.codigo}.-#{anticipo.cuentaContable.nombre}"/>
+                                </p:column>                                
+                                <p:column headerText="N° Registro Contable" style="width: 5%">
+                                    <h:outputText value="#{anticipo.registroContable}" style="float: right"/>
+                                </p:column>
+                                <p:column headerText="Acciones" style="width: 8%;text-align: center">
+                                    <p:commandLink title="Eliminar" actionListener="#{anticipoSinProceso.eliminar(anticipo)}" 
+                                                   update="formMain" rendered="#{anticipo.estadoAnticipo.orden == 5}"
+                                                   process="@this">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>   
+                                    <p:commandLink update="formMain" 
+                                                   actionListener="#{anticipoSinProceso.openDialogAmortizacion(anticipo)}"
+                                                   title="Visualizar Tabla de Amortización" process="@this">
+                                        <i class="fa fa-search" style="font-size: 2em; margin-right: 5px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column> 
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </div>
+            </div>
+        </h:form>
+        <p:dialog header="Tabla de amortización de Anticipo"
+                  widgetVar="dlgAnt"
+                  modal="true"
+                  height="500px" width="80%"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgAnt">
+            <h:form prependId="false" id="frmAnt">
+                <p:growl id="msgsss2" showDetail="true"/>
+                <div class="ui-fluid">
+                    <div class="ui-g">
+                        <div class="ui-g-12">
+                            <div class="car card-w-title" style="background: #00796b; border-radius: 100px 0px 100px 0px;">
+                                <h1 style="text-align: center;font-size: 40px;font-family: fantasy;color: white; "> 
+                                    TABLA DE AMORTIZACIÓN
+                                </h1>
+                            </div>
+                        </div>
+                        <div class="ui-g-12">
+                            <div class="ui-g">
+                                <div class="ui-g-9">
+                                    <p:fieldset legend="DATOS">
+                                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Servidor" for="serNom"/>
+                                                <p:inputText id="serNom"
+                                                             value="#{anticipoSinProceso.anticipoRemuneracionAdic.servidor.persona.nombreCompleto}"
+                                                             readonly="true">
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Préstamo" for="amortMonto" />
+                                                <p:inputNumber id="amortMonto" value="#{anticipoSinProceso.anticipoRemuneracionAdic.montoAnticipo}" 
+                                                               decimalSeparator="." thousandSeparator="," 
+                                                               inputStyle="text-align:right" readonly="true">
+                                                </p:inputNumber>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Número de cuotas:" for="amortCuo"/>
+                                                <p:inputText id="amortCuo"
+                                                             value="#{anticipoSinProceso.anticipoRemuneracionAdic.numeroCuota}"
+                                                             readonly="true">
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Valor Diciembre" for="amortDic"/>
+                                                <p:inputNumber id="amortDic" value="#{anticipoSinProceso.anticipoRemuneracionAdic.valorDiciembre}"
+                                                               inputStyle="text-align:right"
+                                                               decimalSeparator="." thousandSeparator="," readonly="true">
+                                                </p:inputNumber>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel for="amortFechaReg" value="Fecha Registro"  style="width: 100%;"/>
+                                                <p:inputText id="amortFechaReg" value="#{anticipoSinProceso.anticipoRemuneracionAdic.fechaAnticipo}"
+                                                             readonly="true">
+                                                    <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel for="amortFechaApr" value="Fecha Aprobado"  style="width: 100%;"/>
+                                                <p:inputText id="amortFechaApr"
+                                                             readonly="true">
+                                                    <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                </div>
+                                <div class="ui-g-3">
+                                    <p:fieldset legend="RESUMEN">
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Total Pagado" for="amortTotal"/>
+                                                <p:inputNumber id="amortTotal" value="#{anticipoSinProceso.totalPagado}" 
+                                                               inputStyle="text-align:right" readonly="true"
+                                                               decimalSeparator="." thousandSeparator="," >
+                                                </p:inputNumber>
+                                            </p:panelGrid>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Saldo A Pagar" for="amortSaldo"/>
+                                                <p:inputNumber id="amortSaldo" value="#{anticipoSinProceso.saldoPagar}" 
+                                                               inputStyle="text-align:right" readonly="true"
+                                                               decimalSeparator="." thousandSeparator="," >
+                                                </p:inputNumber>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui-g-12">
+                            <h:panelGroup id="panelGAmortizacion" layout="block">
+                                <p:dataTable id="dtAmortizacion" widgetVar="dtAmortizacion" var="amort" 
+                                             paginator="true" rows="12" value="#{anticipoSinProceso.lazyCuotas}"
+                                             paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="12,24,36" lazy="true"
+                                             emptyMessage="No existe el criterio de búsqueda especificado" >
+
+                                    <p:column headerText="Nombre Servidor" style="text-align: center">
+                                        <h:outputText value="#{anticipoSinProceso.anticipoRemuneracionAdic.servidor.persona.nombreCompleto}"/>
+                                    </p:column>                                                         
+                                    <p:column headerText="Mes cuota" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.mes}" />    
+                                    </p:column>                                
+                                    <p:column headerText="Cuota" style="text-align: center;width: 5%">
+                                        <h:outputText value="#{amort.cuota}"  />
+                                    </p:column>
+                                    <p:column headerText="Valor Cuota" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.valorCuota}"  />
+                                    </p:column>
+                                    <p:column headerText="Pagado" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.estadoCuota eq true ? 'CANCELADO':'ADEUDA'}"/>
+                                    </p:column>       
+                                    <p:column headerText="Fecha Pago" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.fechaPago}"  >
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </h:outputText>
+                                    </p:column>       
+                                    <p:column headerText="Referencia Contable" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.referenciaContable}" />
+                                    </p:column>       
+                                    <p:column headerText="Periodo" style="text-align: center;width: 10%">
+                                        <h:outputText value="#{amort.periodo}" />
+                                    </p:column>       
+                                </p:dataTable>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

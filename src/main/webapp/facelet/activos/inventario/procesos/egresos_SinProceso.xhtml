@@ -1,0 +1,482 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        EGRESO DE INVENTARIO
+    </ui:define>
+    <ui:param name="tittle" value="EGRESO DE INVENTARIO" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g" >
+                <h:form id="frmMain" prependId="false">
+                    <div class="ui-g-12">
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="egresoCabecera1">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:commandButton value="Nuevo Egreso" icon="fa fa-plus" process="@this" style="width: 170px" 
+                                                     disabled="#{procesoEgresoInvSinProView.inventario.fechaMovimiento==null?false:true}"
+                                                     update="frmMain" actionListener="#{procesoEgresoInvSinProView.nuevoEgreso()}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel value="EGRESO NO:" style="width: 100%;font-weight: bold;font-size: 15px" /><br/>
+                                    <p:outputLabel value="Generado automaticamente por el sistema" style="width: 100%;font-weight: bold;font-size: 12px" />
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group" id="egresoCabecera2">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel value="FECHA EGRESO:" style="width: 100%;font-weight: bold;font-size: 15px" />
+                                    <p:calendar id="fechaEgreso" pattern="yyyy-MM-dd" mask="true" required="true" 
+                                                navigator="true" yearRange="c-100:c+100" locale="es" style="width: 100%"
+                                                value="#{procesoEgresoInvSinProView.inventario.fechaMovimiento}">
+                                    </p:calendar>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </div>
+                    <div class="ui-g-12">
+                        <div class="ui-g-2">
+                            <p:fieldset legend="DATOS DEL EGRESO:" style="margin-bottom:40px; font-weight: bold" id="datosEgreso">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="outPanelDatos">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="USUARIO GUARDARMACEN:" for="originador" style="width: 100%;"/>
+                                        <p:inputText  id="originador" style="text-transform: uppercase; width: 100%;" 
+                                                      class="panelInput" readonly="true" value="#{procesoEgresoInvSinProView.inventario.usuarioOriginador}">
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="MOTIVO:" for="originador" style="width: 100%;"/>
+                                        <p:selectOneMenu style="width:100%;" value="#{procesoEgresoInvSinProView.inventario.motivoMovimiento}" 
+                                                         disabled="#{procesoEgresoInvSinProView.habilitarBtn}" converter="entityConverter">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems value="#{procesoEgresoInvSinProView.motivoMovimiento}" var="medidaUno"
+                                                           itemLabel="#{medidaUno.texto}" itemValue="#{medidaUno}"/>
+                                            <p:ajax listener="#{procesoEgresoInvSinProView.mostrarBtn()}" update="frmMain"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="ob">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="OBSERVACIÓN:" for="observacion"/>
+                                        <p:inputTextarea id="observacion" rows="4" cols="30" autoResize="true" 
+                                                         class="panelInput" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                                         readonly="false" style="width: 100%;border: 1px solid #cccccc; text-transform: uppercase"
+                                                         value="#{procesoEgresoInvSinProView.inventario.observacion}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-4" id="divdatosSolicitante">
+                            <p:fieldset legend="DATOS DEL SOLICTANTE:" style="margin-bottom:40px; font-weight: bold" id="datosSolicitante">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="outPanelDatosUs">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="outPanelSolicitante">
+                                        <h:panelGroup >
+                                            <p:outputLabel value="SOLICITANTE:" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="identifica" class="panelInput" value="#{procesoEgresoInvSinProView.servidor.persona.identificacion}">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                                <p:commandButton title="Buscar Servidor" icon="fa fa-search" 
+                                                                 actionListener="#{procesoEgresoInvSinProView.buscarServidor(true)}"
+                                                                 disabled="#{procesoEgresoInvSinProView.habilitarBtnSol}"
+                                                                 process="identifica" update="outPanelSolicitante" styleClass="button-group">
+                                                    <p:ajax event="dialogReturn" listener="#{procesoEgresoInvSinProView.selectDataServidor}" 
+                                                            update="identifica,outPanelSolicitante,datosSolicitante"/> 
+                                                </p:commandButton>
+                                            </div>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="APELLIDOS Y NOMBRES:" for="apellido" style="width: 100%;"/>
+                                            <p:inputText  id="apellido" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true" value="#{procesoEgresoInvSinProView.servidor.persona.nombreCompleto}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="CARGO:" for="cargo" style="width: 100%;"/>
+                                            <p:inputText  id="cargo" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true" value="#{procesoEgresoInvSinProView.cargoSelectData.idCargo.nombreCargo}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="UNIDAD ADMINISTRATIVA:" 
+                                                           for="unidad" style="width: 100%;"/>
+                                            <p:inputText  id="unidad" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true"
+                                                          value="#{procesoEgresoInvSinProView.cargoSelectData.idCargo.idUnidad.nombre}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="outPanelAutorizador">
+                                        <h:panelGroup >
+                                            <p:outputLabel value="AUTORIZADOR:" style="font-weight: bold"/>
+                                            <div class="ui-inputgroup">
+                                                <p:inputText id="identificaAutorizador" class="panelInput" value="#{procesoEgresoInvSinProView.inventario.usuarioAutorizador.persona.identificacion}">
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                                <p:commandButton title="Buscar Servidor Autorizador" icon="fa fa-search" 
+                                                                 actionListener="#{procesoEgresoInvSinProView.buscarServidor(false)}"
+                                                                 disabled="#{procesoEgresoInvSinProView.habilitarBtnSol}"
+                                                                 process="identificaAutorizador" update="outPanelAutorizador" styleClass="button-group">
+                                                    <p:ajax event="dialogReturn" listener="#{procesoEgresoInvSinProView.selectDataServidorAutorizador}" 
+                                                            update="identificaAutorizador,outPanelAutorizador, panelDatosAutorizador"/> 
+                                                </p:commandButton>
+                                            </div>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="panelDatosAutorizador">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="APELLIDOS Y NOMBRES:" for="apellidoAutorizador" style="width: 100%;"/>
+                                            <p:inputText  id="apellidoAutorizador" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true" value="#{procesoEgresoInvSinProView.inventario.usuarioAutorizador.persona.nombreCompleto}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="CARGO:" for="cargoAutorizador" style="width: 100%;"/>
+                                            <p:inputText  id="cargoAutorizador" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true" value="#{procesoEgresoInvSinProView.cargoAutorizadorSelectData.idCargo.nombreCargo}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel value="UNIDAD ADMINISTRATIVA:" 
+                                                           for="unidadAutorizador" style="width: 100%;"/>
+                                            <p:inputText  id="unidadAutorizador" style="text-transform: uppercase" 
+                                                          class="panelInput" readonly="true"
+                                                          value="#{procesoEgresoInvSinProView.cargoAutorizadorSelectData.idCargo.idUnidad.nombre}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-6" id="divDatosAdicionales"> 
+                            <p:fieldset legend="OFICIO/DOCUMENTO" style="margin-bottom:40px; font-weight: bold" id="datosOficio" rendered="#{procesoEgresoInvSinProView.mostrarOfi}">
+                                <p:outputPanel id="outPanelOficio" style="width: 100%">
+                                    <p:commandButton value="Adicionar" icon="fa fa-plus"
+                                                     disabled="#{!empty procesoEgresoInvSinProView.listOficio}"
+                                                     process="@this" update="frmOficio"
+                                                     actionListener="#{procesoEgresoInvSinProView.abrirDialogOficioCambios(null)}"
+                                                     style=" width: 130px;margin-bottom: 15px">
+                                    </p:commandButton>
+                                    <p:dataTable id="dtOficio"
+                                                 value="#{procesoEgresoInvSinProView.listOficio}"
+                                                 var="of" 
+                                                 reflow="true" 
+                                                 paginator="true" 
+                                                 lazy="true" rows="10" 
+                                                 rowsPerPageTemplate="10,50,100" 
+                                                 paginatorPosition="bottom"
+                                                 filterEvent="keyup"
+                                                 emptyMessage="No se encontró ningun oficio.">
+                                        <f:facet name="header">
+                                            LISTA DE OFICIOS
+                                        </f:facet>
+                                        <p:column headerText="Número Oficio" style="font-weight: bold; width: 150px" >
+                                            <h:outputText value="#{of.numeroOficio}"/>   
+                                        </p:column>
+                                        <p:column headerText="Fecha Oficio" style="font-weight: bold">
+                                            <h:outputText value="#{of.fechaOficio}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>  
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold; width: 150px">
+                                            <center>
+                                                <p:commandLink title="Editar" update="frmOficio" disabled="#{procesoEgresoInvSinProView.habilitarBtn}" 
+                                                               actionListener="#{procesoEgresoInvSinProView.abrirDialogOficioCambios(of)}" process="@this">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>  
+                                                <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoEgresoInvSinProView.borrarElementoOficio(of)}"
+                                                               disabled="#{procesoEgresoInvSinProView.habilitarBtn}" update="datosOficio" >
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar oficio seleccionado?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>        
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:outputPanel>
+                            </p:fieldset>
+                            <p:fieldset legend="DATO INGRESO" id="carIngreso" style="margin-bottom:40px; font-weight: bold"  rendered="#{procesoEgresoInvSinProView.mostrarIng}">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="outPanelCargarIngreso">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:commandButton value="Cargar Ingreso"  process="@this" icon="fa fa-search" 
+                                                         id="btnCargarIngreso" actionListener="#{procesoEgresoInvSinProView.abrirDialogIngreso()}"
+                                                         style="width: 150px">
+                                            <p:ajax event="dialogReturn" listener="#{procesoEgresoInvSinProView.selectDatosIngreso}" update="ingresoRel"/>
+                                        </p:commandButton>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="INGRESO RELACIONADO:" for="ingresoRel" style="width: 100%;"/>
+                                        <p:inputText  id="ingresoRel" style="text-transform: uppercase"
+                                                      value="#{procesoEgresoInvSinProView.inventarioIngreso.codigo}"
+                                                      class="panelInput" readonly="true"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="MOTIVO DE INGRESO:" for="fechaIngreso" style="width: 100%;"/>
+                                        <p:inputText  id="fechaIngreso" style="text-transform: uppercase"
+                                                      value="#{procesoEgresoInvSinProView.inventarioIngreso.motivoMovimiento.texto}"
+                                                      class="panelInput" readonly="true"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="DATOS CONSTATACION FISICA INVENTARIO" style="margin-bottom:40px; font-weight: bold" id="datosCons" rendered="#{procesoEgresoInvSinProView.rendCons}">
+                                <p:outputPanel id="outPanelCons" style="width: 100%">
+                                    <p:commandButton value="Adicionar"
+                                                     icon="fa fa-plus"
+                                                     process="@this" 
+                                                     actionListener="#{procesoEgresoInvSinProView.abrirDialogCons()}"
+                                                     style="width: 150px;margin-bottom: 15px">
+                                        <p:ajax event="dialogReturn" 
+                                                listener="#{procesoEgresoInvSinProView.selectDatosCons}"
+                                                update="dtCons"/>
+                                    </p:commandButton>
+                                    <p:dataTable id="dtCons" 
+                                                 var="con" 
+                                                 reflow="true" 
+                                                 paginator="true" 
+                                                 lazy="true" rows="10" 
+                                                 rowsPerPageTemplate="10,50,100" 
+                                                 paginatorPosition="bottom"
+                                                 value="#{procesoEgresoInvSinProView.listCons}"
+                                                 filterEvent="keyup"
+                                                 emptyMessage="No se encontró ninguna constatación seleccionada.">
+                                        <f:facet name="header">
+                                            LISTA DE CONSTATACIÓN FÍSICA DE INVENTARIO
+                                        </f:facet>
+                                        <p:column headerText="Número Constatación" style="font-weight: bold" >
+                                            <h:outputText value="#{con.codigo}"/>   
+                                        </p:column>
+                                        <p:column headerText="Fecha Constatación" style="font-weight: bold">
+                                            <h:outputText value="#{con.fechaConstatacion}">
+                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                            </h:outputText>  
+                                        </p:column>
+                                        <p:column headerText="Originador" style="font-weight: bold" >
+                                            <h:outputText value="#{con.usuarioCreacion}"/>   
+                                        </p:column>
+                                        <p:column headerText="Estado" style="font-weight: bold" >
+                                            <h:outputText value="#{con.estado}"/>   
+                                        </p:column>
+                                        <p:column headerText="Acciones" style="font-weight: bold">
+                                            <center>
+                                                <p:commandLink title="Eliminar" process="@this" actionListener="#{procesoEgresoInvSinProView.borrarElementoCons(con)}"
+                                                               update="dtCons">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar elemento seleccionado?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>        
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:outputPanel>
+                            </p:fieldset>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </div>
+                    </div>
+                    <div class="ui-g-12">
+                        <p:fieldset legend="DETALLE DEL ÍTEM" style="margin-bottom:40px; font-weight: bold" id="listaItem">
+                            <p:outputPanel id="outPanelItem" style="width: 100%">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:commandButton value="Adicionar"
+                                                     id="btnItem"
+                                                     disabled="#{procesoEgresoInvSinProView.mostrar2}"
+                                                     process="@this" actionListener="#{procesoEgresoInvSinProView.abrirDialogItem()}" 
+                                                     icon="fa fa-plus"
+                                                     style=" float: right; width: 130px">
+                                        <p:ajax event="dialogReturn" 
+                                                listener="#{procesoEgresoInvSinProView.selectDatosItem}" 
+                                                update="dtItemEgreso"/>
+                                    </p:commandButton>
+                                    <p:remoteCommand name="onCellEdit" update="dtItemEgreso"/>
+                                    <p:dataTable 
+                                        emptyMessage="Ningún Ítem para mostrar." rowsPerPageTemplate="10,50,100" paginatorPosition="bottom"
+                                        reflow="true" paginator="true"  rows="10" 
+                                        id="dtItemEgreso" rowIndexVar="can" 
+                                        widgetVar="dtItemEgreso"
+                                        value="#{procesoEgresoInvSinProView.listDetalle}"
+                                        var="egr" editable="#{procesoEgresoInvSinProView.habilitar1}" editMode="cell">
+                                        <f:facet name="header" >
+                                            Detalle de Item 
+                                        </f:facet>
+                                        <p:ajax event="cellEdit" listener="#{procesoEgresoInvSinProView.onCellEdit}" oncomplete="onCellEdit()"
+                                                update="dtItemEgreso"/>
+                                        <p:column headerText="#" style=" width: 10px" >
+                                            <h:outputText value="#{can +1 }"/>   
+                                        </p:column>
+                                        <p:column headerText="Item" >
+                                            <h:outputText value="#{egr.codigoAgrupado}"/>  
+                                        </p:column>
+                                        <p:column headerText="Descripción" >
+                                            <h:outputText value="#{egr.descripcion}"/>  
+                                        </p:column>
+                                        <p:column headerText="Medida" >
+                                            <h:outputText value="#{egr.tipoMedida.descripcion}"/> 
+                                        </p:column>
+                                        <p:column headerText="Stock" >
+                                            <h:outputText value="#{egr.cantidadExistente}"/> 
+                                        </p:column>
+                                        <p:column headerText="Cantidad Solicitada" >
+                                            <p:cellEditor disabled="#{procesoEgresoInvSinProView.mostrar2}">
+                                                <f:facet name="output"><h:outputText  value="#{egr.cantidadTempSol}" /></f:facet>
+                                                <f:facet name="input"><p:inputText  value="#{egr.cantidadTempSol}" style="width:100%">
+                                                        <p:keyFilter regEx="/[\d]/"/>
+                                                    </p:inputText>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Despacho parcial" rendered="#{procesoEgresoInvSinProView.habilitar1}">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText  value="#{egr.cantidadTempDes}" /></f:facet>
+                                                <f:facet name="input"><p:inputText value="#{egr.cantidadTempDes}" style="width:100%">
+                                                        <p:keyFilter regEx="/[\d]/"/>
+                                                    </p:inputText> </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Cantidad a despachar" id="uno" rendered="#{procesoEgresoInvSinProView.habilitar1}">
+                                            <h:outputText value="#{egr.cantidadTemp}" />
+                                        </p:column>
+                                        <p:column headerText="Observación" >
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText  value="#{egr.observacionTemp}" /></f:facet>
+                                                <f:facet name="input"><p:inputText value="#{egr.observacionTemp}" style="width:100%"
+                                                                                   onkeyup="javascript:this.value = this.value.toUpperCase();"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Acciones" style=" width: 150px" rendered="#{procesoEgresoInvSinProView.habilitar1}">
+                                            <center>
+                                                <p:commandLink title="Eliminar" process="@this" 
+                                                               actionListener="#{procesoEgresoInvSinProView.borrarElementoLista(egr)}"
+                                                               update="dtItemEgreso">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar el ítem?" icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>        
+                                            </center>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </p:fieldset>
+                        <center>
+                            <p:commandButton value="Generar Egreso"
+                                             icon="fa fa-save"
+                                             id="btnGen"
+                                             disabled="#{procesoEgresoInvSinProView.habilitarBtn}"
+                                             process="@form"  update="frmMain"
+                                             actionListener="#{procesoEgresoInvSinProView.guardar()}"
+                                             style=" width: 170px">
+                            </p:commandButton>
+                            <p:spacer width="10" />
+                            <p:commandButton value="Cancelar"
+                                             icon="ui-icon-clear" styleClass="red-btn"
+                                             process="@this" update="frmMain"
+                                             actionListener="#{procesoEgresoInvSinProView.limpiarTodo()}"
+                                             style="width: 170px">
+                            </p:commandButton>
+                            <p:spacer width="10" />
+                            <p:commandButton value="Imprimir" id="imp" disabled="#{procesoEgresoInvSinProView.bolImprimir}"
+                                             icon="fa fa-print" process="@this" update="frmMain" 
+                                             actionListener="#{procesoEgresoInvSinProView.imprimirEgreso()}" 
+                                             style="width: 170px">
+                            </p:commandButton>
+
+                        </center>
+                    </div>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{procesoEgresoInvSinProView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{procesoEgresoInvSinProView.aprobacionPrcoeso(1)}" rendered="#{procesoEgresoInvSinProView.botonRechazado}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Rechazar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{procesoEgresoInvSinProView.aprobacionPrcoeso(0)}" rendered="#{procesoEgresoInvSinProView.botonAprobaciones}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" 
+                                             onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos oficio"
+                  widgetVar="dlgOficio"
+                  modal="true"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"    
+                  id="dlgOficios">
+            <h:form prependId="false" id="frmOficio">
+                <p:growl id="msgs1" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <p:outputPanel id="outPanelOficio2" style="width: 100%">   
+                            <p:fieldset legend="DATOS" style="margin-bottom:10px; font-weight: bold" id="datosOficioCambios">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Número de Oficio" for="numOficio" style="width: 100%;"/>
+                                        <p:inputText  id="numOficio" style="text-transform: uppercase;width: 100%;"
+                                                      value="#{procesoEgresoInvSinProView.oficio.numeroOficio}" class="panelInput" readonly="false" >
+                                        </p:inputText>
+                                    </h:panelGroup>  
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Fecha Oficio" style="width: 100%;"></p:outputLabel><br/>
+                                        <p:calendar id="fecOficio" pattern="dd-MM-yyyy" mask="true" required="true" style="width: 100%;"
+                                                    navigator="true" yearRange="c-100:c+100" maxdate="sysdate" locale="es"
+                                                    value="#{procesoEgresoInvSinProView.oficio.fechaOficio}"/>
+                                    </h:panelGroup>  
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <center>
+                                <p:commandButton value="Guardar"
+                                                 icon="fa fa-save" style="width: 150px"
+                                                 actionListener="#{procesoEgresoInvSinProView.guardarOficio()}"
+                                                 process="@form" update="datosOficio"
+                                                 rendered="#{procesoEgresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:commandButton value="Editar"
+                                                 actionListener="#{procesoEgresoInvSinProView.editarOficio()}"
+                                                 icon="fa fa-edit" style="width: 150px"
+                                                 process="@form" update="datosOficio"
+                                                 rendered="#{!procesoEgresoInvSinProView.nuevo}">
+                                </p:commandButton>
+                                <p:commandButton value="Cerrar" icon="fa fa-close"
+                                                 onclick="PF('dlgOficio').hide()" style="width: 150px"
+                                                 actionListener="#{procesoEgresoInvSinProView.limpiarVariableOficio()}"
+                                                 process="@this">
+                                </p:commandButton>
+                            </center>
+                        </p:outputPanel>
+
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+
+    </ui:define>
+
+</ui:composition>

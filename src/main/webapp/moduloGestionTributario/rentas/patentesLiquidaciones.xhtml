@@ -1,0 +1,590 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="DECLARACIONES DE IMPUESTOS SOBRE PATENTE MUNICIPALES" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">  
+                <h:form id="frmAlcPlus" prependId="false">
+                    <p:dataTable id="dtPatentes" lazy="true" 
+                                 value="#{patenteLiquidacionView.localesLazy}" 
+                                 style="width: 100%;"
+                                 var="local" rows="5" 
+                                 paginator="true" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 widgetVar="dtPatentes">
+                        <f:facet name="header">
+                            LISTADO DE LOCALES
+                        </f:facet>
+                        <p:column headerText="RUC" filterBy="#{local.propietario.identificacionCompleta}" width="15%;" filterStyle="width:70%;" filterMatchMode="contains">
+                            <center><h:outputText value="#{local.propietario.identificacionCompleta}"/></center>
+                        </p:column>
+
+                        <p:column headerText="Clave Predial" filterBy="#{local.clavePreial}" width="20%;" filterStyle="width:70%;" filterMatchMode="contains">
+                            <center><h:outputText value="#{local.clavePreial}"/></center>
+                        </p:column>
+
+                        <p:column headerText="Num Local" filterBy="#{local.numLocal}" width="5%;" filterStyle="width:70%;">
+                            <center><h:outputText value="#{local.numLocal}"/></center>
+                        </p:column>
+
+                        <p:column headerText="Tipo Predio" filterBy="#{local.tipoPredio}" width="15%;" filterStyle="width:70%;">
+                            <center><h:outputText value="#{local.tipoPredio}"/></center>
+                        </p:column>
+
+                        <p:column headerText="Contribuyente" width="30%;" filterBy="#{local.patente.propietario.nombreCompleto}" filterMatchMode="contains">
+                            <h:outputText value="#{local.patente.propietario.nombreCompleto}" />
+
+                        </p:column>
+                        <p:column headerText="Razón Social" filterBy="#{local.propietario.razonSocial}"  width="40%;" filterMatchMode="contains">
+                            <h:outputText value="#{local.propietario.razonSocial}" style="text-transform: uppercase;"/>
+                        </p:column>
+
+                        <p:column headerText="LLeva Contabilitdad" width="10%;" filterBy="#{local.contabilidad}" style="text-align: center;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dtPatentes').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{local.contabilidad?'SI':'NO'}"/>
+                        </p:column>
+                        <p:column headerText="Nombre Local" filterBy="#{local.nombreLocal}" width="25%;">
+                            <h:outputText value="#{local.nombreLocal}" style="margin-left: 15px;"/>
+                        </p:column>
+                        <p:column headerText="Acción" width="20%;">
+                            <center>
+                                <p:commandLink title="Seleccionar"  styleClass="btnStyle" process="@this"   update="frmAlcPlus" actionListener="#{patenteLiquidacionView.seleccionLocal(local)}">
+                                    <i class="fa fa-check" style="font-size: 1.5rem"></i>                               
+                                </p:commandLink>
+                                <p:spacer width="10"/>
+                                <p:commandLink title="Visualizar deudas"  styleClass="btnStyle" process="@this"  
+                                               update="formDetEmision" actionListener="#{patenteLiquidacionView.loadDeudasLocales(local)}">
+                                    <i class="fa fa-book" style="font-size: 1.5rem"></i>                               
+                                </p:commandLink>
+                            </center>
+                        </p:column>
+                    </p:dataTable>
+                    <br/><br/>
+                    <center>
+                        <h4 style="font: italic;color:#9D9999 "> Los Intereses se calcularán en tiempo real despues de guardar la información </h4>
+                    </center>
+                    <p:fieldset legend="Info"  rendered="#{patenteLiquidacionView.localSel != null and patenteLiquidacionView.localSel.id !=null}">
+                        <p:panelGrid styleClass="ui-panelgrid-blank" columns="5"  layout="grid" columnClasses="ui-g-2, ui-g-2, ui-g-3,ui-g-2,ui-g-3"
+                                     id="anio_liq" style="width: 100%" >
+
+                            <p:panelGrid columns="1" style="width: 100%" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="Año Liquidación: " style="font-weight: bolder"/>
+                                <p:inputText id="anio_liquidacion" value="#{patenteLiquidacionView.liquidacion.anio}" onkeypress="validateIntegerValueAndFocusNext(event, 'btn_procesar')">                                    
+                                    <p:keyFilter mask="num"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="Contribuyente:" style="font-weight: bold; margin-left: 20px;" />                           
+                                <h:outputText value="#{patenteLiquidacionView.localSel.patente.propietario.nombreCompleto}" style="margin-left: 15px;"/>                           
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="Lleva Contabilidad:" style="font-weight: bold; margin-left: 20px; text-align: center;" />
+                                <p:outputLabel value="#{patenteLiquidacionView.localSel.patente.contabilidad ?'SI':'NO'}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="Fecha Liquidación:" style="font-weight: bold; margin-left: 20px;" />
+                                <p:inputText  value="#{patenteLiquidacionView.liquidacion.fechaIngreso}" readonly="true" style="text-align: center">
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>    
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="justify-content: center; align-items: center; text-align: center;">
+                                <center>
+                                    <p:commandButton value="Resetear" icon="fa fa-refresh"  style="width: 100%;" 
+                                                     actionListener="#{patenteLiquidacionView.initView()}" update="frmAlcPlus"/>
+                                </center>                                    
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <br/><br/>
+                    <p:panelGrid styleClass="ui-panelgrid-blank" layout="grid" columns="4" columnClasses="ui-g-3,ui-g-3,ui-g-3,ui-g-3"   
+                                 rendered="#{patenteLiquidacionView.localSel != null and patenteLiquidacionView.localSel.id !=null}">
+                        <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.localSel ne null and patenteLiquidacionView.localSel.patente ne null and 
+                                                                     patenteLiquidacionView.localSel.contabilidad eq null ?false:(patenteLiquidacionView.localSel.contabilidad)}" >
+                            <h:panelGroup layout="block" rendered="#{patenteLiquidacionView.localSel ne null and patenteLiquidacionView.localSel.patente ne null and 
+                                                                     patenteLiquidacionView.localSel.contabilidad eq null ?false:(patenteLiquidacionView.localSel.contabilidad)}">
+                                <p:outputLabel value="ACTIVOS TOTALES" class="FontBold"/> <p:spacer width="10"/>
+                                <p:selectBooleanCheckbox value="#{patenteLiquidacionView.activoShow}">
+                                    <p:ajax update="opciones" listener="#{patenteLiquidacionView.loadFuncionalidad(1)}"/>
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" >
+                            <h:panelGroup layout="block">
+                                <p:outputLabel value="PATENTE" class="FontBold"/> <p:spacer width="10"/>
+                                <p:selectBooleanCheckbox value="#{patenteLiquidacionView.patenteShow}">
+                                    <p:ajax update="opciones" listener="#{patenteLiquidacionView.loadFuncionalidad(2)}"/>
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" >
+                            <h:panelGroup layout="block">
+                                <p:outputLabel value="HABILITACIÓN" class="FontBold"/> <p:spacer width="10"/>
+                                <p:selectBooleanCheckbox value="#{patenteLiquidacionView.habilitacionShow}" >
+                                    <p:ajax update="opciones" listener="#{patenteLiquidacionView.loadFuncionalidad(3)}"/>
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.localSel ne null and patenteLiquidacionView.localSel.patente ne null and 
+                                                             patenteLiquidacionView.localSel.contabilidad eq null ?false:(patenteLiquidacionView.localSel.contabilidad)}" >
+                            <h:panelGroup layout="block">
+                                <p:outputLabel value="PERMISO ADICIONALES" class="FontBold"/> <p:spacer width="10"/>
+                                <p:selectBooleanCheckbox value="#{patenteLiquidacionView.permisoAdicionalesShow}" >
+                                    <p:ajax update="opciones" listener="#{patenteLiquidacionView.loadFuncionalidad(4)}"/>
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:tabView prependId="false" id="opciones"    rendered="#{patenteLiquidacionView.localSel != null and patenteLiquidacionView.localSel.id !=null}">
+                        <p:tab title="ACTIVOS TOTALES" rendered="#{patenteLiquidacionView.activoShow}">         
+                            <p:fieldset class="ui-g-6">
+                                <p:panelGrid  columns="4" rendered="#{patenteLiquidacionView.tipoLiquidacion.id == 7}">
+                                    <p:outputLabel value="Activo totales: " class="FontBold"/>
+                                    <p:inputText value="#{patenteLiquidacionView.balanceActivos.activoTotal}" id="at1"
+                                                 onkeypress="validateFloatValueAndFocusNext(event, 'at8')">                      
+                                        <p:ajax   listener="#{patenteLiquidacionView.sumarActivos()}" update="t1,at1, at8,dtLocal"/>
+                                    </p:inputText>
+                                    <p:outputLabel value="Pasivo Corriente: " class="FontBold"/>
+                                    <p:inputText value="#{patenteLiquidacionView.balanceActivos.pasivoTotal}" id="at8" onkeypress="validateFloatValueAndFocusNext(event, 'at5')">
+                                        <p:ajax listener="#{patenteLiquidacionView.sumarPasivos()}" update="t1,at1, at8,dtLocal"/>
+                                    </p:inputText>
+                                    <p:outputLabel value="Año de Balance: " class="FontBold"/>
+                                    <p:inputText id="at5" value="#{patenteLiquidacionView.balance.anioBalance}" onkeypress="validateIntegerValueAndFocusNext(event, 'at6')">
+                                        <p:ajax update="t1,at1, at8, anio_liquidacion,dtLocal" listener="#{patenteLiquidacionView.impuesto()}" />
+                                    </p:inputText>
+                                    <p:outputLabel value="Porcentaje de Ingreso: " class="FontBold" rendered="false" />
+                                    <p:inputNumber rendered="false" value="#{patenteLiquidacionView.balanceActivos.porcentajeIngreso}" id="at6" emptyValue="zero" 
+                                                   onkeypress="validateFloatValueAndFocusNext(event, 'at11')"
+                                                   decimalPlaces="2" maxValue="100" >
+                                        <p:ajax  listener="#{patenteLiquidacionView.impuesto()}" update="t1,at1, at8,dtLocal"/>
+                                    </p:inputNumber>
+                                    <p:outputLabel value="Porcentaje participación: "  class="FontBold"/>
+                                    <p:inputNumber value="#{patenteLiquidacionView.balanceActivos.porcentajeParticipacion}" id="at11" 
+                                                   emptyValue="zero" onkeypress="validateFloatValueAndFocusNext(event, 'btn_procesar')"
+                                                   decimalPlaces="3" maxValue="100" >
+                                        <p:ajax   listener="#{patenteLiquidacionView.impuesto()}" update="t1,at1, at8,dtLocal"/>
+                                    </p:inputNumber>
+                                    <p:outputLabel value="Provicional ? "  class="FontBold" rendered="false"/>
+                                    <p:selectBooleanCheckbox value="#{patenteLiquidacionView.liqProvicional}" rendered="false" >
+                                        <p:ajax update="t1,at1, at8,dtLocal" listener="#{patenteLiquidacionView.impuesto()}" />
+                                    </p:selectBooleanCheckbox>
+                                    <p:outputLabel value="Aplica Distribuccion" class="FontBold"/>
+                                    <p:selectBooleanCheckbox  value="#{patenteLiquidacionView.distribuccion}">
+                                        <p:ajax listener="#{patenteLiquidacionView.openDlogoDistibuccion()}" update="t1,frmDistribuccion,frmAlcPlus"/>
+                                    </p:selectBooleanCheckbox>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset  class="ui-g-5">
+                                <p:dataTable  id="dtLocal" reflow="true" value="#{patenteLiquidacionView.detalle}"  
+                                              var="rub" rowIndexVar="index" style="width: 100%;margin: auto;" >
+                                    <p:column style="width: 5%">
+                                        <h:outputText value="#{index+1}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" >
+                                        <h:outputText value="#{rub.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                        <h:outputText value="#{rub.valor}" >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="$"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable> 
+                                <h:panelGroup layout="block">
+                                    <div align="right">
+                                        <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                        <p:outputLabel  value=" " style="font-weight: bold;"/>
+                                        <p:inputText id="t1" value="#{patenteLiquidacionView.liquidacion.totalPago}" readonly="true" style="width: auto; text-align: right;">
+                                            <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />
+                                            <p:ajax listener="#{patenteLiquidacionView.modificarTotal()}" update="dtLocal"/>
+                                        </p:inputText>
+                                    </div>
+
+                                </h:panelGroup>
+                            </p:fieldset>
+                            <!--                    RUBROS LOCALES COMERCIALES -->
+                        </p:tab>
+                        <p:tab title="PATENTES" rendered="#{patenteLiquidacionView.patenteShow}">
+                            <p:fieldset class="ui-g-6">
+                                <p:panelGrid columns="1"  styleClass="ui--panelgrid-blank"  id="patenteCal">
+                                    <p:panelGrid  columns="4" columnClasses="ui-g-3,ui-g-3,ui-g-3,ui-g-3"  >
+                                        <p:outputLabel value="Capital o Patrimonio: " class="FontBold" />
+                                        <p:inputText value="#{patenteLiquidacionView.balance.capital}" id="pa1" onkeypress="validateFloatValueAndFocusNext(event, 'tipoExom')">
+                                            <p:ajax update="patenteCal,dtLocalPatente,pa1,totalPatente" listener="#{patenteLiquidacionView.generarValorLiquidacion()}" />
+                                        </p:inputText>
+                                        <h:outputText value="Tipo de exoneracion" style="display: block;" class="FontBold"/>
+                                        <p:selectOneMenu id="tipoExom" value="#{patenteLiquidacionView.exoneracionSeleccionada}" converter="#{utilConverter}"  style="width: 100px;" panelStyleClass="width:180px;" >
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}"/>
+                                            <f:selectItems value="#{patenteLiquidacionView.listaExoneraciones}" var="i" itemLabel="#{i.descripcion}" itemValue="#{i}"/>
+                                            <p:ajax update="patenteCal,dtLocalPatente,pa1,totalPatente" listener="#{patenteLiquidacionView.generarValorLiquidacion()}" />
+                                        </p:selectOneMenu>
+                                        <p:outputLabel value="Año de Balance: " class="FontBold"/>
+                                        <p:inputText value="#{patenteLiquidacionView.balance.anioBalance}" id="pa3" onkeypress="validateIntegerValueAndFocusNext(event, 'frmAlcPlus:porc_input')">
+                                            <p:ajax update=" m_i,totalPatente" listener="#{patenteLiquidacionView.generarValorLiquidacion()}" />
+                                        </p:inputText>
+                                        <p:outputLabel value="(%) Operación Durán: " class="FontBold" />
+                                        <p:inputNumber value="#{patenteLiquidacionView.balance.porcentajeParticipacion}" id="porc"
+                                                       onkeypress="validateFloatValueAndFocusNext(event, 'frmAlcPlus:pa14_input')" >
+                                            <p:ajax update="patenteCal,dtLocalPatente,totalPatente" listener="#{patenteLiquidacionView.generarValorLiquidacion()}" />
+                                        </p:inputNumber>
+                                        <p:outputLabel value="Valor permiso: " class="FontBold" rendered="false"/>
+                                        <p:inputText value="#{patenteLiquidacionView.tasaPermiso}" id="pa14"  rendered="false"
+                                                     onkeypress="validateFloatValueAndFocusNext(event, 'frmAlcPlus:btn_procesar')">
+                                            <p:ajax update="patenteCal,dtLocalPatente, m_i, pa3, anio_liq,totalPatente" listener="#{patenteLiquidacionView.generarValorLiquidacion()}" />
+                                        </p:inputText>
+                                        <p:outputLabel value="Meses interes: " class="FontBold" rendered="false"/>
+                                        <p:inputText id="m_i" value="#{patenteLiquidacionView.mesesInteres}" readonly="true" rendered="false"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="2"  styleClass="ui--panelgrid-blank" columnClasses="ui-g-6,ui-g-6" >
+                                        <p:commandButton process="@this" value="Cal.Multa" actionListener="#{patenteLiquidacionView.aplicarMulta()}"  
+                                                         style="width: auto;" update="dtLocalPatente,totalPatente"/>
+                                        <p:commandButton process="@this" value="Qui.Multa" actionListener="#{patenteLiquidacionView.quitarMulta()}"  
+                                                         style="width: auto;background: red;" update="dtLocalPatente,totalPatente"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset  class="ui-g-5">
+                                <p:dataTable  id="dtLocalPatente" reflow="true" value="#{patenteLiquidacionView.detallePatente}"  
+                                              var="rub" rowIndexVar="index" style="width: 100%;margin: auto;" >
+                                    <p:column style="width: 5%">
+                                        <h:outputText value="#{index+1}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" >
+                                        <h:outputText value="#{rub.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                        <h:outputText value="#{rub.valorTotal}" >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="$"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable> 
+                                <h:panelGroup layout="block">
+                                    <div align="right">
+                                        <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                        <p:outputLabel  value=" " style="font-weight: bold;"/>
+                                        <p:inputText id="totalPatente" value="#{patenteLiquidacionView.liquidacionPatente.totalPago}" readonly="true" style="width: auto; text-align: right;">
+                                            <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />                                            
+                                        </p:inputText>
+                                    </div>
+
+                                </h:panelGroup>
+                            </p:fieldset>
+                        </p:tab>
+
+                        <p:tab title="TASA DE HABILITACIÓN" rendered="#{patenteLiquidacionView.habilitacionShow}">
+                            <p:fieldset legend="Paramatrización" >
+                                <p:panelGrid  layout="grid" columns="3" style="width: auto;" columnClasses="ui-g-4,ui-g-4,ui-g-4" styleClass="ui-panelgrid-blank">
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Actividad Comerical:" class="FontBold" />
+                                        <p:selectOneMenu id="qcbactividad" filter="true" filterMatchMode="contains" value="#{patenteLiquidacionView.seleccionActividad}" 
+                                                         converter="#{utilConverter}" style="width: 300px;">
+                                            <f:selectItem itemDisabled="true" itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems itemDisabled="true"  value="#{patenteLiquidacionView.actividesLocales}" var="loc" itemLabel="#{loc.descripcion}" itemValue="#{loc}"/>
+                                            <p:ajax listener="#{patenteLiquidacionView.tasaHabilitacion()}" process="qcbactividad,cbtipolocal,cbfatorubi" update="dtLocalHabilitacion,totalHabilitacion"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Tipo Local:" class="FontBold" />
+                                        <p:selectOneMenu id="cbtipolocal" filter="true" filterMatchMode="contains" value="#{patenteLiquidacionView.tipoLocal}"
+                                                         converter="#{utilConverter}" style="width: 300px;">
+                                            <f:selectItem  itemDisabled="true" itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems itemDisabled="true" value="#{patenteLiquidacionView.listaTipoLocales}" var="tipoLoc" itemLabel="#{tipoLoc.descripcion}" itemValue="#{tipoLoc}"/>
+                                            <p:ajax listener="#{patenteLiquidacionView.tasaHabilitacion()}" process="qcbactividad,cbtipolocal,cbfatorubi" update="dtLocalHabilitacion,totalHabilitacion"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1">
+                                        <p:outputLabel value="Factor de Ubicación:" class="FontBold"/>
+                                        <p:selectOneMenu id="cbfatorubi" filter="true" filterMatchMode="contains" 
+                                                         value="#{patenteLiquidacionView.factorUbicacion}" converter="#{utilConverter}" style="width: 300px;">
+                                            <f:selectItem itemDisabled="true" itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems itemDisabled="true" value="#{patenteLiquidacionView.listaFactoresUbicacion}" var="fu" itemLabel="#{fu.texto}" itemValue="#{fu}"/>
+                                            <p:ajax listener="#{patenteLiquidacionView.tasaHabilitacion()}" process="qcbactividad,cbtipolocal,cbfatorubi" update="dtLocalHabilitacion,totalHabilitacion"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>                                
+
+                                <p:dataTable  id="dtLocalHabilitacion" reflow="true" value="#{patenteLiquidacionView.detalleHabilitacion}"  
+                                              var="rub" rowIndexVar="index" style="width: 100%;margin: auto;" >
+                                    <p:column style="width: 5%">
+                                        <h:outputText value="#{index+1}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" >
+                                        <h:outputText value="#{rub.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                        <h:outputText value="#{rub.valorTotal}" >
+                                            <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="$"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable> 
+                                <h:panelGroup layout="block">
+                                    <div align="right">
+                                        <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                        <p:outputLabel  value=" " style="font-weight: bold;"/>
+                                        <p:inputText id="totalHabilitacion" value="#{patenteLiquidacionView.liquidacionHabilitacion.totalPago}" readonly="true" style="width: auto; text-align: right;">
+                                            <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />                                            
+                                        </p:inputText>
+                                    </div>
+                                </h:panelGroup>
+                            </p:fieldset>
+                        </p:tab>
+
+                        <p:tab title="PERMISOS ADICIONALES" rendered="#{patenteLiquidacionView.permisoAdicionalesShow}">
+                            <p:selectOneMenu style="width: 300px;" value="#{patenteLiquidacionView.liquidacionPermisosAdicionales.tipoLiquidacion}" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{patenteLiquidacionView.listLiquidacionPermisosAdicionales}" var="i" 
+                                               itemLabel="#{i.nombreTransaccion}" itemValue="#{i}"/>
+                                <p:ajax listener="#{patenteLiquidacionView.cargarRubros()}" update="dtLocalPermiso,totalPermisoAdicional"/>
+                            </p:selectOneMenu>
+                            <br/>
+                            <p:dataTable  id="dtLocalPermiso" reflow="true" value="#{patenteLiquidacionView.detallePermisoAdicional}"  
+                                          var="data" rowIndexVar="indice" style="width: 100%;margin: auto;"  editable="true" editMode="cell">
+                                <p:column headerText="Seleccionar" width="10%">
+                                    <center>     
+                                        <p:selectBooleanCheckbox value="#{data.cobrar}">
+                                            <p:ajax listener="#{patenteLiquidacionView.editarDetallePago(data, indice)}" 
+                                                    update="dtLocalPermiso,totalPermisoAdicional"/>
+                                        </p:selectBooleanCheckbox>
+                                    </center>
+                                </p:column>
+                                <p:column headerText="Descripción" >
+                                    <h:outputText value="#{data.descripcion}" />
+                                </p:column>
+                                <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                    <p:cellEditor>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{data.valorTotal}">
+                                                <p:ajax event="change" listener="#{patenteLiquidacionView.editarDetallePago(data,indice)}" 
+                                                        update="dtLocalPermiso,totalPermisoAdicional" />
+                                            </p:inputNumber>
+                                        </f:facet>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{data.valorTotal}">                                                    
+                                                <f:convertNumber pattern="#0.00" locale="pt_BR"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:cellEditor>                                  
+                                </p:column>
+                            </p:dataTable> 
+                            <h:panelGroup layout="block">
+                                <div align="right">
+                                    <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                    <p:outputLabel  value=" " style="font-weight: bold;"/>
+                                    <p:inputText id="totalPermisoAdicional" value="#{patenteLiquidacionView.liquidacionPermisosAdicionales.totalPago}"
+                                                 readonly="true" style="width: auto; text-align: right;">
+                                        <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />                                            
+                                    </p:inputText>
+                                </div>
+                            </h:panelGroup>
+                        </p:tab>
+                    </p:tabView>
+                    <p:panelGrid style="width: 100%;" rendered="#{patenteLiquidacionView.localSel!=null and patenteLiquidacionView.localSel.id!=null}">
+                        <center>
+                            <p:commandButton value="Generar" icon="fa fa-cogs" style="margin-top: 20px; width: 200px;" actionListener="#{patenteLiquidacionView.openObser()}"/>
+                        </center>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="dlgObs" header="Observación" widgetVar="dlgObs" resizable="false" modal="true"  
+                  position="center" closable="true" width="1000">
+            <h:form id="frmObsCor" prependId="false">
+                <p:inputTextarea cols="12" rows="5" placeholder="ESCRIBA UNA OBSERVACIÓN"  value="#{patenteLiquidacionView.observacion}" required="true" style="width: 100%;"/>
+                <br/>
+                <center>
+                    <p:commandButton value="PROCESAR" icon="fa fa-save" process="" actionListener="#{patenteLiquidacionView.procesar()}" />
+                </center>            
+            </h:form>      
+        </p:dialog>
+        
+        <p:dialog id="dlgIdLiquidacion" header="NUM-LIQUIDACIÓN" widgetVar="dlgIdLiquidacion" resizable="false" modal="true" 
+                  position="center" closable="false" width="1000">
+            <h:form id="numLiq" prependId="false">                
+                <p:panelGrid layout="grid" columns="4" columnClasses="ui-g-3,ui-g-3,ui-g-3,ui-g-3" styleClass="ui-panelgrid-blank" >
+                    <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.idActivos ne null}">
+                        <center>
+                            <p:outputLabel value="ACIVOS" class="FontBold"/>
+                            <h3 style="color: blue;">#{patenteLiquidacionView.idActivos}</h3>
+                        </center>                        
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.idPatente ne null}">
+                        <center>
+                            <p:outputLabel value="PATENTE" class="FontBold"/>
+                            <h3 style="color: blue;">#{patenteLiquidacionView.idPatente}</h3>
+                        </center>                      
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.idHabilitacion ne null}">
+                        <center>
+                            <p:outputLabel value="TASA DE HABILITACION" class="FontBold"/>
+                            <h3 style="color: blue;">#{patenteLiquidacionView.idHabilitacion}</h3>
+                        </center>                       
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" rendered="#{patenteLiquidacionView.idPermisos ne null}">
+                        <center>
+                            <p:outputLabel value="PERMISO ADICIONAL" class="FontBold"/>
+                            <h3 style="color: blue;">#{patenteLiquidacionView.idPermisos}</h3>
+                        </center>                        
+                    </p:panelGrid>
+                </p:panelGrid>    
+                <br/>
+                <p:panelGrid layout="grid" columns="3" columnClasses="ui-g-4,ui-g-4,ui-g-4" styleClass="ui-panelgrid-blank" >
+                    <p:commandButton value="Imprimir Permiso Funcionamiento" icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimirPermisoFuncionamiento()}"  style="width: 300px;background: red;" />
+                    <p:commandButton value="Imprimir titulo Emitido (Activos) " icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimir(patenteLiquidacionView.liquidacion)}"  style="width: 300px;background: green;"/>
+                    <p:commandButton value="Imprimir titulo Emitido (Activos + Distribucción) " icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimirDist(patenteLiquidacionView.liquidacion)}" style="width: 300px; background: orange;"/>
+                    <p:commandButton value="Imprimir titulo Emitido (Patente) " icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimir(patenteLiquidacionView.liquidacionPatente)}" style="width: 300px;"/>
+                    <p:commandButton value="Imprimir titulo Emitido (Habilitación) " icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimir(patenteLiquidacionView.liquidacionHabilitacion)}" style="width: 300px; background: purple;"/>
+                    <p:commandButton value="Imprimir titulo Emitido (Permiso Adicional) " icon="fa fa-print" 
+                                     actionListener="#{patenteLiquidacionView.imprimir(patenteLiquidacionView.liquidacionPermisosAdicionales)}" style="width: 300px;"/>    
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Aceptar" icon="fa fa-check" actionListener="#{patenteLiquidacionView.cerrarDialog()}" update="numLiq,frmAlcPlus" 
+                                     oncomplete="PF('dlgIdLiquidacion').hide()"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogoDistribuccion" header="Distribucción Porcentual" widgetVar="dlogoDistribuccion" resizable="false" modal="true" 
+                  position="center" closable="false" width="700" height="500">
+            <h:form id="frmDistribuccion" prependId="false">
+                <p:panelGrid columns="3" styleClass="ui-panelgrid-blank" columnClasses="ui-g-5,ui-g-5,ui-g-2" layout="grid">
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Canton" class="FontBold"/>
+                        <p:selectOneMenu value="#{patenteLiquidacionView.participacionCantones.cantones}" converter="#{utilConverter}" style="width: 200px;">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItems value="#{patenteLiquidacionView.listaCantones}" var="canto" itemLabel="#{canto.canton}" itemValue="#{canto}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Procentaje (%):" class="FontBold"/>
+                        <p:inputText value="#{patenteLiquidacionView.participacionCantones.porcentaje}" />
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <center>
+                            <p:commandButton update="frmDistribuccion" actionListener="#{patenteLiquidacionView.addDistribuccion()}"
+                                             process="frmDistribuccion" value="Añadir" icon="fa fa-plus" style="width: auto;"/>
+                        </center>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <br/>
+                <p:dataTable id="listaDistribuccionProcentual" value="#{patenteLiquidacionView.listParticipacionCantones}" var="s" 
+                             style="width: 100%"  reflow="true" paginator="true" rows="10"  rowIndexVar="index"
+                             paginatorPosition="top">
+                    <p:column headerText="Canton" >
+                        <h:outputText value="#{s.cantones.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Porcentaje" width="100">
+                        <h:outputText value="#{s.porcentaje}"/>
+                    </p:column>
+                    <p:column headerText="Valor" width="100">
+                        <h:outputText value="#{s.valor}"/>
+                    </p:column>
+                    <p:column headerText="" width="100">
+                        <p:commandButton disabled="#{s.cantones.codigo eq '0907'}" icon="fa fa-remove" actionListener="#{patenteLiquidacionView.eliminarDistribuccion(index)}" 
+                                         style="width: 25px; background: red;"
+                                         update="listaDistribuccionProcentual"/>
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Aceptar" style="width: auto;" actionListener="#{patenteLiquidacionView.actualizarTotalActivosDistibuccion()}"
+                                     oncomplete="PF('dlogoDistribuccion').hide()" update="frmDistribuccion,frmAlcPlus"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgDeudasLocales" header="Deudas Locales" widgetVar="dlgDeudasLocales" resizable="false" modal="true" position="center" closable="true" width="900">
+            <h:form id="frmDeudasLocales" prependId="false">
+                <p:dataTable id="dtLiquidaciones" reflow="true" widgetVar="dtLiquidaciones" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             value="#{patenteLiquidacionView.lazyLiquidacionDeudas}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                             selectionMode="single" rowKey="#{titulo.id}" selection="#{patenteLiquidacionView.liquidacionSelect}" filterEvent="enter">
+                    <p:ajax event="rowSelect" update="opLiquidacionesEmitidas"/>
+                    <p:column  headerText="ID Liquidación" width="50" filterBy="#{titulo.idLiquidacion}" filterStyle="width: 60%;">
+                        <h:outputText value="#{titulo.idLiquidacion}" />
+                    </p:column>
+                    <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                        <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                    </p:column>
+                    <p:column headerText="No. Liq." width="70" filterBy="#{titulo.numLiquidacion}" sortBy="#{titulo.numLiquidacion}" filterStyle="width: 80%;">
+                        <h:outputText value="#{titulo.numLiquidacion}" />
+                    </p:column>
+                    <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 60%;">
+                        <h:outputText value="#{titulo.anio}"/>
+                    </p:column>
+                    <p:column headerText="Predio" width="200" filterBy="#{titulo.predio.claveCat}" >
+                        <h:outputText value="#{titulo.predio.claveCat}" />
+                    </p:column>
+                    <p:column headerText="Local" width="200" filterBy="#{titulo.localComercial.numLocal}">
+                        <h:outputText value="#{titulo.localComercial.numLocal}" />
+                    </p:column>
+                    <p:column headerText="Validador" width="100" filterBy="#{titulo.liquidadorResponsable}">
+                        <h:outputText value="#{titulo.liquidadorResponsable}" />
+                    </p:column>
+                    <p:column headerText="Fecha emision" width="200" >
+                        <h:outputText value="#{titulo.fechaIngreso}" >
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacion}" filterStyle="width: 80%;">                        
+                        <h:outputText  value="#{titulo.comprador.identificacion}" />
+                    </p:column>
+                    <p:column headerText="Solicitante" width="250" filterBy="#{titulo.comprador.nombreCompleto}">                        
+                        <h:outputText  value="#{titulo.comprador.nombreCompleto}"/>
+                    </p:column>
+                    <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+<!--                                <p:column headerText="Saldo" width="60"><h:outputText value="#{titulo.saldo}" style="font-weight: bold;"/></p:column>
+                    <p:column headerText="Interes" width="60"><h:outputText value="#{liquidacionGenTributarioView.interes(titulo)}" style="font-weight: bold;"/></p:column>
+                    <p:column headerText="Total Pago" width="60"><h:outputText value="#{titulo.totalPago+liquidacionGenTributarioView.interes(titulo)}" style="font-weight: bold;"/></p:column>-->
+                    <p:column headerText="Validada" width="65" filterBy="#{titulo.validada}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('dtLiquidaciones').filter()" styleClass="custom-filter">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue="" />
+                                <f:selectItem itemLabel="Validado" itemValue="true" />
+                                <f:selectItem itemLabel="Sin Validar" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{titulo.validada?'Vaildado':'Sin Validar'}" style="font-weight: bold;"/>
+                    </p:column>
+                    <p:column headerText="Estado" width="65" filterBy="#{titulo.estadoLiquidacion.descripcion}">
+                        <h:outputText value="#{titulo.estadoLiquidacion.descripcion}" style="font-weight: bold;"/>
+                    </p:column>               
+                </p:dataTable>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                    <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                </p:confirmDialog>
+                <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones">
+                    <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgDetalle').show();" update="formDetEmision"  process="@this"
+                                actionListener="#{patenteLiquidacionView.calculosAdicionales()}"/>
+                </p:contextMenu>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center" height="400">
+            <h:form id="formDetEmision">
+                <dlg:detalleLiquidacion liquidacion="#{patenteLiquidacionView.liquidacionSelect}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

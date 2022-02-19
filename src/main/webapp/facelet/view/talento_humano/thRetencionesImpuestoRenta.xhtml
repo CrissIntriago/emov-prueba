@@ -1,0 +1,176 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Retención de Impuesto a la Renta
+    </ui:define>
+    <ui:param name="tittle" value="Retención de Impuesto a la Renta"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Parámetros de busqueda">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodo" value="#{thRetencionesImpuestoRentaView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thRetencionesImpuestoRentaView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="tipoRoles" listener="#{thRetencionesImpuestoRentaView.updateTipoRolList()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="tipoRoles">
+                                    <p:outputLabel for="@next" value="Tipo de rol:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thTipoRol" value="#{thRetencionesImpuestoRentaView.thTipoRol}" converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thRetencionesImpuestoRentaView.tipoRolList}" var="item" itemValue="#{item}" itemLabel="#{item.descripcion}"/>
+                                        <p:ajax update="fieldsetDatos,fieldsetAcciones,thRetencionesImpuestoRentaTable,btnReportes" process="thTipoRol"
+                                                listener="#{thRetencionesImpuestoRentaView.updateLazyModel()}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos del rol" id="fieldsetDatos">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Mes:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoMes" value="#{thRetencionesImpuestoRentaView.thTipoRol.idMes.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoMes')"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoTipo" value="#{thRetencionesImpuestoRentaView.thTipoRol.idTipo.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoTipo')"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Acciones" id="fieldsetAcciones">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Configuración"
+                                                     icon="fa fa-fw fa-gears" actionListener="#{thRetencionesImpuestoRentaView.openDlgConfig()}"
+                                                     styleClass="Fs16" style="width: 100%;">
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Cargar datos" icon="fa fa-refresh" process="@this" styleClass="Fs16"
+                                                     actionListener="#{thRetencionesImpuestoRentaView.loadData()}"
+                                                     disabled="#{thRetencionesImpuestoRentaView.thTipoRol ==null?true:(!thRetencionesImpuestoRentaView.btnCargarDatos)}"
+                                                     style="width: 100%;background: green" title="Nuevo registro">
+                                    </p:commandButton>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid> 
+                    <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" id="btnReportes">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar reporte general(.pdf)" icon="fa fa-file-excel-o" process="@this" styleClass="Fs16"
+                                             actionListener="#{thRetencionesImpuestoRentaView.printReport('pdf',true)}"
+                                             disabled="#{thRetencionesImpuestoRentaView.thTipoRol ==null?true:false}"
+                                             style="width: 100%;background: green" title="Generar reporte(.pdf)">
+                            </p:commandButton> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar reporte general (.xlsx)" icon="fa fa-file-pdf-o" process="@this" styleClass="Fs16"
+                                             actionListener="#{thRetencionesImpuestoRentaView.printReport('xlsx',true)}"
+                                             disabled="#{thRetencionesImpuestoRentaView.thTipoRol ==null?true:false}"
+                                             style="width: 100%;background: green" title="Generar reporte (.xlsx)">
+                            </p:commandButton> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar reporte simplificado(.pdf)" icon="fa fa-file-excel-o" process="@this" styleClass="Fs16"
+                                             actionListener="#{thRetencionesImpuestoRentaView.printReport('pdf',false)}"
+                                             disabled="#{thRetencionesImpuestoRentaView.thTipoRol ==null?true:false}"
+                                             style="width: 100%;background: gray" title="Generar reporte(.pdf)">
+                            </p:commandButton> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Generar reporte simplificado (.xlsx)" icon="fa fa-file-pdf-o" process="@this" styleClass="Fs16"
+                                             actionListener="#{thRetencionesImpuestoRentaView.printReport('xlsx',false)}"
+                                             disabled="#{thRetencionesImpuestoRentaView.thTipoRol ==null?true:false}"
+                                             style="width: 100%;background: gray" title="Generar reporte (.xlsx)">
+                            </p:commandButton> 
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="thRetencionesImpuestoRentaTable" widgetVar="thRetencionesImpuestoRentaTable" var="thRetencionesImpuestoRenta" style="width: 100%;" 
+                                     lazy="true" rows="50" rowKey="#{thRetencionesImpuestoRenta.id}" rowIndexVar="index" editable="true" editMode="cell"
+                                     paginator="true" paginatorPosition="bottom" value="#{thRetencionesImpuestoRentaView.thRetencionesImpuestoRentaLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <p:column headerText="Cédula" style="text-align: center;width: 15%" filterBy="#{thRetencionesImpuestoRenta.servidor.persona.identificacion}" filterMatchMode="contains">
+                                <h:outputText value="#{thRetencionesImpuestoRenta.servidor.persona.identificacion}"/>
+                            </p:column>                                
+                            <p:column headerText="Nombre completo" style="width: 30%" filterBy="#{thRetencionesImpuestoRenta.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                <h:outputText value="#{thRetencionesImpuestoRenta.servidor.persona.nombreCompleltoSql}" style="float: left"/>
+                            </p:column>
+                            <p:column headerText="Total de ingresos" style="width: 15%">
+                                <h:outputText value="#{thRetencionesImpuestoRenta.idGastoPersonal.totalIngreso}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Impuesto a la renta anual" style="width: 15%">
+                                <h:outputText value="#{thRetencionesImpuestoRenta.impuestoRentaAnual}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Impuesto a la renta mensual" style="width: 15%" rendered="#{!thRetencionesImpuestoRentaView.btnCargarDatos}">
+                                <h:outputText value="#{thRetencionesImpuestoRenta.impuestoRentaMesual}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Impuesto a la renta mensual" style="width: 15%" rendered="#{thRetencionesImpuestoRentaView.btnCargarDatos}">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{thRetencionesImpuestoRenta.impuestoRentaMesual}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{thRetencionesImpuestoRenta.impuestoRentaMesual}">
+                                            <p:ajax update="thRetencionesImpuestoRentaTable" listener="#{thRetencionesImpuestoRentaView.edit(thRetencionesImpuestoRenta,true)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Quitar" style="width: 10%;text-align: center" rendered="#{thRetencionesImpuestoRentaView.btnCargarDatos}">
+                                <p:commandLink title="Eliminar" actionListener="#{thRetencionesImpuestoRentaView.edit(thRetencionesImpuestoRenta,false)}" 
+                                               update="thRetencionesImpuestoRentaTable" process="@this">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink> 
+                            </p:column>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thRetencionesImpuestoRentaView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thRetencionesImpuestoRentaView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{thRetencionesImpuestoRentaView.saveConfig()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>     
+    </ui:define>
+</ui:composition>

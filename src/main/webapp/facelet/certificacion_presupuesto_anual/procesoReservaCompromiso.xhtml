@@ -1,0 +1,684 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Reserva de Compromiso</ui:define>
+
+    <ui:define name="content">
+
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" style="font: oblique bold 120% cursive; font-size: 25px; text-align: center;">
+
+                <span style="color:#FBC02D; ">Solicitud</span>  <span style="color:blue;">de Reserva</span> <span style="color: red;">de Compromiso</span> 
+
+            </div>
+
+            <h:form prependId="false">
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:commandButton icon="fa fa-plus" style="float: left;" value="Registrar" actionListener="#{reservaCompromisoView.registarrMostrarAndOcultarPaneles()}"  
+                                     update="consultasSol,fmSolicitudReserva,fmglobal,fmglobal2,fmRequisito,butonReservar"/>
+                    <p:commandButton icon="fa fa-search" style="float: left;" value="Consultar" actionListener="#{reservaCompromisoView.consultarMostrarAndOcultarPaneles()}" 
+                                     update="consultasSol,fmSolicitudReserva,fmglobal,fmglobal2,fmRequisito,butonReservar" />
+                </p:panelGrid>
+
+            </h:form>
+
+
+
+            <h:form prependId="false" id="consultasSol">
+                <p:panel rendered="#{reservaCompromisoView.panel1}">
+                    <p:dataTable id="dataSolciitudesReserva" widgetVar="dataSolciitudesReserva" var="item" value="#{reservaCompromisoView.lazyReal}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+
+                        <p:column headerText="SOLICITUD" style="width: 8%;">
+                            <p:outputLabel value="#{reservaCompromisoView.formatoCodigo(item.secuencial)}-#{item.periodo}" />
+
+                        </p:column>
+                        <p:column headerText="DESCRIPCIÓN" style="width: 35%;">
+                            <p:outputLabel value="#{item.descripcion}"/>
+
+                        </p:column>
+
+                        <p:column headerText="UNIDAD REQUIRIENTE" style="width: 35%;">
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="FECHA SOLICITUD" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{item.fechaSolicitud}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="ESTADO" style="width:8%; text-align: center;" >
+                            <p:outputLabel value="#{item.estado.texto}"/>
+                        </p:column>
+
+                        <p:column headerText="ACCIONES" style="width: 12%; text-align: center;">
+                            <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this" update="dataSolciitudesReserva" actionListener="#{reservaCompromisoView.enviarSolicitud(item)}" >
+                                <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+
+                            <p:commandLink  disabled="#{item.estado.codigo=='APRO'?false:true}"  title="EDITAR" process="@this" 
+                                            update="consultasSol,dataSolciitudesReserva,consultasSol,fmSolicitudReserva,fmglobal,fmglobal2,fmRequisito,butonReservar" 
+                                            actionListener="#{reservaCompromisoView.edicionSolicitud(item)}">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+
+                            <p:commandLink  title="VISUALIZAR" process="@this" update="dataSolciitudesReserva" actionListener="#{reservaCompromisoView.visualizarDetalleSolcitud(item)}" >
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}"  title="ELIMINAR" process="@this" update="dataSolciitudesReserva" actionListener="#{reservaCompromisoView.eliminarSolicitudCompleta(item)}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar la Solcitud #{reservaCompromisoView.formatoCodigo(item.secuencial)}-#{item.periodo}?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column> 
+
+
+                    </p:dataTable>
+                </p:panel>
+            </h:form>
+
+
+
+
+
+            <div class="ui-g-12">
+                <h:form id="fmSolicitudReserva" prependId="false">
+                    <p:panel rendered="#{reservaCompromisoView.panel2}">
+                        <p:fieldset legend="Información" id="informacionFielset" style="margin-bottom: 10px">
+                            <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="N° DE SOLICITUD:" style="font-weight: bold;"/>
+                                    <p:inputText readonly="true" id="codigofecha" value="#{reservaCompromisoView.reservaCompromiso.secuencial}" />
+
+                                </p:panelGrid>
+
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="PERÍODO:" style="font-weight: bold;"/>
+                                    <p:inputText id="idPeriodo" value="#{reservaCompromisoView.reservaCompromiso.periodo}" readonly="true">
+
+                                    </p:inputText>
+
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="FECHA SOLICITUD:" style="font-weight: bold;"/>
+                                    <p:calendar value="#{reservaCompromisoView.reservaCompromiso.fechaSolicitud}" locale="es" navigator="true" readonly="true" pattern="yyyy-MM-dd" />
+                                </p:panelGrid>
+
+                                <p:panelGrid  columns="1"  styleClass="form-group ui-panelgrid-blank" layout="grid">
+
+                                    <p:inputTextarea placeholder="Descriocion" id="descripcion" style="border: 1px solid #BDBDBD; border-radius:5px 5px 5px 5px;text-transform: uppercase;width:100%;"  
+                                                     onkeyup="javascript:this.value = this.value.toUpperCase();" rows="5" 
+                                                     value="#{reservaCompromisoView.reservaCompromiso.descripcion}">
+                                    </p:inputTextarea>
+                                </p:panelGrid>
+
+
+                                <p:panelGrid style="text-align: center"  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:commandButton icon="fa fa-flash" style="width: 70%" value="Agregar Detalle: Plan Anual Política Pública" actionListener="#{reservaCompromisoView.accionComponenetes()}"  update="codigofecha,tablaSeleccion,fmglobal2"/>
+                                    <p:commandButton icon="fa fa-flash" style="width: 70%" value="Agregar Detalle: Distributivo y Partidas Directas" actionListener="#{reservaCompromisoView.accionComponentesDistriuvtioPartida()}" update="codigofecha,tablaSeleccion,fmglobal2" />
+
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+
+
+                        </p:fieldset>
+                    </p:panel>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12">
+
+                <p:tabView id="tabladimnamica" prependId="false" >
+                    <p:tab title="Plan Anual Politicas Publicas" titleStyle="border-right: 2px solid #eaeaea">
+                        <h:form id="fmglobal" prependId="false">
+
+                            <p:panel rendered="#{reservaCompromisoView.panel2}">  
+
+                                <!--                                <p:remoteCommand name="onCellEdit" update="tablaSolicitud" />-->
+                                <p:dataTable  paginator="true"  paginatorPosition="bottom" style=" margin: 20px"
+                                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="10,15,20,25" rowIndexVar="inedex"  editable="true" editMode="cell"
+                                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                              id="tablaSolicitud" value="#{reservaCompromisoView.listaGlobalDetalleSolicitudCompromisos}" var="item">
+                                    <f:facet name="header">
+                                        Reserva PAPP  <p:outputLabel value="#{reservaCompromisoView.reservaCompromiso.fechaSolicitud}">    
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </p:outputLabel>
+                                    </f:facet>
+
+                                    <p:ajax event="cellEdit" listener="#{reservaCompromisoView.solicitarReservas(item)}" oncomplete="tablaSolicitud"  /> 
+
+                                    <p:column headerText="PLAN-PROGRAMA-PROYECTO"  style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                    </p:column>
+
+                                    <p:column headerText="ACTIVIDAD OPERATIVA"  style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.actividadOperativa.nombreActividad}" />
+                                    </p:column>
+
+                                    <p:column headerText="PRODUCTO"  style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.descripcion}" />
+                                    </p:column> 
+
+                                    <p:column headerText="PARTIDA" style="width: 10%;text-align: center">
+                                        <h:outputText value="#{item.actividadProducto.codigoPresupuestario}" />
+                                    </p:column> 
+                                    <p:column headerText="ITEM" style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.itemPresupuestario.descripcion}"/>
+                                    </p:column> 
+
+                                    <p:column headerText="FUNCIÓN"  style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.estructuraProgramatica.descripcion}">
+
+                                        </h:outputText>
+                                    </p:column> 
+
+                                    <p:column headerText="MONTO PRESUPUESTADO"  style="width: 10%">
+                                        <h:outputText value="#{item.actividadProducto.monto}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column> 
+
+                                    <p:column headerText="MONTO DISPONIBLE"  style="width: 10%">
+                                        <h:outputText value="#{item.montoDisponible}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column> 
+
+                                    <p:column headerText="COMPROMETIDO" style="width: 10%;">
+                                        <h:outputText value="#{item.montoComprometido}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:column headerText="MONTO SOLICITADO" style="width: 10%;">
+                                        <p:cellEditor>
+                                            <f:facet name="output"><h:outputText value="#{item.montoSolicitado}" style="float: right"> <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/></h:outputText></f:facet>
+                                            <f:facet name="input"><p:inputNumber value="#{item.montoSolicitado}" style="width:96%" >
+                                                </p:inputNumber></f:facet>
+                                        </p:cellEditor>
+                                    </p:column> 
+
+
+
+
+                                    <p:column headerText="ACCIONES"  style="width: 5%;text-align: center">
+                                        <p:commandLink actionListener="#{reservaCompromisoView.abrirDlgo(item)}" title="Monto solicitado" update="fmglobal">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{reservaCompromisoView.eliminadoMemoriaDetalleSOlicitud(index)}" title="Eliminar" update="fmglobal">
+                                            <i class="fa fa-remove" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar este PAPP"  icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+
+                            </p:panel>
+
+                        </h:form>
+
+                    </p:tab>
+
+                    <p:tab title="Plan Distributivo y Partidas Directas" titleStyle="border-right: 2px solid #eaeaea" > 
+
+                        <h:form id="fmglobal2" prependId="false">
+
+                            <p:panel rendered="#{reservaCompromisoView.panel2}">
+
+                                <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 20px"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="10,15,20,25" rowIndexVar="index"
+                                             emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                             id="tablaSolicitud2" value="#{reservaCompromisoView.listaGlobalDetalleSolicitudPartidas}" var="itemData">
+                                    <f:facet name="header">
+                                        Reserva Distributivo y Partidas Directa   
+                                        <p:outputLabel value="#{reservaCompromisoView.reservaCompromiso.fechaSolicitud}">    
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </p:outputLabel>
+                                    </f:facet>
+                                    <p:column headerText="CONCEPTO" style="width: 10%">
+                                        <h:outputText value="Distributivo" />
+                                    </p:column>
+
+                                    <p:column headerText="PARTIDA" style="width: 10%;text-align: center">
+                                        <h:outputText value="#{itemData.presupuesto.partida}" />
+                                    </p:column>
+
+                                    <p:column headerText="ITEM" style="width: 25%">
+                                        <h:outputText value="#{itemData.presupuesto.item.descripcion}" />
+                                    </p:column>
+
+                                    <p:column headerText="FUNCIÓN" style="width: 20%">
+                                        <h:outputText value="#{itemData.presupuesto.estructura.descripcion}" />
+                                    </p:column>
+
+                                    <p:column headerText="MONTO PRESUPUESTADO" style="width: 10%">
+                                        <h:outputText value="#{itemData.presupuesto.valorEgreso}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:column headerText="MONTO DISPONIBLE" style="width: 10%">
+                                        <h:outputText value="#{itemData.montoDisponible}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column> 
+                                    <p:column headerText="COMPROMETIDO" style="width: 10%;">
+                                        <h:outputText value="#{itemData.montoComprometido}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+
+                                    <p:column headerText="MONTO SOLICITADO" style="width: 10%;">
+                                        <h:outputText value="#{itemData.montoSolicitado}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column> 
+
+
+                                    <p:column headerText="ACCIONES"  style="width: 5%;;text-align: center">
+                                        <p:commandLink actionListener="#{reservaCompromisoView.abrirDlgoPartidas(itemData)}" title="Monto solicitado" update="fmglobal2">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{reservaCompromisoView.eliminarPArtidasDirectasAndDistributivo(itemData)}" title="ELIMINAR" update="fmglobal2">
+                                            <i class="fa fa-remove" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar esta Partida"  icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+
+                                </p:confirmDialog>
+
+
+                            </p:panel>
+                        </h:form>
+
+                    </p:tab>
+
+                    <p:tab title="Requisitos" titleStyle="border-right: 2px solid #eaeaea">
+                        <h:form id="fmRequisito" prependId="false">
+
+                            <p:panel rendered="#{reservaCompromisoView.panel2}">
+                                <center>
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:outputLabel for="@next" value="ELEGIR PROCEDIMIENTO:" style="width: 100%;font-weight: bold" />
+                                        <p:selectOneMenu id="procedimientos" value="#{reservaCompromisoView.procedimientoSeleccionado}" converter="#{utilConverter}" 
+                                                         panelStyle="width:15%" style="width: 300px;">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                            <f:selectItems  value="#{reservaCompromisoView.procedimientoList}" var="t" itemLabel="#{t.nombre}" itemValue="#{t}"/>
+                                            <p:ajax listener="#{reservaCompromisoView.cargarRequisitos()}" update="requisitosTabla"/>
+                                        </p:selectOneMenu>             
+                                    </p:panelGrid>
+                                </center>
+
+                                <p:dataTable id="requisitosTabla" widgetVar="requisitosTabla" var="requisito" 
+                                             value="#{reservaCompromisoView.procedimientoRequisitoList}"
+                                             rows="15" style="margin: 20px" lazy="true"  
+                                             emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+
+                                    <f:facet name="header">
+                                        LISTADO DE REQUISITOS
+                                    </f:facet>
+                                    <p:column headerText="NOMBRE" style="width:30%;">
+                                        <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                        <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                        <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                    </p:column>
+                                    <p:column headerText="ACCIONES" style="width:10%;text-align: center">
+                                        <p:commandLink title="CARGAR REQUISITO" actionListener="#{reservaCompromisoView.requisitoSeleccionado(requisito)}" >
+                                            <i class="fa fa-cloud-upload" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="VER REQUISITO" actionListener="#{reservaCompromisoView.vizualizarPDF(requisito)}" update="viewPDF" >
+                                            <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="QUITAR REQUISITO" actionListener="#{reservaCompromisoView.eliminarPDF(requisito)}">
+                                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable> 
+
+                            </p:panel>
+
+                        </h:form>
+                        <h:form id="butonReservar" prependId="false">
+                            <p:panel rendered="#{reservaCompromisoView.panel2}">
+                                <div style="width: auto; margin-top:2% ;text-align: center; font-size: 20px;">
+                                    <p:commandButton rendered="#{reservaCompromisoView.mostrarButton}" process="fmSolicitudReserva"  icon="fa fa-codepen" value="REGISTRAR  RESERVAR" actionListener="#{reservaCompromisoView.savesolicitud()}" style="width: auto;" 
+                                                     update="fmSolicitudReserva,fmglobal,fmglobal2,dataSolciitudesReserva,fmRequisito"/>
+                                    <p:commandButton rendered="#{reservaCompromisoView.ocultarbutton}"  icon="fa fa-codepen" value="  EDITAR RESERVA" actionListener="#{reservaCompromisoView.editarReservaCompromiso()}" 
+                                                     process="fmSolicitudReserva" style="width: auto;" 
+                                                     update="fmSolicitudReserva,fmglobal,fmglobal2,dataSolciitudesReserva,fmRequisito"/>
+                                    <p:commandButton  icon="fa fa-remove" value="CANCELAR" style="width: auto;background: red;" actionListener="#{reservaCompromisoView.resetSolicitud()}" 
+                                                      update="fmSolicitudReserva,fmglobal,fmglobal2,dataSolciitudesReserva,fmRequisito"/>
+                                </div>
+                            </p:panel>
+
+                        </h:form>
+                    </p:tab>
+
+                </p:tabView>
+            </div>
+        </div>
+
+        <p:dialog id="requisitoDialog" header="Adjuntar archivos de requitos" widgetVar="requisitoDialog" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <!--            <p:ajax event="close" listener="# {pruebaView.handleCloseForm}" update="requisitoDialog" />-->
+            <h:form id="requisitoDialogForm" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:fileUpload fileUploadListener="#{reservaCompromisoView.handleFileUpload}"
+                                          mode="advanced" uploadLabel="Cargar"
+                                          invalidFileMessage="Solo acepta archivos PDF"
+                                          dragDropSupport="false" label="Seleccionar" skinSimple="true"
+                                          update="messages1"  fileLimit="1"
+                                          fileLimitMessage="Solo puede subir 1"
+                                          cancelLabel="Eliminar"/>
+                            <p:growl id="messages1" showDetail="true" />
+                        </div>
+                    </div>
+                </div>
+            </h:form> 
+        </p:dialog>
+
+        <p:dialog id="viewPDF" widgetVar="viewPDF" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false" width="80%"  header="RUTA DEL ARCHIVO: #{reservaCompromisoView.fileName}">
+            <!--            <p:ajax event="close" listener="# {pruebaView.handleCloseForm}" update="requisitoDialog" />-->
+            <p:media value="#{reservaCompromisoView.fileName}" width="100%" height="600px" player="pdf">
+            </p:media>
+        </p:dialog>
+
+        <p:dialog id="Dlogo"  header="Ingrese el Monto Solicitado" widgetVar="Dlogo" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDlogo"  prependId="false">
+
+                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:inputNumber value="#{reservaCompromisoView.detalleSolicitud.montoSolicitado}" decimalPlaces="2" />
+                </p:panelGrid>
+                <div style="text-align: center;">
+                    <p:commandButton  value="Añadir" actionListener="#{reservaCompromisoView.solicitarReservas()}"
+                                      icon="ui-icon-plus"  update="fmglobal"
+                                      styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </div>                                                  
+
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlgoVisualizacion"  header="Detalle Solcilitud" position="center"
+                  widgetVar="DlgoVisualizacion" modal="true" width="70%" showEffect="fade" hideEffect="fade" resizable="false">
+            <p:ajax event="close" listener="#{reservaCompromisoView.handleCloseForm}" />
+            <h:form id="formVisualizacion"  prependId="false">
+
+
+                <div class="ui-g-12">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="Nº DE SOLICITUD:" style="font-weight: bold;" />
+                            <p:outputLabel value= "#{reservaCompromisoView.formatoCodigo(reservaCompromisoView.reservaCompromiso.secuencial)}-#{reservaCompromisoView.reservaCompromiso.periodo}" style="margin-right: 3%;"/>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="ESTADO:" style="font-weight: bold;"/>
+                            <p:outputLabel value= "#{reservaCompromisoView.reservaCompromiso.estado.texto}" style="margin-right: 3%;text-transform: uppercase"/>
+                        </p:panelGrid>   
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel style="font-weight: bold;" value="FECHA SOLICITUD:   "/>
+                            <p:outputLabel value="#{reservaCompromisoView.reservaCompromiso.fechaSolicitud}">
+                                <f:convertDateTime pattern="yyyy/mm/dd"/>
+                            </p:outputLabel>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="DESCRIPCIÓN:" style="font-weight: bold;" />
+                            <p:outputLabel value="#{reservaCompromisoView.reservaCompromiso.descripcion}"/>
+                        </p:panelGrid>
+                    </p:panelGrid>  
+
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:outputLabel value="OBSERVACION: " style="font-weight: bold;" rendered="#{reservaCompromisoView.reservaCompromiso.comentario.toString().length()>0?true:false}"/>
+                        <p:outputLabel value="#{reservaCompromisoView.reservaCompromiso.comentario}" rendered="#{reservaCompromisoView.reservaCompromiso.comentario.toString().length()>0?true:false}"/>
+                    </p:panelGrid>        
+                </div>
+
+
+                <div class="ui-g-12">
+
+                    <p:dataTable  paginator="true"  paginatorPosition="bottom" 
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="10,15,20,25" scrollable="true" scrollHeight="300"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="datosEnDetalle" value="#{reservaCompromisoView.visualizacionSolicitud}" var="item">
+
+                        <p:column headerText="CONCEPTO" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion==null?'Distributivo':item.actividadProducto.descripcion}"/>
+                        </p:column>
+
+                        <p:column headerText="PARTIDA" style="width: 10%;text-align: center">
+                            <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.presupuesto.partida}"/>
+                        </p:column>
+                        <p:column headerText="ITEM" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.itemPresupuestario.descripcion} #{item.presupuesto.item.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="FUNCIÓN" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.estructuraProgramatica.descripcion} #{item.presupuesto.estructura.descripcion}" />
+                        </p:column>
+
+                        <p:column headerText="MONTO PRESUPUESTADO" style="width: 10%" >
+                            <p:outputLabel   value="#{item.actividadProducto.monto}" style="float: right" >
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                            <p:outputLabel   value="#{item.presupuesto.valorEgreso}" style="float: right" >
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="MONTO DISPONIBLE" style="width:8%">
+                            <p:outputLabel value="#{item.montoDisponible}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC" />
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="MONTO SOLICITADO" style="width: 8%">
+                            <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>                                            
+                    </p:dataTable>    
+
+                </div>
+
+                <div class="ui-g-12">
+                    <p:dataTable id="requisitosTablaView" widgetVar="requisitosTablaView" var="requisito" 
+                                 value="#{reservaCompromisoView.procedimientoRequisitoList}"
+                                 rows="10" style="margin: 20px" lazy="true"  
+                                 emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+
+                        <f:facet name="header">
+                            LISTADO DE REQUISITOS
+                        </f:facet>
+                        <p:column headerText="PROCEDIMIENTO" groupRow="true">
+                            <h:outputText value="#{requisito.idProcedimiento.nombre}"/>
+                        </p:column>
+                        <p:column headerText="REQUISITO" style="width:30%;">
+                            <h:outputText value="#{requisito.idRequisito.nombre}" />
+                        </p:column>
+                        <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                            <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                        </p:column>
+                        <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                            <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="ACCIONES" style="width:10%;text-align: center">
+                            <p:commandLink title="VER REQUISITO" actionListener="#{reservaCompromisoView.vizualizarPDF(requisito)}" update="viewPDF" >
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+
+
+            </h:form>
+        </p:dialog>
+
+
+
+
+        <p:dialog id="DlEdicionPartida"  header="Ingresar el Monto a Solicitar" position="center"
+                  widgetVar="DlEdicionPartida" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formEdicionPartida"  prependId="false">
+
+                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:inputNumber value="#{reservaCompromisoView.detalleSolicitud.montoSolicitado}" decimalPlaces="2" />
+                </p:panelGrid>
+                <div style="text-align: center;">
+                    <p:commandButton  value="Añadir" actionListener="#{reservaCompromisoView.solicitarReservasPartidas()}"
+                                      icon="ui-icon-plus"  update="fmglobal2,formEdicionPartida"
+                                      styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </div>                                                  
+
+
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog id="Dlogo2" width="80%"  header="Planes Anuales Programa Proyecto de #{reservaCompromisoView.reservaCompromiso.periodo}" widgetVar="Dlogo2" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDlogo2"  prependId="false">
+
+                <div align="right">
+                    <p:commandButton  value="REGRESAR" 
+                                      icon="fa fa-sign-in"  onclick="PF('Dlogo2').hide()"  update="formDlogo2"
+                                      styleClass="Fs16" style="  background: red;  width: auto; margin-right: 20px" />
+                </div>
+
+
+                <p:dataTable  paginator="true"  paginatorPosition="bottom" style="margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true" scrollHeight="300"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="tablaSeleccion" value="#{reservaCompromisoView.listaProductos}" var="item2">
+
+                    <p:column headerText="PLAN-PROGRAMA-PROYECTO" style="width: 10%">
+                        <h:outputText value="#{item2.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                    </p:column>
+
+                    <p:column headerText="ACTIVIDAD OPERATIVA" style="width: 10%" >
+                        <h:outputText value="#{item2.actividadOperativa.nombreActividad}" />
+                    </p:column> 
+
+
+                    <p:column headerText="PRODUCTO" style="width: 10%">
+                        <h:outputText value="#{item2.descripcion}" />
+                    </p:column> 
+
+                    <p:column headerText="PARTIDA" style="width: 7%;text-align: center">
+                        <h:outputText value="#{item2.codigoPresupuestario}" />
+                    </p:column> 
+
+                    <p:column headerText="ITEM" style="width: 10%">
+                        <h:outputText value="#{item2.itemPresupuestario.descripcion}" />
+                    </p:column> 
+
+                    <p:column headerText="FUNCIÓN" style="width: 8%">
+                        <h:outputText value="#{item2.estructuraProgramatica.descripcion}" />
+                    </p:column> 
+
+
+                    <p:column headerText="MONTO" style="width: 5%">
+                        <h:outputText value="#{item2.monto}" style="float: right">
+                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column> 
+
+
+
+                    <p:column headerText="ACCIONES" style="width: 4%;text-align: center">
+                        <p:commandLink  title="SELECCIONAR" update="tablaSolicitud" process="@this" actionListener="#{reservaCompromisoView.añadiendoFormato(item2)}">
+                            <i class="fa fa-chevron-circle-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="Dlogo3" width="85%"  header="Partidas Directas y Distributivo #{reservaCompromisoView.reservaCompromiso.periodo}" 
+                  widgetVar="Dlogo3" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="formDlogo3"  prependId="false">
+
+                <div align="right">
+                    <p:commandButton  value="REGRESAR" 
+                                      icon="fa fa-sign-in"  onclick="PF('Dlogo3').hide()"  update="formDlogo2"
+                                      styleClass="Fs16" style="  background: red;  width: auto; margin-right: 20px" />
+                </div>
+
+                <p:dataTable  paginator="true"  paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true" scrollHeight="300"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                              value="#{reservaCompromisoView.listaPresupuesto}" var="item3">
+
+
+
+                    <p:column headerText="CONCEPTO" style="width: 5%">
+                        <h:outputText value="Distributivo" />
+                    </p:column>
+
+                    <p:column headerText="PARTIDA" style="width: 4%">
+                        <h:outputText value="#{item3.partida}" />
+                    </p:column> 
+
+                    <p:column headerText="ITEM" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item3.item.descripcion}" />
+                    </p:column>
+
+                    <p:column headerText="FUNCIÓN" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item3.estructura.descripcion}" />
+                    </p:column>
+
+                    <p:column headerText="MONTO" style="width: 3%;">
+                        <h:outputText value="#{item3.valorEgreso}" style="float: right">
+                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column> 
+
+
+                    <p:column headerText="Acciones" style="width: 2%">
+                        <p:commandLink  title="SELECCIONAR" update="fmglobal2" process="@this" actionListener="#{reservaCompromisoView.seleccionPresupuestoDPD(item3)}">
+                            <i class="fa fa-chevron-circle-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,489 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Mantenimiento de Cliente 
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO DE CLIENTES" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block">
+                        <p:commandButton value="Adicionar Cliente" class="nuevo"
+                                         icon="ui-icon-plus" actionListener="#{clienteView.form(null)}"
+                                         styleClass="Fs16" style="width: 150px;"/>
+                        <p:commandButton value="Limpiar filtros"  process="@this" 
+                                         icon="ui-icon-refresh" onclick="PF('clientes').clearFilters()" update="clientes"
+                                         styleClass="Fs16" style="width: 150px;"/>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="clientes" trigger="mostrarColumnas" />
+                        <p:dataTable  id="clientes" widgetVar="clientes" var="cliente" 
+                                      value="#{clienteView.clienteLazyModel}" paginator="true" rows="30" style="width: 100%;margin-top: 15px" 
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="30,40,50,100" lazy="true" selectionMode="single" rowKey="#{cliente.id}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado"
+                                      rowIndexVar="num">
+                            <p:column headerText="N°" style="width: 3%;text-align: center">
+                                <h:outputText value="#{num+1}" />
+                            </p:column>
+                            <p:column filterBy="#{cliente.tipoIdentificacion}" headerText="Tipo"  style="width: 7%;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('clientes').filter()" converter="#{utilConverter}" style="width: 100%">
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{clienteView.tiposDeIdentificacion}" var="n" itemLabel="#{n.texto}" itemValue="#{n}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{cliente.tipoIdentificacion.texto}" />
+                            </p:column>
+                            <p:column headerText="Identificación" style="width: 10%;" filterBy="#{cliente.identificacionCompleta}" filterMatchMode="contains">
+                                <h:outputText value="#{cliente.identificacionCompleta}" />
+                            </p:column>
+                            <p:column headerText="Nombres/Nombre Comercial" style="width: 15%;" filterBy="#{cliente.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{cliente.nombre}" />
+                            </p:column>
+                            <p:column headerText="Apellidos/Razón Social" style="width: 15%;" filterBy="#{cliente.apellido}" filterMatchMode="contains">
+                                <h:outputText value="#{cliente.apellido}" />
+                            </p:column>
+                            <p:column headerText="Teléfono" style="width: 6%;" filterMatchMode="contains">
+                                <h:outputText value="#{cliente.telefono !=null ? cliente.telefono:cliente.celular}" />
+                            </p:column>
+                            <p:column headerText="Dirección" style="width: 23%;" >
+                                <h:outputText value="#{cliente.direccion}" />
+                            </p:column>
+                            <p:column headerText="E-mail" style="width: 14%;" >
+                                <h:outputText value="#{cliente.email}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 7%">
+                                <p:commandLink actionListener="#{clienteView.form(cliente)}" title="Editar Cliente" process="@this" class="editar">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{clienteView.ver(cliente)}" title="Ver Cliente" process="@this" class="editar">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar" actionListener="#{clienteView.delete(cliente)}" process="@this" class="eliminar">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el cliente #{cliente.identificacion} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="clienteDialog" header="Formulario Clientes" widgetVar="clienteDialog" width="50%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <p:ajax event="close" update="clienteDialog" listener="#{clienteView.handleClose}" />
+            <h:form prependId="false">
+                <p:outputPanel id="formCliente" 
+                               style="width: 100%" >
+                    <p:panelGrid  columns="3" 
+                                  layout="grid" 
+                                  styleClass="ui-panelgrid-blank form-group" 
+                                  id="gridMain">
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid" >
+                            <p:outputLabel for="@next" 
+                                           value="Tipo de identificación:" 
+                                           style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoIdentificacion" 
+                                             value="#{clienteView.cliente.tipoIdentificacion}" 
+                                             converter="#{utilConverter}" 
+                                             filter="true" 
+                                             required="true"
+                                             filterMatchMode="startsWith" 
+                                             style="width: 100%" 
+                                             disabled="#{clienteView.noEditar}">
+                                <f:selectItem itemLabel="Seleccione" 
+                                              itemValue="#{null}" 
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{clienteView.tiposDeIdentificacion}" 
+                                               var="cla" 
+                                               itemLabel="#{cla.texto}" 
+                                               itemValue="#{cla}" 
+                                               itemLabelEscaped="false"/>
+                                <p:ajax update="gridMain,gridAdcionales" 
+                                        listener="#{clienteView.actualizarFormulario()}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel for="@next" 
+                                           value="#{clienteView.tipo==1?'RUC/RISE:':'No. Identificación:'}" 
+                                           style="font-weight: bold"/>
+                            <div class="ui-inputgroup">
+                                <p:inputText id="identificacionCC_1" 
+                                             class="panelInput" 
+                                             style="width: 100%" 
+                                             maxlength="13" 
+                                             readonly ="#{clienteView.noEditar}"
+                                             required="true"
+                                             value="#{clienteView.cliente.identificacion}" 
+                                             rendered="#{clienteView.tipo == 1 ? true:false}">
+                                    <p:keyFilter regEx="/[\d]/"
+                                                 preventPaste="false"/>
+                                </p:inputText>    
+                                <p:commandButton title="Buscar" 
+                                                 icon="fa fa-search" 
+                                                 rendered="#{clienteView.tipo == 1 ? true:false}"
+                                                 id="btnBuscarCliente_1" 
+                                                 disabled="#{clienteView.noEditar}"
+                                                 actionListener="#{clienteView.buscarCliente(true)}"
+                                                 process="identificacionCC_1,tipoIdentificacion" styleClass="green-button button-group"
+                                                 update="gridMain,gridAdcionales">
+                                </p:commandButton>
+                            </div>
+
+                            <div class="ui-inputgroup">
+                                <p:inputText id="identificacionCC_2" 
+                                             class="panelInput" 
+                                             style="width: 100%"
+                                             maxlength="10" 
+                                             required="true"
+                                             readonly="#{clienteView.noEditar}"
+                                             value="#{clienteView.cliente.identificacion}" 
+                                             rendered="#{clienteView.tipo == 2 ? true:false}" >
+                                    <p:keyFilter regEx="/[\d]/" 
+                                                 preventPaste="false"/>
+                                </p:inputText>
+                                <p:commandButton title="Buscar" 
+                                                 icon="fa fa-search" 
+                                                 id="btnBuscarCliente_2" 
+                                                 disabled="#{clienteView.noEditar}"
+                                                 rendered="#{clienteView.tipo == 2 ? true:false}"
+                                                 actionListener="#{clienteView.buscarCliente(false)}"
+                                                 process="identificacionCC_2,tipoIdentificacion" styleClass="green-button button-group"
+                                                 update="gridMain,gridAdcionales">
+                                </p:commandButton>
+                            </div>
+
+                            <p:inputText id="identificacionCC_3" 
+                                         class="panelInput" 
+                                         style="width: 100%"
+                                         maxlength="250"
+                                         required="true"
+                                         readonly="#{clienteView.noEditar}"
+                                         value="#{clienteView.cliente.identificacion}" 
+                                         rendered="#{clienteView.tipo == 3 ? true:false}" >
+                            </p:inputText>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel for="@next" 
+                                           value="#{clienteView.tipo==1?'Razón Social:':'Nombres:'}" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="nombres" 
+                                         style="width: 100%" 
+                                         required="true"
+                                         onkeyup="toUpperCase(this)"
+                                         value="#{clienteView.cliente.nombre}"/> 
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel for="@next" 
+                                           value="#{clienteView.tipo==1?'Nombre Comercial:':'Apelidos:'}" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="apellidos" 
+                                         style="width: 100%" 
+                                         required="true"
+                                         onkeyup="toUpperCase(this)" 
+                                         maxlength="#{clienteView.tipo==1?30:200}"
+                                         value="#{clienteView.cliente.apellido}"/> 
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel for="@next" 
+                                           value="#{clienteView.tipo==1?'Fecha de Constitución:':'Fecha de Nacimiento:'}" 
+                                           style="font-weight: bold"/>
+                            <br/>
+                            <p:calendar id="fechaNacimientoContitucion" 
+                                        pattern="dd/MM/yyyy" 
+                                        navigator="true" 
+                                        yearRange="c-100:c+100" 
+                                        locale="es"
+                                        value="#{clienteView.cliente.fechaNacimiento}" 
+                                        style="width: 100%">
+                            </p:calendar>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="grid" rendered="#{clienteView.tipo == 1 ? false:true}"
+                                      styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel for="@next" 
+                                           value="Estado Civil" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="estadoCivil" readonly="true"
+                                         style="width: 100%" 
+                                         value="#{clienteView.cliente.estadoCivil}"/> 
+                        </h:panelGroup>
+                        
+                        <h:panelGroup layout="grid" 
+                                      styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel for="@next" 
+                                           value="E-mail:" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="email" 
+                                         style="width: 100%" 
+                                         value="#{clienteView.cliente.email}"/> 
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="grid"
+                                      styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel for="@next" 
+                                           value="Dirección:" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="direccion" 
+                                         required="true"
+                                         style="width: 100%;" 
+                                         onkeyup="toUpperCase(this)" 
+                                         value="#{clienteView.cliente.direccion}"/> 
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel  for="@next" 
+                                            value="Provincia:" 
+                                            style="font-weight: bold"/>
+                            <p:selectOneMenu id="provincia" 
+                                             value="#{clienteView.provinciaSelecionada}" 
+                                             converter="#{utilConverter}"
+                                             filter="true" 
+                                             required="true"
+                                             filterMatchMode="startsWith" 
+                                             style="width: 100%" 
+                                             panelStyle="width:125px">
+                                <f:selectItem itemLabel="Seleccionar" 
+                                              itemValue="#{null}" />
+                                <f:selectItems value="#{clienteView.provincias}" 
+                                               var="provincia" 
+                                               itemLabel="#{provincia.provincia}" 
+                                               itemValue="#{provincia}" />
+                                <p:ajax update="canton" 
+                                        listener="#{clienteView.actualizarCantones()}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>    
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid">
+                            <p:outputLabel  for="@next" 
+                                            value="Cantón:" 
+                                            style="font-weight: bold"/>
+                            <p:selectOneMenu id="canton" 
+                                             value="#{clienteView.cliente.canton}" converter="#{utilConverter}"
+                                             filter="true" 
+                                             required="true"
+                                             filterMatchMode="startsWith"
+                                             style="width: 100%;"
+                                             panelStyle="width:125px">
+                                <f:selectItem itemLabel="Seleccionar" 
+                                              itemValue="#{null}" />
+                                <f:selectItems value="#{clienteView.cantones}" 
+                                               var="canton" 
+                                               itemLabel="#{canton.canton}" 
+                                               itemValue="#{canton}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>  
+
+                        <h:panelGroup layout="grid" 
+                                      styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel for="@next" 
+                                           value="Teléfono:" 
+                                           style="font-weight: bold"/>
+                            <p:inputMask id="telefono" 
+                                         mask="(99)999-9999" 
+                                         placeholder="(99)999-9999" 
+                                         style="width: 100%"
+                                         value="#{clienteView.cliente.telefono}"/>
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="grid" 
+                                      styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel for="@next" 
+                                           value="Celular:" 
+                                           style="font-weight: bold"/>
+                            <p:inputMask id="celular" 
+                                         mask="099999-9999" 
+                                         placeholder="099999-9999" 
+                                         style="width: 100%"
+                                         value="#{clienteView.cliente.celular}"/>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid" rendered="#{clienteView.tipo == 1 ? false:true}">
+                            <p:outputLabel for="@next"
+                                           value="Género:" 
+                                           style="font-weight: bold"/>
+                            <p:selectOneMenu id="genero" 
+                                             value="#{clienteView.cliente.genero}" 
+                                             converter="#{utilConverter}" 
+                                             style="width: 100%"
+                                             filter="true" 
+                                             filterMatchMode="startsWith">
+                                <f:selectItem itemLabel="Seleccione" 
+                                              itemValue="#{null}" 
+                                              noSelectionOption="true" />
+                                <f:selectItems value="#{clienteView.tiposDeGenero}" 
+                                               var="cla" 
+                                               itemLabel="#{cla.texto}" 
+                                               itemValue="#{cla}" 
+                                               itemLabelEscaped="false"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="3" 
+                                 styleClass="form-group ui-panelgrid-blank"
+                                 layout="grid"
+                                 id="gridAdcionales">
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid" 
+                                      rendered="#{clienteView.tipo == 1 ? false:true}">
+                            <p:outputLabel for="@next" 
+                                           value="¿Tiene Enfermedad Catastrófica?" 
+                                           style="font-weight: bold"/>
+                            <p:selectBooleanButton id="enfermedadCatastro"  
+                                                   value="#{clienteView.cliente.enfermedadCatastrofica}" 
+                                                   style="width: 50%"
+                                                   onLabel="Si" 
+                                                   offLabel="No" 
+                                                   offIcon="fa fa-times" 
+                                                   onIcon="fa fa-check">
+                            </p:selectBooleanButton>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" 
+                                      layout="grid" 
+                                      rendered="#{clienteView.tipo == 1 ? false:true}">
+                            <p:outputLabel for="@next" 
+                                           value="¿Es discapacitado(a)?" 
+                                           style="font-weight: bold"/>
+                            <p:selectBooleanButton id="discapacidad"  
+                                                   value="#{clienteView.cliente.discapacidad}" 
+                                                   style="width: 50%"
+                                                   onLabel="Si" 
+                                                   offLabel="No" 
+                                                   offIcon="fa fa-times" 
+                                                   onIcon="fa fa-check">
+                                <p:ajax update="gridAdcionales"/>
+                            </p:selectBooleanButton>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank"
+                                      layout="grid" 
+                                      id="gridNumconadis" 
+                                      rendered="#{clienteView.tipo==1?false:clienteView.cliente.discapacidad}">
+                            <p:outputLabel for="@next" 
+                                           value="N° del carnet CONADIS:" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="numconadis"  
+                                         maxlength="10" 
+                                         value="#{clienteView.cliente.numConadis}" 
+                                         style="width: 100%"
+                                         required="#{clienteView.cliente.discapacidad}">
+                                <p:keyFilter regEx="/[\d]/"/>
+                            </p:inputText>
+                        </h:panelGroup>
+
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank"
+                                      id="panelGridPorcentaje"
+                                      rendered="#{clienteView.tipo==1?false:clienteView.cliente.discapacidad}">
+                            <p:outputLabel for="@next" 
+                                           value="Porcentaje de Discapacidad" 
+                                           style="font-weight: bold"/>
+                            <p:inputText id="porcentajeDiscapacitado" 
+                                         style="width: 100%"
+                                         value="#{clienteView.cliente.porcentajeDiscapacidad}" 
+                                         required="#{clienteView.discapacitado}"
+                                         readonly="#{!clienteView.discapacitado}"/>
+                            <p:slider for="porcentajeDiscapacitado" 
+                                      step="1" 
+                                      maxValue="100" />
+                        </h:panelGroup >
+
+                    </p:panelGrid>
+
+                    <center>
+                        <p:commandButton value="Guardar" 
+                                         id="guardar" 
+                                         update="formCliente"
+                                         icon="ui-icon-save" 
+                                         style="margin: 5px"
+                                         actionListener="#{clienteView.save()}"
+                                         styleClass="Fs16"/>
+
+                        <p:commandButton value="Cancelar" 
+                                         id="cancelar" 
+                                         process="@this"
+                                         style="margin: 5px"
+                                         icon="fa fa-remove" 
+                                         actionListener="#{clienteView.cancelar()}"
+                                         styleClass="red-button"/>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="clienteDialogView" header="Vista de Cliente" widgetVar="clienteDialogView" width="50%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <p:ajax event="close" update="clienteDialogView" listener="#{clienteView.handleClose}" />
+            <h:form prependId="false">
+                <p:outputPanel id="formClienteView" style="width: 100%" >
+                    <p:panelGrid  columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridMainView">
+                        <comp:text label="Tipo de identificación:" value="#{clienteView.cliente.tipoIdentificacion.texto}" readonly="true" />
+                        <comp:text label="N° de identificación:" value="#{clienteView.cliente.identificacion}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <comp:text label="Nombres:" value="#{clienteView.cliente.nombre}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <comp:text label="Apellidos:" value="#{clienteView.cliente.apellido}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <comp:text label="Fecha de Nacimiento:" value="#{clienteView.cliente.fechaNacimiento}" readonly="true" typeInput="date" rendered="#{!clienteView.ocultar}" />
+                        <comp:text label="Estado Civil" value="#{clienteView.cliente.estadoCivil}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <comp:text label="RUC/RISE:" value="#{clienteView.cliente.identificacionCompleta}" readonly="true" rendered="#{clienteView.ocultar}" />
+                        <comp:text label="Razón Social:" value="#{clienteView.cliente.nombre}" readonly="true" rendered="#{clienteView.ocultar}" />
+                        <comp:text label="Nombre Comercial:" value="#{clienteView.cliente.apellido}" readonly="true"  rendered="#{clienteView.ocultar}" />
+                        <comp:text label="Fecha de Constitución:" value="#{clienteView.cliente.fechaNacimiento}" readonly="true" typeInput="date" rendered="#{clienteView.ocultar}" />
+                        <comp:text label="E-mail:" value="#{clienteView.cliente.email}" readonly="true"  />
+                        <comp:text label="Dirección:" value="#{clienteView.cliente.direccion}" readonly="true"  />
+                        <comp:text label="Provincia:" value="#{clienteView.provinciaSelecionada.descripcion}" readonly="true" />
+                        <comp:text label="Cantón:" value="#{clienteView.cliente.canton.canton}" readonly="true" />
+                        <comp:text label="Teléfono:" value="#{clienteView.cliente.telefono}" readonly="true" />
+                        <comp:text label="Celular" value="#{clienteView.cliente.celular}" readonly="true" />
+                        <comp:text label="Género:" value="#{clienteView.cliente.genero.texto}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{!clienteView.ocultar}">
+                            <p:outputLabel  for="@next" value="¿Tiene Enfermedad Catastrófica?" style="font-weight: bold"/>
+                            <p:selectBooleanButton  id="enfermedadCatastro1"  value="#{clienteView.cliente.enfermedadCatastrofica}" style="width: 50%"
+                                                    onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check" disabled="true"  />
+                        </h:panelGroup>
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{!clienteView.ocultar}">
+                            <p:outputLabel  for="@next" value="¿Es discapacitado(a)?" style="font-weight: bold"/>
+                            <p:selectBooleanButton  id="discapacidad1"  value="#{clienteView.cliente.discapacidad}" style="width: 50%"
+                                                    onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check" disabled="true" />
+                        </h:panelGroup>
+                        <comp:text label="N° del carnet CONADIS:" value="#{clienteView.cliente.numConadis}" readonly="true" rendered="#{!clienteView.ocultar}" />
+                        <h:panelGroup style="margin-bottom: 10px" id="panelGridPorcentaje1" rendered="#{!clienteView.ocultar}">
+                            <p:outputLabel for="@next" value="Porcentaje de Discapacidad" style="font-weight: bold"/>
+                            <p:inputText id="porcentajeDiscapacitado1" value="#{clienteView.cliente.porcentajeDiscapacidad}" readonly="true" style="width: 100%" />
+                            <p:slider for="porcentajeDiscapacitado" step="1" maxValue="100" rendered="false"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

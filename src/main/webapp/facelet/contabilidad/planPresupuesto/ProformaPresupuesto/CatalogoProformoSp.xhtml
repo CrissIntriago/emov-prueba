@@ -1,0 +1,287 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Aprobación de Proformas</ui:define>
+    <ui:param name="tittle" value="Aprobación de Proforma"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <h:panelGroup id="dataTable" layout="block">    
+                                <p:commandButton value="Limpiar Filtros" style="width: auto;margin-bottom: 1%;" icon="fa fa-eraser"
+                                                 onclick="PF('catalogoProformaPresupuestoTable').clearFilters()" 
+                                                 actionListener="#{arpoabcionProformaspView.clearAllFilters}"
+                                                 update="catalogoProformaPresupuestoTable">
+                                    <p:resetInput target="catalogoProformaPresupuestoTable" />
+                                </p:commandButton>
+
+                                <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="float: right; width: auto; margin-bottom: 15px;" 
+                                                 icon="fa fa-align-justify" />
+                                <p:columnToggler datasource="catalogoProformaPresupuestoTable" trigger="mostrarColumnas" />
+                                <p:remoteCommand name="updateCountry" update="catalogoProformaPresupuestoTable" />
+                                <p:dataTable id="catalogoProformaPresupuestoTable" widgetVar="catalogoProformaPresupuestoTable" var="catalogoProformaPresupuesto" 
+                                             value="#{arpoabcionProformaspView.catalogoProformaPresupuestoLazyModel}" paginator="true" rows="15" 
+                                             style="width: 100%; text-align: center" paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="10,15,20,30,40,50,100" editable="true" editMode="cell" lazy="true" rowKey="#{catalogoProformaPresupuesto.id}"
+                                             emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                                    <f:facet name="header">
+                                        Catalogo de Proformas de Presupuesto 
+                                    </f:facet>
+                                    <p:column  headerText="Descripción" style="width: 20%; text-align: left">
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.descripcion}" />
+                                    </p:column>
+                                    <p:column  headerText="Tipo de presupuesto" style="width: 10%" filterBy="#{catalogoProformaPresupuesto.tipoFlujo}">
+                                        <f:facet name="filter">
+                                            <p:selectOneMenu onchange="PF('catalogoProformaPresupuestoTable').filter()" styleClass="custom-filter">                                        
+                                                <f:converter converterId="javax.faces.Boolean" />
+                                                <f:selectItem itemLabel="TODAS" itemValue="" noSelectionOption="true" />
+                                                <f:selectItem itemLabel="INGRESO" itemValue="#{true}" />
+                                                <f:selectItem itemLabel="EGRESO" itemValue="#{false}" />
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.tipoFlujo  == true ? 'INGRESO':'EGRESO'}" />
+                                    </p:column>
+                                    <p:column  headerText="Período" style="width: 10%;" filterBy="#{catalogoProformaPresupuesto.periodo}" filterMatchMode="contains">
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.periodo}" />
+                                    </p:column>
+                                    <p:column  headerText="Presupuesto Inicial" style="width: 10%">
+                                        <h:outputText value="#{catalogoProformaPresupuesto.total}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column  headerText="Estado de Aprobación" style="width: 10%" filterBy="#{catalogoProformaPresupuesto.aprobado}">
+                                        <f:facet name="filter">
+                                            <p:selectOneMenu onchange="PF('catalogoProformaPresupuestoTable').filter()" styleClass="custom-filter">                                        
+                                                <f:converter converterId="javax.faces.Boolean" />
+                                                <f:selectItem itemLabel="TODAS" itemValue="" noSelectionOption="true" />
+                                                <f:selectItem itemLabel="APROBADO" itemValue="#{true}" />
+                                                <f:selectItem itemLabel="NO APROBADO" itemValue="#{false}" />
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.aprobado == true ? 'APROBADO':'NO APROBADO'}" />
+                                    </p:column>
+                                    <p:column  headerText="Fecha de Aprobación..." style="width: 10%">
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.fechaAprobacion}" >
+                                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column  headerText="Nº de Resolución/Acta" style="width: 15%" filterBy="#{catalogoProformaPresupuesto.numResolucionActa}" filterMatchMode="contains">
+                                        <p:outputLabel value="#{catalogoProformaPresupuesto.numResolucionActa}" />
+                                    </p:column>
+                                    <p:column  headerText="Acciones" style="width: 10%">
+                                        <p:commandLink actionListener="#{arpoabcionProformaspView.form(catalogoProformaPresupuesto)}" rendered="#{!catalogoProformaPresupuesto.aprobado}" update="formMain" title="Editar Proforma" process="@this">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+
+                                        <p:commandLink actionListener="#{arpoabcionProformaspView.rechazado(catalogoProformaPresupuesto)}" rendered="#{!catalogoProformaPresupuesto.aprobado}" update="formMain" 
+                                                       title="Rechazar Proforma" process="@this">
+                                            <i class="fa fa-thumbs-down" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+
+                                        <p:commandLink actionListener="#{arpoabcionProformaspView.showDlgProformaPresupuesto(catalogoProformaPresupuesto)}" ajax="true" title="Visualizar" >
+                                            <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink> 
+                                        <p:commandLink actionListener="#{arpoabcionProformaspView.eliminar(catalogoProformaPresupuesto)}" title="Eliminar" process="@this" update="catalogoProformaPresupuestoTable">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar #{catalogoProformaPresupuesto.descripcion}?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink> 
+                                        <p:commandLink action="#{arpoabcionProformaspView.redireccionar(catalogoProformaPresupuesto)}"  title="ir a proforma" immediate="true">
+                                            <i class="fa fa-angle-double-right" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog> 
+        </h:form>
+
+        <p:dialog id="dlgCatalogoPresupuestoIngreso" header="REVISIÓN DE LA PROFORMA PRESUPUESTO DE INGRESO" 
+                  widgetVar="dlgCatalogoPresupuestoIngreso" modal="true" showEffect="fade" 
+                  position="center" width="80%" height="600"
+                  hideEffect="fade" resizable="false" closeOnEscape="true">
+            <h:form id="formDlgCatalogoPresupuestoIngreso" prependId="false">  
+
+                <h:panelGroup id="dlgCatalogoPresupuestoIngresoDataTable" layout="block">
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">                                        
+                        <p:outputLabel style="font-size: larger" value="Proceso:"/>
+                        <h:outputText id="estadoPresupuestoIngreso" 
+                                      value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.aprobado == true ? 'APROBADO':'NO APROBADO'}" 
+                                      style="font-size: larger;font-weight: bolder;"/>                                        
+                    </p:panelGrid>
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel style="font-size: larger" value="Total de Presupuesto:"/>
+                        <h:outputText id="totalIngreso" value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.total}" style="font-size: larger;font-weight: bolder;" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:panelGrid>
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel style="font-size: larger" value="Descripción:"/>
+                        <h:outputText id="descripcionIngreso" value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.descripcion}" style="font-size: larger;font-weight: bolder;"/>
+                    </p:panelGrid>
+                    <p:dataTable value="#{arpoabcionProformaspView.proformaIngresosLazy}" 
+                                 id="catalogoProformaPresupuestoIngresoTable"  widgetVar="catalogoProformaPresupuestoIngresoTable"
+                                 paginatorPosition="bottom" var="ingresos" rows="10" paginator="true"  style="text-align: center"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,20,25,35,50" lazy="true"
+                                 emptyMessage="No existen cuentas con el criterio de búsqueda especificado" scrollable="true" scrollHeight="350">
+                        <f:facet name="header">
+                            PROFORMAS DE PRESUPUESTO DE INGRESOS
+                        </f:facet> 
+                        <p:column headerText="Código" style="width: 10%; font-weight: bold; font-size: 15px;" filterBy="#{ingresos.item.codigo}">
+                            <h:outputText value="#{ingresos.item.codigo}"/>
+                        </p:column>
+                        <p:column headerText="Fuente" style="width: 15%;">
+                            <h:outputText value="#{ingresos.fuente.nombre}" />
+                        </p:column>         
+                        <p:column headerText="Descripción" >
+                            <h:outputText value="#{ingresos.item.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Clasificación" style="width: 15%;">
+                            <h:outputText value="#{ingresos.item.clasificacion.texto}" />
+                        </p:column> 
+                        <p:column headerText="Periodo" style="width: 15%;">
+                            <h:outputText value="#{ingresos.periodo}" />
+                        </p:column> 
+                        <p:column headerText="Tipo Ítem" filterBy="#{ingresos.item.movimiento}" style="width: 8%; text-align: center;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('catalogoProformaPresupuestoIngresoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="A" itemValue="false" />
+                                    <f:selectItem itemLabel="M" itemValue="true" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{ingresos.item.movimiento ? 'M':'A' }" />
+                        </p:column> 
+                        <p:column headerText="Presupuesto Inicial" style="width: 8%;">                                        
+                            <h:outputText value="#{ingresos.presupuestoInicial}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>                                    
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgCatalogoPresupuestoEgreso" header="REVISIÓN DE LA PROFORMA PRESUPUESTO DE EGRESO" 
+                  widgetVar="dlgCatalogoPresupuestoEgreso" modal="true" showEffect="fade" 
+                  position="center" width="80%" height="600"
+                  hideEffect="fade" resizable="false">
+            <h:form id="formDlgCatalogoPresupuestoEgreso" prependId="false">  
+                <h:panelGroup id="dlgCatalogoPresupuestoEgresoDataTable" layout="block">
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">                                        
+                        <p:outputLabel style="font-size: larger" value="Proceso:"/>
+                        <h:outputText id="estadoPresupuestoEgreso" 
+                                      value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.aprobado == true ? 'APROBADO':'NO APROBADO'}" 
+                                      style="font-size: larger;font-weight: bolder;"/>                                        
+                    </p:panelGrid>
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel style="font-size: larger" value="Total de Presupuesto:"/>
+                        <h:outputText id="totalEgreso" value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.total}" style="font-size: larger;font-weight: bolder;">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:panelGrid>
+                    <p:panelGrid columns="5" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel style="font-size: larger" value="Descripción:"/>
+                        <h:outputText id="descripcionEgreso" value="#{arpoabcionProformaspView.catalogoProformaSeleccionado.descripcion}" style="font-size: larger;font-weight: bolder;"/>
+                    </p:panelGrid>
+                    <p:dataTable value="#{arpoabcionProformaspView.dlgCatalogoPresupuestoEgresoLazy}" 
+                                 id="catalogoProformaPresupuestoEgresoTable"  widgetVar="catalogoProformaPresupuestoEgresoTable"
+                                 paginatorPosition="bottom" var="egresos" rows="10" paginator="true"  style="text-align: center"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,20,25,35,50" lazy="true"
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            PROFORMAS DE PRESUPUESTO DE EGRESO
+                        </f:facet> 
+                        <p:column  headerText="Estructura Programática" style="width: 20%">
+                            <p:outputLabel value="#{egresos.estructruaNew.descripcion}" />
+                        </p:column>
+                        <p:column  headerText=" Partida Presupuestaria" style="width: 20%">
+                            <p:outputLabel value="#{egresos.partidaPresupuestaria}" />
+                        </p:column>
+                        <p:column  headerText="Nombre Ítem Presupuestario" style="width: 30%">
+                            <p:outputLabel value="#{egresos.itemNew.descripcion}" />
+                        </p:column>
+                        <p:column  headerText="Valor asignado" style="width: 10%">
+                            <p:outputLabel value="#{egresos.valor}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column  headerText="Periodo" style="width: 10%" >
+                            <p:outputLabel value="#{egresos.periodo}"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dialogMant" closeOnEscape="true"  header="Formulario Cuenta Presupuesto" widgetVar="dialogMant" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formDialog" style="width: 100%;" >
+                                <p:panelGrid  columns="4" columnClasses="10" styleClass="form-group ui-panelgrid-blank" >
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:outputLabel for="@next" value="Año" style="width: 100%;"/> 
+                                        <p:inputText class="panelInput" readonly="true" value="#{arpoabcionProformaspView.mantenimientoProforma.periodoCatalogo.anio}" />
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  value="Aprobado:" style="width: 100%;"/>
+                                        <p:selectBooleanButton value="#{arpoabcionProformaspView.mantenimientoProforma.aprobado}" onLabel="Aprobado" offLabel="No Aprobado" offIcon="fa fa-times" onIcon="fa fa-check">
+                                        </p:selectBooleanButton>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                                <p:panelGrid style="width: 100%;" columns="1" styleClass="form-group ui-panelgrid-blank" columnClasses="ui-grid-col-12" layout="grid" >
+                                    <p:outputLabel for="@next" value="Descripción:" style="width: 100%;"/>
+                                    <p:inputTextarea id="plan-description" rows="2" cols="50"  style="width: 100%;" required="true"
+                                                     value="#{arpoabcionProformaspView.mantenimientoProforma.descripcion}"/>
+                                </p:panelGrid>
+
+                                <p:panelGrid style="width: 100%;" columns="1" styleClass="form-group ui-panelgrid-blank" columnClasses="ui-grid-col-12" layout="grid">
+                                    <p:outputLabel for="@next" value="Nº de Resolución/Acuerdo/Acta:" style="width: 100%;"/>
+                                    <p:inputText id="num_acuerdo" style="width: 100%;" required="true"
+                                                 value="#{arpoabcionProformaspView.mantenimientoProforma.numResolucionActa}"/>
+                                </p:panelGrid>
+
+                                <center>
+                                    <p:commandButton value="Guardar" id="save" update="formDialog"
+                                                     icon="ui-icon-save" actionListener="#{arpoabcionProformaspView.guardarAprobacionDeLaProforma}"
+                                                     styleClass="Fs16">
+                                        <p:confirm header="Confirmation" message="Una vez aprobado el presupuesto no podrá ser editado, ¿Está seguro de continuar?" icon="pi pi-exclamation-triangle" />
+                                    </p:commandButton>
+                                    <p:commandButton value="Cancelar" id="cancelar"
+                                                     icon="fa fa-remove" onclick="PF('dialogMant').hide()"
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+            </p:confirmDialog> 
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

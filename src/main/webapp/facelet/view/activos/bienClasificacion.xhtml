@@ -1,0 +1,186 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:define name="title">
+        CLASIFICACIÓN DE BIENES
+    </ui:define>
+    <ui:param name="tittle" value="CLASIFICACIÓN DE BIENES"/>
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div style="float: right">
+                            <p:commandButton value="Nueva Clasificación"
+                                             icon="fa fa-plus"
+                                             process="@this"
+                                             actionListener="#{bienClasificacionView.formNewGrupo(null)}"
+                                             update="frmMain"
+                                             style="float: left; width: 170px">
+                            </p:commandButton>
+                        </div>
+                        <br></br>
+                        <br></br>
+                        <br></br>
+                        <div class="ui-g-12">
+                            <p:dataTable id="dtGrupoBien" widgetVar="dtGrupoBien" var="grup" reflow="true" paginator="true" lazy="true" rows="20" 
+                                         value="#{bienClasificacionView.lazyGrupoBien}" rowsPerPageTemplate="10,15,20,30,50,100" 
+                                         paginatorPosition="bottom" filterEvent="keyup" rowIndexVar="num"
+                                         paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         emptyMessage="No se encontró ningun Grupo para mostrar.">
+                                <f:facet name="header">
+                                    SUBGRUPOS DE BIENES
+                                </f:facet>
+                                <p:columnGroup type="header">
+                                    <p:row>
+                                        <p:column rowspan="2" headerText="N°" width="5%" style="font-weight: bold" />
+                                        <p:column colspan="2" headerText="GRUPOS (CUENTAS)" width="40%"/>
+                                        <p:column colspan="2" headerText="SUBGRUPOS" width="45%"/>
+                                        <p:column rowspan="2" headerText="Acciones" width="10%" style="font-weight: bold"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column headerText="Código Cuenta" filterBy="#{grup.cuentaContable.codigo}" width="5%" filterMatchMode="startsWith"/>
+                                        <p:column headerText="Descripción" style="font-weight: bold;" width="80%" filterBy="#{grup.cuentaContable.id}">
+                                            <f:facet name="filter">
+                                                <p:selectOneMenu onchange="PF('dtGrupoBien').filter()" styleClass="custom-filter"   style="width: 100%;">
+                                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{bienClasificacionView.listBienesItemFilterCta}" var="bien" itemLabel="#{bien.descripcion}" 
+                                                                   itemValue="#{bien.id}"/>
+                                                </p:selectOneMenu>
+                                            </f:facet>
+                                        </p:column>
+                                        <p:column headerText="Código" style="font-weight: bold;" width="20%"/>
+                                        <p:column headerText="Descripción" filterBy="#{grup.descripcion}"  filterMatchMode="constains"
+                                                  style="font-weight: bold;" width="80%" />
+                                    </p:row>
+                                </p:columnGroup>
+                                <p:column>
+                                    <h:outputText value="#{num + 1}" />   
+                                </p:column>
+                                <p:column>
+                                    <center><h:outputText value="#{grup.cuentaContable.codigo}" style="width: 10%; "/> </center> 
+                                </p:column>
+                                <p:column>
+                                    <h:outputText value="#{grup.cuentaContable.descripcion}"/>  
+                                </p:column>
+                                <p:column>
+                                    <center><h:outputText value="#{grup.codigoBien}"/></center>
+                                </p:column>
+                                <p:column filterBy="#{grup.descripcion}">
+                                    <h:outputText value="#{grup.descripcion}"/>  
+                                </p:column>
+                                <p:column>
+                                    <center>   
+                                        <p:commandLink title="Editar" process="@this" actionListener="#{bienClasificacionView.formNewGrupo(grup)}"
+                                                       update="frmMain,frmRegClasificacion">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 5px; color: #00b0ff;"></i>
+                                        </p:commandLink>       
+                                        <p:commandLink title="Eliminar" process="@this" actionListener="#{bienClasificacionView.borrarBienGrupoLista(grup)}"
+                                                       update="dtGrupoBien">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el Grupo?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>       
+                                    </center>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog header="REGISTROS DE SUBGRUPOS"
+                  widgetVar="dlgRegSubGrupo"
+                  modal="true" width="55%" height="85%"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgRegSubGrupo">
+            <h:form prependId="false" id="frmRegClasificacion" style=" width: 100%;">
+                <p:graphicImage value="/resources/icons/grupos.png"
+                                width="60" height="60" 
+                                style="margin:auto;  width: auto; float: left"></p:graphicImage>
+                <h1 style="font-weight: bold; text-align: center">DATOS DE INGRESO DE UN SUBGRUPO</h1>
+                <p:panel header="Formulario Registro" id="panelformReg">
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="pgRegistroGrupoBien">
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="codigoBien" value="Código" style="font-weight: bold;"/>
+                                <p:inputText id="codigoBien" value="#{bienClasificacionView.bienesItem.codigoBien}" style="width: 28%"
+                                             disabled="true">
+                                    <p:keyFilter regEx="/[a-z A-Z]/i"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%">
+                                <p:outputLabel for="descripcionGrupo" value="Descripción" style="font-weight: bold;" />
+                                <p:inputText id="descripcionGrupo" value="#{bienClasificacionView.bienesItem.descripcion}" style="width: 100%" required="true">
+                                    <p:keyFilter regEx="/[a-z0-9 _]/i" preventPaste="false"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                        </p:panelGrid>              
+                        <p:fieldset legend="Asignar Cuenta Contable (Grupo)" id="fsetCuentaGrupo">
+                            <p:panelGrid columns="2" styleClass="form-group" layout="grid" style="width: 100%">
+                                <p:panelGrid columns="1" styleClass="form-group" layout="grid" style="width: 100%">
+                                    <p:outputLabel value="Clasificación" escape="false" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="clasificacionCuentaD" value="#{bienClasificacionView.bienesItem.clasificTipoBien}" style="width: 100%"
+                                                     styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains">
+                                        <p:ajax listener="#{bienClasificacionView.limpiarCuentaGrupo()}" update="ccGrupo,ccDescripGrupo,codigoBien"/>
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienClasificacionView.listCuentaContableClasifGrupo}" var="cta" 
+                                                       itemLabel="#{cta.codigo} #{cta.descripcion}" itemValue="#{cta}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="form-group" layout="grid">
+                                    <p:outputLabel for="ccGrupo" value="Cuenta Contable: " style="font-weight: bold; width: 100%;"/>
+                                    <p:panelGrid columns="4"  style="float: left;"  styleClass="ui-panelgrid-blank">
+                                        <p:inputText value="#{bienClasificacionView.bienesItem.cuentaContable.codigo}" 
+                                                     id="ccGrupo"  readonly="false">
+                                            <p:ajax update="ccGrupo"/>
+                                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                        </p:inputText>
+                                        <p:commandButton title="Listado de Cuenta Contable" icon="fa fa-search" id="btn-ccGrupo"
+                                                         actionListener="#{bienClasificacionView.buscarCuentaGrupo()}" process="@this">
+                                            <p:ajax event="dialogReturn" listener="#{bienClasificacionView.selectCuentaGrupo}" update="codigoBien,fsetCuentaGrupo"/>
+                                        </p:commandButton>
+                                        <p:spacer width="10"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group" layout="grid" style="width: 100%; margin-left: 5px">
+                                <p:outputLabel for="ccDescripGrupo" value="Descripción" style="font-weight: bold;"/>
+                                <p:inputText value="#{bienClasificacionView.bienesItem.cuentaContable.descripcion}" style="width: 100%"
+                                             id="ccDescripGrupo" readonly="true">
+                                </p:inputText>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:commandLink title="Guardar" id="guardar-btn"  style="width: auto; float: right" update="frmRegClasificacion, frmMain"
+                                           actionListener="#{bienClasificacionView.saveGrupoBien()}"
+                                           styleClass="Fs16">
+                                <p:graphicImage value="/resources/icons/disquet.png"
+                                                width="40" height="50" 
+                                                style="margin:auto;  width: auto; "/>
+                            </p:commandLink>
+                            <p:commandLink title="Cancelar" id="cancelar-btn"  style="width: auto;"  process="@this" update="frmMain,frmRegClasificacion"
+                                           actionListener="#{bienClasificacionView.cancelarGrupoBien()}"
+                                           styleClass="Fs16">
+                                <p:graphicImage value="/resources/icons/cancelar.png"
+                                                width="40" height="50" 
+                                                style="margin:auto;  width: auto; "/>
+                            </p:commandLink>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:panel>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Reducción PAPP</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <comp:titleTask task="#{modificacionPappreduccionView.tarea}" tramite="#{modificacionPappreduccionView.tramite}" />    
+            </div>
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formPanels">
+                    <p:fieldset legend="Opciones" >
+                        <p:commandButton disabled="#{modificacionPappreduccionView.enabledReformas}" value="Reformas"  actionListener="#{modificacionPappreduccionView.showReformas()}"
+                                         icon="fa fa-check" style="width: 10%;" update="formPanels,fmReformas,formulariobuscar,formMain,,actividadesOperativa,productos,formTablaData"/> 
+                    </p:fieldset>                      
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformas">
+                    <p:panel  rendered="#{modificacionPappreduccionView.consultaRe}">
+                        <center>
+                            <h1>Datos Reformas</h1>
+                        </center>
+                        <p:dataTable id="datareformas" widgetVar="datareformas" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="15,20,30,40,50,100" value="#{modificacionPappreduccionView.lazyReforma}" selectionMode="single" rowKey="#{item.id}"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado" rowIndexVar="index"  style="text-align: center;">
+                            <p:column headerText="No.REFORMA" style="text-align: center;padding: 10px 10px 10px 10px;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO" style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="SALDO DISPONIBLE" style="text-align: center;">
+                                <p:outputLabel style="float: right;" value="#{modificacionPappreduccionView.mostarValoresPrincipal(item)}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto.toUpperCase()}"/>   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 10%">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}"  title="Modificar PAPP"    process="@this" 
+                                               actionListener="#{modificacionPappreduccionView.showPapp(item)}" 
+                                               update="formPanels,fmReformas,formulariobuscar,formMain,actividadesOperativa,productos,formTablaData">
+                                    <i class="fa fa-check-square-o" style="font-size: 1.5em; margin-right: 8px"></i>
+                                </p:commandLink>
+                                <p:commandLink  disabled="#{item.estado.codigo=='APRO'?true:false}" title="Enviar" process="@this"  
+                                                actionListener="#{modificacionPappreduccionView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formulariobuscar">
+                    <p:panelGrid columns="4" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" rendered="#{modificacionPappreduccionView.registranuevo}">
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Unidad:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{modificacionPappreduccionView.unidadGlobal.nombre}"/>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Monto Disponible:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{modificacionPappreduccionView.totalCupoReduccion}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Monto que se ha Reducido:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{modificacionPappreduccionView.totalCupoReduccionasignacion}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel value="Estado:" style="font-size: 12px;"/><br/>
+                            <p:outputLabel style="font-weight:bold;font-size: 12px" value="#{modificacionPappreduccionView.estadoMostrar.texto}"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <p:accordionPanel id="formMain" prependId="false" style="width: 100%; border: 1px solid #FCFBFB" activeIndex="#{modificacionPappreduccionView.indiceDeAcordian}">                   
+                    <p:tab title="ACTIVIDAD OPERATIVA" rendered="#{modificacionPappreduccionView.registranuevo}">
+                        <h:form id="actividadesOperativa" prependId="false" rendered="#{modificacionPappreduccionView.registranuevo}">
+                            <p:dataTable rendered="#{modificacionPappreduccionView.registranuevo}"   expandableRowGroups="true" id="listaactividad" widgetVar="listaactividad" paginatorPosition="bottom" var="item"
+                                         value="#{modificacionPappreduccionView.lazyActividadOperativas}" rows="20" paginator="true"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         style=" margin: 20px"
+                                         rowsPerPageTemplate="20,25,35,50" lazy="true"
+                                         emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE ACTIVIDADES - #{modificacionPappreduccionView.busqueda.anio == 0 ? '20XX':modificacionPappreduccionView.busqueda.anio}
+                                </f:facet>
+                                <p:column  headerText="PLAN" style="width: 10%;" filterBy="#{item.planProgramaProyecto.programa.panificacion.codigo}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null and item.planProgramaProyecto.programa ne null
+                                                           and item.planProgramaProyecto.programa.panificacion ne null?
+                                                           item.planProgramaProyecto.programa.panificacion.codigo.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+                                <p:column  headerText="PROGRAMA" style="width: 10%;" filterBy="#{item.planProgramaProyecto.programa.codigo}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null and item.planProgramaProyecto.programa ne null?
+                                                           item.planProgramaProyecto.programa.codigo.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+
+                                <p:column  headerText="PROYECTO" style="width: 10%;" filterBy="#{item.planProgramaProyecto}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null?item.planProgramaProyecto.nombreProgramaProyecto.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+
+                                <p:column  headerText="Actividad Operacional" style="width: 20%" filterBy="#{item.nombreActividad}">
+                                    <h:outputText value="#{item.nombreActividad}"/>
+                                </p:column>
+                                <p:column  headerText="Monto Reformado" style="width: 8%;" filterBy="#{item.monotReformado}" >
+                                    <h:outputText value="#{item.monotReformado}" style="float: right;" class="FontBold">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column  headerText="Unidad Responsable" style="width: 16%" filterBy="#{item.unidadResponsable.id}" >
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaactividad').filter()" styleClass="custom-filter"   style="width: 100%;">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{modificacionPappreduccionView.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{item.unidadResponsable.nombre}"/>
+                                </p:column>
+                                <p:column  headerText="Período" style="width: 5%;text-align: center; " >
+                                    <h:outputText value="#{item.periodo} "/>
+                                </p:column>
+                                <p:column rendered="#{modificacionPappreduccionView.estadoMostrar.codigo=='AR'?false:true}" headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink disabled="true" title="Añadir Producto" process="@this" actionListener="#{modificacionPappreduccionView.añadirActividadOperativa(item)}">
+                                        <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink disabled="true" title="Editar Actividad"   process="@this"  update="listaactividad" actionListener="#{modificacionPappreduccionView.editarActividadOperativa(item)}" >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15" 
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink disabled="true" title="Eliminar"   process="@this"  actionListener="#{modificacionPappreduccionView.eliminarActividadOperativa(item)}" update="listaactividad">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar la esta plan proyecto"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+                    <p:tab title="PRODUCTOS" rendered="#{modificacionPappreduccionView.registranuevo}">
+                        <h:form id="productos" prependId="false" rendered="#{modificacionPappreduccionView.registranuevo}">
+                            <p:dataTable rendered="#{modificacionPappreduccionView.registranuevo}"   expandableRowGroups="true" value="#{modificacionPappreduccionView.productoReduccion}" 
+                                         id="listaProductos" widgetVar="listaProductos" 
+                                         paginatorPosition="bottom" var="item" rows="20" paginator="true"  style="margin: 20px"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="20,25,35,50,100"  editable="true" editMode="cell"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE PRODUCTOS - #{modificacionPappreduccionView.busqueda.anio == 0 ? '20XX':modificacionPappreduccionView.busqueda.anio}
+                                </f:facet>
+
+                                <p:column  headerText="Plan-Programa-Proyecto" filterBy="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" groupRow="true">
+                                    <p:outputLabel value="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                </p:column>
+                                <p:column  headerText="Actividade Operacional/Monto" filterBy="#{item.actividadOperativa.nombreActividad}" groupRow="true" style="width: 25%;" filterMatchMode="contains">
+                                    <div style="width: 100%;">
+                                        <div style="width: 70%;float: left;">
+                                            <p:outputLabel value="#{item.actividadOperativa.nombreActividad}"/>
+                                        </div>
+                                        <div style="width: 30%;float: right;text-align: right;">
+
+                                            <p:outputLabel value="#{item.actividadOperativa.monotReformado}" class="FontBold">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:outputLabel>
+
+                                        </div>
+                                    </div>
+
+                                </p:column>
+                                <p:column headerText="Producto" filterBy="#{item.descripcion}">
+                                    <p:outputLabel value="#{item.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Monto Codificado" filterBy="#{item.monto}" style="width: 7%;">
+                                    <p:outputLabel value="#{item.monto}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>                                
+                                <p:column headerText="Monto Reserva" filterBy="#{item.reserva}" style="twidth: 7%;">
+                                    <p:outputLabel value="#{item.reserva}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>                                
+                                <p:column headerText="Saldo Disponible" filterBy="#{item.saldoDisponible}" style="width: 7%;">
+                                    <p:outputLabel value="#{item.saldoDisponible}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column headerText="Reducción" filterBy="#{item.reduccionEgreso}" style="idth: 7%;">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.reduccionEgreso}" style="float: right;"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item.reduccionEgreso}"  >
+
+                                                <p:ajax  event="change" listener="#{modificacionPappreduccionView.editarSuplelemtoEgresos(item)}" 
+                                                         update="productos,actividadesOperativa,formulariobuscar"/>
+                                            </p:inputNumber>
+
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column  headerText="Monto Reformado" filterBy="#{item.montoReformada}" style="width: 7%;">
+                                    <p:outputLabel value="#{item.montoReformada}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column rendered="false" headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink  rendered="false"   title="Reducción Egreso" actionListener="#{modificacionPappreduccionView.abrirDloSuplementoEgreso(item)}"  process="@this"  >
+                                        <p:graphicImage value="/resources/icons/dinero.png" 
+                                                        width="16" height="15"  
+                                                        style="margin-right: 8px; color: #FFC107"/>  
+                                    </p:commandLink>
+                                    <p:commandLink rendered="false"  title="Editar Producto" actionListener="#{modificacionPappreduccionView.editarProducto(item)}"   process="@this"  >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15"  
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink rendered="false" title="Eliminar" actionListener="#{modificacionPappreduccionView.eliminarProducto(item)}" update="listaProductos"   process="@this" >
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar este producto"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+                </p:accordionPanel>
+            </div>
+            <div class="ui-g-12">  
+                <h:form id="formTablaData" prependId="false"  >
+                    <center>
+                        <p:outputLabel rendered="#{modificacionPappreduccionView.consultarPapp}" style=" width: 100% ;text-align: center; font-size: 2vw;
+                                       font-family: Vegur, 'PT Sans', Verdana, sans-serif; border: 8px double #00cccc; margin-bottom: 4%;" 
+                                       value="TABLA GENERAL DE LOS PLANES ANUALES - #{modificacionPappreduccionView.busqueda.anio == 0 ? '20XX':modificacionPappreduccionView.busqueda.anio}"/>
+                    </center>
+                    <p:panelGrid rendered="#{modificacionPappreduccionView.consultarPapp}"   columns="4" styleClass="form-group ui-panelgrid-blank" style="margin-bottom: 15px;margin-top: 20px;">
+                        <p:commandButton value="Limpiar filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('dataTablePlanes').clearFilters()" update="dataTablePlanes"
+                                         styleClass="Fs16" style="width: auto;"/>
+                        <p:commandButton value="Comprobar valores"  process="@this" action="#{modificacionPappreduccionView.verificadorDeValores()}"
+                                         icon="ui-icon-check-box" update="dataTablePlanes"
+                                         styleClass="Fs16" style="width: auto;"/>
+                        <p:selectBooleanButton value="#{modificacionPappreduccionView.filtroDatosNullTablaGeneralPlanes}" onLabel="Filtrado por NO APLICA" offLabel="Quitar Filtro" 
+                                               onIcon="fa fa-check" offIcon="fa fa-times" style="width:auto;">
+                            <p:ajax update="dataTablePlanes" listener="#{modificacionPappreduccionView.filtroDeDatosNullVistaGeneralPlanAnual()}" />
+                        </p:selectBooleanButton>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas Visibles" style="width: auto; " icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="dataTablePlanes" trigger="mostrarColumnas" />
+                    </p:panelGrid>
+                    <p:dataTable rendered="#{modificacionPappreduccionView.consultarPapp}"   id="dataTablePlanes" widgetVar="dataTablePlanes" var="item" value="#{modificacionPappreduccionView.vistaGeneralPlanAnualLazy}" paginator="true" rows="10" 
+                                 style="text-align:center" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true"
+                                 editable="true" editMode="cell" 
+                                 scrollable="true" scrollWidth="100%"
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" >
+                        <f:facet name="header">
+                            TABLA GENERAL DE LOS PLANES ANUALES - #{modificacionPappreduccionView.busqueda.anio == 0 ? '20XX':modificacionPappreduccionView.busqueda.anio}
+                        </f:facet>
+                        <p:column headerText="Eje" filterBy="#{item.ejePlanNacional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.ejePlanNacional == null ? 'NO APLICA':item.ejePlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Nacional" filterBy="#{item.objetivoPlanNacional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.objetivoPlanNacional == null ? 'NO APLICA':item.objetivoPlanNacional}"/>
+                        </p:column>                      
+                        <p:column headerText="Política Nacional" filterBy="#{item.ejePlanNapoliticaPlanNacionalcional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.politicaPlanNacional == null ? 'NO APLICA':item.politicaPlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Sistema" filterBy="#{item.sistemaPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.sistemaPlanLocal ==  null ? 'NO APLICA':item.sistemaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Local" filterBy="#{item.objetivoPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.objetivoPlanLocal == null ? 'NO APLICA':item.objetivoPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Política Local" filterBy="#{item.politicaPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.politicaPlanLocal == null ? 'NO APLICA':item.politicaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Nombre del plan, programa, proyecto" filterBy="#{item.nombrePlanLocalProgramaProyecto}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombrePlanLocalProgramaProyecto == null ? 'NO APLICA':item.nombrePlanLocalProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Nº de identificación" sortBy="#{item.numeroIdentificacionProgramaProyecto}" style="width: 150px;" groupRow="true">
+                            <p:outputLabel value="#{item.numeroIdentificacionProgramaProyecto ==null ? 'SIN DEFINIR':item.numeroIdentificacionProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Plan, programa y/o proyecto" filterBy="#{item.nombreProgramaProyecto}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreProgramaProyecto ==null ? 'SIN DEFINIR':item.nombreProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Actividad Operativa" filterBy="#{item.nombreActividad}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreActividad ==null ? 'SIN DEFINIR':item.nombreActividad}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Operativa" filterBy="#{item.objetivoOperativo}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.objetivoOperativo ==null ? 'SIN DEFINIR':item.objetivoOperativo}"/>
+                        </p:column>
+                        <p:column headerText="Medición Meta" filterBy="#{item.medicionMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.medicionMeta ==null ? 'SIN DEFINIR':item.medicionMeta}"/>
+                        </p:column>
+                        <p:column headerText="Cuatrimestre 1" filterBy="#{item.cuatrimestre1Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre1Meta ==null ? 'SIN DEFINIR':item.cuatrimestre1Meta}"/>
+                        </p:column>
+                        <p:column headerText="Cuatrimestre 2" filterBy="#{item.cuatrimestre2Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre2Meta ==null ? 'SIN DEFINIR':item.cuatrimestre2Meta}"/>
+                        </p:column>       
+                        <p:column headerText="Cuatrimestre 3" filterBy="#{item.cuatrimestre3Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre3Meta ==null ? 'SIN DEFINIR':item.cuatrimestre3Meta}"/>
+                        </p:column>
+                        <p:column headerText="Indicador Meta" filterBy="#{item.indicadorMeta}" style="width: 250px;">
+                            <p:outputLabel value="#{item.indicadorMeta ==null ? 'SIN DEFINIR':item.indicadorMeta}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Responsable" filterBy="#{item.unidadResponsable}" style="width: 250px;" >
+                            <p:outputLabel value="#{item.unidadResponsable ==null ? 'SIN DEFINIR':item.unidadResponsable}"/>
+                        </p:column>
+                        <p:column headerText="Monto de Actividad" filterBy="#{item.sistemaPlanLocal}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.montoActividad ==null ? 'SIN DEFINIR':item.montoActividad}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>                        
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 1" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre1Actividad}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 2" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre2Actividad}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 3" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre3Actividad}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Producto" filterBy="#{item.nombreProducto}" style="width: 250px;">
+                            <p:outputLabel value="#{item.nombreProducto ==null ? 'SIN DEFINIR':item.nombreProducto}"/>
+                        </p:column>
+                        <p:column headerText="Monto de Producto" filterBy="#{item.montoProducto}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoProducto ==null ? 'SIN DEFINIR':item.montoProducto}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Reserva" filterBy="#{item.reserva}" style="width: 150px;">
+                            <p:outputLabel value="#{item.reserva ==null ? 'SIN DEFINIR':item.reserva}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Saldo Disponible" filterBy="#{item.saldoDisponible}" style="width: 150px;">
+                            <p:outputLabel value="#{item.saldoDisponible ==null ? 'SIN DEFINIR':item.saldoDisponible}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Monto Reformada" filterBy="#{item.montoReformada}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoReformada ==null ? 'SIN DEFINIR':item.montoReformada}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>         
+        </div>
+        <!--        <ui:include id="ActividadesProductos"  src="/common/Dialog/dlgReporte.xhtml" />-->
+        <p:dialog width="400" id="DdlgProducto"  header="Nombre Producto" widgetVar="DdlgProducto" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProducto" prependId="false">
+                <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1"   >
+                        <p:outputLabel value="Nombre Producto:" />
+                        <p:inputText value="#{modificacionPappreduccionView.producto.descripcion}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1"   >
+                        <p:outputLabel value="Monto:" />
+                        <p:inputNumber value="#{modificacionPappreduccionView.producto.monto}"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Añadir" process="formProducto"
+                                     icon="ui-icon-plus"  actionListener="#{modificacionPappreduccionView.saveProducto()}"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px;" update="productos"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="300" id="DdlgProductoSuplemento"  header="Producto" widgetVar="DdlgProductoSuplemento" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProductoSuplemento" prependId="false">
+                <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1"  styleClass="form-group ui-panelgrid-blank" >
+                        <p:outputLabel value="Monto Suplemento:" />
+                        <p:inputNumber value="#{modificacionPappreduccionView.producto.reduccionEgreso}"/>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1"  styleClass="form-group ui-panelgrid-blank" >
+                        <p:commandButton value="Añadir"
+                                         icon="ui-icon-plus"
+                                         styleClass="Fs16" style="width: auto; margin-bottom: 15px;" update="productos,actividadesOperativa"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="800" id="DlgActividad"  header="Actividad Operativa" widgetVar="DlgActividad" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formActividad" prependId="false">
+                <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1"   >
+                        <p:outputLabel value="Nombre Actividad:" />
+                        <p:inputText value="#{modificacionPappreduccionView.actividad.nombreActividad}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Objetivo Operativo:" />
+                        <p:inputText value="#{modificacionPappreduccionView.actividad.objetivoOperativo}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Descripción meta:" />
+                        <p:inputText value="#{modificacionPappreduccionView.actividad.descripcionMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Medición Porcentaje:" />
+                        <p:selectBooleanButton style="widows: auto;" value="#{modificacionPappreduccionView.actividad.medicionPorcentaje}" 
+                                               onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check">
+                            <p:ajax update="medMeta" listener="#{modificacionPappreduccionView.cambiarMedicionPorcentual()}"/>
+                        </p:selectBooleanButton>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:fieldset legend="Detalles de Actividad">
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Medicion Meta:" />
+                            <p:inputNumber id="medMeta" value="#{modificacionPappreduccionView.actividad.medicionMeta}" disabled="#{modificacionPappreduccionView.actividad.medicionPorcentaje}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 1:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre1Meta}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 2:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre2Meta}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 3:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre3Meta}"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Actividad">
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Monto:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.monto}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 1:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre1Actividad}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 2:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre2Actividad}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 3:" />
+                            <p:inputNumber value="#{modificacionPappreduccionView.actividad.cuatrimestre3Actividad}"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Indicador meta:" />
+                        <p:inputText value="#{modificacionPappreduccionView.actividad.indicadorMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Unidad Administrativa:" />
+                        <p:selectOneMenu value="#{modificacionPappreduccionView.actividad.unidadResponsable}" converter="#{utilConverter}">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItems value="#{modificacionPappreduccionView.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="text-align: center;">
+                        <p:commandButton value="AÑÁDIR" process="formActividad"  actionListener="#{modificacionPappreduccionView.saveActividadOperativa()}"
+                                         icon="ui-icon-plus"  update="actividadesOperativa,listaProductos" style="margin: auto; width: 100%" />
+                    </p:panelGrid>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlgPlanProyecto"  header="Formulario Plan-Proyecto" widgetVar="DlgPlanProyecto" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formPlanProyecto"  prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formProgramaProyecto" style="width: 100%;">
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="Nombre del plan anual, programa, proyecto"/>
+                                    <p:selectOneMenu value="#{modificacionPappreduccionView.programaProyecto.nombreProgramaProyecto}" onkeyup="javascript:this.value = this.value.toUpperCase();" editable="true" style="width: 100%" >
+                                        <f:selectItem itemLabel="NO APLICA" itemValue="NO APLICA"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <center>
+                    <p:commandButton value="Adicionar" actionListener="#{modificacionPappreduccionView.savePlanNombreProyecto()}"
+                                     icon="ui-icon-plus"  
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="1200" id="DloCupos"  header="Asignación De Cupos" widgetVar="DloCupos" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formCupos" prependId="false">
+                <p:dataTable id="dataCupos" widgetVar="dataCupos" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="20,30,40,50,100" value="#{modificacionPappreduccionView.lazyCupos}" editable="true" editMode="cell"
+                             emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                    <p:column headerText="Nombre" sortBy="#{item.unidadAdministrativa.nombre}" filterBy="#{item.unidadAdministrativa.nombre}" style="width: 20%;">
+                        <h:outputText value="#{item.unidadAdministrativa.nombre.toUpperCase()}" />
+                    </p:column>
+                    <p:column filterBy="#{item.unidadAdministrativa.padre.nombre}" headerText="Supervisa"  style="width: 20%;">
+                        <h:outputText value="#{item.unidadAdministrativa.padre.nombre==null?'ENTIDAD':item.unidadAdministrativa.padre.nombre}" />
+                    </p:column>
+                    <p:column filterBy="#{item.unidadAdministrativa.tipoUnidad.texto}" headerText="Tipo de Unidad"  style="width: 10%;">
+                        <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.texto}" />
+                    </p:column>
+                    <p:column headerText="Fecha de vigencia" style="width:7%;text-align: center;">
+                        <h:outputText value="#{item.unidadAdministrativa.fechaVigencia}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Fecha de Caducidad" style="width: 7%;text-align: center;"  >
+                        <h:outputText value="#{item.unidadAdministrativa.fechaCaducidad}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Cupo" style="width: 8%; text-align: right">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{item.montoCupo}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber value="#{item.montoCupo}" style="width:96%" >
+                                    <p:ajax event="change" listener="#{modificacionPappreduccionView.editarCell(item)}" />
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column> 
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{modificacionPappreduccionView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{modificacionPappreduccionView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

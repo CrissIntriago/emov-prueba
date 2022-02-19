@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Programación Ingreso</ui:define>
+    <ui:param name="tittle" value="Programación de Ingresos Mensuales (PIM)"/>
+    <ui:define name="content">        
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="tablepr" prependId="false">   
+
+                    <p:fieldset style="width:25%;margin: auto; border: 1px solid;border-color: #00796b; border-radius: 20px 20px 20px 20px; float: left" legend="Buscar"  >
+
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <!--                                        <h:panelGroup layout="block">
+                                                                        <p:graphicImage value="/resources/icons/dinero.png"  width="42" height="55"          
+                                                                                        style=" width: auto;"/>
+                                                                    </h:panelGroup>-->
+
+                            <h:panelGroup layout="block">
+                                <p:outputLabel value="Período" escape="false" style="font-weight: bold;"/>
+                                <p:selectOneMenu  value="#{pimSpView.busqueda.anio}">
+
+                                    <f:selectItems value="#{pimSpView.periodosIngreso}" var="p" itemLabel="#{p.periodo}" itemValue="#{p.periodo}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block">
+                                <p:outputLabel value=""/>
+                                <p:commandLink title="Buscar"  action="#{pimSpView.actualizar()}" update="pimTable">
+                                    <p:graphicImage value="/resources/icons/buscar.png"
+                                                    width="37" height="37" 
+                                                    style="margin:auto;  width: auto;"/>
+                                </p:commandLink>
+                            </h:panelGroup>
+
+
+                        </p:panelGrid>
+                    </p:fieldset>
+
+                </h:form> 
+            </div>
+
+            <br></br>
+            <div class="ui-g-12">
+
+                <h:form id="formPIM" prependId="false">
+                    <h:panelGroup id="dataPimTable" layout="block">     
+                        <span style="font-weight: bold; font-size: 18px;">Estado: </span> <span style="font-size: 18px;">  #{pimSpView.estadoGeneral.texto==null?'REGISTRADO':pimSpView.estadoGeneral.texto}</span>
+                        <p:spacer width="30"/>
+
+                        <p:remoteCommand name="update" update="pimTable" />   
+                        <div style="float: right">
+                            <p:commandLink title="Reporte de PIM en pdf" actionListener="#{pimSpView.reportePIM('pdf')}" process="@this" >
+                                <i class="fa fa-file-pdf-o blue1 Fs20" />
+                            </p:commandLink>
+                            <p:commandLink title="Reporte de PIM en excel" actionListener="#{pimSpView.reportePIM('xlsx')}" process="@this" >
+                                <i class="fa fa-file-excel-o blue2 Fs20" />
+                            </p:commandLink>
+                            <p:commandLink title="Reporte de PIM en word" actionListener="#{pimSpView.reportePIM('docx')}" process="@this" >
+                                <i class="fa fa-file-word-o blue3 Fs20" />
+                            </p:commandLink>
+                        </div>
+                        <p:dataTable id="pimTable" widgetVar="pimTable" var="item" value="#{pimSpView.lazyIngreso}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" emptyMessage="No existen cuentas con el criterio de busqueda especificado"
+                                     editable="true" editMode="cell" selection="#{pimSpView.pimSeleccionado}" selectionMode="single" rowKey="#{item.id}"
+                                     >
+                            <f:facet name="header">
+                                Distribución del PIM.
+                            </f:facet>
+                            <p:ajax event="cellEdit" listener="#{pimSpView.guardarPIM(item)}" update="pimTable"/>
+                            <p:column headerText="Código Partida" style="width:75px;text-align: center">
+                                <h:outputText value="#{item.itemNew.codigo}#{item.itemNew.fueteNew.codFuente}"/>
+                            </p:column>
+
+                            <p:column headerText="Nombre" style="width:250px;text-align: left">
+                                <h:outputText value="#{item.itemNew.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Presupuesto Inicial" style="width:250px;">
+                                <h:outputText value="#{pimSpView.presupuestoInical(item.periodo,item.itemNew)}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column headerText="Distribuir" style="width:100px;text-align: center">
+                                <p:selectBooleanCheckbox value="#{item.distribucion}" disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <p:ajax update="pimTable" listener="#{pimSpView.getDistribucion(item)}" process="@this"/>
+                                </p:selectBooleanCheckbox>
+                            </p:column>
+
+                            <p:column headerText="Enero" style="width:100px;">
+                                <p:cellEditor  disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.enero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.enero}" label="Enero">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Febrero" style="width:100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}" >
+                                    <f:facet name="output"><h:outputText value="#{item.febrero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.febrero}"  label="Febrero">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Marzo" style="width:100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}" >
+                                    <f:facet name="output"><h:outputText value="#{item.marzo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.marzo}" label="Marzo">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Abril" style="width:100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.abril}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.abril}" label="Abril">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Mayo" style="width:100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}" >
+                                    <f:facet name="output"><h:outputText value="#{item.mayo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.mayo}" label="Mayo">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Junio" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.junio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.junio}" label="Junio">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Julio" style="width:100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.julio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.julio}" label="Julio">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Agosto" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.agosto}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.agosto}" label="Agosto">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Septiembre" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.septiembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.septiembre}" label="Septiembre">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Octubre" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.octubre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.octubre}" label="Octubre">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Noviembre" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.noviembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.noviembre}" label="Noviembre">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Diciembre" style="width: 100px;">
+                                <p:cellEditor disabled="#{pimSpView.estadoGeneral.codigo=='PRO'?true:false}">
+                                    <f:facet name="output"><h:outputText value="#{item.diciembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText></f:facet>
+                                    <f:facet name="input"><p:inputNumber value="#{item.diciembre}" label="Diciembre">
+                                            <p:ajax event="valueChange" oncomplete="update()"/>
+                                        </p:inputNumber></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+
+                            <p:column headerText="Total PIM" style="width: 100px;text-align: center;">
+                                <h:outputText value="#{item.totalAnio}" style="width:100%;text-align: center;" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:columnGroup type="footer">
+                                <p:row id="footerPIM" style="width: 100px;font-weight: bold;font-size: 17px;">
+                                    <p:column colspan="2" style="text-align:right;font-weight: bold;width: 100px;font-size: 0.9vw;" footerText="Total:" />                                
+
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalItem}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column  style="text-align:right;font-weight: bold;width: 100px;font-size: 0.9vw;" footerText="" />   
+
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalEnero}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalFebrero}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalMarzo}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalAbril}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalMayo}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalJunio}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalJulio}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalAgosto}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalSeptiembre}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalOctubre}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalNoviembre}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalDiciembre}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{pimSpView.totalPIM}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                </p:row>
+                            </p:columnGroup>                                    
+                        </p:dataTable>                                
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog header="Error en Distribución de Presupuesto" id="DialogPIM" closeOnEscape="true"
+                  widgetVar="DialogPIM" modal="true" showEffect="fade" hideEffect="fade" resizable="false"
+                  style="text-align: center;text-align: center;">
+            <h2>"¡El Presupuesto PIM sobrepasa al Presupuesto Inicial! </h2>
+            <h2>Verifique que los valores esten correctos."</h2>
+            <center>
+                <p:commandButton value="OK" id="buscar-save" style="width: 100px;"
+                                 icon="fa fa-fw fa-ban" actionListener="#{pimSpView.dialogoError()}"
+                                 styleClass="red-btn"/>
+
+            </center>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

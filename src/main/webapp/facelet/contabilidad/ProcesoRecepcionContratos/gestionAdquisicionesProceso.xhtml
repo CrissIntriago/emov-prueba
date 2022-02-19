@@ -1,0 +1,810 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Gestión de Adquisición
+    </ui:define>
+    <ui:define name="head">
+        <style type="text/css">
+            .activo {
+                background-color: #87F664 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            .inactivo {
+                background-color: #F66F64!important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{GestionAdquisicionesBeans.tarea}" tramite="#{GestionAdquisicionesBeans.tramite}" />
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block" rendered="#{GestionAdquisicionesBeans.formAdquisicion}">
+                        <p:commandButton value="Nueva Adquisición" process="@this"
+                                         icon="fa fa-plus" actionListener="#{GestionAdquisicionesBeans.form(null)}"
+                                         styleClass="Fs16" style="width: auto; margin-bottom: 15px;"/>
+                        <p:commandButton value="Limpiar filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('adquisionesTable').clearFilters()" update="adquisionesTable"
+                                         styleClass="Fs16" style="width: auto; margin-left: 15px;"/>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="adquisionesTable" trigger="mostrarColumnas" />
+                        <p:dataTable id="adquisionesTable" widgetVar="adquisionesTable" var="adquisicion" 
+                                     paginator="true" rows="30" style="width: 100%;" paginatorPosition="bottom"
+                                     value="#{GestionAdquisicionesBeans.adquisicionesLazyModel}" 
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="30,40,50,60,70,100" lazy="true" selectionMode="single" rowKey="#{adquisicion.id}" 
+                                     emptyMessage="No existen ordenes de compras con el criterio de busqueda especificado">
+                            <p:column headerText="ID. Proceso" style="width: 5vw;" filterBy="#{adquisicion.idProceso}" filterMatchMode="contains" sortBy="#{adquisicion.idProceso}">
+                                <h:outputText value="#{adquisicion.idProceso}" />
+                            </p:column>  
+                            <p:column headerText="Tipo de Adquisicion" style="width: 5vw;text-align:center " filterBy="#{adquisicion.tipoAdquisicion.id}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('adquisionesTable').filter()" >
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{GestionAdquisicionesBeans.tiposAdquisicion}" var="tipoAdquisicion" itemLabel="#{tipoAdquisicion.texto}" itemValue="#{tipoAdquisicion.id}" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{adquisicion.tipoAdquisicion.texto}" />
+                            </p:column>  
+                            <p:column headerText="Tipo de Proceso" style="width: 8vw;" filterBy="#{adquisicion.tipoProceso.texto}" filterMatchMode="contains">                                
+                                <h:outputText value="#{adquisicion.tipoProceso.texto}" />
+                            </p:column>  
+                            <p:column headerText="Proveedor" style="width: 10vw;" filterBy="#{adquisicion.proveedor.cliente.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{adquisicion.proveedor.cliente.nombre}" />
+                            </p:column>  
+                            <p:column headerText="Fecha de Emision / Publicación" style="width: 6vw;text-align: center" sortBy="#{adquisicion.fechaEmision}">
+                                <h:outputText value="#{adquisicion.fechaEmision}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha de Aceptación / Adjudicación" style="width: 6vw;text-align: center" sortBy="#{adquisicion.fechaAceptacion}">
+                                <h:outputText value="#{adquisicion.fechaAceptacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="Nº de Contrato" style="width: 6vw;" filterBy="#{adquisicion.numeroContrato}" filterMatchMode="contains">
+                                <h:outputText value="#{adquisicion.numeroContrato}" />
+                            </p:column> 
+                            <p:column headerText="Fecha de Contrato" style="width: 5vw;text-align: center" sortBy="#{adquisicion.fechaContrato}">
+                                <h:outputText value="#{adquisicion.fechaContrato}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="Valor de Contrato" style="width: 5vw;" >
+                                <h:outputText value="#{adquisicion.valorContratado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>  
+                            <p:column headerText="Acciones" style="width: 5vw;text-align: center">
+                                <p:commandLink actionListener="#{GestionAdquisicionesBeans.form(adquisicion)}" title="Editar" process="@this">
+                                    <i class="fa fa-edit" style="font-size: 1.8em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>  
+                                <p:commandLink actionListener="#{GestionAdquisicionesBeans.verDocumento(adquisicion)}" title="Ver Documentos" process="@this">
+                                    <i class="fa fa-cloud-download" style="font-size: 1.8em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>  
+                                <p:commandLink actionListener="#{GestionAdquisicionesBeans.updialogObservacion(adquisicion)}" 
+                                               title="Siguiente Tarea" process="@this">
+                                    <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink> 
+                                <p:commandLink title="Eliminar Orden de Compra" actionListener="#{GestionAdquisicionesBeans.delete(adquisicion)}" process="@this">
+                                    <i class="fa fa-trash" style="font-size: 1.8em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿ Esta seguro de eliminar la esta Adquisición #{adquisicion.idProceso} ?" 
+                                               icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>  
+                            </p:column> 
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                    <div class="ui-g-12" >
+                        <h:panelGroup id="adquisicionForm" layout="block" rendered="#{!GestionAdquisicionesBeans.formAdquisicion}">
+                            <div class="ui-g-7" >
+                                <p:fieldset legend="Detalle de la Adquisición:" style="margin-bottom: 10px" id="fieldsetDetalleAdquisicion">
+                                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Tipo de Adquisición:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="tipoAdquisicion" value="#{GestionAdquisicionesBeans.adquisiciones.tipoAdquisicion}" converter="#{utilConverter}"
+                                                             filter="true" filterMatchMode="startsWith" required="true"
+                                                             style="width: 100%;" panelStyle="width:120px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true"/>
+                                                <f:selectItems value="#{GestionAdquisicionesBeans.tiposAdquisicion}" var="tipoAdquisicion" itemLabel="#{tipoAdquisicion.texto}" itemValue="#{tipoAdquisicion}" />
+                                                <p:ajax update="subtipoAdquisicion,tipoProceso" listener="#{GestionAdquisicionesBeans.actualizarTiposProcesos()}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Subtipo de Bienes:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="subtipoAdquisicion" filter="true" filterMatchMode="startsWith" converter="#{utilConverter}"
+                                                             value="#{GestionAdquisicionesBeans.adquisiciones.subTipoAdquisicion}" 
+                                                             disabled="#{GestionAdquisicionesBeans.adquisiciones.tipoAdquisicion.codigo == 'tipo_adquisicion_bienes' ? false:true}"
+                                                             style="width: 100%;" panelStyle="width:130px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true" />
+                                                <f:selectItems value="#{GestionAdquisicionesBeans.subTiposAdquisicion}" var="subTipoAdquisicion" itemLabel="#{subTipoAdquisicion.texto}" itemValue="#{subTipoAdquisicion}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Tipo de Proceso:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="tipoProceso" value="#{GestionAdquisicionesBeans.adquisiciones.tipoProceso}" converter="#{utilConverter}"
+                                                             filter="true" filterMatchMode="startsWith" required="true"
+                                                             style="width: 100%;" panelStyle="width:120px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true" />
+                                                <f:selectItems value="#{GestionAdquisicionesBeans.tiposProcesos}" var="tipoProceso" itemLabel="#{tipoProceso.texto}" itemValue="#{tipoProceso}" />
+                                                <p:ajax update="identificacion" listener="#{GestionAdquisicionesBeans.actualizarSiglas()}" process="@this"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" id="gridDetalle">
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="ID. Proceso:" style="font-weight: bold"/>
+                                            <p:inputText id="identificacion" style="width: 100%" value="#{GestionAdquisicionesBeans.adquisiciones.idProceso}" 
+                                                         required="#{GestionAdquisicionesBeans.renderedAdquisicion}"
+                                                         onkeypress="focusNextOnEnter(event, 'fechaEmision')"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Fecha de Emisión/Publicación" style="font-weight: bold"/>
+                                            <p:calendar id="fechaEmision" value="#{GestionAdquisicionesBeans.adquisiciones.fechaEmision}" 
+                                                        locale="es" pattern="dd/MM/yyyy" readonlyInput="true" 
+                                                        required="#{GestionAdquisicionesBeans.renderedAdquisicion}"
+                                                        maxdate="#{GestionAdquisicionesBeans.adquisiciones.fechaAceptacion}" navigator="true">
+                                                <p:ajax event="dateSelect" update="fechaAceptacion"/>  
+                                            </p:calendar>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Fecha de Aceptación/Adjudicación:" style="font-weight: bold;"/>
+                                            <p:calendar id="fechaAceptacion" value="#{GestionAdquisicionesBeans.adquisiciones.fechaAceptacion}"
+                                                        locale="es" readonlyInput="true" pattern="dd/MM/yyyy"
+                                                        required="#{GestionAdquisicionesBeans.renderedAdquisicion}"
+                                                        disabled="#{empty GestionAdquisicionesBeans.adquisiciones.fechaEmision? true:false}"
+                                                        mindate="#{GestionAdquisicionesBeans.adquisiciones.fechaEmision}" navigator="true"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:fieldset legend="Detalle del Contrato:" style="margin-bottom: 10px" id="fieldsetContrato">
+                                            <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel  for="@next" value="¿Aplica Garantía?" style="font-weight: bold"/>
+                                                    <p:selectBooleanCheckbox value="#{GestionAdquisicionesBeans.adquisiciones.garantia}"/>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel  for="@next" value="Nº de Contrato:" style="font-weight: bold"/>
+                                                    <p:inputText id="numContrato" onkeypress="focusNextOnEnter(event, 'valorContratado')" 
+                                                                 required="true"
+                                                                 style="width: 100%" value="#{GestionAdquisicionesBeans.adquisiciones.numeroContrato}"/>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel  for="@next" value="Valor Contratado US $:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="valorContratado" onkeypress="focusNextOnEnter(event, 'fechaContrato')"
+                                                                   required="true"
+                                                                   value="#{GestionAdquisicionesBeans.adquisiciones.valorContratado}" style="width: 300px"
+                                                                   decimalSeparator="," thousandSeparator="."/>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel  for="@next" value="Fecha de Contrato:" style="font-weight: bold"/>
+                                                    <p:calendar id="fechaContrato" value="#{GestionAdquisicionesBeans.adquisiciones.fechaContrato}"
+                                                                required="true"
+                                                                locale="es" readonlyInput="true" pattern="dd/MM/yyyy" navigator="true"/>
+                                                </p:panelGrid>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Descripción:" style="font-weight: bold;"/>
+                                            <p:inputTextarea id="descripcion" rows="3" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase" 
+                                                             value="#{GestionAdquisicionesBeans.adquisiciones.descripcion}"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>  
+                            </div>
+                            <div class="ui-g-5">
+                                <p:fieldset legend="Detalle Proveedor:" style="margin-bottom: 10px" id="fieldsetProveedor">
+                                    <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <h:panelGroup layout="block" style="width: 100%;text-align: center" class="panelInput" >
+                                            <p:commandButton value="Agregar Proveedor" id="aniadirProveedor" process="@this"
+                                                             icon="fa fa-user-plus" actionListener="#{GestionAdquisicionesBeans.formProveedor()}"
+                                                             style="width: auto" styleClass="Fs16"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="RUC:" style="font-weight: bold"/>
+                                            <p:inputText id="RUC" style="width: 100%;"
+                                                         onkeypress="focusNextOnEnter(event, 'proveedor')" readonly="true" maxlength="13"
+                                                         value="#{GestionAdquisicionesBeans.adquisiciones.proveedor.cliente.identificacionCompleta}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Provincia:" style="font-weight: bold"/>
+                                            <p:inputText id="ciudadProvedorCarga" style="width: 100%;"
+                                                         onkeypress="focusNextOnEnter(event, 'ciudadProvedorCarga')" readonly="true"
+                                                         value="#{GestionAdquisicionesBeans.adquisiciones.proveedor.cliente.canton.idProvincia.provincia}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Razón Social:" style="font-weight: bold"/>
+                                            <p:inputText id="proveedor" onkeypress="focusNextOnEnter(event, 'cuenta1')"
+                                                         readonly="true" style="width: 100%" value="#{GestionAdquisicionesBeans.adquisiciones.proveedor.cliente.nombre}"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="Anticipo" style="margin-bottom: 10px" >
+                                    <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Anticipo Proveedor:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="cuenta1" value="#{GestionAdquisicionesBeans.adquisiciones.anticipo}" var="t"
+                                                             filter="true" filterMatchMode="contains" converter="#{utilConverter}"
+                                                             style="width: 100%;" panelStyle="width:130px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true" />
+                                                <f:selectItems value="#{GestionAdquisicionesBeans.cuentaAnticipoList}" 
+                                                               var="anticipo" itemLabel="#{anticipo.codigo}"   itemValue="#{anticipo}" />
+                                                <p:column style="width:10%" >
+                                                    <f:facet name="header">
+                                                        <h:outputText value="Código"/>
+                                                    </f:facet>
+                                                    <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                                </p:column>
+                                                <p:column style="width: 50%;">
+                                                    <f:facet name="header">
+                                                        <h:outputText value="Nombre"/>
+                                                    </f:facet>
+                                                    <h:outputText value="#{t.nombre}" />
+                                                </p:column>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Costo/Gasto:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="cuenta2" filter="true" filterMatchMode="contains" converter="#{utilConverter}"
+                                                             value="#{GestionAdquisicionesBeans.adquisiciones.gasto}" var="t"
+                                                             style="width: 100%;" panelStyle="width:130px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true" />
+                                                <f:selectItems  var="gastos" itemLabel="#{gastos.codigo}"  itemValue="#{gastos}" 
+                                                                value="#{GestionAdquisicionesBeans.cuentaCostoGastolist}"/>
+                                                <p:column style="width:10%" >
+                                                    <f:facet name="header">
+                                                        <h:outputText value="Código"/>
+                                                    </f:facet>
+                                                    <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                                </p:column>
+                                                <p:column style="width: 50%;">
+                                                    <f:facet name="header">
+                                                        <h:outputText value="Nombre"/>
+                                                    </f:facet>
+                                                    <h:outputText value="#{t.nombre}" />
+                                                </p:column>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Forma de pago:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="idFormaPago" value="#{GestionAdquisicionesBeans.adquisiciones.idFormaPago}"
+                                                             filter="true" filterMatchMode="contains" converter="#{utilConverter}"
+                                                             style="width: 100%;" panelStyle="width:130px">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" itemDisabled="true" />
+                                                <f:selectItems  var="itemSelect" itemLabel="#{itemSelect.texto}"  itemValue="#{itemSelect}" 
+                                                                value="#{GestionAdquisicionesBeans.formasPagoList}"/> 
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel  for="@next" value="Porcentaje Anticipo:" style="font-weight: bold"/>
+                                            <p:inputNumber id="porcentaje" class="panelInput" style="width: 100%"
+                                                           value="#{GestionAdquisicionesBeans.adquisiciones.porcentajeAnticipo}"
+                                                           symbol="%" symbolPosition="s" decimalPlaces="0"
+                                                           onkeypress="focusNextOnEnter(event, 'porcentaje')">
+                                                <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="Documento" style="margin-bottom: 10px">
+                                    <p:fileUpload fileUploadListener="#{GestionAdquisicionesBeans.subirArchivo}" 
+                                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                                                  mode="advanced" dragDropSupport="false"
+                                                  update="messages" />
+                                    <br/><br/>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="pngGLinkComprasPub1" >
+                                        <p:outputLabel value="URL Portal Compras Públicas" class="FontBold Wid100" />
+                                        <div class="ui-inputgroup Wid100">
+                                            <p:inputText value="#{GestionAdquisicionesBeans.adquisiciones.urlProcesoContratacion}" class="Wid94" 
+                                                         placeholder="URL Portal Compras Públicas">
+                                                <p:ajax update="pngGLinkComprasPub1,linkComprasPub1" />
+                                            </p:inputText>
+                                            <p:commandLink style="width: 9%" onclick="window.open('#{GestionAdquisicionesBeans.adquisiciones.urlProcesoContratacion}', '_blank');"
+                                                           rendered="#{GestionAdquisicionesBeans.adquisiciones.urlProcesoContratacion ne null}" id="linkComprasPub1">
+                                                <i class="fa fa-external-link newi Fs22"  />
+                                            </p:commandLink>  
+                                        </div>
+                                    </h:panelGroup>
+                                </p:fieldset>                               
+                            </div>
+                            <div class="ui-g-12" >
+                                <p:fieldset legend="Responsables:" style="margin-bottom: 10px" id="fieldsetResponsable">
+                                    <p:commandButton value="Añadir Responsable" id="aniadirResponsable" update="fieldsetResponsable" process="@this"
+                                                     icon="fa fa-plus" actionListener="#{GestionAdquisicionesBeans.añadirCelda()}" rendered="#{GestionAdquisicionesBeans.habilitarResponsable}"
+                                                     style="width: auto" styleClass="Fs16"/>
+                                    <p:dataTable  style="text-align: center; margin: 10px 0px" rows="3" editable="true" editMode="cell" 
+                                                  emptyMessage="No existen datos" rowStyleClass="#{servidorResponsable.estado==true ? 'activo' : 'inactivo'}"
+                                                  id="servidorResponsableTable" value="#{GestionAdquisicionesBeans.responsableList}" 
+                                                  var="servidorResponsable" widgetVar="servidorResponsableTable">
+                                        <p:column headerText="Nº de Identificación" style="width: 3vw; height: 1vw;text-align: center">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{servidorResponsable.responsable.persona.identificacion}" /></f:facet>
+                                                <f:facet name="input">
+                                                    <p:selectOneMenu value="#{servidorResponsable.responsable}" style="width:100%" disabled="#{servidorResponsable.id==null?false:true}"
+                                                                     converter="#{utilConverter}" filter="true" filterMatchMode="contains" >
+                                                        <f:selectItem itemLabel="Seleccionar"/>
+                                                        <f:selectItems value="#{GestionAdquisicionesBeans.servidorList}" var="servidor" 
+                                                                       itemLabel="#{servidor.persona.identificacion} - #{servidor.persona.nombreCompleto}" itemValue="#{servidor}"/>
+                                                        <p:ajax update="servidorResponsableTable"/>
+                                                    </p:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Nombres " style="width: 6vw;text-align: center">
+                                            <h:outputText value="#{servidorResponsable.responsable.persona.nombreCompleto}" />
+                                        </p:column>
+                                        <p:column headerText="Cargo " style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{servidorResponsable.responsable.distributivo.cargo.nombreCargo}" />
+                                        </p:column>
+                                        <p:column headerText="Unidad Administrativa " style="width: 6vw;text-align: center">
+                                            <h:outputText value="#{servidorResponsable.responsable.distributivo.unidadAdministrativa.nombre}" />
+                                        </p:column>
+                                        <p:column headerText="Fecha Asignación " style="width: 3vw;text-align: center">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{servidorResponsable.fechaAsignacion}" >
+                                                        <f:convertDateTime pattern="dd/MM/yyyy" locale="es"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input" >
+                                                    <p:calendar value="#{servidorResponsable.fechaAsignacion}" locale="es" style="width:100%" navigator="true"
+                                                                mindate="#{servidorResponsable.fechaAsignacion}" readonlyInput="true" disabled="#{servidorResponsable.id==null?false:true}">
+                                                        <p:ajax event="dateSelect" update="servidorResponsableTable" listener="#{GestionAdquisicionesBeans.controlFecha(servidorResponsable)}" />
+                                                    </p:calendar>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Fecha Finalización " style="width: 3vw;text-align: center">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{servidorResponsable.fechaFinalizacion}" >
+                                                        <f:convertDateTime pattern="dd/MM/yyyy" locale="es" />
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input">
+                                                    <p:calendar value="#{servidorResponsable.fechaFinalizacion}" locale="es" 
+                                                                mindate="#{servidorResponsable.fechaAsignacion}" style="width:100%" navigator="true"
+                                                                disabled="#{empty servidorResponsable.fechaAsignacion? true:servidorResponsable.estado ? false: true}">
+                                                        <p:ajax event="dateSelect" listener="#{GestionAdquisicionesBeans.onDateSelect(servidorResponsable)}" update="servidorResponsableTable" />
+                                                    </p:calendar>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{servidorResponsable.estado==true?'Activo':'Inactivo'}" />
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-12">
+                                <center>
+                                    <p:commandButton value="Guardar" id="save" update="adquisicionForm" style="margin: 15px;width: 100px"
+                                                     icon="ui-icon-save" actionListener="#{GestionAdquisicionesBeans.save()}"
+                                                     styleClass="Fs16"/>
+                                    <p:commandButton value="Cancelar" process="@this"
+                                                     icon="fa fa-remove" actionListener="#{GestionAdquisicionesBeans.cancelar()}"
+                                                     styleClass="Fs16" class="red-button" style="width: 100px; margin-bottom: 15px;"/>
+                                </center>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                </h:form>
+            </div>  
+        </div>
+
+        <p:dialog id="proveedorDlg" widgetVar="proveedorDlg" width="30%" position="center" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de Proveedores" >
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="proveedorForm" style="width: 100%;" >
+                        <p:commandButton value="Nuevo Proveedor" process="@this"
+                                         icon="fa fa-user-plus" actionListener="#{GestionAdquisicionesBeans.formNuevoProveedor()}"
+                                         styleClass="Fs16" style="width: 25%; margin-bottom: 10px"/>
+                        <p:dataTable  id="proveedorTable" widgetVar="proveedorTable" var="proveedor" value="#{GestionAdquisicionesBeans.proveedorLazyModel}" 
+                                      scrollable="true" scrollHeight="300" lazy="true" rows="20000" style="width: 100%" rowKey="#{proveedor.id}"
+                                      emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                            <p:column headerText="RUC" filterBy="#{proveedor.cliente.identificacion}"  style="width: 4vw;text-align: center">
+                                <h:outputText value="#{proveedor.cliente.identificacionCompleta}" />
+                            </p:column> 
+                            <p:column headerText="Nombre Beneficiario" filterBy="#{proveedor.cliente.nombre}"  style="width: 10vw;">
+                                <h:outputText value="#{proveedor.cliente.nombre}" />
+                            </p:column>
+                            <p:column headerText="Seleccionar"  style="width: 4vw;text-align: center">
+                                <p:commandLink actionListener="#{GestionAdquisicionesBeans.añadirProveedor(proveedor)}" title="Seleccionar" update="fieldsetProveedor" process="@this">
+                                    <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="proveedorNuevoDlg" widgetVar="proveedorNuevoDlg" position="top" style="margin-top: 100px" width="60%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="registroProveedor" >
+                <p:tabView id="tabViewProveedor">
+                    <p:tab title="Registro del Proveedor" id="tabProveedor">
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo de Identificación:" style="font-weight: bold"/>
+                                <p:inputText id="tipoIdentificacionProveedor" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'tipoIdentificacionProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.tipoIdentificacion.texto}" readonly="true" /> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{!GestionAdquisicionesBeans.datosCargados}">
+                                <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                                <p:inputText id="identificacionProveedor" style="width: 100%" maxlength="13"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.identificacion}"
+                                             required="true" class="panelInput" onkeypress="focusNextOnEnter(event, 'provinciaProveedor')">
+                                    <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                    <p:ajax listener="#{GestionAdquisicionesBeans.buscarCliente(true)}" event="blur" update="registroProveedor"/>
+                                </p:inputText> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{GestionAdquisicionesBeans.datosCargados}">
+                                <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                                <p:inputText id="identificacionProveedor2" style="width: 100%" readonly="#{GestionAdquisicionesBeans.datosCargados}" maxlength="13"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.identificacionCompleta}"
+                                             required="true" class="panelInput" onkeypress="focusNextOnEnter(event, 'identificacionProveedor2')">
+                                </p:inputText> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel  for="@next" value="Provincia:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="provinciaProveedor" value="#{GestionAdquisicionesBeans.provinciaProveedor}" converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="startsWith" required="true"
+                                                 style="width: 100%" panelStyle="width:125px">
+                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.provincias}" var="provincia" itemLabel="#{provincia.provincia}" 
+                                                   itemValue="#{provincia}" />
+                                    <p:ajax update="cantonProveedor" listener="#{GestionAdquisicionesBeans.actualizarCantones('PROVEEDOR')}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>    
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel  for="@next" value="Cantón:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="cantonProveedor" value="#{GestionAdquisicionesBeans.clienteProveedor.canton}" converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="startsWith" required="true"
+                                                 style="width: 100%;" panelStyle="width:125px">
+                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.cantonProveedor}" var="canton" itemLabel="#{canton.canton}" 
+                                                   itemValue="#{canton}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>  
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                <p:outputLabel for="@next" value="Razón Social:" style="font-weight: bold"/>
+                                <p:inputText id="razonSocialProveedor" style="width: 100%;text-transform: uppercase" 
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                             readonly="#{GestionAdquisicionesBeans.datosCargados}" required="true"
+                                             onkeypress="focusNextOnEnter(event, 'razonSocialProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.nombre}"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Nombre Comercial:" style="font-weight: bold"/>
+                                <p:inputText style="width: 100%;text-transform: uppercase"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" required="true" id="nombreComercial"
+                                             onkeypress="focusNextOnEnter(event, 'nombreComercial')" maxlength="30" 
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.apellido}"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Dirección:" style="font-weight: bold"/>
+                                <p:inputText id="direccionProveedor" style="width: 100%;text-transform: uppercase" 
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                             readonly="#{GestionAdquisicionesBeans.datosCargados}" required="true"
+                                             onkeypress="focusNextOnEnter(event, 'direccionProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.direccion}"/> 
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="E-mail:" style="font-weight: bold"/>
+                                <p:inputText id="proveedorEmail" style="width: 100%" 
+                                             onkeypress="focusNextOnEnter(event, 'proveedorEmail')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.email}"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Teléfono:" style="font-weight: bold"/>
+                                <p:inputMask id="telefonoProveedor" mask="(99)999-9999" placeholder="(99) 999-9999" style="width: 100%"
+                                             required="true" onkeypress="focusNextOnEnter(event, 'telefonoProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.telefono}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Celular:" style="font-weight: bold"/>
+                                <p:inputMask id="celularProveedor" mask="(99)9999-9999" placeholder="(99) 9999-9999" style="width: 100%"
+                                             onkeypress="focusNextOnEnter(event, 'celularProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.celular}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo Negocio:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="tipoNegocidoProveedor" value="#{GestionAdquisicionesBeans.clienteProveedor.tipoDeNegocio}" 
+                                                 required="true" style="width:185px">
+                                    <f:selectItem itemLabel="Seleccione"  itemValue="" />
+                                    <f:selectItem itemLabel="COMERCIAL"  itemValue="COMERCIAL" />
+                                    <f:selectItem itemLabel="FUNCACIÓN"  itemValue="FUNCACIÓN" />
+                                    <f:selectItem itemLabel="ASOCIACIÓN"  itemValue="ASOCIACIÓN" />
+                                    <f:selectItem itemLabel="RELIGIOSO"  itemValue="RELIGIOSO" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group" id="clasificacionTipoGrid">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="clasificaciones" value="#{GestionAdquisicionesBeans.clienteProveedor.clasificacionProv}" 
+                                                 style="width:185px" converter="#{utilConverter}" required="true">
+                                    <f:selectItem itemLabel="Seleccione"  itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.clasificaciones}" var="clasificacion"
+                                                   itemLabel="#{clasificacion.texto}" itemValue="#{clasificacion}" />
+                                    <p:ajax listener="#{GestionAdquisicionesBeans.actualizarTipo()}" update="tipos, :registroProveedor:tabViewProveedor:gridContacto" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>   
+                                <p:selectOneMenu id="tipos" value="#{GestionAdquisicionesBeans.clienteProveedor.tipoProv}" 
+                                                 style="width:185px" converter="#{utilConverter}" required="true">
+                                    <f:selectItem itemLabel="Seleccione"  itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.tipos}" var="tipos"
+                                                   itemLabel="#{tipos.texto}" itemValue="#{tipos}" />
+                                    <p:ajax listener="#{GestionAdquisicionesBeans.actualizarContribuyente()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Contribuyente Especial:" style="font-weight: bold"/>
+                                <p:selectBooleanButton id="contribuyente" value="#{GestionAdquisicionesBeans.clienteProveedor.contribuyenteEspecial}" onLabel="Si" offLabel="No" 
+                                                       disabled="#{GestionAdquisicionesBeans.habilitarContribuyente}"
+                                                       onIcon="fa fa-check" offIcon="fa fa-times" style="width:30%">
+                                    <p:ajax update="clasificacionTipoGrid"/>
+                                </p:selectBooleanButton>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="resolucion" 
+                                         rendered="#{GestionAdquisicionesBeans.clienteProveedor.contribuyenteEspecial}">
+                                <p:outputLabel for="@next" value="Resolución SRI:" style="font-weight: bold"/>
+                                <p:inputText id="resolucionProveedor" style="width: 100%" onkeypress="focusNextOnEnter(event, 'resolucionProveedor')"
+                                             value="#{GestionAdquisicionesBeans.clienteProveedor.resolucionSri}"/> 
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" >
+                                <p:outputLabel for="@next" value="Observación" style="width: 100%; font-weight: bold"/>
+                                <p:inputTextarea  id="observacion" rows="1" cols="65" style="text-transform: uppercase;width: 100%" 
+                                                  value="#{GestionAdquisicionesBeans.proveedor.observacion}" 
+                                                  class="panelInput" readonly="false" onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                </p:inputTextarea>
+                            </p:panelGrid> 
+                            <p:panelGrid columns="1" layout="grid" >
+                                <p:outputLabel for="@next" value="Actividad Comercial:" style="width: 100%; font-weight: bold"/>
+                                <p:inputTextarea  id="actividadComercial" rows="1" cols="65" style="text-transform: uppercase;width: 100%" 
+                                                  value="#{GestionAdquisicionesBeans.proveedor.actividadComercial}" required="true"
+                                                  class="panelInput" readonly="false" onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                </p:inputTextarea>
+                            </p:panelGrid> 
+                        </p:panelGrid>
+                    </p:tab>
+                    <p:tab title="Registro del Contacto" id="tabContacto">
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridContacto">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo de Identificación:" style="font-weight: bold"/>
+                                <p:inputText id="tipoIdentificacionContacto" style="width: 100%;" readonly="true" 
+                                             onkeypress="focusNextOnEnter(event, 'tipoIdentificacionContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.tipoIdentificacion}"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Nº de Identificación:" style="font-weight: bold"/>
+                                <p:inputText id="identificacionContacto" maxlength="10" style="width: 100%;text-transform: uppercase" 
+                                             required="#{GestionAdquisicionesBeans.habilitarContribuyente}" readonly="#{GestionAdquisicionesBeans.habilitarContacto}"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" onkeypress="focusNextOnEnter(event, 'identificacionContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.identificacion}">
+                                    <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                    <p:ajax listener="#{GestionAdquisicionesBeans.buscarCliente(false)}" event="blur" update="gridContacto"/>
+                                </p:inputText> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                                <p:inputText id="nombreContacto" style="width: 100%;text-transform: uppercase" 
+                                             required="#{GestionAdquisicionesBeans.habilitarContribuyente}" readonly="#{GestionAdquisicionesBeans.habilitarContacto}"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" onkeypress="focusNextOnEnter(event, 'nombreContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.nombre}" /> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                                <p:inputText id="apellidoContacto" style="width: 100%;text-transform: uppercase" 
+                                             required="#{GestionAdquisicionesBeans.habilitarContribuyente}" readonly="#{GestionAdquisicionesBeans.habilitarContacto}"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" onkeypress="focusNextOnEnter(event, 'apellidoContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.apellido}" /> 
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="Género:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="generoContacto" value="#{GestionAdquisicionesBeans.contacto.genero}" disabled="#{GestionAdquisicionesBeans.habilitarContacto}"
+                                                 converter="#{utilConverter}" style="width: 100%"
+                                                 filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{clienteView.tiposDeGenero}" var="cla" itemLabel="#{cla.texto}" itemValue="#{cla}" itemLabelEscaped="false"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Teléfono:" style="font-weight: bold"/>
+                                <p:inputMask id="telefonoContacto" mask="(99)999-9999" placeholder="(99)999-9999" 
+                                             style="width: 100%" onkeypress="focusNextOnEnter(event, 'telefonoContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.telefono}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="Celular:" style="font-weight: bold"/>
+                                <p:inputMask mask="(99)9999-9999" placeholder="(99)9999-9999" style="width: 100%" id="celularContacto"
+                                             value="#{GestionAdquisicionesBeans.contacto.celular}" onkeypress="focusNextOnEnter(event, 'celularContacto')"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="Email:" style="font-weight: bold"/>
+                                <p:inputText style="width: 100%" value="#{GestionAdquisicionesBeans.contacto.email}" id="emailProveedor"
+                                             onkeypress="focusNextOnEnter(event, 'emailProveedor')" readonly="#{GestionAdquisicionesBeans.habilitarContacto}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Dirección:" style="font-weight: bold"/>
+                                <p:inputText id="direccionContacto" style="width: 100%;text-transform: uppercase"
+                                             required="#{GestionAdquisicionesBeans.habilitarContribuyente}" readonly="#{GestionAdquisicionesBeans.habilitarContacto}"
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" onkeypress="focusNextOnEnter(event, 'direccionContacto')"
+                                             value="#{GestionAdquisicionesBeans.contacto.direccion}"/> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel  for="@next" value="Provincia:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="provinciaContacto" value="#{GestionAdquisicionesBeans.provinciaContacto}" converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="startsWith" 
+                                                 style="width: 100%" panelStyle="width:125px">
+                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.provincias}" var="provincia" itemLabel="#{provincia.provincia}" 
+                                                   itemValue="#{provincia}" />
+                                    <p:ajax update="cantonContacto" listener="#{GestionAdquisicionesBeans.actualizarCantones('CONTACTO')}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>    
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel  for="@next" value="Cantón:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="cantonContacto" value="#{GestionAdquisicionesBeans.contacto.canton}" converter="#{utilConverter}"
+                                                 filter="true" filterMatchMode="startsWith"
+                                                 style="width: 100%;" panelStyle="width:125px">
+                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                                    <f:selectItems value="#{GestionAdquisicionesBeans.cantonContacto}" var="canton" itemLabel="#{canton.canton}" 
+                                                   itemValue="#{canton}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>  
+                        </p:panelGrid>
+                    </p:tab>
+                    <p:tab title="Cuenta Bancaria" id="entidadBancariaTab">
+                        <p:commandButton value="Buscar Entidad Bancaria" id="aniadirCuenta" process="@this" update="entidadBancariaTable"
+                                         icon="fa fa-user-plus" actionListener="#{GestionAdquisicionesBeans.openDlgBanco()}"
+                                         style="width: auto; margin: 10px 0px" styleClass="Fs16">
+                        </p:commandButton>
+                        <p:dataTable  id="entidadBancariaTable" widgetVar="entidadBancariaTable" var="detalleBanco" value="#{GestionAdquisicionesBeans.detalleBancoList}" 
+                                      scrollable="true" scrollHeight="100" rows="20" style="width: 100%"  editable="true" editMode="cell"
+                                      emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                            <p:column headerText="Banco" style="width: 10vw">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{detalleBanco.banco.nombreBanco}" /></f:facet>
+                                    <f:facet name="input"><p:inputText id="modelInput" value="#{detalleBanco.banco.nombreBanco}"/></f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Cuenta" style="width: 7vw">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{detalleBanco.cuentaBanco}" /></f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText value="#{detalleBanco.cuentaBanco}" maxlength="16" >
+                                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                        </p:inputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Tipo de Cuenta" style="width: 7vw">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{detalleBanco.tipoCuenta.texto}" /></f:facet>
+                                    <f:facet name="input">
+                                        <h:selectOneMenu value="#{detalleBanco.tipoCuenta}" style="width:100%" converter="#{utilConverter}">
+                                            <f:selectItem itemLabel="Seleccione..."/>
+                                            <f:selectItems value="#{proveedorView.tipoCuentaBancaria}" var="ti" itemLabel="#{ti.texto}" itemValue="#{ti}"/>
+                                        </h:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Registro" style="width: 7vw">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{detalleBanco.registro}" /></f:facet>
+                                    <f:facet name="input"><p:inputText value="#{detalleBanco.registro}" style="text-transform: uppercase" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                                    </f:facet>
+
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Estado de la Cuenta" style="width:7vw;text-align: center">
+                                <p:selectBooleanCheckbox value="#{detalleBanco.estadoCuenta}" >
+                                    <p:ajax update="entidadBancariaTable" process="@this"/>
+                                </p:selectBooleanCheckbox>
+                            </p:column>
+                            <p:column headerText="Quitar" style="width:4vw;text-align: center">
+                                <p:commandLink actionListener="#{GestionAdquisicionesBeans.removerCuentaBancaria(detalleBanco)}" title="Quitar" 
+                                               process="@this" update=":registroProveedor:tabViewProveedor:entidadBancariaTable">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:tabView>
+                <center>
+                    <p:commandButton value="Guardar Proveedor" id="saveProveedor2" style="margin: 10px" update=":registroProveedor" 
+                                     icon="ui-icon-save" actionListener="#{GestionAdquisicionesBeans.guardarAñadirProveedor()}" 
+                                     styleClass="Fs16"/>    
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="BancosDlg" widgetVar="BancosDlg" width="30%" modal="true" showEffect="fade"  draggable="false"
+                  hideEffect="fade" resizable="false" position="center">
+            <h:form  prependId="false">
+                <h:panelGroup id="formBanco" layout="block">
+                    <p:dataTable  id="datosDelBancoTable" widgetVar="datosDelBancoTable" var="banco" value="#{GestionAdquisicionesBeans.bancoLazyModel}" 
+                                  scrollable="true" scrollHeight="350" lazy="true" rows="20000" style="width: 100%" rowKey="#{banco.id}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            LISTADO DE ENTIDADES BANCARIAS
+                        </f:facet>
+                        <p:column headerText="Nombre del Banco" filterBy="#{banco.nombreBanco}">
+                            <h:outputText value="#{banco.nombreBanco}"/>
+                        </p:column>
+                        <p:column headerText="Código del Bco. Central" filterBy="#{banco.cuentaCorriente}" style="text-align: center">
+                            <h:outputText value="#{banco.cuentaCorriente}"/>
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 4vw;text-align: center">
+                            <p:commandLink actionListener="#{GestionAdquisicionesBeans.añadirBanco(banco)}" title="Seleccionar" process="@this"
+                                           update=":registroProveedor:tabViewProveedor:entidadBancariaTable">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{GestionAdquisicionesBeans.tramite}"/>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{GestionAdquisicionesBeans.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{GestionAdquisicionesBeans.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

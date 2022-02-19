@@ -1,0 +1,417 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Comprobante de pago directo
+    </ui:define>
+    <ui:param name="tittle" value="Comprobante de pago de directo"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Detalle">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contPagoAbonosView.contComprobantePago.numRegistro==null?false:true}">
+                                    <p:outputLabel for="@next" value="No." style="font-weight: bold"/>
+                                    <p:inputText id="cpNumReferencia" value="#{contPagoAbonosView.contComprobantePago.numRegistro}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'cpNumReferencia')"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="cpPeriodo" value="#{contPagoAbonosView.contComprobantePago.periodo}" disabled="#{!contPagoAbonosView.view}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{contPagoAbonosView.listaPeriodo}" var="item" itemValue="#{item}"/>
+                                        <p:ajax process="@this"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Fecha de registro:" style="font-weight: bold"/>
+                                    <p:calendar id="cpFecha"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" 
+                                                onkeypress="focusNextOnEnter(event, 'cpFecha')" readonlyInput="true" disabled="#{!contPagoAbonosView.view}"
+                                                value="#{contPagoAbonosView.contComprobantePago.fechaRegistro}" style="width: 100%">
+                                        <p:ajax event="dateSelect"/>
+                                    </p:calendar> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Beneficiarios" id="botonBeneficiario" rendered="#{contPagoAbonosView.view}"
+                                                     icon="fa fa-user" actionListener="#{contPagoAbonosView.searchBeneficiario()}" styleClass="Fs16" >
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Cta. Banco de pago" id="botonCtaBanco" rendered="#{contPagoAbonosView.view}"
+                                                     icon="fa fa-th-list" actionListener="#{contPagoAbonosView.openBancoDlg()}" styleClass="Fs16" >
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Guardar" id="botonGuardar"  style="background: green" rendered="#{contPagoAbonosView.view}"
+                                                     icon="fa fa-save" actionListener="#{contPagoAbonosView.save()}" styleClass="Fs16" >
+                                        <p:confirm header="Confirmación de guardado" message="¿Está seguro desea guardar el comprobante de pago?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandButton>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </p:fieldset>
+                        <p:fieldset legend="Descripción">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:inputTextarea id="cpDetalle" rows="5" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"  disabled="#{!contPagoAbonosView.view}"
+                                                     onkeypress="focusNextOnEnter(event, 'cpDetalle')" value="#{contPagoAbonosView.contComprobantePago.descripcion}"/>    
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:commandButton value="Nueva linea" id="botonCuentasContables" process="@this" update="registroContableDetalleTable" rendered="#{contPagoAbonosView.view}"
+                                             icon="fa fa-plus-circle" actionListener="#{contPagoAbonosView.nuevaLinea()}" styleClass="Fs16" />
+                        </h:panelGroup>
+                    </p:panelGrid>       
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="registroContableDetalleTable" widgetVar="registroContableDetalleTable" var="detalle" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{detalle.numeracion}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{contPagoAbonosView.contDiarioGeneralDetalleList}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <f:facet name="header">
+                                DETALLE DEL COMPROBANTE DE PAGO
+                            </f:facet>
+                            <p:column headerText="No." style="width: 5%;text-align: center">
+                                <h:outputText value="#{detalle.numeracion}"/>
+                            </p:column>
+                            <p:column headerText="Cta. Contable" style="width: 9%;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalle.idContCuentas.codigo}" />
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText id="codCuentaInsert" value="#{detalle.codCuentaInsert}" 
+                                                     rendered="#{!detalle.datoCargado}" style="width:100%">
+                                            <p:ajax update="registroContableDetalleTable" listener="#{contPagoAbonosView.searchContCuenta(detalle)}"/>
+                                        </p:inputText>
+                                    </f:facet>
+                                </p:cellEditor>                                    
+                            </p:column>
+                            <p:column headerText="Cta. Contable" style="width: 18%;">
+                                <h:outputText value="#{detalle.idContCuentas.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Debe" style="width: 9%;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalle.debe}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{detalle.debe}" disabled="#{!contPagoAbonosView.view}">
+                                            <p:ajax update="registroContableDetalleTable" process="cpPeriodo"
+                                                    listener="#{contPagoAbonosView.determinarRelacionPresupuestaria(detalle,true)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Haber" style="width: 9%;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalle.haber}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{detalle.haber}" disabled="#{!contPagoAbonosView.view}">
+                                            <p:ajax update="registroContableDetalleTable" process="cpPeriodo"
+                                                    listener="#{contPagoAbonosView.determinarRelacionPresupuestaria(detalle,false)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Partida" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.partidaPresupuestaria}"/>
+                            </p:column>
+                            <p:column headerText="Ejecutado" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.ejecutado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Quitar" style="width: 5%;text-align: center" rendered="#{contPagoAbonosView.view}">
+                                <p:commandLink title="Eliminar" actionListener="#{contPagoAbonosView.deleteRegistro(detalle,index)}"  
+                                               update="registroContableDetalleTable" process="@this">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink> 
+                            </p:column>
+                            <p:columnGroup type="footer">
+                                <p:row >
+                                    <p:column colspan="3" footerText="TOTALES " style="text-align:right;font-weight: bold"/>
+                                    <p:column footerText="$#{contPagoAbonosView.totalDebe}" style="text-align:right;font-weight: bold" />
+                                    <p:column footerText="$#{contPagoAbonosView.totalHaber}" style="text-align:right;font-weight: bold"/>
+                                    <p:column colspan="1" footerText="" style="text-align:center;font-weight: bold"/>
+                                    <p:column footerText="$#{contPagoAbonosView.totalEjecutado}" style="text-align:right;font-weight: bold"/>
+                                    <p:column footerText="" style="text-align:right;font-weight: bold" rendered="#{contPagoAbonosView.view}"/>
+                                </p:row>
+                            </p:columnGroup>
+                        </p:dataTable>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="beneficiariosTable" widgetVar="beneficiariosTable" var="beneficiario" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{beneficiario.idCliente}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{contPagoAbonosView.beneficiarioComprobantePagos}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <f:facet name="header">
+                                LISTADO DE BENEFICIARIOS
+                            </f:facet>
+                            <p:column headerText="Cta. bancaria" style="width: 10%;text-align: center"
+                                      filterBy="#{beneficiario.idDetalleBanco.cuentaBanco}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.cuentaBanco}"/>
+                            </p:column>
+                            <p:column headerText="Nom. banco" style="width: 30%;"
+                                      filterBy="#{beneficiario.idDetalleBanco.banco.nombreBanco}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.banco.nombreBanco}"/>
+                            </p:column>
+                            <p:column headerText="Tipo de cuenta" style="width: 15%;text-align: center">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.tipoCuenta.texto}"/>
+                            </p:column>
+                            <p:column headerText="Nombre beneficiario" style="width: 30%;"
+                                      filterBy="#{beneficiario.idCliente.nombreCompleltoSql}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idCliente.nombreCompleltoSql}"/>
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 15%;">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{beneficiario.monto}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{beneficiario.monto}" disabled="#{!contPagoAbonosView.view}">
+                                            <p:ajax update="beneficiariosTable" listener="#{contPagoAbonosView.validarMonto(beneficiario)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Quitar" style="width: 5%;text-align: center" rendered="#{contPagoAbonosView.view}">
+                                <p:commandLink title="Eliminar" actionListener="#{contPagoAbonosView.deleteRegistroBeneficiario(beneficiario,index)}"  
+                                               update="beneficiariosTable" process="@this">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink> 
+                            </p:column>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="bancoDlg" widgetVar="bancoDlg" width="60%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de banco">
+            <h:form prependId="false" id="bancoForm">
+                <p:dataTable  id="contCuentaBancoTable" widgetVar="contCuentaBancoTable" var="contCuentaBanco" 
+                              value="#{contPagoAbonosView.contCuentaEntidadLazyModel}" 
+                              scrollable="true" scrollHeight="auto" lazy="true" rows="400000" style="width: 100%" rowKey="#{banco.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Cta. Contable
+                    </f:facet>
+                    <p:column headerText="Cta. Bancaria" filterBy="#{contCuentaBanco.numeroCuenta}"  style="width: 20%;text-align: center">
+                        <h:outputText value="#{contCuentaBanco.numeroCuenta}" />
+                    </p:column> 
+                    <p:column headerText="Nombre" filterBy="#{contCuentaBanco.nombre}"  style="width: 50%;">
+                        <h:outputText value="#{contCuentaBanco.nombre}" />
+                    </p:column>
+                    <p:column headerText="Cta. Contable" filterBy="#{contCuentaBanco.idCuentaMovimiento.codigo}"  style="width: 15%;">
+                        <h:outputText value="#{contCuentaBanco.idCuentaMovimiento.codigo}" />
+                    </p:column>
+                    <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{contPagoAbonosView.closeBancoDlg(contCuentaBanco)}" title="Seleccionar">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>                                
+                </p:dataTable>
+            </h:form>         
+        </p:dialog>
+        <p:dialog id="dlgCuentaContable" widgetVar="dlgCuentaContable" width="40%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de cuenta">
+            <h:form prependId="false" id="dlgCuentaContableForm">
+                . <p:commandButton value="Mostrar todo el plan de cuentas" id="btnCuentasFiltro" style="background: green;margin-bottom: 20px" 
+                                   update="contCuentasTable,dlgCuentaContableForm" icon="fa fa-refresh"
+                                   actionListener="#{contPagoAbonosView.updateContCuentas(false,'')}" styleClass="Fs16" >
+                </p:commandButton>
+                <p:dataTable  id="contCuentasTable" widgetVar="contCuentasTable" var="contCuentas" 
+                              value="#{contPagoAbonosView.contCuentasLazyModel}" 
+                              scrollable="true" scrollHeight="auto" lazy="true" rows="200000" style="width: 100%" rowKey="#{contCuentas.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Cta. Contable
+                    </f:facet>
+                    <p:column headerText="Código" filterBy="#{contCuentas.codigo}"  style="width: 15%;text-align: center">
+                        <h:outputText value="#{contCuentas.codigo}" />
+                    </p:column> 
+                    <p:column headerText="Nombre" filterBy="#{contCuentas.descripcion}"  style="width: 70%;">
+                        <h:outputText value="#{contCuentas.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{contPagoAbonosView.selectContCuenta(contCuentas)}" title="Seleccionar">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>                                
+                </p:dataTable>
+            </h:form>         
+        </p:dialog>
+        <p:dialog id="beneficiarioDlg" widgetVar="beneficiarioDlg" width="50%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de beneficiario">
+            <h:form prependId="false" id="beneficiarioForm">
+                <p:fieldset legend="Parametros:" style="margin-bottom: 10px">
+                    <p:selectOneRadio id="customRadio"  layout="custom" value="#{contPagoAbonosView.tipoListado}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="formMain" event="valueChange" listener="#{contPagoAbonosView.searchBeneficiario()}"/>
+                    </p:selectOneRadio>
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt1" value="Servidores" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt2" value="Proveedores" />
+                        </h:panelGroup>             
+                    </p:panelGrid>
+                </p:fieldset>                
+                <p:outputPanel id="servidorPanel" style="width: 100%;" rendered="#{contPagoAbonosView.tipoListado}">
+                    <p:dataTable  id="servidorTable" widgetVar="servidorTable" var="servidor" value="#{contPagoAbonosView.servidorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="100" style="width: 100%" rowKey="#{servidor.id}"
+                                  rowsPerPageTemplate="30"  paginator="true" 
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Servidores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{servidor.persona.identificacion}"  style="width: 20%;text-align: center">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{servidor.persona.nombreCompleltoSql}"  style="width: 65%;">
+                            <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                            <p:commandLink actionListener="#{contPagoAbonosView.closeDlg(servidor.persona, false)}" title="Seleccionar"  process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+                <p:outputPanel id="proveedorPanel" style="width: 100%;" rendered="#{!contPagoAbonosView.tipoListado}">
+                    <p:dataTable  id="proveedorTable" widgetVar="proveedorTable" var="proveedor" value="#{contPagoAbonosView.proveedorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="100" style="width: 100%" rowKey="#{proveedor.id}"
+                                  rowsPerPageTemplate="100"  paginator="true" 
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Proveedores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{proveedor.cliente.identificacionCompleta}"  style="width: 20%;text-align: center">
+                            <h:outputText value="#{proveedor.cliente.identificacionCompleta}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{proveedor.cliente.nombreCompleltoSql}"  style="width: 65%;">
+                            <h:outputText value="#{proveedor.cliente.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                            <p:commandLink actionListener="#{contPagoAbonosView.closeDlg(proveedor.cliente,true)}" title="Seleccionar" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="partidaEstructuraRelacionadaDlg" widgetVar="partidaEstructuraRelacionadaDlg" width="30%" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="LISTADO PRESUPUESTO" >
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="partidaEstructuraRelacionadaForm" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="gridPartidas">
+                            <p:outputLabel for="@next" value="Cédula Presupuestaria" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{contPagoAbonosView.partePresupuestariaModel}" style="width:100%"
+                                             converter="dtoConverter" var="t"
+                                             filter="true" filterMatchMode="contains" id="listPresupuesto" panelStyle="width:180px">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" />
+                                <f:selectItems value="#{contPagoAbonosView.partePresupuestariaModelList}" 
+                                               var="itemP" itemLabel="#{itemP.partidapresupuestaria} - #{itemP.descripcion}" 
+                                               itemValue="#{itemP}" />
+                                <p:column style="width:10%" >
+                                    <f:facet name="header">
+                                        <h:outputText value="Código"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.partidapresupuestaria}" style="font-weight: bold;" />
+                                </p:column>
+                                <p:column style="width: 30%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.descripcion}" />
+                                </p:column>
+                                <p:column style="width: 10%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Saldo"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.saldodisponible}" >
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="Seleccionar" icon="fa fa-save" actionListener="#{contPagoAbonosView.guardarRelacionesPresupuestarias()}" 
+                                             update="registroContableDetalleTable"
+                                             styleClass="Fs16" style="width: auto; margin: 15px;"/> 
+                        </center>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        <p:dialog id="dlgConfirmacion" widgetVar="dlgConfirmacion" width="40%" position="center" closable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Comprobante de pago">
+            <h:form prependId="false" id="dlgConfirmacionForm">
+                <center>
+                    <h1> REGISTRADO/EDITADO CON ÉXITO</h1>
+                    <p:graphicImage name="success_icon.png" library="icons" style="width: 30%"/>
+                    <h1> NO. DE COMPROBANTE DE PAGO</h1>
+                    <h1> #{contPagoAbonosView.contComprobantePago.numRegistro} </h1>
+                    <br/>                  
+                </center>
+                <p:panelGrid columns="4" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Ir al listado" id="btn_1" process="@this" style="background: #0091EA;width: 100%"
+                                         icon="fa fa-th-list" actionListener="#{contPagoAbonosView.openConfirmacion(1,'')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Reporte PDF" id="btn_2" process="@this" style="background: gray;width: 100%"
+                                         icon="fa fa-file-pdf-o" actionListener="#{contPagoAbonosView.openConfirmacion(2,'pdf')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Reporte EXCEL" id="btn_3" process="@this" style="background: gray;width: 100%"
+                                         icon="fa fa-file-excel-o" actionListener="#{contPagoAbonosView.openConfirmacion(2,'xlsx')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Nuevo registro" id="btn_4" process="@this" style="background: green;width: 100%"
+                                         icon="fa fa-plus-circle" actionListener="#{contPagoAbonosView.openConfirmacion(3,'')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>              
+</ui:composition>

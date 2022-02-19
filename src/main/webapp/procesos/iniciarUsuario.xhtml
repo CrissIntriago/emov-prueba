@@ -1,0 +1,260 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:sc="http://xmlns.jcp.org/jsf/composite/sigef/components"
+
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+
+    <ui:define name="title">
+        Mantenimiento de Tablas de Auth
+    </ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{menuUsuarioNuevoBeans.tarea}" tramite="#{menuUsuarioNuevoBeans.tramite}" />
+        </div>
+
+        <h:form id="frmMain" prependId="false">
+            <h:panelGroup id="dataTable" layout="block">
+                <div style="width: 100% !important; display: inline-block">
+                    <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                        <div class="ui-g-12 ui-md-6 ui-lg-3 activo">ACTIVO</div>
+                        <div class="ui-g-12 ui-md-6 ui-lg-3 inactivo">INACTIVO</div>
+                    </div>
+                    <p:commandButton id="cbNuevoUsuario"  value="Nuevo Usuario" title="Nuevo Usuario" icon="fa fa-user-plus" actionListener="#{menuUsuarioNuevoBeans.nuevoUsuario(null)}" 
+                                     process="@this" class="btnColorWhite nuevo" rendered="#{menuUsuarioNuevoBeans.flujo == true ? true : false}"/>
+                </div>
+
+
+
+
+                <p:dataTable id="dtUsers" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                             value="#{menuUsuarioNuevoBeans.usersLazy}" var="usr1" style="text-align: center;"
+                             paginatorPosition="bottom" rowStyleClass="#{usr1.estado? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable"
+                             emptyMessage="No existe información con el criterio de busqueda especificado"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             >
+
+                    <f:facet name="header">
+                        Usuarios
+                    </f:facet>
+                    <p:column headerText="Usuario" filterBy="#{usr1.usuario}">
+                        <p:outputLabel value="#{usr1.usuario}" />
+                    </p:column>
+                    <p:column headerText="Fecha Ingreso" width="15%" filterBy="#{usr1.fechaIngreso}" filterMatchMode="gte">
+                        <f:facet name="filter">
+                            <p:calendar  label="Ids" onselect="PF('usersTable').filter()" styleClass="custom-filter" navigator="true" pattern="yyyy-MM-dd" >
+                                <p:ajax event="dateSelect" update="dtUsers" oncomplete="PF('usersTable').filter()" />
+                            </p:calendar>
+                        </f:facet>
+                        <p:outputLabel value="#{usr1.fechaIngreso}"  ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                    </p:column>
+                    <p:column  rendered="#{menuUsuarioNuevoBeans.flujo == false ? true : false}" headerText="Fecha Ingreso" 
+                               width="15%" filterBy="#{usr1.fechaCaducidad}" filterMatchMode="gte">
+                        <f:facet name="filter">
+                            <p:calendar  label="Ids" onselect="PF('usersTable').filter()" styleClass="custom-filter" navigator="true" pattern="yyyy-MM-dd" >
+                                <p:ajax event="dateSelect" update="dtUsers" oncomplete="PF('usersTable').filter()" />
+                            </p:calendar>
+                        </f:facet>
+                        <p:outputLabel value="#{usr1.fechaCaducidad}"  ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Nombre Funcionario" width="15%" filterBy="#{usr1.funcionario.persona.nombre}">
+                        <p:outputLabel value="#{usr1.funcionario.persona.nombreCompleto}" />
+                    </p:column>
+                    <p:column headerText="Opciones" width="15%">
+                        <p:commandButton title="Enviar Tramte" icon="fa fa-send" style="font-size: 1.5em;  color: #0D47A1;"
+                                         disabled="#{usr1.estado}" rendered="#{menuUsuarioNuevoBeans.flujo == false ? true : false}"
+                                         actionListener="#{menuUsuarioNuevoBeans.ingObservacion()}" process="@this"  >
+                        </p:commandButton>
+                        <p:spacer width="5" />
+                        <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" 
+                                         disabled="#{!usr1.estado}" rendered="#{menuUsuarioNuevoBeans.flujo == false ? true : false}"
+                                         actionListener="#{menuUsuarioNuevoBeans.deshabilitarUsuario(usr1)}" update="frmUsuario" process="@this"  >
+                            <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el Usuario: #{usr1.usuario}" />
+                        </p:commandButton>
+                        <p:spacer width="5" />
+                        <p:commandButton title="Ver Datos de usuario" icon="fa fa-folder-open edit" class="btnTranparent ver" process="@this" 
+                                         actionListener="#{menuUsuarioNuevoBeans.nuevoUsuario(usr1)}" update="frmUsuario" action="#{menuUsuarioAppBean.setVer(true)}" />
+                        <p:spacer width="5" />
+
+
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Continuar Trámite" process="@this"  rendered="#{menuUsuarioNuevoBeans.flujo == true ? true : false}"
+                                     icon="fa fa-external-link"    actionListener="#{menuUsuarioNuevoBeans.ingObservacion()}"
+                                     style="width: auto; background: #0081cb; margin-top: 2%;"
+                                     />
+                </center>
+            </h:panelGroup>
+        </h:form>
+        <p:dialog header="Información del Usuario" modal="true" widgetVar="dlgUsuario" width="80%" closable="false" >
+            <h:form id="frmUsuario" prependId="false" >
+                <p:panelGrid columns="2" style="width: 100% !important;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup>
+                        <p:fieldset legend="Datos de Funcionario publico" >
+                            <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="No. Documento" style="width: 100%" />
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="#{menuUsuarioNuevoBeans.usuario.funcionario.persona.identificacion}" 
+                                                     readonly="#{menuUsuarioNuevoBeans.usuario.id ne null}" style="width: 80%" 
+                                                     maxlength="15" id="docUser" />
+                                        <p:commandButton title="Buscar Funcionario Público" icon="fa fa-search" styleClass="green-button button-group"
+                                                         process="@this, docUser" actionListener="#{menuUsuarioNuevoBeans.buscarFuncionario()}"
+                                                         update="@(.ui-panelgrid)" rendered="#{menuUsuarioNuevoBeans.usuario.id eq null}" >
+                                            <p:ajax event="dialogReturn" listener="#{menuUsuarioNuevoBeans.listener}" update="@(.ui-panelgrid)" />
+                                        </p:commandButton>
+                                    </div>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Apellidos y Nombres" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.usuario.funcionario.persona.nombreCompleto}" readonly="true" style="width: 100%; text-transform: uppercase"  />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Dirección" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.usuario.funcionario.persona.direccion}" readonly="true" style="width: 100%; text-transform: uppercase"  />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Teléfono" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.usuario.funcionario.persona.telefono}" readonly="true" style="width: 100%"  />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Correo" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.usuario.funcionario.persona.email}" readonly="true" style="width: 100%"  />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fecha de Ingreso" style="width: 100%" />
+                                    <p:calendar value="#{menuUsuarioNuevoBeans.usuario.funcionario.fechaIngreso}" style="width: 100%" pattern="yyyy-MM-dd"
+                                                navigator="true" readonly="true" readonlyInput="true" showOtherMonths="true" inputStyle="width: 100%" />
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos Para el usuario" >
+                            <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" id="pngDatosUsuario">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Usuario" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.usuario.usuario}" readonly="#{menuUsuarioNuevoBeans.usuario.id eq null}" style="width: 100%"  />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fecha de Caducidad" style="width: 100%" />
+                                    <p:calendar value="#{menuUsuarioNuevoBeans.usuario.fechaCaducidad}" style="width: 100%" pattern="yyyy-MM-dd"
+                                                navigator="true" readonly="true" readonlyInput="true" showOtherMonths="true" inputStyle="width: 100%" />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Caduca Clave" style="width: 100%" />
+                                    <p:selectBooleanCheckbox value="#{menuUsuarioNuevoBeans.usuario.caducarClave}" style="width: 100%"  >
+                                        <p:ajax update="pngDatosUsuario" process="pngDatosUsuario" />
+                                    </p:selectBooleanCheckbox>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioNuevoBeans.usuario.caducarClave}" id="pngDiasCaducidad" >
+                                    <p:outputLabel for="diasCaducidad" value="Dias Caducidad Clave" style="width: 100%" />
+                                    <p:spinner id="diasCaducidad" value="#{menuUsuarioNuevoBeans.usuario.diasCaducidad}" min="0" max="365" stepFactor="1" style="width: 100%" decimalPlaces="0" />
+                                    <!--<p:slider for="diasCaducidad" minValue="0" maxValue="365" step="1"  />-->
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioNuevoBeans.usuario.id eq null}" >
+                                    <p:outputLabel value="Contraseña" style="width: 100%" />
+                                    <p:password value="#{menuUsuarioNuevoBeans.pass1}" style="width: 100%" readonly="#{menuUsuarioNuevoBeans.sendMail}" feedback="true" 
+                                                goodLabel="Buena" promptLabel="Ingrese Contraseña" strongLabel="Fuerte" weakLabel="Débil" id="pass1" 
+                                                placeholder="#{menuUsuarioAppBean.sendMail? 'Contraseña sera enviada al correo' : 'Ingresar Contraseña'}" >
+                                        <p:ajax process="@this, pass2" listener="#{menuUsuarioNuevoBeans.validarPass}" />
+                                    </p:password>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioNuevoBeans.sendMail or menuUsuarioNuevoBeans.usuario.id eq null}" >
+                                    <p:outputLabel value="Confirmar Contraseña" style="width: 100%" />
+                                    <p:password value="#{menuUsuarioNuevoBeans.pass2}" style="width: 100%" readonly="false" placeholder="Confirme Contraseña" 
+                                                feedback="true" goodLabel="Buena" strongLabel="Fuerte" weakLabel="Débil" id="pass2" >
+                                        <p:ajax process="@this, pass1" listener="#{menuUsuarioNuevoBeans.validarPass}" />
+                                    </p:password>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </h:panelGroup>
+                    <p:panel id="pngRolesUsuarios" header="Roles" style="width: 100%;">
+                        <p:panelGrid columns="2" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                     rendered="#{!menuUsuarioNuevoBeans.ver}" id="pngUsuarioRolAdm">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="datosUnidadAdmRol" >
+                                <p:outputLabel value="Unidad Administrativa" style="width: 100%"  />
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="" rendered="#{menuUsuarioNuevoBeans.rol.unidadAdministrativa.nombre eq null}" readonly="true" />
+                                    <p:inputText value="#{menuUsuarioNuevoBeans.rol.unidadAdministrativa.nombre}" style="width: 80%"
+                                                 rendered="#{menuUsuarioNuevoBeans.rol.unidadAdministrativa.nombre ne null}" readonly="true"  />
+                                    <p:commandButton title="Buscar Unidad Administrativa" icon="fa fa-search" styleClass="green-button button-group"
+                                                     actionListener="#{menuUsuarioNuevoBeans.buscarUnidad()}" process="@this"  >
+                                        <p:ajax event="dialogReturn" listener="#{menuUsuarioNuevoBeans.selectUnidad}" update="pngRolesUsuarios"/>
+                                    </p:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="pngRolesUser">
+                                <p:outputLabel value="Rol" style="width: 100%"  />
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:selectOneMenu id="listRolesUnA" value="#{menuUsuarioNuevoBeans.rol}" converter="#{utilConverter}"
+                                                     effect="fade" style="width: 70%" filter="true" filterMatchMode="contains">
+                                        <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{menuUsuarioNuevoBeans.roles}" var="rl2" itemLabel="#{rl2.nombre}" itemValue="#{rl2}" />
+                                    </p:selectOneMenu>
+                                    <p:commandButton title="Agregar" icon="fa fa-plus-square" class="green-button button-group" 
+                                                     actionListener="#{menuUsuarioNuevoBeans.agregarRol()}" update="pngRolesUsuarios"  />
+                                </h:panelGroup>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:dataTable value="#{menuUsuarioNuevoBeans.usuario.roles}" var="rl1" paginator="true" rows="8" 
+                                     paginatorPosition="top" paginatorAlwaysVisible="false" id="tdRolesUsuario"
+                                     rowKey="#{rl1.id}" rowIndexVar="index" filterBy="#{rl1.eliminado}">
+                            <p:column colspan="2" headerText="Unidad Administrativa">
+                                <h:outputText value="#{rl1.rol.unidadAdministrativa.nombre}" />
+                            </p:column>
+                            <p:column headerText="Nombre" >
+                                <p:outputLabel value="#{rl1.rol.nombre}" />
+                            </p:column>
+                            <p:column headerText="Acciones" width="10%" rendered="#{!menuUsuarioNuevoBeans.ver}">
+                                <p:commandButton title="Eliminar rol"  icon="fa fa-trash delete" update="tdRolesUsuario"
+                                                 actionListener="#{menuUsuarioNuevoBeans.elimarRolUsuario(rl1, index)}" />
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </p:panelGrid>
+                <p:fileUpload fileUploadListener="#{menuUsuarioNuevoBeans.handleFileUpload}" rendered="#{!menuUsuarioNuevoBeans.ver}"
+                              skinSimple="true" accept="image/*" mode="advanced" dragDropSupport="false" 
+                              label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar"  />
+                <u:documents entiti="#{menuUsuarioNuevoBeans.usuario}"/>
+                <center>
+                    <p:commandButton title="Guardar Rol" icon="fa fa-save" actionListener="#{menuUsuarioNuevoBeans.saveUser()}" update="dtUsers" 
+                                     rendered="#{!menuUsuarioNuevoBeans.ver}" process="@this"/>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" actionListener="#{menuUsuarioNuevoBeans.cerrarDialogo()}" oncomplete="PF('dlgUsuario').hide();" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{menuUsuarioNuevoBeans.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{menuUsuarioNuevoBeans.completar()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        
+    </ui:define>
+
+</ui:composition>

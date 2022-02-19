@@ -1,0 +1,228 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:param name="tittle" value="SOLICITUD DE PERMISO DE FUNCIONAMIENTO" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+
+                <center>
+                    <h:form id="frmAlcPlus" >
+                        <p:panel header="SELECCIONAR PATENTE" style="width: 99%;">
+                            <center>
+                                <h:panelGrid columns="2" styleClass="noBorder" >
+                                    <h:panelGrid columns="2" >
+                                        <h:outputText value="Año del permiso" style="display: block;"/>
+                                        <p:inputText value="#{localesComerciales.anioSolicitudPermiso}" style="display: block; margin: 0 auto;" 
+                                                     onkeypress="validateIntegerValueAndFocusNext(event, 'frmAlcPlus:btn_find')" />
+                                    </h:panelGrid>
+                                    <h:panelGrid columns="3" >
+                                        <h:outputText value="Número de Identificación" style="display: block;"/>
+                                        <p:inputText value="#{localesComerciales.cedulaRuc}" style="display: block; margin: 0 auto;" >
+                                        </p:inputText>                            
+                                        <p:commandLink id="busSolicitante" actionListener="#{localesComerciales.openDlgPatente()}" update=":listPatentes,frmAlcPlus">
+                                            <i class="fa fa-fw fa-search" style="font-size: 1.3em; margin-right: 4px; color: #0066cc;"></i>
+                                        </p:commandLink>      
+
+                                    </h:panelGrid>
+
+                                </h:panelGrid>
+                            </center>
+                        </p:panel>
+                        <br/>
+                        <p:panel rendered="#{localesComerciales.patente != null}">
+                            <p:dataTable rows="5" paginator="true" paginatorPosition="top" value="#{localesComerciales.patente.renLocalComercialList}" 
+                                         var="local1">
+                                <f:facet name="header">
+                                    ESTABLECIMIENTOS DE LA PATENTE: #{localesComerciales.patente.propietario.nombreCompleto}
+                                </f:facet>
+                                <p:column headerText="Número del local" filterBy="#{local1.numLocal}" filterStyle="width: 50%;" width="20%">
+                                    <center><h:outputText value="#{local1.numLocal}"/></center>
+                                </p:column>
+                                <p:column headerText="Nombre del local" filterBy="#{local1.nombreLocal}" filterStyle="width: 70%;" width="60%">
+                                    <h:outputText value="#{local1.nombreLocal}" style="text-transform: uppercase; padding-left: 15px;"/>
+                                </p:column>
+
+                                <p:column headerText="Acción" width="20%">
+                                    <center><p:commandLink value="Seleccionar" actionListener="#{localesComerciales.openDlgActividades(local1)}" update="frmAlcPlus, :listActividades, dlgActividades"/></center>
+                                </p:column>
+                            </p:dataTable>
+                        </p:panel>
+                        <br/>
+                        <p:panel header="DETALLE DEL VALOR DEL PERMISO" rendered="#{localesComerciales.actividadPrincipal != null}">
+                            <center> <strong>ACTIVIDAD:</strong> #{localesComerciales.actividadPrincipal.descripcion}</center>
+                            <p:panelGrid columns="2" columnClasses="ui-g-6, ui-g-6" styleClass="ui-panelgrid-blank">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                    <p:panelGrid columns="2" styleClass="ui-panelgrid-blank">
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                            <p:outputLabel value="Capital o Patrimonio: " />
+                                            <p:inputNumber value="#{localesComerciales.balance.capital}" id="pa1" 
+                                                           onkeypress="validateFloatValueAndFocusNext(event, 'frmAlcPlus:porc_input')">
+                                                <p:ajax update="frmAlcPlus" listener="#{localesComerciales.generarValorLiquidacion()}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                            <h:outputText value="Tipo de exoneracion" style="display: block;"/>
+                                            <p:selectOneMenu value="#{localesComerciales.tipoExoneracion}"  style="width: 150px;">
+                                                <f:selectItem itemLabel="Seleccione..." itemValue="0"/> 
+                                                <f:selectItem itemLabel="100% por Artesano" itemValue="1"/>
+                                                <f:selectItem itemLabel="Hasta 3ra parte por descenso en la utilidad mayor al 50% " itemValue="2" />
+                                                <f:selectItem itemLabel="50% por haber sufrido perdidas según declaración SRI" itemValue="3" />
+                                                <p:ajax update="frmAlcPlus" listener="#{localesComerciales.generarValorLiquidacion()}" />
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                            <p:outputLabel value="Porciento Participación: " />
+                                            <p:inputNumber value="#{localesComerciales.balance.porcentajeParticipacion}" id="porc" onkeypress="validateFloatValueAndFocusNext(event, 'frmAlcPlus:pa14_input')">
+                                                <p:ajax update="frmAlcPlus" listener="#{localesComerciales.generarValorLiquidacion()}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                            <p:outputLabel value="Valor permiso: " />
+                                            <p:inputNumber value="#{localesComerciales.tasaPermiso}" id="pa14" onkeypress="validateFloatValueAndFocusNext(event, 'frmAlcPlus:btn_procesar')">
+                                                <p:ajax update="frmAlcPlus" listener="#{localesComerciales.generarValorLiquidacion()}" />
+                                            </p:inputNumber>
+
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+
+                                    <!--                    RUBROS LOCALES COMERCIALES -->
+                                    <p:dataTable id="dtLocal" reflow="true" value="#{localesComerciales.detalle}" 
+                                                 var="rub" rowIndexVar="index" style="width: 99%;" >
+                                        <p:column style="width: 5%">
+                                            <h:outputText value="#{index+1}" />
+                                        </p:column>
+                                        <p:column headerText="Descripción" >
+                                            <h:outputText value="#{rub.descripcion}" />
+                                        </p:column>
+                                        <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                            <h:outputText value="#{rub.valor}" >
+                                                <f:convertNumber maxFractionDigits="2" minFractionDigits="2" currencySymbol="$"/>
+                                            </h:outputText>
+                                        </p:column>
+                                    </p:dataTable>
+                                    <br/>
+
+
+                                    <h:panelGroup layout="block">
+                                        <div align="right">
+                                            <h:outputText  value=" " style="font-weight: bold;" />
+                                            <p:outputLabel  value=" " style="font-weight: bold;"/>
+
+                                        </div>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block">
+                                        <div align="right">
+                                            <h:outputText  value="Total a cancelar: " style="font-weight: bold;"/>
+                                            <p:outputLabel  value=" " style="font-weight: bold;"/>
+                                            <p:inputText id="t1" value="#{localesComerciales.liquidacion.totalPago}" >
+                                                <f:convertNumber maxFractionDigits="2"  minFractionDigits="2"/>
+                                                <p:ajax listener="#{localesComerciales.modificarTotal()}" update="frmAlcPlus:dtLocal"/>
+                                            </p:inputText>
+                                        </div>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panel>
+                        <br/><br/>
+                        <center  >
+                            <p:commandButton value="Procesar" id="btn_procesar" actionListener="#{localesComerciales.validar()}" rendered="#{localesComerciales.localSel != null}" 
+                                             icon="fa fa-fw fa-save" styleClass="btnStyle" iconPos="r" style="text-align: center;font-size: 1.5em">
+                                <p:confirm header="Advertencia" icon="ui-icon-info" message="¿Esta seguro de guardar los datos ingresados?"/>
+                            </p:commandButton>
+                        </center>
+                        <br/><br/>
+                    </h:form>
+                </center>
+                <!--
+                                <dlg:dialogNumLiquidacion headerDialog="#{localesComerciales.liquidacion.tipoLiquidacion.nombreTransaccion}"
+                                                          idLiq="#{localesComerciales.liquidacion.idLiquidacion}" 
+                                                          actionButton="#{localesComerciales.borrar()}"
+                                                          update="frmAlcPlus"
+                                                          id="numLiq"/>
+                
+                                <dlg:observaciones actionButton="#{localesComerciales.procesar()}"
+                                                   observaciones="#{localesComerciales.liquidacion.observacion}"
+                                                   requerido="false"
+                                                   />-->
+
+
+                <p:dialog id="dlgPatentes" widgetVar="dlgPatentes" 
+                          header="LISTADO DE PATENTES" width="70%" 
+                          responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+                    <h:form id="listPatentes">
+                        <p:dataTable id="dtPatentes" lazy="true" value="#{localesComerciales.patentes}" style="width: 100%;"
+                                     var="patente" rows="5" paginator="true" paginatorPosition="top" class="MarTop20"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     filterEvent="enter" widgetVar="dtPatentes" >
+                            <f:facet name="header">
+                                LISTADO DE PATENTES
+                            </f:facet>
+                            <p:column headerText="Id" filterBy="#{patente.id}" width="15%;" filterStyle="width:70%;">
+                                <center><h:outputText value="#{patente.id}"/></center>
+                            </p:column>
+                            <p:column headerText="RUC" filterBy="#{patente.codigoUsuario}" width="15%;" filterStyle="width:70%;">
+                                <center><h:outputText value="#{patente.codigoUsuario}"/></center>
+                            </p:column>
+                            <p:column headerText="Contribuyente" width="60%;">
+                                <h:outputText value="#{patente.propietario.nombreCompleto}"  style="text-transform: uppercase;"/>
+                            </p:column>
+                            <p:column headerText="Razón Social" width="60%;">
+                                <h:outputText value="#{patente.propietario.razonSocial}"  style="text-transform: uppercase;"/>
+                            </p:column>
+                            <p:column headerText="Numero Locales" width="10%;">
+                                <h:outputText value="#{patente.renLocalComercialList.size()}"/>
+                            </p:column>
+                            <p:column headerText="Acción" width="10%;">
+                                <center>
+                                    <p:commandLink title="Seleccionar" actionListener="#{localesComerciales.seleccionarPatente(patente)}" styleClass="btnStyle"
+                                                   update="frmAlcPlus" >
+                                        <i class="fa fa-fw fa-long-arrow-right" style="font-size: 1.5em"></i>
+                                    </p:commandLink>
+                                </center>
+                            </p:column>
+                        </p:dataTable>      
+                    </h:form>
+                </p:dialog>   
+                <p:dialog id="dlgActividades" widgetVar="dlgActividades" 
+                          header="LISTADO DE ACTIVIDADES DEL LOCAL " appendTo="@(body)" width="70%" 
+                          responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+                    <h:form id="listActividades">
+                        <p:dataTable id="dtActiv" value="#{localesComerciales.actividades}" style="width: 100%;"
+                                     var="act" rows="5" paginator="true" paginatorPosition="top" class="MarTop20"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     filterEvent="enter" widgetVar="dtActiv" >
+                            <f:facet name="header">
+                                SELECCIONE LA ACTIVIDAD PRINCIPAL DEL LOCAL #{localesComerciales.localSel.nombreLocal}
+                            </f:facet>
+                            <p:column headerText="CIIU" filterBy="#{act.ciu}" width="15%;" filterStyle="width:70%;">
+                                <center><h:outputText value="#{act.ciu}"/></center>
+                            </p:column>
+                            <p:column headerText="Descripción" filterBy="#{act.descripcion}" width="70%;" filterStyle="width:70%;">
+                                <h:outputText value="#{act.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Acción" width="15%;">
+                                <center>
+                                    <p:commandLink title="Seleccionar" actionListener="#{localesComerciales.seleccionarActividad(act)}" styleClass="btnStyle"
+                                                   update="frmAlcPlus" >
+                                        <i class="fa fa-fw fa-long-arrow-right" style="font-size: 1.5em"></i>
+                                    </p:commandLink>
+                                </center>
+                            </p:column>
+                        </p:dataTable>      
+                    </h:form>
+                </p:dialog>   
+
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

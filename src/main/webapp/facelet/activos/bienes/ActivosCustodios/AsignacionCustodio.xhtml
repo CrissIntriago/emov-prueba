@@ -1,0 +1,453 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Asignación de Custodio
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <u:titleTask task="#{activoFijoCustodioView.tarea}" tramite="#{activoFijoCustodioView.tramite}" />
+            </div>
+
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block">
+                        <p:commandButton value="Nueva Asignacion" id="entregaActivoFijo"
+                                         icon="fa fa-user-plus" actionListener="#{activoFijoCustodioView.form(null,'ASIGNAR')}"
+                                         styleClass="Fs16" style="width: auto; margin-right: 10px;"/>
+
+
+                        <p:commandButton value="Terminar Tarea" id="terminatarea" 
+                                         icon="fa fa-check" actionListener="#{activoFijoCustodioView.ingObservacion()}"
+                                         styleClass="Fs16" style="width: auto; margin-right: 10px;"/>
+
+                        <p:commandButton value="Limpiar filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('activosFijosCustodioTable').clearFilters()" update="activosFijosCustodioTable"
+                                         styleClass="Fs16" style="width: auto; margin-right: 15px;"/>
+
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: 9%; float: right;" icon="fa fa-align-justify" />
+
+                        <p:dataTable id="activosFijosCustodioTable" widgetVar="activosFijosCustodioTable" var="custodio" 
+                                     paginator="true" rows="20" style="width: 100%;margin-top: 15px" paginatorPosition="bottom"
+                                     value="#{activoFijoCustodioView.activoFijoCustodioLazyModel}" 
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,60,100" lazy="true" selectionMode="single" rowKey="#{custodio.id}" 
+                                     emptyMessage="No existe información con el criterio de busqueda especificado">
+
+                            <p:column headerText="Nº de Acta" style="width: 10vw;" filterBy="#{custodio.id}">
+                                <h:outputText value="#{custodio.id}" />
+                            </p:column> 
+
+                            <p:column headerText="Servidor Público" style="width: 10vw;" filterBy="#{custodio.servidor.persona.nombreCompleto}">
+                                <h:outputText value="#{custodio.servidor.persona.nombreCompleto}" />
+                            </p:column> 
+
+                            <p:column headerText="Unidad Adminitrativa de Custodio" style="width: 10vw;" filterBy="#{custodio.servidor.distributivo.unidadAdministrativa.nombre}">
+                                <h:outputText value="#{custodio.servidor.distributivo.unidadAdministrativa.nombre}" />
+                            </p:column> 
+
+                            <p:column headerText="Cantidad Asignadas" style="width: 5vw;text-align: center">
+                                <h:outputText value="#{custodio.cantidadBienes}" />
+                            </p:column>
+
+                            <p:column headerText="Descripción" style="width: 10vw;">
+                                <h:outputText value="#{custodio.descripcion}" />
+                            </p:column> 
+
+                            <p:column headerText="Fecha de Asignacion" style="width: 10vw;text-align: center">
+                                <h:outputText value="#{custodio.fechaEntrega}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column> 
+
+
+                            <p:column headerText="Acciones" style="width: 4vw;text-align: center">
+
+                                <p:commandLink actionListener="#{activoFijoCustodioView.form(custodio,'VIZUALIZAR')}" title="Vizualizar Asignación" 
+                                               update="bienesTable" process="@this">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                </p:commandLink>
+
+                            </p:column>
+
+                        </p:dataTable>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{activoFijoCustodioView.observador}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{activoFijoCustodioView.terminartareaCustodio()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+
+        <p:dialog id="asignacionCustodioDLG" header="Formulario de Asignacion" width="80%"
+                  widgetVar="asignacionCustodioDLG" modal="true" showEffect="fade" style="margin-top: 100px"
+                  hideEffect="fade" resizable="false" position="top" >
+            <h:form prependId="false">
+                <div class="ui-g">
+
+                    <div class="ui-g-12">
+
+                        <p:outputPanel id="asignacionPanel" style="width: 100%;" >
+
+                            <p:fieldset legend="Detalles del Servidor" style="margin-bottom: 15px">
+
+                                <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group" id="servidorGrid">
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:commandButton value="Buscar Servidor" id="buscarServidor" process="@this" update="servidorGrid"
+                                                         icon="fa fa-user-plus" actionListener="#{activoFijoCustodioView.openDlgServidor('NUEVO')}"
+                                                         style="width: 70%" styleClass="Fs16"/>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                        <p:inputText id="identificacion" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreCompleto" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                        <p:inputText id="unidadAdminitrativa" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.distributivo.unidadAdministrativa.nombre}"/>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" id="ActivosGrid">
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                        <p:inputText id="cantidadBienes" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.cantidadBienes}" />
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" layout="grid" >
+                                        <p:outputLabel for="@next" value="Descripción:" style="width: 100%; font-weight: bold"/>
+                                        <p:inputTextarea  id="descripcion" rows="5" cols="100" style="border: 1px solid #cccccc;"
+                                                          value="#{activoFijoCustodioView.activoFijoCustodio.descripcion}" >
+                                        </p:inputTextarea>
+                                    </p:panelGrid> 
+
+                                </p:panelGrid>
+
+                            </p:fieldset>
+
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:commandButton value="Buscar Bienes" id="buscarBienes" process="@this" update="bienesTable"
+                                                 icon="fa fa-user-plus" actionListener="#{activoFijoCustodioView.openDlgBienes()}"
+                                                 style="width: 10%;margin-bottom: 8px" styleClass="Fs16"/>
+                            </p:panelGrid>
+
+                            <p:dataTable id="bienesTable" widgetVar="bienesTable" var="bienes" style="width: 100%;
+                                         text-align: center" reflow="true" lazy="true" rows="6" editable="true" editMode="cell"
+                                         value="#{activoFijoCustodioView.bienesSeleccionados}" 
+                                         paginator="true" paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No hay datos seleccionados">
+                                <f:facet name="header">
+                                    LISTADO DE BIENES A ASIGNAR
+                                </f:facet>
+
+                                <p:column headerText="Código" style="width: 8vw">
+                                    <h:outputText value="#{bienes.bienesItem.codigoBienAgrupado}"/>
+                                </p:column>
+
+                                <p:column headerText="Descripción" style="width: 12vw">
+                                    <h:outputText value="#{bienes.bienesItem.descripcion}"/>
+                                </p:column>
+
+                                <p:column headerText="Marca" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.marca}"/>
+                                </p:column>
+
+                                <p:column headerText="Modelo" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.modelo}"/>
+                                </p:column>
+
+                                <p:column headerText="Serie" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.serie1}"/>
+                                </p:column>
+
+                                <p:column headerText="Color" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.color1}"/>
+                                </p:column>
+
+                                <p:column headerText="Estado" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.estadoBien.texto}"/>
+                                </p:column>
+
+                                <p:column headerText="Observaciones" style="width: 12vw">
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{bienes.observacionInicial}" /></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{bienes.observacionInicial}" style="width:100%"/></f:facet>
+                                    </p:cellEditor>
+                                    <h:outputText value="#{bienes.observacionInicial}"/>
+                                </p:column>
+
+                                <p:column headerText="Quitar" style="width: 3vw;text-align: center">
+                                    <p:commandLink actionListener="#{activoFijoCustodioView.removerBien(bienes)}" title="Quitar" 
+                                                   update="bienesTable" process="@this">
+                                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+
+                            </p:dataTable>
+
+                            <center>
+                                <p:commandButton value="Asignar Bienes" id="save" update="activosFijosCustodioTable" style="margin-top: 30px"
+                                                 icon="ui-icon-save" actionListener="#{activoFijoCustodioView.guardarAsignacion()}"
+                                                 styleClass="Fs16"/>
+                            </center>
+
+                        </p:outputPanel>
+
+                    </div>
+
+                </div>                
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="viewCustodioDLG" header="Vizualizador de Datos" width="75%"
+                  widgetVar="viewCustodioDLG" modal="true" showEffect="fade"
+                  hideEffect="fade" resizable="false" position="center" >
+            <h:form prependId="false">
+                <div class="ui-g">
+
+                    <div class="ui-g-12">
+
+                        <p:outputPanel id="ViewPanel" style="width: 100%;" >
+
+                            <p:fieldset legend="Detalles del Servidor" style="margin-bottom: 15px">
+
+                                <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                        <p:inputText id="identificacionView" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreCompletoView" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                        <p:inputText id="unidadAdminitrativaView" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.servidor.distributivo.unidadAdministrativa.nombre}"/>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                        <p:inputText id="cantidadBienesView" style="width: 100%;" readonly="true" 
+                                                     value="#{activoFijoCustodioView.activoFijoCustodio.cantidadBienes}" />
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                            </p:fieldset>
+
+                            <p:dataTable id="bienesViewTable" widgetVar="bienesViewTable" var="bienesView" style="width: 100%;
+                                         text-align: center" reflow="true" lazy="true" rows="5" editable="true" editMode="cell"
+                                         value="#{activoFijoCustodioView.bienesItemList}"
+                                         paginator="true" paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No hay datos seleccionados">
+                                <f:facet name="header">
+                                    LISTADO DE BIENES A ASIGNADOS
+                                </f:facet>
+
+                                <p:column headerText="Código" style="width: 8vw">
+                                    <h:outputText value="#{bienesView.bienesItem.codigoBienAgrupado}"/>
+                                </p:column>
+
+                                <p:column headerText="Descripción" style="width: 12vw">
+                                    <h:outputText value="#{bienesView.bienesItem.descripcion}"/>
+                                </p:column>
+
+                                <p:column headerText="Marca" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.marca}"/>
+                                </p:column>
+
+                                <p:column headerText="Modelo" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.modelo}"/>
+                                </p:column>
+
+                                <p:column headerText="Serie" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.serie1}"/>
+                                </p:column>
+
+                                <p:column headerText="Color" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.color1}"/>
+                                </p:column>
+
+                                <p:column headerText="Estado" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.estadoBien}"/>
+                                </p:column>
+
+                                <p:column headerText="Observaciones" style="width: 12vw">
+                                    <h:outputText value="#{bienesView.observacionInicial}"/>
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </p:outputPanel>
+
+                    </div>
+
+                </div>                
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="servidorDLG" widgetVar="servidorDLG" width="50%" modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+
+            <h:form  prependId="false">
+
+                <h:panelGroup id="servidorForm" layout="block">
+
+                    <p:dataTable id="ServidorTable" widgetVar="ServidorTable" var="servidor" style="width: 100%;text-align: center" 
+                                 reflow="true" paginator="true" lazy="true" rows="10"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,15" filterEvent="enter" value="#{activoFijoCustodioView.servidorLazyModel}" 
+                                 paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                        <f:facet name="header">
+                            LISTADO DE SERVIDORES PÚBLICOS
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{servidor.persona.identificacion}" style="width: 7vw">
+                            <h:outputText value="#{servidor.persona.identificacion}"/>
+                        </p:column>
+
+                        <p:column headerText="Nombre" filterBy="#{servidor.persona.nombre}" style="width: 7vw">
+                            <h:outputText value="#{servidor.persona.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Apellido" filterBy="#{servidor.persona.apellido}" style="width: 7vw">
+                            <h:outputText value="#{servidor.persona.apellido}"/>
+                        </p:column>
+
+                        <p:column headerText="Cargo" filterBy="#{servidor.distributivo.cargo.nombreCargo}" style="width: 7vw">
+                            <h:outputText value="#{servidor.distributivo.cargo.nombreCargo}"/>
+                        </p:column>
+
+                        <p:column headerText="Unidad Administrativa" style="width: 10vw">
+                            <h:outputText value="#{servidor.distributivo.unidadAdministrativa.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Añadir" style="width: 4vw">
+                            <p:commandButton icon="fa fa-plus" actionListener="#{activoFijoCustodioView.añadirServidor(servidor)}" update="servidorGrid" 
+                                             title="Añadir Servidor" rendered="#{activoFijoCustodioView.ocultarBoton}"
+                                             styleClass="green-button"/>  
+                        </p:column>
+
+                    </p:dataTable>
+
+                </h:panelGroup>
+
+            </h:form>
+
+        </p:dialog>
+
+        <p:dialog id="BienesDLG" widgetVar="BienesDLG" width="70%" modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+
+            <h:form  prependId="false">
+
+                <h:panelGroup id="formBienes" layout="block">
+
+                    <p:dataTable id="bienesRegistradoTable" widgetVar="bienesRegistradoTable" var="bienesRegistrado" style="width: 100%;
+                                 text-align: center" reflow="true" paginator="true" lazy="true" rows="10"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 selection="#{activoFijoCustodioView.bienesSeleccionados}" rowKey="#{bienesRegistrado.id}"
+                                 rowsPerPageTemplate="10,15" filterEvent="enter" value="#{activoFijoCustodioView.bienesLazyModel}" 
+                                 paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                        <f:facet name="header">
+                            LISTADO DE BIENES REGISTRADOS
+                        </f:facet>
+                        <p:column selectionMode="multiple" style="width:3vw;text-align:center"/>
+                        <p:column headerText="Código" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.codigoBienAgrupado}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.codigoBienAgrupado}"/>
+                        </p:column>
+
+                        <p:column headerText="Descripción" style="width: 10vw" filterBy="#{bienesRegistrado.bienesItem.descripcion}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.descripcion}"/>
+                        </p:column>
+
+                        <p:column headerText="Marca" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.marca}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.marca}"/>
+                        </p:column>
+
+                        <p:column headerText="Modelo" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.modelo}"/>
+                        </p:column>
+
+                        <p:column headerText="Serie" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.serie1}"/>
+                        </p:column>
+
+                        <p:column headerText="Color" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.color1}"/>
+                        </p:column>
+
+                        <p:column headerText="Estado" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.estadoBien.texto}">
+                            <h:outputText value="#{bienesRegistrado.bienesItem.estadoBien.texto}"/>
+                        </p:column>
+
+                        <f:facet name="footer" >
+                            <p:commandButton process="bienesRegistradoTable" update="bienesTable" icon="fa fa-arrow-circle-down" 
+                                             styleClass="green-button" value="Asignar Bienes"  actionListener="#{activoFijoCustodioView.añadirBienes()}" />
+                        </f:facet>
+
+                    </p:dataTable>
+
+                </h:panelGroup>
+
+            </h:form>
+
+        </p:dialog>
+
+
+    </ui:define>
+
+</ui:composition>

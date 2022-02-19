@@ -1,0 +1,263 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Trámites ingresados</ui:define>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div style="width: 100% !important; display: inline-block;">
+                <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo">FINALIZADO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo">INACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal">ACTIVO</div>
+                </div>
+            </div>
+            <p:dataTable var="ht1" value="#{tareasAdminView.lazy}" rows="20" id="taskGrid" 
+                         paginator="true" paginatorAlwaysVisible="false" lazy="true" widgetVar="taskGrid"
+                         rowsPerPageTemplate="20,30,40,50" filterEvent="enter" 
+                         rowStyleClass="#{ht1.deleteReason ne null ? 'estado-inactivo' : (ht1.endTime ne null? 'estado-activo' : 'estado-normal')}">
+                <p:column headerText="# Instancia" filterBy="#{ht1.procInstId}" width="5%" class="TexAlRight" >
+                    <p:outputLabel value="#{ht1.procInstId}" />
+                </p:column>
+                <p:column headerText="# Trámite" filterBy="#{ht1.numTramite}" width="5%" class="TexAlRight" >
+                    <p:outputLabel value="#{ht1.numTramite}" />
+                </p:column>
+                <p:column headerText="Fecha Ingreso" filterBy="#{ht1.tramite.fechaIngreso}" width="12%" class="TexAlCenter" >
+                    <f:facet name="filter">
+                        <p:calendar navigator="true" pattern="yyyy-MM-dd" >
+                            <p:ajax event="dateSelect" update="taskGrid" oncomplete="PF('taskGrid').filter()" />
+                        </p:calendar>
+                    </f:facet>
+                    <p:outputLabel value="#{ht1.tramite.fechaIngreso}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Fecha Finalizacion" width="12%" class="TexAlCenter" filterBy="#{ht1.endTime}">
+                    <f:facet name="filter">
+                        <p:calendar navigator="true" pattern="yyyy-MM-dd" >
+                            <p:ajax event="dateSelect" update="taskGrid" oncomplete="PF('taskGrid').filter()" />
+                        </p:calendar>
+                    </f:facet>
+                    <p:outputLabel value="#{ht1.endTime}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Solicitante" filterBy="#{ht1.tramite.nombrePropietario}" >
+                    <p:outputLabel value="#{ht1.tramite.nombrePropietario}" />
+                </p:column>
+                <p:column headerText="Tipo Trámite" filterBy="#{ht1.tramite.tipoTramite.descripcion}" width="20%" class="TexAlCenter" filterMatchMode="contains" >
+                    <p:outputLabel value="#{ht1.tramite.tipoTramite.descripcion}" />
+                </p:column>
+                <p:column headerText="Acciones" width="11%" class="TexAlCenter">
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{tareasAdminView.viewProcess(ht1)}"
+                                   title="Ver detalle del trámite" class="ver" process="@this" >
+                        <i class="fa fa-folder newi" style="font-size: 20px"></i>
+                    </p:commandLink>
+                    <p:spacer width="3" />
+                    <p:commandLink update="editPrioridadTraDlg, formEditPrioridadTra" title="Actualizar Prioridad"  class="prioridad"
+                                   actionListener="#{tareasAdminView.changePriority(ht1)}" disabled="#{ht1.endTime ne null}" process="@this" >
+                        <i class="fa fa-bullhorn delete" style="font-size: 20px"></i>
+                    </p:commandLink>
+                    <p:spacer width="3" />
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{tareasAdminView.reasignarProcess(ht1)}"
+                                   title="Reasignar" disabled="#{ht1.endTime ne null}" class="reasignar" process="@this" >
+                        <i class="fa fa-users newi" style="font-size: 20px"></i>
+                    </p:commandLink>
+                    <p:spacer width="3" />
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{tareasAdminView.deleteProcess(ht1)}" process="@this"
+                                   title="Elimar instancia de proceso" disabled="#{ht1.endTime ne null}" class="eliminar"  >
+                        <i class="fa fa-trash delete" style="font-size: 20px"></i>
+                        <p:confirm header="Confirmación" message="Esta seguro de eliminar el trámite # #{ht1.numTramite}?" icon="ui-icon-alert" />
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog modal="true" closeOnEscape="true" closable="true" height="450" width="60%" id="dlgTramite" minHeight="250"
+                  widgetVar="dlgTramite" header="Detalle del trámite numero: #{tareasAdminView.instTramite.numTramiteCom}">
+            <h:form id="frmDetalleTarea">
+                <p:panelGrid columns="4" style="width: 100%; padding: 5px;" styleClass="ui-panelgrid-blank">
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Tipo de Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.tramite.tipoTramite.descripcion}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Instancia Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.procInstId}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Solicitante:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.tramite.nombrePropietario}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Ingreso:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.tramite.fechaIngreso}" readonly="true" style="width: 100%;" >
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </p:inputText>
+                    </h:panelGroup>
+
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Finalizacion:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.endTime}" readonly="true" style="width: 100%;" >
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Duracion:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.duration}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" rendered="#{tareasAdminView.instTramite.deleteReason ne null}" >
+                        <p:outputLabel value="Razon de Eliminación:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{tareasAdminView.instTramite.deleteReason}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                </p:panelGrid><br/>
+                <p:tabView>
+                    <p:tab title="Tarea">
+                        <p:dataTable value="#{tareasAdminView.tasks}" emptyMessage="El trámite no ha sido ingresado."
+                                     var="trm1" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Nombre Tarea">
+                                <p:outputLabel value="#{trm1.name}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="20%">
+                                <p:outputLabel value="#{trm1.assignee}" rendered="#{trm1.assignee ne null}"/>
+                                <!--<p:outputLabel value="# {tareasAdminView.usuariosCandidatos(tarea.id)}" rendered="# {tarea.assignee eq null}"/>-->
+                            </p:column>
+                            <p:column headerText="Fech.Inicio" width="15%">
+                                <p:outputLabel value="#{trm1.createTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Fech.Fin" width="15%">
+                                <p:outputLabel value="#{trm1.endTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"    />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Duracion" width="10%" style="text-align: center;">
+                                <p:outputLabel value="#{trm1.durationInMillis}" >
+                                    <f:convertDateTime pattern="MM-dd HH:mm:ss"    />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Observaciones">
+                        <p:dataTable value="#{tareasAdminView.instTramite.tramite.observaciones}" emptyMessage="Sin elementos..."
+                                     var="obs" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Tarea" width="150">
+                                <p:outputLabel value="#{obs.tarea}"/>
+                            </p:column>
+                            <p:column headerText="Observacion">
+                                <p:outputLabel value="#{obs.observacion}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="100">
+                                <p:outputLabel value="#{obs.userCre}"/>
+                            </p:column>
+                            <p:column headerText="Fecha" width="14%">
+                                <p:outputLabel value="#{obs.fecCre}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Flujo">
+                        <p:graphicImage value="#{tareasAdminView.imageProcessInstance}" stream="false" width="100%"   />
+                    </p:tab>
+                    <p:tab title="Documentos">
+                        <comp:documents entiti="#{tareasAdminView.instTramite.tramite}" />
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Editar Prioridad de Trámite #{tareasAdminView.instTramite.numTramite}" widgetVar="editPrioridadTraDlg" 
+                  modal="true" resizable="false" id="editPrioridadTraDlg" >
+            <h:form id="formEditPrioridadTra">
+                <p:outputLabel value="No Proceso: #{tareasAdminView.instTramite.procInstId}" style="font-weight: bold;"/>
+                <p:selectOneRadio value="#{tareasAdminView.prioridad}" layout="pageDirection">
+                    <f:selectItem itemLabel="Alta" itemValue="100"/>
+                    <f:selectItem itemLabel="Normal" itemValue="50"/>
+                    <f:selectItem itemLabel="Baja" itemValue="20"/>
+                </p:selectOneRadio>
+                <center>
+                    <p:commandButton value="Guardar" styleClass="btnStyle" actionListener="#{tareasAdminView.actualizarPrioridad()}">
+                        <p:confirm header="Confirmación" message="Cambiar prioridad de Tramite #{tareasAdminView.instTramite.numTramite}?" icon="ui-icon-alert" />
+                    </p:commandButton>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Eliminar Trámite #{tareasAdminView.instTramite.numTramite}" widgetVar="eliminarTraDlg" 
+                  modal="true" resizable="false" id="eliminarTraDlg" >
+            <h:form id="formEliminarTra">
+                <p:outputLabel value="Razon de la Eliminación *"   /><br/>
+                <p:inputTextarea value="#{tareasAdminView.deleteReason}" rows="7" cols="70"/>
+                <br/>
+                <br/>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{tareasAdminView.delete()}" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Reasignar Trámite #{tareasAdminView.instTramite.numTramite}" widgetVar="reasignarTraDlg" 
+                  modal="true" resizable="false" id="reasignarTraDlg" width="50%" >
+            <h:form id="formReasignarTra">
+                <h:panelGroup rendered="#{empty tareasAdminView.tareas}" >
+                    <p:panelGrid columns="3" rendered="#{tareasAdminView.tarea ne null}">
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Tarea Actual:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{tareasAdminView.tarea.name}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Usuario Actual:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{tareasAdminView.tarea.assignee}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Prioridad:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{tareasAdminView.tarea.priority}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <br/>
+                    <p:dataTable value="#{tareasAdminView.usuarios}" emptyMessage="Sin elementos..." scrollHeight="350" scrollable="true"
+                                 var="usr1" style="text-align: center;">
+                        <p:column headerText="Usuario" filterBy="#{usr1.usuario}">
+                            <p:outputLabel value="#{usr1.usuario}"/>
+                        </p:column>
+                        <p:column headerText="Nombre" filterBy="#{usr1.funcionario.persona.apellido}" >
+                            <p:outputLabel value="#{usr1.funcionario.persona.nombreCompleto}"/>
+                        </p:column>
+                        <p:column headerText="Selec." width="50">
+                            <p:commandLink actionListener="#{tareasAdminView.reasignar(usr1)}" title="Reasignar">
+                                <i class="fa fa-arrow-right new" style="font-size: 20px;"/>
+                                <p:confirm header="Confirmación" message="Esta seguro de Reasignar tarea al usuario #{usr1.usuario}?" icon="ui-icon-alert"/>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty tareasAdminView.tareas}" >
+                    <p:dataTable value="#{tareasAdminView.tareas}" emptyMessage="Sin elementos..." scrollHeight="350" scrollable="true"
+                                 var="task1" style="text-align: center;">
+                        <p:column headerText="Tarea" filterBy="#{task1.name}">
+                            <p:outputLabel value="#{task1.name}"/>
+                        </p:column>
+                        <p:column headerText="Usuario Actual" filterBy="#{task1.assignee}" >
+                            <p:outputLabel value="#{task1.assignee}"/>
+                        </p:column>
+                        <p:column headerText="Prioridad" >
+                            <p:outputLabel value="#{task1.priority}"/>
+                        </p:column>
+                        <p:column headerText="Selec." width="50">
+                            <p:selectOneMenu value="#{tareasAdminView.usuario}" converter="#{utilConverter}">
+                                <f:selectItems value="#{tareasAdminView.usuarios}" var="usr2" itemLabel="#{usr2.usuario}" itemValue="#{usr2}" />
+                                <p:ajax event="change" listener="#{tareasAdminView.reasignar(tareasAdminView.usuario, task1)}" />
+                            </p:selectOneMenu>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

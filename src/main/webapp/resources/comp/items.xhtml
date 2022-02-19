@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <cc:interface displayName="customSelectPais" shortDescription="Componente personalizado para texto, puede usar ajax de primefaces el nombre del evento es 'ajax' " >
+        <cc:attribute name="id" shortDescription="Id del componente" default="#{cc.clientId}"/>
+        <cc:attribute name="label" required="true" shortDescription="Etiqueta a mostrar"/>
+        <cc:attribute name="catalogo" required="true" shortDescription="Nombre del catalogo, cuando es 'pais' muestra el listado de paises"/>
+        <cc:attribute name="required" required="false" default="false" shortDescription="true requerido, false no requerido"/>
+        <cc:attribute name="dynamic" required="false" default="false" shortDescription="true requerido, false no requerido" type="java.lang.Boolean"/>
+        <cc:attribute name="value" type="java.lang.Object" required="true" shortDescription="Valor del campo# {bean.entity.property}" />
+        <cc:attribute name="filterBy" type="java.lang.Object" required="false" shortDescription="Filtro para cantones, para catalogo item filtra por la columna padre" />
+        <cc:attribute name="readonly" required="false" default="false" shortDescription="true si el campo se es editable"/>
+        <cc:attribute name="styleClass" required="false" default="" shortDescription="Valor para comparar" />
+
+        
+        <cc:clientBehavior name="ajax" targets="#{cc.clientId}-pais" default="ajax"  />
+    </cc:interface>
+    <cc:implementation id="#{cc.attrs.id}" class="input-custom-app">
+        <div class="ui-g-12 ui-md-2 input-custom-app" style="width: 100%">
+            <p:outputLabel for="@next" value="#{cc.attrs.label}" class="FontBold Wid100"  style="margin-bottom: 3px;" />
+            <c:if test="#{cc.attrs.readonly}">
+                <c:if test="#{cc.attrs.catalogo == 'pais' or (cc.attrs.catalogo == 'canton' or cc.attrs.catalogo == 'provincia')}">
+                    <p:inputText id="#{cc.attrs.id}-pais" value="#{cc.attrs.value.descripcion}" class="Wid95 #{cc.attrs.styleClass} input-custom-app" readonly="#{cc.attrs.readonly}" />
+                </c:if>
+                <c:if test="#{cc.attrs.catalogo != 'pais' and cc.attrs.catalogo != 'canton' and cc.attrs.catalogo != 'provincia'}">
+                    <p:inputText id="#{cc.attrs.id}-pais" value="#{cc.attrs.value.texto}" class="Wid95 #{cc.attrs.styleClass} input-custom-app" readonly="#{cc.attrs.readonly}" />
+                </c:if>
+            </c:if>
+            <c:if test="#{!cc.attrs.readonly}">
+                <c:if test="#{cc.attrs.catalogo == 'pais'}">
+                    <p:selectOneMenu id="#{cc.attrs.id}-pais" value="#{cc.attrs.value}" required="#{cc.attrs.required}" converter="#{utilConverter}" 
+                                     appendTo="@(body)" autoWidth="false" filter="true" filterMatchMode="contains" class="Wid95 #{cc.attrs.styleClass}"  >
+                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}" />
+                        <f:selectItems value="#{catalogoApp.paises}" var="px1" itemLabel="#{px1.descripcion}" itemValue="#{px1}" rendered="#{cc.attrs.catalogo == 'pais'}" />
+                    </p:selectOneMenu>
+                </c:if>
+                <c:if test="#{cc.attrs.catalogo == 'canton'}">
+                    <p:selectOneMenu id="#{cc.attrs.id}-pais" value="#{cc.attrs.value}" required="#{cc.attrs.required}" converter="#{utilConverter}" 
+                                     appendTo="@(body)" autoWidth="false" class="Wid95 #{cc.attrs.styleClass}" filter="true" filterMatchMode="contains" >
+                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}" />
+                        <c:if test="#{cc.attrs.filterBy eq null}">
+                            <f:selectItems value="#{catalogoApp.cantones}" var="px1" itemLabel="#{px1.descripcion}" itemValue="#{px1}" />
+                        </c:if>
+                        <c:if test="#{cc.attrs.filterBy ne null}">
+                            <f:selectItems value="#{catalogoApp.getCantones(cc.attrs.filterBy)}" var="pv1" itemLabel="#{pv1.descripcion}" itemValue="#{pv1}" />
+                        </c:if>
+                    </p:selectOneMenu>
+                </c:if>
+                <c:if test="#{cc.attrs.catalogo == 'provincia'}">
+                    <p:selectOneMenu id="#{cc.attrs.id}-pais" value="#{cc.attrs.value}" required="#{cc.attrs.required}" converter="#{utilConverter}" 
+                                     appendTo="@(body)" autoWidth="false" class="Wid95 #{cc.attrs.styleClass}" filter="true" filterMatchMode="contains" >
+                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}" />
+                        <f:selectItems value="#{catalogoApp.provincias}" var="pv1" itemLabel="#{pv1.descripcion}" itemValue="#{pv1}" />
+                    </p:selectOneMenu>
+                </c:if>
+                <c:if test="#{cc.attrs.catalogo != 'pais' and cc.attrs.catalogo != 'canton' and cc.attrs.catalogo != 'provincia' }">
+                    <p:selectOneMenu id="#{cc.attrs.id}-pais" value="#{cc.attrs.value}" required="#{cc.attrs.required}" converter="#{utilConverter}" dynamic="#{cc.attrs.dynamic}" 
+                                     appendTo="@(body)" autoWidth="false" class="Wid95 #{cc.attrs.styleClass}" filter="true" filterMatchMode="contains"  >
+                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}" />
+                        <f:selectItems value="#{catalogoApp.itemFromCatalogo(cc.attrs.catalogo, cc.attrs.filterBy)}" var="cci2" itemLabel="#{cci2.texto}" itemValue="#{cci2}" />
+                    </p:selectOneMenu>
+                </c:if>
+            </c:if>
+        </div>
+    </cc:implementation>
+</html>

@@ -1,0 +1,209 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="./../../../WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Reporte de Comprobante de Pagos
+    </ui:define>
+    <ui:param name="tittle" value="REPORTE DE COMPROBANTE DE PAGOS"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <center>
+                <p:fieldset legend="Parámetros de Consulta" id="fieldsetParametros"
+                            style="width: 50%; height:50%;  font-weight: bold; text-align: left">
+                    <p:fieldset legend="Datos de Fecha" id="fieldsetFecha" style="margin-bottom:20px;">
+                        <p:selectOneRadio id="customRadio"  layout="custom" value="#{reporteComprobanteView.parametrosFecha}">
+                            <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                            <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                            <p:ajax update="fieldsetFecha" event="valueChange" />
+                        </p:selectOneRadio>
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                                <h:outputLabel for="opt1" value="Todo" />
+                            </h:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank" id="gridFechas">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                                <h:outputLabel for="opt2" value="Por fecha" />
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                <h:outputText value="Desde:"/>
+                                <p:calendar id="fechaDesde" value="#{reporteComprobanteView.fechaDesde}" 
+                                            locale="es" readonlyInput="true"
+                                            pattern="dd/MM/yyyy" disabled="#{reporteComprobanteView.parametrosFecha}"
+                                            maxdate="#{reporteComprobanteView.fechaHasta}" navigator="true">
+                                    <p:ajax event="dateSelect" update="fechaHasta"/>
+                                </p:calendar>
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                <h:outputText value="Hasta:"/>
+                                <p:calendar id="fechaHasta" value="#{reporteComprobanteView.fechaHasta}"
+                                            locale="es" readonlyInput="true"
+                                            pattern="dd/MM/yyyy"
+                                            mindate="#{reporteComprobanteView.fechaDesde}"
+                                            disabled="#{empty reporteComprobanteView.fechaDesde? true: reporteComprobanteView.parametrosFecha}" navigator="true">
+                                </p:calendar>
+                            </h:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+
+                    <p:fieldset legend="Datos de No. de Comprobante" id="fieldsetNumComprobante" style="margin-bottom:20px;">
+                        <p:selectOneRadio id="customRadio2"  layout="custom" value="#{reporteComprobanteView.parametrosNumComprobante}">
+                            <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                            <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                            <p:ajax update="fieldsetNumComprobante" event="valueChange" />
+                        </p:selectOneRadio>
+
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt3" for="customRadio2" itemIndex="0" />
+                                <h:outputLabel for="opt3" value="Todo" />
+                            </h:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank" id="gridNumComprobante">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt4" for="customRadio2" itemIndex="1" />
+                                <h:outputLabel for="opt4" value="Por No. Comprobante" />
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                <h:outputText value="Desde:"/>
+                                <p:spinner id="rotate1" value="#{reporteComprobanteView.numDesde}" min="1" max="#{reporteComprobanteView.numHasta}" 
+                                           disabled="#{reporteComprobanteView.parametrosNumComprobante}" onkeypress="focusNextOnEnter(event, 'rotate2')">
+                                    <p:ajax update="rotate2" process="@this" />
+                                </p:spinner>
+                            </h:panelGrid>
+                            <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                <h:outputText value="Hasta:"/>
+                                <p:spinner id="rotate2" value="#{reporteComprobanteView.numHasta}" min="#{reporteComprobanteView.numDesde}" max="#{reporteComprobanteView.numHasta}"
+                                           onkeypress="focusNextOnEnter(event, 'generarReportePDF')" 
+                                           disabled="#{reporteComprobanteView.parametrosNumComprobante}"/>
+                            </h:panelGrid>
+                        </p:panelGrid>
+                        <h:panelGrid columns="4" >
+                            <h:outputLabel value="Estado:" style="padding-left: 20px"/>   
+                            <p:selectOneRadio  id="selectEstados" value="#{reporteComprobanteView.tipoEstado}">
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="REGISTRADO" itemValue="1"/>
+                                <f:selectItem itemLabel="ANULADO" itemValue="2"/>
+                            </p:selectOneRadio >
+                        </h:panelGrid>     
+                    </p:fieldset>
+                    <p:fieldset rendered="true" legend="Datos del Beneficiario" id="fieldsetBeneficiario" style="margin-bottom:20px;">
+                        <p:selectOneRadio id="customRadio3"  layout="custom" value="#{reporteComprobanteView.parametroBeneficiario}">
+                            <f:selectItem itemLabel="Servidor" itemValue="#{true}" />
+                            <f:selectItem itemLabel="Proveedor" itemValue="#{false}" />
+                            <p:ajax update="fieldsetBeneficiario" event="change" listener="#{reporteComprobanteView.initClienteSelect()}"/>
+                        </p:selectOneRadio>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt5" for="customRadio3" itemIndex="0" />
+                                <h:outputLabel for="opt5" value="Servidor" />
+                            </h:panelGrid>                            
+                            <h:panelGroup rendered="#{reporteComprobanteView.parametroBeneficiario}">
+                                <div class="ui-inputgroup">
+                                    <p:inputText id="identifica" value="#{reporteComprobanteView.beneficiario}" class="panelInput" >
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                    <p:commandButton title="Buscar Servidor" icon="fa fa-search"  actionListener="#{reporteComprobanteView.buscarBeneficiario(true)}"
+                                                     process="identifica"  styleClass="button-group" update="fieldsetBeneficiario">
+                                    </p:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <p:inputTextarea readonly="true" rendered="#{reporteComprobanteView.parametroBeneficiario}" rows="2"
+                                             value="#{reporteComprobanteView.clienteSelect.nombreCompleltoSql}" />
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGrid columns="2" cellpadding="5">
+                                <p:radioButton id="opt6" for="customRadio3" itemIndex="1" />
+                                <h:outputLabel for="opt6" value="Proveedor" />
+                            </h:panelGrid>                            
+                            <h:panelGroup rendered="#{!reporteComprobanteView.parametroBeneficiario}" >
+                                <div class="ui-inputgroup">
+                                    <p:inputText id="identifica2"  value="#{reporteComprobanteView.beneficiario}" class="panelInput" >
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                    <p:commandButton title="Buscar Proveedor" icon="fa fa-search"  actionListener="#{reporteComprobanteView.buscarBeneficiario(false)}"
+                                                     process="identifica2"  styleClass="button-group" update="fieldsetBeneficiario">
+                                    </p:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <p:inputTextarea readonly="true" rendered="#{!reporteComprobanteView.parametroBeneficiario}" rows="2" style="width: 100%"
+                                             value="#{reporteComprobanteView.clienteSelect.nombreCompleltoSql}"  />
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <center>
+                        <p:commandButton value="Generar PDF" id="generarReportePDF" update="formMain" process="formMain"
+                                         icon="fa fa-file-pdf-o" actionListener="#{reporteComprobanteView.generarReporte('pdf')}"
+                                         styleClass="Fs16" style="width: auto;margin: 8px"/> 
+
+                        <p:commandButton value="Generar EXCEL" id="generarReporteEXCEL" update="formMain" process="formMain"
+                                         icon="fa fa-file-excel-o" actionListener="#{reporteComprobanteView.generarReporte('xlsx')}"
+                                         styleClass="Fs16" style="width: auto;margin: 8px"/>  
+
+                        <p:commandButton value="Cancelar" id="cancelarReporte" update="formMain" process="formMain"
+                                         icon="fa fa-remove" actionListener="#{reporteComprobanteView.vaciarParametros()}"
+                                         styleClass="red-btn" style="width: auto;margin: 8px"/>  
+                    </center>
+                </p:fieldset>
+            </center>
+        </h:form>
+        <p:dialog id="beneficiarioDlg" widgetVar="beneficiarioDlg" width="50%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de beneficiario">
+            <h:form prependId="false" id="beneficiarioForm">
+                <p:outputPanel id="servidorPanel" style="width: 100%;" rendered="#{reporteComprobanteView.parametroBeneficiario and reporteComprobanteView.parametroBeneficiario!= null}">
+                    <p:dataTable  id="servidorTable" widgetVar="servidorTable" var="servidor" value="#{reporteComprobanteView.servidorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="100" style="width: 100%" rowKey="#{servidor.id}"
+                                  rowsPerPageTemplate="30"  paginator="true" 
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Servidores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{servidor.persona.identificacion}"  style="width: 20%;text-align: center">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{servidor.persona.nombreCompleltoSql}"  style="width: 65%;">
+                            <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                            <p:commandLink actionListener="#{reporteComprobanteView.closeDlg(servidor.persona)}" title="Seleccionar"  process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+                <p:outputPanel id="proveedorPanel" style="width: 100%;" rendered="#{!reporteComprobanteView.parametroBeneficiario and reporteComprobanteView.parametroBeneficiario!= null}">
+                    <p:dataTable  id="proveedorTable" widgetVar="proveedorTable" var="proveedor" value="#{reporteComprobanteView.proveedorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="100" style="width: 100%" rowKey="#{proveedor.id}"
+                                  rowsPerPageTemplate="100"  paginator="true" 
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Proveedores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{proveedor.cliente.identificacionCompleta}"  style="width: 20%;text-align: center">
+                            <h:outputText value="#{proveedor.cliente.identificacionCompleta}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{proveedor.cliente.nombreCompleltoSql}"  style="width: 65%;">
+                            <h:outputText value="#{proveedor.cliente.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                            <p:commandLink actionListener="#{reporteComprobanteView.closeDlg(proveedor.cliente)}" title="Seleccionar" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

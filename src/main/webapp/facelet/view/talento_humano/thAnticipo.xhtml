@@ -1,0 +1,300 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Anticipos
+    </ui:define>
+    <ui:param name="tittle" value="Anticipos" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Parámetros de busqueda">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodo" value="#{thAnticipoView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thAnticipoView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="thAnticipoTable" listener="#{thAnticipoView.updateLazyModel()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Nuevo registro" process="@this"
+                                                     icon="fa fa-plus" actionListener="#{thAnticipoView.form(null,false)}"
+                                                     styleClass="Fs16" style="width: 100%;background: green"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Configuración"
+                                                     icon="fa fa-fw fa-gears" actionListener="#{thAnticipoView.openDlgConfig()}"
+                                                     styleClass="Fs16" style="width: 100%;">
+                                    </p:commandButton>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="thAnticipoTable" widgetVar="thAnticipoTable" var="thAnticipo" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{thAnticipo.id}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{thAnticipoView.thAnticipoLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <p:column headerText="Identificación" style="width: 10%;text-align: center" filterMatchMode="contains" filterBy="#{thAnticipo.servidor.persona.identificacion}">
+                                <h:outputText value="#{thAnticipo.servidor.persona.identificacion}"/>
+                            </p:column>
+                            <p:column headerText="Servidor" style="width: 37%;" filterMatchMode="contains" filterBy="#{thAnticipo.servidor.persona.nombreCompleltoSql}">
+                                <h:outputText value="#{thAnticipo.servidor.persona.nombreCompleltoSql}"/>
+                            </p:column>
+                            <p:column headerText="Fecha de anticipo" style="width: 13%;text-align: center" sortBy="#{thAnticipo.fechaAnticipo}">
+                                <h:outputText value="#{thAnticipo.fechaAnticipo}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Num. de cuotas" style="width: 10%;text-align: center">
+                                <h:outputText value="#{thAnticipo.numCuotas}"/>
+                            </p:column>
+                            <p:column headerText="Aprobado" style="width: 10%;text-align: center" filterBy="#{thAnticipo.aprobado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('thAnticipoTable').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="SI" itemValue="true" />
+                                        <f:selectItem itemLabel="NO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{thAnticipo.aprobado?'SI':'NO'}" />
+                            </p:column>
+                            <p:column headerText="Pagado" style="width: 10%;text-align: center" filterBy="#{thAnticipo.aprobado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('thAnticipoTable').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="FINALIZADO" itemValue="true" />
+                                        <f:selectItem itemLabel="NO FINALIZADO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{thAnticipo.finalizado?'FINALIZADO':'NO FINALIZADO'}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 20%;text-align: center">
+                                <p:commandLink title="Visualizar" process="@this" actionListener="#{thAnticipoView.form(thAnticipo,true)}"  
+                                               update="formMain">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Editar" process="@this" actionListener="#{thAnticipoView.form(thAnticipo,false)}"  
+                                               update="formMain" rendered="#{!thAnticipo.aprobado}">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Aprobar" process="@this" actionListener="#{thAnticipoView.aprobar(thAnticipo)}"  
+                                               update="formMain" rendered="#{!thAnticipo.aprobado}">
+                                    <i class="fa fa-check-circle-o" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                                    <p:confirm header="Confirmación de aprobación" message="¿Desea aprobar este registro?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink title="Reporte" process="@this" actionListener="#{thAnticipoView.reporte(thAnticipo,'pdf')}"  
+                                               update="formMain">
+                                    <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar" process="@this" actionListener="#{thAnticipoView.delete(thAnticipo)}"  
+                                               update="formMain" rendered="#{!thAnticipo.aprobado}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminacion" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{thAnticipoView.uploadDoc(thAnticipo)}" 
+                                               title="Documentos" process="@this">
+                                    <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{thAnticipoView.verDocumentos(thAnticipo)}" 
+                                               title="Documentos" process="@this">
+                                    <i class="fa fa-folder" style="font-size: 1.5em; margin-right: 8px; color: gray;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thAnticipoDlg" widgetVar="thAnticipoDlg" width="40%" position="top" style="margin-top: 90px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Formulario de anticipo">
+            <h:form prependId="false" id="thAnticipoForm">
+                <p:fieldset legend="Servidor público" id="fieldsetServidor">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thAnticipoView.thAnticipo.id == null ? true:false}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <div class="ui-inputgroup">
+                                <p:inputText id="identificacion" class="panelInput" value="#{thAnticipoView.identificacion}"
+                                             onkeypress="focusNextOnEnter(event, 'identificacion')" maxlength="10">
+                                    <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                </p:inputText>
+                                <p:commandButton title="Buscar" icon="fa fa-search" id="btnIdentificacion"
+                                                 actionListener="#{thAnticipoView.findServidor()}"
+                                                 update="fieldsetServidor,panelGroupRMU,panelGroupValorAnticipo" process="identificacion" styleClass="button-group">
+                                </p:commandButton>
+                            </div>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thAnticipoView.thAnticipo.id == null ? false:true}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacionView" class="panelInput" style="width: 100%" 
+                                         value="#{thAnticipoView.thAnticipo.servidor.persona.identificacion}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionView')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                            <p:inputText id="nombres" class="panelInput" style="width: 100%" 
+                                         value="#{thAnticipoView.thAnticipo.servidor.persona.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombres')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="apellidos" class="panelInput" style="width: 100%" 
+                                         value="#{thAnticipoView.thAnticipo.servidor.persona.apellido}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'apellidos')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Detalle de anticipo">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                            <p:inputText id="periodo" class="panelInput" style="width: 100%" 
+                                         value="#{thAnticipoView.thAnticipo.periodo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'periodo')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha anticipo:" style="font-weight: bold"/>
+                            <p:calendar id="fechaAnticipo"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" 
+                                        readonlyInput="true" disabled="#{thAnticipoView.view}"
+                                        onkeypress="focusNextOnEnter(event, 'fechaAnticipo')"
+                                        value="#{thAnticipoView.thAnticipo.fechaAnticipo}" style="width: 100%">
+                                <p:ajax event="dateSelect"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupRMU" >
+                            <p:outputLabel for="@next" value="RMU:" style="font-weight: bold"/>
+                            <p:inputNumber id="remuneracion" class="panelInput" style="width: 100%" 
+                                           value="#{thAnticipoView.thAnticipo.remuneracion}" symbol="$"
+                                           readonly="true" onkeypress="focusNextOnEnter(event, 'remuneracion')">
+                            </p:inputNumber>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupCuotas">
+                            <p:outputLabel for="@next" value="Num. de cuotas:" style="font-weight: bold"/>
+                            <p:spinner id="numCuotas" value="#{thAnticipoView.thAnticipo.numCuotas}" min="0" max="12" 
+                                       readonly="#{thAnticipoView.view}" onkeypress="focusNextOnEnter(event, 'numCuotas')">
+                                <p:ajax listener="#{thAnticipoView.updateDetalle()}" update="thAnticipoDetalleTable"/>
+                            </p:spinner>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupNumRMU">
+                            <p:outputLabel for="@next" value="Num. RMU:"/>
+                            <p:spinner id="minMax" value="#{thAnticipoView.thAnticipo.numRemuneraciones}" min="1" max="12"
+                                       readonly="#{thAnticipoView.view}" onkeypress="focusNextOnEnter(event, 'minMax')">
+                                <p:ajax listener="#{thAnticipoView.updateMontoAnticipo(true)}" update="panelGroupValorAnticipo"/>
+                            </p:spinner>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupValorAnticipo">
+                            <p:outputLabel for="@next" value="Valor de anticipo:" style="font-weight: bold"/>
+                            <p:inputNumber id="montoAnticipo" class="panelInput" style="width: 100%" 
+                                           value="#{thAnticipoView.thAnticipo.montoAnticipo}" minValue="0" symbol="$"
+                                           readonly="true" onkeypress="focusNextOnEnter(event, 'montoAnticipo')">
+                            </p:inputNumber>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupMesDescuento" >
+                            <p:outputLabel for="@next" value="Mes de descuento:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="mesSeleccionado" value="#{thAnticipoView.thAnticipo.idMesSeleccionado}" disabled="#{thAnticipoView.view}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thAnticipoView.meseList}" var="item" itemLabel="#{item.texto}" itemValue="#{item}"/>
+                                <p:ajax update="thAnticipoDetalleTable,panelGroupCuotas,panelGroupMesDescuento" listener="#{thAnticipoView.updateDetalle()}" process="montoAnticipo,numCuotas"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Descripción:" style="font-weight: bold"/>
+                            <p:inputText id="thDescripcion" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'thDescripcion')"
+                                         value="#{thAnticipoView.thAnticipo.descripcion}" readonly="#{thAnticipoView.view}">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thAnticipoDetalleTable" widgetVar="thAnticipoDetalleTable" var="thAnticipoDetalle" 
+                              value="#{thAnticipoView.thAnticipoDetalleList}" rowKey="#{thAnticipoDetalle.idMes}"
+                              scrollable="true" scrollHeight="auto" lazy="false" rows="12" style="width: 100%;margin-top: 10px" 
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <p:column headerText="Mes" style="width: 25%;text-align: center" filterBy="#{thAnticipoDetalle.idMes.texto}" filterMatchMode="contains">
+                        <h:outputText value="#{thAnticipoDetalle.idMes.texto}" />
+                    </p:column>
+                    <p:column headerText="Valor de la cuota" style="width: 25%;text-align: center">
+                        <h:outputText value="#{thAnticipoDetalle.valorCuota}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Descontado" style="width: 25%;text-align: center">
+                        <h:outputText value="#{thAnticipoDetalle.descontado?'SI':'NO'}" />
+                    </p:column>
+                    <p:column headerText="Fecha de descuento" style="width: 25%;text-align: center">
+                        <h:outputText value="#{thAnticipoDetalle.fechaDescuento}">
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Guardar" update="thAnticipoTable" rendered ="#{!thAnticipoView.view}"
+                                     icon="fa fa-save" actionListener="#{thAnticipoView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>          
+        </p:dialog>
+        <p:dialog id="uploadDocDlg" header="Adjuntar Comprobante SPI" widgetVar="uploadDocDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="uploadDocForm" style="width: 100%;">
+                    <p:fileUpload fileUploadListener="#{thAnticipoView.subirDocGeneral}" id="fileUpload"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                                  mode="advanced" dragDropSupport="false"
+                                  update="messages" />
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{thAnticipoView.thAnticipo}" showDelete="true"/>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thAnticipoView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thAnticipoView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{thAnticipoView.saveConfig()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+    </ui:define>
+</ui:composition>

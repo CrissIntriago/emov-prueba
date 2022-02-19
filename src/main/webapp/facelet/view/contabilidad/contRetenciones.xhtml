@@ -1,0 +1,358 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Registro de retenciones
+    </ui:define>
+    <ui:param name="tittle" value="Registro de retenciones"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:outputPanel rendered="#{!contRetencionesView.accesoComprobante}">
+                        <center>
+                            <div class="exception-band">
+                                <div class="exception-content">
+                                    <h1>ACCESO DENEGADO</h1>
+                                    <p>No tienes los permisos</p>
+                                    <p:graphicImage name="images/logo.png" library="barcelona-layout" />
+                                </div>
+                            </div>
+                        </center>
+                    </p:outputPanel>
+                    <p:outputPanel rendered="#{contRetencionesView.accesoComprobante}">
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Establecimiento:"  style="font-weight: bolder;font-size: 16px"/>
+                                    <p:outputLabel value="#{contRetencionesView.cajero.entidad.rucEntidad} - #{contRetencionesView.cajero.entidad.nombreEntidad}" 
+                                                   style="margin-left: 10px; font-weight: bolder;font-size: 16px"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="fechaEmisiones23" value="Fecha de emisión:" style="font-weight: bolder"/>
+                                    <p:calendar id="fechaEmisiones23"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" readonlyInput="true" 
+                                                value="#{contRetencionesView.liquidacion.fechaEmision}" style="width: 100%">
+                                        <p:ajax event="dateSelect" listener="#{contRetencionesView.setPeriodoFiscal()}" update="idPeriodoFiscal,idPeriodoFiscal2,fechaEmisiones23"/>
+                                    </p:calendar> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="idPeriodoFiscal">
+                                    <p:outputLabel value="Período fiscal:" style="font-weight: bolder"/>
+                                    <p:selectOneMenu id="anio" value="#{contRetencionesView.liquidacion.anio}" style="width: 100%;margin: 0px 10px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{contRetencionesView.periodos}" var="anio" itemLabel="#{anio}" itemValue="#{anio}"/>
+                                        <p:ajax process="mes" listener="#{contRetencionesView.fechaPerido()}" update="fechaEmisiones23"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="idPeriodoFiscal2">
+                                    <p:outputLabel value="" style="font-weight: bolder"/><br/>
+                                    <p:selectOneMenu id="mes" value="#{contRetencionesView.liquidacion.mes}" style="width: 100%;margin: 0px 10px" >
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}"  noSelectionOption="true" />
+                                        <f:selectItems value="#{contRetencionesView.meses}" var="mes" itemLabel="#{mes}" itemValue="#{contRetencionesView.mes(mes)}"/>
+                                        <p:ajax process="mes" listener="#{contRetencionesView.fechaPerido()}" update="fechaEmisiones23"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:fieldset legend="Diario general" id="fielsetDiario">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="dgPeriodo" value="#{contRetencionesView.opcionBusqueda.anio}"
+                                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{contRetencionesView.periodos}" var="item" itemValue="#{item}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next"  value="NO. Registro contable:" style="width: 100%"/>
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="numRegistroContable" class="panelInput"  
+                                                         required="false" value="#{contRetencionesView.numRegistroContable}"/>
+                                            <p:commandButton title="Diarios Generales" icon="fa fa-search"
+                                                             actionListener="#{contRetencionesView.findDiario()}"
+                                                             process="numRegistroContable"
+                                                             update="fielsetDiario"
+                                                             styleClass="button-group">
+                                            </p:commandButton>
+                                        </div>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Fecha de registro:" style="font-weight: bold"/>
+                                        <p:inputText id="dgFecha" onkeypress="focusNextOnEnter(event, 'dgFecha')" readonly="true"
+                                                     value="#{contRetencionesView.contDiarioGeneral.fechaRegistro}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Clase:" style="font-weight: bold"/>
+                                        <p:inputText id="clase" onkeypress="focusNextOnEnter(event, 'clase')" readonly="true"
+                                                     value="#{contRetencionesView.contDiarioGeneral.clase.texto}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                        <p:inputText id="tipo" onkeypress="focusNextOnEnter(event, 'tipo')" readonly="true"
+                                                     value="#{contRetencionesView.contDiarioGeneral.tipo.texto}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Estado:" style="font-weight: bold"/>
+                                        <p:inputText id="cuadrado" onkeypress="focusNextOnEnter(event, 'cuadrado')" readonly="true"
+                                                     value="#{contRetencionesView.contDiarioGeneral.cuadrado?'CUADRADO':'DESCUADRADO'}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Detalle:" style="font-weight: bold"/>
+                                        <p:inputTextarea id="dgDetalle" rows="6" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase" 
+                                                         onkeypress="focusNextOnEnter(event, 'dgDetalle')" readonly="true" 
+                                                         value="#{contRetencionesView.contDiarioGeneral.descripcion}"/>    
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="Sujeto Retenido" id="fielsetProveedor">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next"  value="Proveedor:" style="width: 100%"/>
+                                        <div class="ui-inputgroup">
+                                            <p:inputText id="identificacion" class="panelInput"  
+                                                         required="false" value="#{contRetencionesView.identificacion}"/>
+                                            <p:commandButton title="Proveedor" icon="fa fa-search"
+                                                             actionListener="#{contRetencionesView.findProveedor()}"
+                                                             process="numRegistroContable"
+                                                             update="fielsetProveedor"
+                                                             styleClass="button-group">
+                                            </p:commandButton>
+                                        </div>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Nombre/Razón social:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreCompleltoSql" onkeypress="focusNextOnEnter(event, 'nombreCompleltoSql')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.nombreCompleltoSql}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Tipo identificación:" style="font-weight: bold"/>
+                                        <p:inputText id="tipoIdentificacion" onkeypress="focusNextOnEnter(event, 'tipoIdentificacion')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.tipoIdentificacion.texto}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Correo:" style="font-weight: bold"/>
+                                        <p:inputText id="email" onkeypress="focusNextOnEnter(event, 'email')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.email}"/>
+                                    </h:panelGroup>                                
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Telefóno:" style="font-weight: bold"/>
+                                        <p:inputText id="telefono" onkeypress="focusNextOnEnter(event, 'telefono')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.telefono}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Celular:" style="font-weight: bold"/>
+                                        <p:inputText id="celular" onkeypress="focusNextOnEnter(event, 'celular')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.celular}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Direción:" style="font-weight: bold"/>
+                                        <p:inputText id="direccion" onkeypress="focusNextOnEnter(event, 'direccion')" readonly="true"
+                                                     value="#{contRetencionesView.proveedor.cliente.direccion}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridValores">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="IVA:"  style="font-weight: bold"/><br/>
+                                        <p:inputNumber id="totalRetencionIva"  style="width: 100%"
+                                                       value="#{contRetencionesView.totalRetencionIva}" readonly="true"
+                                                       decimalSeparator="," thousandSeparator="." symbol="$"
+                                                       onkeypress="focusNextOnEnter(event, 'totalRetencionIva')">
+                                        </p:inputNumber>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="RENTA:"  style="font-weight: bold"/><br/>
+                                        <p:inputNumber id="totalRetencionRentas"  style="width: 100%"
+                                                       value="#{contRetencionesView.totalRetencionRentas}" readonly="true"
+                                                       decimalSeparator="," thousandSeparator="." symbol="$"
+                                                       onkeypress="focusNextOnEnter(event, 'totalRetencionRentas')">
+                                        </p:inputNumber>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </p:panelGrid>
+                        <p:dataTable  id="facturasDataTable" 
+                                      style="margin: 15px"
+                                      widgetVar="facturasDataTable"
+                                      var="_factura" lazy="false"
+                                      value="#{contRetencionesView.facturaList}"
+                                      selection="#{contRetencionesView.facturasSeleccionadas}" 
+                                      rowKey="#{_factura.id}">
+                            <p:ajax event="rowSelect" listener="#{contRetencionesView.loadDetalle}" update="gridValores"/>
+                            <p:ajax event="rowSelectCheckbox" listener="#{contRetencionesView.loadDetalle}" update="gridValores"/>
+                            <p:ajax event="toggleSelect" listener="#{contRetencionesView.loadDetalle}" update="gridValores"/>
+                            <p:ajax event="rowUnselectCheckbox" listener="#{contRetencionesView.loadDetalle}" update="gridValores"/>
+                            <f:facet name="header">
+                                FACTURAS
+                            </f:facet>
+                            <p:column selectionMode="multiple" style="width: 5%;text-align:center"/>
+                            <p:column headerText="No Factura" style="text-align: center; width: 15%">
+                                <h:outputText value="#{_factura.numFactura}" />
+                            </p:column>
+                            <p:column headerText="No Autorización" style="text-align: center; width: 30%" >
+                                <h:outputText value="#{_factura.numAutorizacion}" />
+                            </p:column>
+                            <p:column headerText="Fecha Emisión" style="text-align: center; width: 10%">
+                                <h:outputText value="#{_factura.fechaFactura}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Monto" style="text-align: center; width: 10%">
+                                <h:outputText value="#{_factura.subtotalRenta}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="IVA" style="text-align: center; width: 10%">
+                                <h:outputText value="#{_factura.montoIva}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Retenido IVA" style="text-align: center; width: 10%">
+                                <h:outputText value="#{_factura.retencionIva}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Retenido RENTAS" style="text-align: center; width: 10%">
+                                <h:outputText value="#{_factura.retencionRenta}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                        <p:dataTable id="contabilidadDetalle" 
+                                     widgetVar="contabilidadDetalle"
+                                     rowIndexVar="i"
+                                     value="#{contRetencionesView.contDiarioGeneralDetalle}"
+                                     var="contCuentas"
+                                     style="margin: 15px"
+                                     emptyMessage="No existen impuestos">
+                            <f:facet name="header">
+                                DETALLE DEL REGISTRO CONTABLE
+                            </f:facet>
+                            <p:column headerText="Cod. Contable" style="width: 15%;" filterBy="#{contCuentas.idContCuentas.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{contCuentas.idContCuentas.codigo}" />
+                            </p:column>
+                            <p:column headerText="Nom. Contable" style="width: 40%;" filterBy="#{contCuentas.idContCuentas.descripcion}" filterMatchMode="contains">
+                                <h:outputText value="#{contCuentas.idContCuentas.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Debe" style="width: 15%;text-align: center">
+                                <h:outputText value="#{contCuentas.debe}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Haber" style="width: 15%;text-align: center">
+                                <h:outputText value="#{contCuentas.haber}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                        <p:dataTable id="detalleRetencion" 
+                                     widgetVar="detalleRetencion"
+                                     rowIndexVar="i"
+                                     value="#{contRetencionesView.liquidacionDetalles}"
+                                     var="detalle"
+                                     style="margin: 15px"
+                                     emptyMessage="No existen impuestos">
+                            <f:facet name="header">
+                                DETALLE DE RETENCIÓN
+                            </f:facet>
+                            <p:column headerText="No." style="width: 5%;text-align: center">
+                                #{i+1}
+                            </p:column>
+                            <p:column headerText="No Factura" style="width: 15%;text-align: center">
+                                #{detalle.factura.numFactura}
+                            </p:column>
+                            <p:column headerText="Impuesto" style="width: 10%;text-align: center">
+                                #{detalle.rubro.rubroTipo.descripcion}
+                            </p:column>
+                            <p:column headerText="Código" style="width: 10%;text-align: center">
+                                #{detalle.rubro.codigo}
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 20%">
+                                #{detalle.rubro.descripcion}
+                            </p:column>
+                            <p:column headerText="Base imponible" style="width: 10%">
+                                <h:outputText value="#{detalle.baseImponible}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="% Retención" style="width: 10%;text-align: center">
+                                <h:outputText value="#{detalle.impuesto}"/>
+                            </p:column>
+                            <p:column headerText="Valor Retenido" style="width: 10%">
+                                <h:outputText value="#{detalle.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                        <center>
+                            
+                            <p:commandButton value="Verificar servicio" 
+                                             process="@form"
+                                             actionListener="#{contRetencionesView.verificarWSDL()}" 
+                                             style="font-size: 9px; width: 15%;background: green" icon="fa fa-check"  />
+                            <p:commandButton value="Generar Retención" 
+                                             process="@form"
+                                             actionListener="#{contRetencionesView.guardarGenerarRetenciones()}" 
+                                             style="font-size: 9px; width: 15%;margin-left: 15px" icon="fa fa-save"  />
+                            <p:commandButton value="Cancelar Retención" style="font-size: 9px; width: 15%; margin-left: 15px" process="@this"
+                                             styleClass="red-btn" icon="ui-icon-clear" update="formMain" 
+                                             actionListener="#{contRetencionesView.cleanForm()}"/>
+                        </center>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="dlgDiarioGeneral" widgetVar="dlgDiarioGeneral" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Registro contable">
+            <h:form prependId="false" id="dlgDiarioGeneralForm">
+                <p:dataTable  id="dataDiarioGeneral" widgetVar="dataDiarioGeneral" var="registroContable" value="#{contRetencionesView.contDiarioGeneralLazy}" 
+                              paginator="true" rows="20" style="width: 100%;" rowKey="#{registroContable.id}"
+                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="20,25" lazy="true" selectionMode="single" 
+                              emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <p:column headerText="No." style="width: 10%;text-align: center" filterMatchMode="contains" filterBy="#{registroContable.numRegistro}"> 
+                        <h:outputText value="#{registroContable.numRegistro}"/>
+                    </p:column>
+                    <p:column headerText="Fecha de Registro" style="width: 10%;text-align: center">
+                        <h:outputText value="#{registroContable.fechaRegistro}" >
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 30%;" filterMatchMode="contains" filterBy="#{registroContable.descripcion}">
+                        <h:outputText value="#{registroContable.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Beneficiario" style="width: 20%;" filterMatchMode="contains" filterBy="#{registroContable.beneficiario}">
+                        <h:outputText value="#{registroContable.beneficiario}"/>
+                    </p:column>
+                    <p:column headerText="Debe" style="width: 10%;text-align: center" filterMatchMode="contains">
+                        <h:outputText value="#{registroContable.debe}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Haber" style="width: 10%;text-align: center" filterMatchMode="contains">
+                        <h:outputText value="#{registroContable.haber}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                        <p:commandLink title="Seleccionar" process="@this" actionListener="#{contRetencionesView.closeDlgDiarioGeneral(registroContable,true)}">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>                        
+            </h:form>       
+        </p:dialog>            
+    </ui:define>
+</ui:composition>

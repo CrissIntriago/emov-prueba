@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Plan Programático</ui:define>
+    <ui:param name="tittle" value="Mantenimiento de Plan Programático"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:fieldset id="formBusqueda" legend="Buscar" toggleable="true" toggleSpeed="500" collapsed="true">
+                                <p:panelGrid columns="5" layout="grid" columnClasses="ui-grid-col-2" styleClass="ui-panelgrid-blank form-group" >
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Periodo" escape="false"/>
+                                        <p:selectOneMenu  value="#{planProgramaticoView.opcionBusqueda.anio}">
+                                            <f:selectItems value="#{planProgramaticoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="buscar-input-titulo" value="Funcion"/>
+                                        <p:inputText id="buscar-input-titulo" class="panelInput" 
+                                                     maxlength="1" value="#{planProgramaticoView.opcionBusqueda.titulo}" onkeypress="focusNextOnEnter(event, 'buscar-input-grupo')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="buscar-input-grupo" value="Programa" />
+                                        <p:inputText id="buscar-input-grupo" class="panelInput" 
+                                                     maxlength="2" value="#{planProgramaticoView.opcionBusqueda.grupo}" onkeypress="focusNextOnEnter(event, 'buscar-input-subgrupo')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="buscar-input-subgrupo" value="SubPrograma" />
+                                        <p:inputText id="buscar-input-subgrupo" class="panelInput" 
+                                                     maxlength="2" value="#{planProgramaticoView.opcionBusqueda.subGrupo}" onkeypress="focusNextOnEnter(event, 'buscar-input-nivel1')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value=""/>
+                                        <p:commandLink title="Buscar" id="buscar-btn" update="cuentas"
+                                                       actionListener="#{planProgramaticoView.buscar()}">
+                                            <p:graphicImage value="/resources/icons/buscar.png"
+                                                            width="37" height="37" 
+                                                            style="margin:auto;  width: auto;"/>
+                                        </p:commandLink>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <br></br>
+                            <h:panelGroup id="dataTable" layout="block">
+                                <p:commandButton value="Adicionar" process="@this"
+                                                 icon="ui-icon-plus" actionListener="#{planProgramaticoView.formAdd()}"
+                                                 styleClass="Fs16" style="width: auto; margin-bottom: 15px;"/>
+                                <p:commandButton value="Limpiar filtros"  process="@this" actionListener="#{planProgramaticoView.cancelar()}"
+                                                 icon="ui-icon-refresh" onclick="PF('cuentas').clearFilters()" update="cuentas,formBusqueda"
+                                                 styleClass="Fs16" style="width: auto; margin-left: 15px;"/>
+                                <p:dataTable id="cuentas" widgetVar="cuentas" var="item" value="#{planProgramaticoView.lazy}" paginator="true" rows="20" style="width: 100%;" paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true" selection="#{planProgramaticoView.planSeleccionado}" selectionMode="single" rowKey="#{item.id}"
+                                             emptyMessage="No existen planes con el criterio de búsqueda especificado">
+                                    <f:facet name="header">
+                                        Plan Programático 
+                                    </f:facet>
+                                    <p:column headerText="Código" style="width: 5vw; font-weight: bold; font-size: 15px;" filterBy="#{item.codigo}">
+                                        <h:outputText value="#{item.codigo}" />
+                                    </p:column>                                    
+                                    <p:column headerText="Nombre" filterBy="#{item.descripcion}" filterMatchMode="contains" style="width: 25vw;">
+                                        <h:outputText value="#{item.descripcion}" />
+                                    </p:column>
+                                    <p:column filterBy="#{item.clasificacion.id}" headerText="Clasificación"  style="width: 5vw; text-align: center;">
+                                        <f:facet name="filter">
+                                            <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{planProgramaticoView.clasificaciones}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                        <h:outputText value="#{item.clasificacion.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Fecha Vigente" style="width: 5vw; font-weight: bold;text-align: center; font-size: 15px;" filterBy="#{item.fechaVigente}">
+                                        <h:outputText value="#{item.fechaVigente}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                                        <p:commandLink title="Asignar Plan Programático" actionListener="#{planProgramaticoView.form(item, false)}" process="@this">
+                                            <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{planProgramaticoView.form(item, true)}" title="Editar Plan Programatico" process="@this">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>                                             
+                                        <p:commandLink title="Eliminar" actionListener="#{planProgramaticoView.eliminar(item)}" process="@this">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la Plan #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>   
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" update="" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog> 
+
+        </h:form>
+
+        <p:dialog id="cuentaDialog" header="Formulario Estructura Plan Programático" widgetVar="cuentaDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <p:ajax event="close" listener="#{planProgramaticoView.handleCloseForm}" />
+            <h:form prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formCuenta" style="width: 100%;" >
+                                <p:panelGrid  columns="#{planProgramaticoView.cantColumnas}" columnClasses="#{planProgramaticoView.columnClass}" styleClass="form-group ui-panelgrid-blank" >
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel  value="Período:" style="width: 100%;"/>
+                                        <p:inputText class="panelInput" readonly="false"
+                                                     value="#{planProgramaticoView.plan.periodo}" onkeypress="focusNextOnEnter(event, 'buscar-input-grupo')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Nivel:" style="width: 100%;"/>
+                                        <p:inputText class="panelInput" readonly="true"
+                                                     maxlength="1" value="#{planProgramaticoView.plan.nivel.orden}" onkeypress="focusNextOnEnter(event, 'buscar-input-grupo')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{planProgramaticoView.renderElementForm(planProgramaticoView.plan, 1)}">
+                                        <p:outputLabel for="@next" value="Función:" style="width: 100%;"/> 
+                                        <p:inputText class="panelInput" readonly="#{planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 1)}" disabled="#{planProgramaticoView.editable()}" 
+                                                     required="#{!planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 1)}" requiredMessage="REQUERIDO"
+                                                     maxlength="1" value="#{planProgramaticoView.plan.funcion}" onkeypress="focusNextOnEnter(event, 'cuenta_nombre')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{planProgramaticoView.renderElementForm(planProgramaticoView.plan, 2)}">
+                                        <p:outputLabel for="@next" value="Programa:" style="width: 100%;"/>
+                                        <p:inputText maxlength="2" value="#{planProgramaticoView.plan.programa}" onkeypress="focusNextOnEnter(event, 'cuenta_nombre')"
+                                                     readonly="#{planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 2)}" 
+                                                     required="#{!planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 2)}" disabled="#{planProgramaticoView.editable()}" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" columnClasses="ui-grid-col-12" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{planProgramaticoView.renderElementForm(planProgramaticoView.plan, 3)}">
+                                        <p:outputLabel for="@next" value="SubPrograma:" style="width: 100%;"/>
+                                        <p:inputText maxlength="2" value="#{planProgramaticoView.plan.subprograma}" onkeypress="focusNextOnEnter(event, 'cuenta_nombre')"
+                                                     readonly="#{planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 3)}" 
+                                                     required="#{!planProgramaticoView.readOnlyElementForm(planProgramaticoView.plan, 3)}" disabled="#{planProgramaticoView.editable()}" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="@next" value="Clasificación:" style="width: 100%;"/>
+                                        <p:selectOneMenu value="#{planProgramaticoView.plan.clasificacion}" converter="#{utilConverter}" panelStyle="width:200px" disabled="#{planProgramaticoView.editable()}"
+                                                         style="max-width: 200px;" filter="true" filterMatchMode="startsWith" required="true">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{planProgramaticoView.clasificaciones}" var="cla" itemLabel="#{cla.texto}" itemValue="#{cla}" itemLabelEscaped="false" />
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid style="width: 100%;" columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="@next" value="Fecha Vigente" style="width: 100%;"/>
+                                        <p:calendar id="fechavigencia" mask="true" value="#{planProgramaticoView.plan.fechaVigente}" pattern="dd/MM/yyyy" disabled="#{planProgramaticoView.editable()}" />                                                                       
+                                    </p:panelGrid>
+                                    <p:panelGrid style="width: 100%;" columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="@next" value="Fecha Caducidad" style="width: 100%;"/>
+                                        <p:calendar id="fech-cadu" mask="true" value="#{planProgramaticoView.plan.fechaCaducidad}" pattern="dd/MM/yyyy" />                                                                       
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid style="width: 100%;" columns="1" styleClass="form-group ui-panelgrid-blank" columnClasses="ui-grid-col-12" layout="grid">
+                                    <p:outputLabel for="@next" value="Nombre:" style="width: auto; "/>
+                                    <p:inputText id="cuenta_nombre" style="width: 100%;" required="true"
+                                                 value="#{planProgramaticoView.plan.descripcion}" onkeypress="focusNextOnEnter(event, 'cuenta_descripcion')">
+
+                                    </p:inputText>
+                                </p:panelGrid>
+
+                                <center>
+                                    <p:commandButton value="Guardar" id="buscar-save" update="formCuenta" 
+                                                     icon="ui-icon-save" actionListener="#{planProgramaticoView.guardar()}"
+                                                     styleClass="Fs16"/>
+
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

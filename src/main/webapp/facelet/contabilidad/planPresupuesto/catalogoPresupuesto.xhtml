@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">Mantenimiento de Ítems</ui:define>
+    <ui:param name="tittle" value="Mantenimiento de Ítems Presupuestarios"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="panelGroupMain" layout="block">
+                        <p:fieldset legend="Buscar" id="formBusqueda" style="margin-bottom: 20px">
+                            <p:panelGrid columns="6" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel value="Período:" escape="false" style="font-weight: bold"/>
+                                    <p:selectOneMenu  value="#{presupuestoView.opcionBusqueda.anio}">
+                                        <f:selectItem value="#{null}" noSelectionOption="true" itemLabel="Seleccione un período"/>
+                                        <f:selectItems value="#{presupuestoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel for="buscar-input-titulo" value="Título:" style="font-weight: bold"/>
+                                    <p:inputText id="buscar-input-titulo" class="panelInput" maxlength="1" value="#{presupuestoView.opcionBusqueda.titulo}" 
+                                                 onkeypress="focusNextOnEnter(event, 'buscar-input-grupo')">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel for="buscar-input-grupo" value="Naturaleza:" style="font-weight: bold"/>
+                                    <p:inputText id="buscar-input-grupo" class="panelInput" maxlength="1" value="#{presupuestoView.opcionBusqueda.grupo}" 
+                                                 onkeypress="focusNextOnEnter(event, 'buscar-input-subgrupo')">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel for="buscar-input-subgrupo" value="SubGrupo:" style="font-weight: bold"/>
+                                    <p:inputText id="buscar-input-subgrupo" class="panelInput" maxlength="1" value="#{presupuestoView.opcionBusqueda.subGrupo}" 
+                                                 onkeypress="focusNextOnEnter(event, 'buscar-input-nivel1')">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel for="buscar-input-nivel1" value="Item:" style="font-weight: bold"/>
+                                    <p:inputText id="buscar-input-nivel1" class="panelInput" maxlength="1" value="#{presupuestoView.opcionBusqueda.nivel1}" 
+                                                 onkeypress="focusNextOnEnter(event, 'buscar-input-nivel2')">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                    <p:commandButton value="Buscar" id="buscar-btn" update="cuentas" icon="ui-icon-search" 
+                                                     actionListener="#{presupuestoView.buscar()}" styleClass="Fs16"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset> 
+                    </h:panelGroup>
+                    <h:panelGroup id="dataTable" layout="block">
+                        <p:commandButton value="Adicionar Título" icon="ui-icon-plus" actionListener="#{presupuestoView.formAdd()}"
+                                         styleClass="Fs16" style="width: 150px; margin-bottom: 15px;" update="formMain"/>
+                        <p:commandButton value="Limpiar Filtros" process="@this" style="width: 150px;margin-bottom: 15px; " icon="fa fa-eraser" 
+                                         onclick="PF('cuentas').clearFilters()" update="cuentas,formMain" actionListener="#{presupuestoView.clearAllFilters}">
+                            <p:resetInput target="cuentas,mostrarColumnas" />
+                        </p:commandButton>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: 150px; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="cuentas" trigger="mostrarColumnas"/>
+                        <p:dataTable id="cuentas" widgetVar="cuentas" var="item" value="#{presupuestoView.lazy}" paginator="true" rows="35" style="width: 100%;" 
+                                     paginatorPosition="bottom" filterEvent="enter" selection="#{presupuestoView.cuentaSeleccionada}" selectionMode="single" 
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="35,45,55,65,75,85" lazy="true" rowKey="#{item.id}" emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                            <f:facet name="header">                                        
+                                Catálogo Presupuesto Período: #{presupuestoView.opcionBusqueda.anio} 
+                            </f:facet>
+                            <p:column headerText="Código" style="width: 10%; font-weight: bold;" filterBy="#{item.codigo}">
+                                <h:outputText value="#{item.codigo}" />
+                            </p:column>
+                            <p:column headerText="Descripción" filterBy="#{item.descripcion}" style="width: 30%;" filterMatchMode="contains">
+                                <h:outputText value="#{item.descripcion}" />
+                            </p:column>
+                            <p:column filterBy="#{item.nivel.id}" headerText="Nivel"  style="width: 6%; text-align: center;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{presupuestoView.niveles}" var="n" itemLabel="#{n.orden}" itemValue="#{n.id}" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.nivel.orden}" />
+                            </p:column>
+                            <p:column filterBy="#{item.clasificacion.id}" headerText="Clasificación"  style="width: 10%;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith" onchange="PF('cuentas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                        <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{presupuestoView.clasificaciones}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.clasificacion.texto}" />
+                            </p:column>
+                            <p:column headerText="Tipo Ítem" filterBy="#{item.cuentaMovimiento}" style="width: 6%; text-align: center;" visible="true" >
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="A" itemValue="false" />
+                                        <f:selectItem itemLabel="M" itemValue="true" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.cuentaMovimiento ? 'M':'A' }" />
+                            </p:column>
+                            <p:column headerText="Tipo" filterBy="#{item.flujoIngreso}" style="width: 6%; text-align: center;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="Ingreso" itemValue="true" />
+                                        <f:selectItem itemLabel="Egreso" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{item.flujoIngreso ? 'INGRESO':'EGRESO' }" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                                <p:commandLink  actionListener="#{presupuestoView.form(item, false)}" title="Registrar Cuenta" update="titulo,naturaleza,subgrupo,rubro" process="@this">
+                                    <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{presupuestoView.form(item, true)}" update="titulo,naturaleza,subgrupo,rubro" title="Editar Cuenta" process="@this">
+                                    <p:graphicImage value="/resources/icons/editar.png"
+                                                    width="16" height="15" 
+                                                    style="margin-right: 8px;"/>  
+                                </p:commandLink>
+                                <p:commandLink disabled="#{!presupuestoView.bloqueabtn}" title="Eliminar" actionListener="#{presupuestoView.eliminar(item)}" process="@this" update="cuentas">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta con código: #{item.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </h:panelGroup>
+                </h:form>
+                <ui:include src="/common/Dialog/dlgcatalogoPresupuesto.xhtml"/>
+            </div>
+        </div>      
+    </ui:define>
+</ui:composition>
+

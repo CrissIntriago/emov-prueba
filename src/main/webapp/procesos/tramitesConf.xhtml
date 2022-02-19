@@ -1,0 +1,206 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core">
+    <ui:define name="title">Administración de Procesos</ui:define>
+    <ui:param name="tittle" value="Administración de Procesos" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <p:tabView>
+                <p:tab id="tbMantenimientoProcesos" title="Procesos">
+                    <p:dataTable id="dtprocessDispo" value="#{tramitesConfView.tipoTramiteLazy}" var="ttl1" 
+                                 paginator="true" rows="25" rowsPerPageTemplate="25,50" reflow="true" emptyMessage="No existe procesos ingresados"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 style="width: 100%;margin:auto;" lazy="true" paginatorPosition="bottom" >
+                        <f:facet name="header" >
+                            <div style="text-align: left">
+                                <p:commandLink title="Agregar Proceso" actionListener="#{tramitesConfView.agregarProceso(null)}"
+                                               process="@this" class="btnColorWhite nuevo" style="color: #5180ce">
+                                    <i class="fa fa-plus new red Fs18" />
+                                </p:commandLink>
+                            </div>
+                        </f:facet>
+                        <p:column headerText="Id" style="text-align: center;width: 4%" >
+                            #{ttl1.id}
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 20%;" filterBy="#{ttl1.descripcion}" filterMatchMode="contains">
+                            #{ttl1.descripcion}
+                        </p:column>
+<!--                        <p:column headerText="Unidad Administrativa" style="width: 20%" filterBy="#{ttl1.unidadAdministrativa.nombre}" filterMatchMode="contains" >
+                            #{ttl1.unidadAdministrativa.nombre}
+                        </p:column>-->
+                        <p:column headerText="Trámite" style="width: 20%" filterBy="#{ttl1.tramite.nombre}" filterMatchMode="contains" >
+                            #{ttl1.tramite.nombre}
+                        </p:column>
+                        <p:column headerText="Activiti Key" style="width: 18%">
+                            #{ttl1.activitykey}
+                        </p:column>
+                        <p:column headerText="Archivo" style="width: 25%;" filterBy="#{ttl1.archivoBpmn}" filterMatchMode="contains">
+                            #{ttl1.archivoBpmn}
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 6%;text-align: center">
+                            <p:outputLabel value="Activo" rendered="#{ttl1.estado}" />
+                            <p:outputLabel value="inactivo" rendered="#{!ttl1.estado}" />
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 7%; text-align: center;">
+                            <p:commandLink title="Editar Proceso"  actionListener="#{tramitesConfView.agregarProceso(ttl1)}"
+                                           process="@this" class="btnColorWhite nuevo" update="frmProceso">
+                                <i class="fa fa-edit edit" style="font-size: 1.5em; margin-right: 8px; color: #0081cb;"/>
+                            </p:commandLink>
+                            <p:commandLink title="Cargar o actualizar  Proceso"  actionListener="#{tramitesConfView.startProcess(ttl1)}"
+                                           process="@this" class="btnColorWhite nuevo" update="frmProceso">
+                                <i class="fa fa-refresh edit" style="font-size: 1.5em; margin-right: 8px; color: #33ff00;"/>
+                            </p:commandLink>
+                            <p:commandLink title="Duplicar Proceso"  actionListener="#{tramitesConfView.duplicarProceso(ttl1)}"
+                                           process="@this" class="btnColorWhite nuevo" update="frmProceso">
+                                <i class="fa fa-copy edit" style="font-size: 1.5em; margin-right: 8px; color: #ff3333;"/>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab id="tprocessDep" title="Procesos Desplegados">
+                    <p:dataTable id="dtprocessDep" value="#{tramitesConfView.procesosDesplegados}" var="pd" 
+                                 paginator="true" rows="10" reflow="true" emptyMessage="No tiene procesos desplegados"
+                                 style="width: 100%;margin: 0 auto;text-align: left;" paginatorPosition="top" >
+                        <p:column headerText="Identificador" filterBy="#{pd.id}">
+                            #{pd.id}
+                        </p:column>
+                        <p:column headerText="Nombre" filterBy="#{pd.name}" filterMatchMode="contains">
+                            #{pd.name}
+                        </p:column>
+                        <p:column headerText="Versión Actual" style="width: 10%; text-align: center;">
+                            #{pd.version}
+                        </p:column>
+                        <!--                        <p:column headerText="Conteo" style="width: 10%">
+                                                    # {tramitesConfView.countStartProcess(pd.id)}
+                                                </p:column>-->
+                        <p:column headerText="Diagrama" width="50" style="text-align: center;">
+                            <p:commandButton icon="fa fa-area-chart" 
+                                             actionListener="#{tramitesConfView.showDlgDiagram(pd.deploymentId, pd.diagramResourceName)}"/>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="Historial de Procesos Desplegados">
+                    <p:dataTable value="#{tramitesConfView.historialProcesosDesplegados}" var="apd" 
+                                 paginator="true" rows="10" reflow="true" emptyMessage="No tiene procesos desplegados"
+                                 style="width: 100%;margin: 0 auto;text-align: left;" paginatorPosition="top" >
+                        <p:column headerText="Identificador" filterBy="#{apd.id}">
+                            #{apd.id}
+                        </p:column>
+                        <p:column headerText="Nombre" filterBy="#{apd.name}" filterMatchMode="contains">
+                            #{apd.name}
+                        </p:column>
+                        <p:column headerText="Versión" style="width: 10%; text-align: center;">
+                            #{apd.version}
+                        </p:column>
+                        <!--                        <p:column headerText="Conteo" style="width: 10%">
+                                                    # {tramitesConfView.countStartProcess(apd.id)}
+                                                </p:column>-->
+                        <p:column headerText="Diagrama" width="50" style="text-align: center;">
+                            <p:commandButton icon="fa fa-area-chart" process="frmDiagrama" 
+                                             actionListener="#{tramitesConfView.showDlgDiagram(apd.deploymentId, apd.diagramResourceName)}"/>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+            </p:tabView>
+        </h:form>
+
+        <p:dialog widgetVar="dlgDiagrama" header="Diagrama de Proceso" modal="true" closeOnEscape="true" position="center" 
+                  width="60%" height="550" resizable="false" >
+            <h:form id="frmDiagrama">
+                <center>
+                    <p:graphicImage value="#{tramitesConfView.stream}" stream="false" width="100%" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgProceso" header="Detalle de proceso" modal="true" closeOnEscape="true" position="center" >
+            <h:form id="frmProceso">
+                <p:panelGrid columns="2" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                             id="pngDatosRol" >
+<!--                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="unidadAdm" >
+                        <p:outputLabel value="Unidad Administrativa" style="width: 100%"  />
+                        <div class="ui-inputgroup">
+                            <p:inputText value="" rendered="#{tramitesConfView.tipoTramite.unidadAdministrativa.nombre eq null}" readonly="true"  />
+                            <p:inputText value="#{tramitesConfView.tipoTramite.unidadAdministrativa.nombre}" style="width: 80%"   
+                                         rendered="#{tramitesConfView.tipoTramite.unidadAdministrativa.nombre ne null}" readonly="true"  />
+                            <p:commandButton title="Buscar Unidad Administrativa" icon="fa fa-search" styleClass="green-button button-group"
+                                             actionListener="#{tramitesConfView.buscarUnidad()}" process="@this"  >
+                                <p:ajax event="dialogReturn" listener="#{tramitesConfView.selectUnidad}" update="unidadAdm" />
+                            </p:commandButton>
+                        </div>
+                    </h:panelGroup>-->
+                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="tramite" >
+                        <p:outputLabel value="Trámite *" style="width: 100%"  />
+                        <div class="ui-inputgroup">
+                            <p:selectOneMenu id="cmbTramite" value="#{tramitesConfView.tipoTramite.tramite}" filter="true"
+                                converter="dtoConverter" autoWidth="true"  style="width: 100%" filterMatchMode="contains">
+                                <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" />
+                                <f:selectItems value="#{tramitesConfView.tramites}" var="tra" 
+                                               itemLabel="#{tra.nombre}" itemValue="#{tra}"/>
+                                        </p:selectOneMenu>    
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Descripción *" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.descripcion}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Activiti key *" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.activitykey}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Repositorio Archivo" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.carpeta}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Variable y código categoria de rol de la primera tarea" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.userDireccion}" style="width: 100%" placeholder="nameVariable:codigo" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Archivo Bpmn *" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.archivoBpmn}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Abreviatura" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.abreviatura}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Estado" style="width: 100%"  />
+                        <p:selectOneMenu value="#{tramitesConfView.tipoTramite.estado}" effect="fade" style="width: 100%" >
+                            <f:selectItem itemLabel="Activo" itemValue="#{true}" />
+                            <f:selectItem itemLabel="Inactivo" itemValue="#{false}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Permite Archivos" style="width: 100%"  />
+                        <p:selectOneMenu value="#{tramitesConfView.tipoTramite.tieneDigitalizacion}" effect="fade" style="width: 100%" >
+                            <f:selectItem itemLabel="Si" itemValue="#{true}" />
+                            <f:selectItem itemLabel="No" itemValue="#{false}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Dlg Referencia" style="width: 100%" />
+                        <p:inputText value="#{tramitesConfView.tipoTramite.dlgReferencia}" style="width: 100%"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Categoria de rol" style="width: 100%" />
+                        <p:selectManyMenu value="#{tramitesConfView.rolCategoria}" filter="true" style="width: 100%"
+                                          filterMatchMode="contains" showCheckbox="true" scrollHeight="75">
+                            <f:selectItems value="#{tramitesConfView.categorias}" var="item2" itemLabel="#{item2.texto}" itemValue="#{item2.codigo}" />
+                        </p:selectManyMenu>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <div style="text-align: center">
+                    <p:commandButton value="Guardar" actionListener="#{tramitesConfView.guardarProceso()}" icon="fa fa-save" />
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

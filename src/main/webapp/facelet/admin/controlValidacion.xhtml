@@ -1,0 +1,275 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        control
+    </ui:define>
+    <ui:param name="tittle" value="Validador" />
+    <ui:define name="content">
+
+        <h:form id="frmMain" prependId="false">
+            <center>
+                <h1>Total Registros Validados #{controlValidacionMb.totalRegistroValidados} de #{controlValidacionMb.totalRegistro}</h1>
+
+            </center>
+
+            <p:panelGrid style="text-align: center;" columns="4" layout="grid"  styleClass="ui-panelgrid-blank ui-fluid">
+                <p:commandButton value="Registro Actividad" actionListener="#{controlValidacionMb.openDlogoHistory()}" icon="fa fa-list" 
+                                 style="background: blue; width: 200px;"/>
+
+                <p:commandButton value="Historial de unifición conasultas" actionListener="#{controlValidacionMb.actualizHisotrialconsultas()}" icon="fa fa-list" 
+                                 style="background: #00796B; width: 200px;"/>
+
+                <p:commandButton value="Clientes validados unificados" actionListener="#{controlValidacionMb.idClienteHisotrial()}" icon="fa fa-list" 
+                                 style="background: sienna; width: 200px;"/>
+
+                <p:commandButton value="Reportes Validadores" actionListener="#{controlValidacionMb.armandoExcel()}" icon="fa fa-file-excel-o" 
+                                 style=" width: auto; background: #c2185b; color:white"/> 
+            </p:panelGrid>
+
+            <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank ui-fluid">
+                <p:dataTable var="control" value="#{controlValidacionMb.lazyValidadores}" lazy="true"  rows="10"  paginator="true"
+                             paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                             rowsPerPageTemplate="5,10,15,30"  widgetVar="data" filterEvent="enter"
+                             rowIndexVar="index" id="data">
+                    <f:facet name="header">
+                        <p:commandButton style="background: blue" title="Refresacar data"
+                                         icon="fa fa-refresh" actionListener="#{controlValidacionMb.init()}" update="frmMain"/>
+                    </f:facet>
+                    <p:column headerText="No" style="width: 10%;" >
+                        #{index+1}
+                    </p:column>
+                    <p:column headerText="Nombres" filterMatchMode="contains" filterBy="#{control.nombreCompleto}">
+                        <h:outputText value="#{control.nombreCompleto.toUpperCase()}"/>
+                    </p:column>
+                    <p:column headerText="User" filterMatchMode="contains" filterBy="#{control.usuario}" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{control.usuario}"/>
+                    </p:column>
+                    <p:column headerText="Fecha"  filterBy="#{control.fecha}" style="width: 10%;">
+                        <f:facet name="filter">
+                            <p:datePicker  onchange="PF('data').filter()" />
+                        </f:facet>
+
+                        <h:outputText value="#{control.fecha eq null ?'valid_admin':control.fecha}">
+                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Conteo(Registro)" filterMatchMode="contains" style="width: 10%; text-align: center;" filterBy="#{control.registrosConteo}">
+                        <h:outputText value="#{control.registrosConteo}"/>
+                    </p:column >
+                    <p:column rendered="false" headerText="****" style="width: 8%;">
+                        <p:commandButton icon="fa fa-search"/>
+                    </p:column>
+                </p:dataTable>
+            </p:panelGrid>
+        </h:form>
+
+
+        <p:dialog modal="true" header="Confirmación de Nodos" widgetVar="dlogoHistorial" id="dlogoHistorial" height="500" width="1000" showEffect="fade">
+            <h:form id="frmRegisterHistorial" prependId="false">
+                <div class="ui-g-8">
+                    <p:dataTable var="datos" value="#{controlValidacionMb.lazyListaSeguimiento}" lazy="true"  rows="10"  paginator="true"
+                                 paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                                 rowsPerPageTemplate="5,10,15,30"  widgetVar="datosHistorial" filterEvent="enter"
+                                 rowIndexVar="index" scrollable="true" 
+                                 id="datosHistorial">
+                        <f:facet name="header">
+                            Historial de Registros
+                        </f:facet>
+                        <p:column headerText="No.">
+                            #{index+1}
+                        </p:column>
+                        <p:column headerText="User" filterMatchMode="contains" filterBy="#{datos.usuario.usuario}">
+                            <h:outputText value="#{datos.usuario.usuario}"/>
+                        </p:column>
+                        <p:column headerText="Id Desde" filterBy="#{datos.idDesde}" filterMatchMode="contains">
+                            <h:outputText value="#{datos.idDesde}"/>
+                        </p:column>
+                        <p:column headerText="Id Hasta" filterMatchMode="contains" filterBy="#{datos.idHasta}">
+                            <h:outputText value="#{datos.idHasta}" />
+                        </p:column>
+
+                        <p:column headerText="Fecha Inicio">
+                            <h:outputText value="#{datos.fecha}">
+                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Fecha Fin">
+                            <h:outputText value="#{datos.fechaHasta}">
+                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="*****">
+                            <p:commandButton process="@this" icon="fa fa-edit" actionListener="#{controlValidacionMb.editar(datos)}" update="datosForm"/>
+                        </p:column>
+
+
+                    </p:dataTable>     
+                </div>
+                <div class="ui-g-4">
+                    <h3>Formulario Registro</h3>
+                    <p:panelGrid id="datosForm" columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Nombre Usuario:"/>
+                            <p:selectOneMenu required="true" id="advanced" value="#{controlValidacionMb.seguimientoContibuyente.usuario}" converter="#{utilConverter}"
+                                             panelStyle="width:180px" effect="fade" var="c" 
+                                             filter="true" filterMatchMode="contains">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems  value="#{controlValidacionMb.listUser}" var="i"
+                                                itemLabel="#{i.funcionario.persona.nombreCompleto}" itemValue="#{i}"/>
+
+                                <p:column style="width:10%">
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText value="#{c.usuario}"/>
+                                </p:column>
+                                <p:column>
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText  value="#{c.funcionario.persona.nombreCompleto}"/>
+                                </p:column>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Id Desde:"/>
+
+
+                            <p:inputText id="idDesde" required="true" value="#{controlValidacionMb.seguimientoContibuyente.idDesde}" style="width: 100%">
+                                <p:keyFilter mask="num" preventPaste="false" />
+                                <p:ajax   process="idDesde,idadd" listener="#{controlValidacionMb.calculateRegister()}" update="idHasta"/>
+                            </p:inputText>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Cantantides a añadir:"/>
+                            <p:inputNumber id="idadd" required="true" value="#{controlValidacionMb.addRegistro}" style="width: 100%">
+                                <p:keyFilter preventPaste="false"/>
+                                <p:ajax  process="idDesde,idadd" listener="#{controlValidacionMb.calculateRegister()}" update="idHasta"/>
+                            </p:inputNumber>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Id Hasta:"/>
+
+                            <p:inputText id="idHasta" required="true" value="#{controlValidacionMb.seguimientoContibuyente.idHasta}" style="width: 100%">
+                                <p:keyFilter preventPaste="false" mask="num" />
+                            </p:inputText>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Fecha de Inicio: "/>
+
+                            <p:calendar maxdate="#{controlValidacionMb.seguimientoContibuyente.fechaHasta}" id="fechaDesde" required="true" locale="es" navigator="true" pattern="dd/MM/yyyy" 
+                                        value="#{controlValidacionMb.seguimientoContibuyente.fecha}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="fechaDesde,fechaHasta"/>
+                            </p:calendar>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" style="font-weight: bold;" value="Fecha de Hasta: "/>
+
+                            <p:calendar mindate="#{controlValidacionMb.seguimientoContibuyente.fecha}" id="fechaHasta" disabled="#{controlValidacionMb.seguimientoContibuyente.fecha==null?true:false}"  required="true" locale="es" navigator="true" pattern="dd/MM/yyyy" 
+                                        value="#{controlValidacionMb.seguimientoContibuyente.fechaHasta}" style="width: 100%">
+                            </p:calendar>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <br/><!-- comment -->
+                    <center>
+                        <p:commandButton value="Guardar" style="width: auto;" process="frmRegisterHistorial"
+                                         icon="fa fa-save" actionListener="#{controlValidacionMb.saveSeguimiento()}"/>
+                        <p:spacer width="10"/>
+                        <p:commandButton value="Cancelar" icon="fa fa-remove" oncomplete="PF('dlogoHistorial').hide()" style="background: red;"/>
+                    </center>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog modal="true" header="Historial De ediciones" widgetVar="dligHistorialConsultas" id="dligHistorialConsultas" height="500" width="1000" showEffect="fade">
+            <h:form id="fmConsultasHisotrial" prependId="false">
+                <p:dataTable var="con" value="#{controlValidacionMb.referenciaConsultas}" lazy="true"  rows="10"  paginator="true"
+                             paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                             rowsPerPageTemplate="5,10,15,30"  widgetVar="datosHistorialConsultas" filterEvent="enter"
+                             rowIndexVar="index" scrollable="true" 
+                             id="datosHistorialConsultas">
+                    <f:facet name="header">
+                        Historial Consultas Realizadas
+                    </f:facet>
+                    <p:column headerText="No." style="width: 5%;">
+                        #{index+1}
+                    </p:column><!-- comment -->
+                    <p:column headerText="Query" filterMatchMode="contains" filterBy="#{con.query}" style="width: 20%;">
+                        <h:outputText value="#{con.query}"/>
+                    </p:column><!-- comment -->
+                    <p:column headerText="Referencia Nueva" filterMatchMode="contains" filterBy="#{con.newValue}" style="width: 5%;">
+                        <h:outputText value="#{con.newValue}"/>
+                    </p:column><!-- comment -->
+                    <p:column headerText="Referencia anerior" filterMatchMode="contains" filterBy="#{con.oldValue}" style="width: 5%;">
+                        <h:outputText value="#{con.oldValue}"/>
+                    </p:column><!-- comment --> 
+                    <p:column headerText="Esquema" filterMatchMode="contains" filterBy="#{con.esquema}" style="width: 5%;">
+                        <h:outputText value="#{con.esquema}"/>
+                    </p:column><!-- comment -->
+
+                    <p:column headerText="Tabla" filterMatchMode="contains" filterBy="#{con.tabla}" style="width: 5%;">
+                        <h:outputText value="#{con.tabla}"/>
+                    </p:column><!-- comment -->
+
+                    <p:column headerText="Fecha" filterMatchMode="contains" filterBy="#{con.fechaCreacion}" style="width: 5%;">
+                        <h:outputText value="#{con.fechaCreacion}">
+                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                        </h:outputText>
+                    </p:column><!-- comment -->
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog modal="true" header="Personas Historial unificación" widgetVar="clienteHistorico" id="clienteHistorico" height="500" width="1000" showEffect="fade">
+            <h:form id="fmClienteHistorial" prependId="false">
+                <p:dataTable var="regValidados" value="#{controlValidacionMb.clienteHisotrialIdHisotorial}" lazy="true"  rows="10"  paginator="true"
+                             paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                             rowsPerPageTemplate="5,10,15,30"  widgetVar="datosHistorialValidados" filterEvent="enter"
+                             rowIndexVar="index" scrollable="true" 
+                             id="datosHistorialValidados">
+                    <f:facet name="header">
+                        Registro Validados
+                    </f:facet>
+                    <p:column headerText="No." style="width: 5%;">
+                        #{index+1}
+                    </p:column><!-- comment -->
+                    <p:column headerText="Id" filterMatchMode="contains" filterBy="#{regValidados.id}" style="width: 5%;">
+                        <h:outputText value="#{regValidados.id}"/>
+                    </p:column><!-- comment -->
+                    <p:column headerText="Identificacion" filterMatchMode="contains" filterBy="#{regValidados.identificacion}" style="width: 5%;">
+                        <h:outputText value="#{regValidados.identificacion}"/>
+                    </p:column><!-- comment -->
+
+                    <p:column headerText="Ruc" filterMatchMode="contains" filterBy="#{regValidados.ruc}" style="width: 5%;">
+                        <h:outputText value="#{regValidados.ruc}"/>
+                    </p:column><!-- comment -->
+
+                    <p:column headerText="Nombre Completo" filterMatchMode="contains" filterBy="#{regValidados.nombreCompleto}" style="width: 20%;">
+                        <h:outputText value="#{regValidados.nombreCompleto}"/>
+                    </p:column><!-- comment -->
+
+                    <p:column headerText="Referencia Id unificados" filterMatchMode="contains" filterBy="#{regValidados.idReferenciasConsolidados}" style="width: 20%;">
+                        <h:outputText value="#{regValidados.idReferenciasConsolidados}"/>
+                    </p:column><!-- comment -->                   
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

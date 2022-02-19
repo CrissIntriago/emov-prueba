@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+<ui:param name="tittle" value="TASAS DE TURISMO" /> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="frmTasaTur">
+                   
+
+                    <center style="width: 70%;margin: auto;">
+                        <div align="right">
+
+                            <p:commandButton value="Agregar Tasa" accesskey="I" actionListener="#{tasaTursmoMB.nuevo()}"  icon="fa fa-plus"
+                                             styleClass="btnStyle" style="font-weight: bold; font-size: 13px; width: auto;" />
+                        </div>
+                        <p:dataTable id="tasas" value="#{tasaTursmoMB.lazy}" var="tt1" reflow="true" rows="15"
+                                     lazy="true" emptyMessage="No se encontraron registros..." widgetVar="tasas"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="15,25,50,100" paginator="true"  >
+
+                            <p:column headerText="Descripción" filterBy="#{tt1.descripcion}"  filterMatchMode="contains"
+                                      sortBy="#{tt1.descripcion}" width="60%" filterStyle="width: 65%;" >
+                                <p:outputLabel value="#{tt1.descripcion}" />
+                            </p:column>
+
+                            <p:column headerText="Categoria" filterBy="#{tt1.categoria.descripcion}"  filterMatchMode="contains"
+                                      width="60%" filterStyle="width: 20%;" >
+                                <p:outputLabel value="#{tt1.categoria.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Valor Min." width="20%" >
+                                <p:outputLabel value="#{tt1.valor}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Valor Max." width="20%">
+                                <p:outputLabel value="#{tt1.maximo}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Tipo" filterBy="#{tt1.tipoItem.texto}" 
+                                      width="20%"  filterMatchMode="contains">
+                                <center>  <p:outputLabel value="#{tt1.tipoItem.texto}" /></center>
+                            </p:column>
+                            <p:column headerText="Opciones" width="10%" style="text-align: center; " >
+                                <p:commandLink actionListener="#{tasaTursmoMB.editar(tt1)}" shape="circle" style="height: 25px" >
+                                    <p:graphicImage value="/resources/icons/editar.png" height="20" width="20" style="text-align: center;" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgTasa" widgetVar="dlgTasa" width="70%" header="Ingreso y edicion de Valor por Tasa de Turismo" height="60%" modal="true"
+                  closeOnEscape="true" appendTo="@(body)" responsive="true" resizable="false">
+            <h:form id="frmtt">
+                <p:panelGrid columns="3"  layout="grid" styleClass="ui-panlelgrid-blank form-group">
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <h:outputText value="Categoria " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectOneMenu filter="true" filterMatchMode="contains" id="cate" value="#{tasaTursmoMB.idCategoria}" style="width: 300px;" panelStyle="width:280px;">
+                            <f:selectItem itemLabel="Seleccione " itemValue="#{null}"/>
+                            <f:selectItems value="#{tasaTursmoMB.categorias}" var="cat1" itemLabel="#{cat1.descripcion}" itemValue="#{cat1.id}"/>
+                            <p:ajax update="subCateogria" /> 
+                        </p:selectOneMenu>    
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%"> 
+                        <h:outputText value="SubCategoria " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectOneMenu id="subCateogria" value="#{tasaTursmoMB.tasa.categoria}" panelStyle="width:280px;"  converter="#{utilConverter}"  style="width: 300px;">
+                            <f:selectItem itemLabel="Seleccion..." itemValue="#{null}" />
+                            <f:selectItems value="#{tasaTursmoMB.categoriasHijas}" var="cat1" itemLabel="#{cat1.descripcion}" itemValue="#{cat1}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Tipo Valor" class="DispBlock Wid100"  style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectOneMenu value="#{tasaTursmoMB.tasa.tipoItem}" panelStyle="width:280px;"  style="width: 300px;" converter="#{utilConverter}">
+                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" />
+                            <f:selectItems value="#{tasaTursmoMB.tipos}" var="tv1" itemLabel="#{tv1.descripcion}" itemValue="#{tv1}"/>
+                            <p:ajax update="frmtt:vMax, frmtt:vMax1"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Valor Min." class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:inputNumber value="#{tasaTursmoMB.tasa.valor}" emptyValue="zero"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel id="vMax" value="Valor Maximo" rendered="#{tasaTursmoMB.tasa.tipo != 4}" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:inputNumber id="vMax1" value="#{tasaTursmoMB.tasa.maximo}" emptyValue="zero" rendered="#{tasaTursmoMB.tasa.tipo != 4}"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel id="rubro" value="Rubro" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectOneMenu value="#{tasaTursmoMB.tasa.rubro}" converter="entityConverter" >
+                            <f:selectItem itemLabel="Seleccion..." itemValue="#{null}"/>
+                            <f:selectItems value="#{tasaTursmoMB.rubrosTurismo}" var="cat1" 
+                                           itemLabel="#{cat1.descripcion}" itemValue="#{cat1}"/>
+
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Estado" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectBooleanCheckbox value="#{tasaTursmoMB.tasa.estado}" disabled="#{tasaTursmoMB.esNuevo}"/>
+                    </p:panelGrid>    
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Tipo Actividad Desglose:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                        <p:selectOneMenu value="#{tasaTursmoMB.tasa.tipoDesglose}"  panelStyle="width:280px;"  style="width: 300px;"  converter="#{utilConverter}" filter="true">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItems value="#{tasaTursmoMB.listaTasaTipoActividad}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>    
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton icon="fa fa-save" value="Guardar" styleClass="btnStyle"
+                                     actionListener="#{tasaTursmoMB.guardar()}"  />
+                </center>
+                <br></br><br></br>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

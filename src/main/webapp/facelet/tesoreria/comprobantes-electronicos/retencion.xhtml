@@ -1,0 +1,902 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">Comprobante de Retención</ui:define>
+    <ui:param name="tittle" value="Comprobante de Retención"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    $("form").keypress(function (e) {
+                        if (e.which == 13) {
+                            return false;
+                        }
+                    });
+                });
+            </script>
+            <style>
+                .ui-wizard-step-title{
+                    font-size: 12px !important;
+                    font-weight: bolder !important;
+                }
+                /*
+                                .ui-widget-header{
+                                    background-color: white !important;
+                                }
+                
+                                .ui-corner-top{
+                                    background-color: black !important;
+                                }*/
+                .hasDatepicker{
+                    width: 68% !important;
+                }
+                .ui-selectonemenu-filter-container {
+                    width: 98% !important;
+                }
+                .ui-datatable-footer.ui-widget-header.ui-corner-bottom{
+                    background: none;
+                    border-color: #e4e4e4;
+                    text-align: right;
+                }
+            </style>
+            <div class="ui-fluid">
+
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <div class="ui-g">
+                                <br/><br/><br/><br/>
+                                <div class="ui-g-12">
+                                    <h:body styleClass="exception-body accessdenied-body" rendered="#{!retencionView.accesoComprobante}">
+                                        <center>
+                                            <div class="exception-band">
+                                                <div class="exception-content">
+                                                    <h1>ACCESO DENEGADO</h1>
+                                                    <p>No tienes los permisos</p>
+                                                    <p:graphicImage name="images/logo.png" library="barcelona-layout" />
+                                                </div>
+                                            </div>
+                                        </center>
+                                        <h:outputStylesheet name="css/layout-green.css" library="barcelona-layout" />
+                                    </h:body>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{retencionView.accesoComprobante}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGrid columns="2" cellpadding="5">
+                                                <p:outputLabel value="Establecimiento:"  style="font-weight: bolder"/>
+                                                <p:outputLabel value="#{retencionView.cajero.entidad.rucEntidad} -
+                                                               #{retencionView.cajero.entidad.nombreEntidad}" 
+                                                               style="margin-left: 10px; font-weight: bolder"/>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridPeriodos">
+                                            <h:panelGrid columns="2" cellpadding="5">
+                                                <p:outputLabel for="fechaEmisiones23" value="Fecha de emisión:" style="font-weight: bolder"/>
+                                                <p:calendar id="fechaEmisiones23"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" readonlyInput="true" 
+                                                            value="#{retencionView.liquidacion.fechaEmision}" style="width: 100%">
+                                                    <p:ajax event="dateSelect" listener="#{retencionView.setPeriodoFiscal()}" update="idPeriodoFiscal,fechaEmisiones23"/>
+                                                </p:calendar> 
+                                            </h:panelGrid>
+                                            <h:panelGrid columns="3" cellpadding="5" id="idPeriodoFiscal">
+                                                <p:outputLabel value="Período fiscal:" style="font-weight: bolder"/>
+                                                <p:selectOneMenu id="anio" 
+                                                                 value="#{retencionView.liquidacion.anio}" 
+                                                                 style="width: 100%;margin: 0px 10px" disabled="#{retencionView.disabledPeriodos}">
+                                                    <p:ajax update="formMain" listener="#{retencionView.actualizarPeriodoFiscal()}"/>
+                                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{retencionView.anios}"
+                                                                   var="anio"
+                                                                   itemLabel="#{anio}"
+                                                                   itemValue="#{anio}"/>
+                                                </p:selectOneMenu>
+                                                <p:selectOneMenu id="mes" 
+                                                                 value="#{retencionView.liquidacion.mes}" 
+                                                                 style="width: 100%;margin: 0px 10px" disabled="#{retencionView.disabledPeriodos}">
+                                                    <p:ajax update="formMain" listener="#{retencionView.actualizarPeriodoFiscal()}"/>
+                                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                                  noSelectionOption="true" />
+                                                    <f:selectItems value="#{retencionView.meses}"
+                                                                   var="mes"
+                                                                   itemLabel="#{mes}"
+                                                                   itemValue="#{retencionView.mes(mes)}"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+
+                                    <div class="ui-g">
+                                        <div class="ui-g-6">    
+                                            <p:fieldset id="fldInfoDiarioGeneral" legend="Datos Diario General" 
+                                                        style="margin-bottom:20px; font-weight: bold;" rendered="#{retencionView.accesoComprobante}">
+
+                                                <p:panelGrid id="pnlDiarioGeneral" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="periodoDiario" value="Período:" style="width: 100%;"/>
+                                                        <p:inputText id="periodoDiario" class="panelInput" required="true"
+                                                                     value="#{retencionView.diarioGeneral.periodo}"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="numTransaccion"  value="N° Transacción" style="width: 100%"/>
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="numTransaccion" class="panelInput"  
+                                                                         required="false"   
+                                                                         value="#{retencionView.diarioGeneral.numRegistro}" 
+                                                                         readonly="#{retencionView.readOnlyInput}"/>
+                                                            <p:commandButton title="Diarios Generales" icon="fa fa-search"
+                                                                             actionListener="#{retencionView.buscarDiarioGeneral()}"
+                                                                             process="numTransaccion"
+                                                                             update="pnlDiarioGeneral"
+                                                                             styleClass="green-button button-group"
+                                                                             rendered="#{retencionView.renderedBotones}">
+                                                                <p:ajax event="dialogReturn" listener="#{retencionView.selectDataDiarioGeneral}" 
+                                                                        update="pnlDiarioGeneral,gridPeriodos" process="numTransaccion"/>
+                                                            </p:commandButton>
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="fechaElaboracion" value="Fecha de Elaboración" style="width: 100%;"/>
+                                                        <p:inputText id="fechaElaboracion" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.diarioGeneral.fechaRegistro}">
+                                                            <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="clase" value="Clase:" style="width: 100%;"/>
+                                                        <p:inputText id="clase" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.diarioGeneral.clase.texto}"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="tipo" value="Tipo:" style="width: 100%;"/>
+                                                        <p:inputText id="tipo" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.diarioGeneral.tipo.texto}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="observacion" value="Detalle: " style="width: 100%"/>
+                                                        <p:inputTextarea id="observacion" rows="5" cols="33" value="#{retencionView.diarioGeneral.descripcion}"
+                                                                         readonly="true"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/>
+                                            </p:fieldset>
+
+                                            <p:fieldset id="fdInfoDocumentoRetencion" legend="Documento objeto de retención" 
+                                                        style="margin-bottom:20px; font-weight: bold;" rendered="#{retencionView.accesoComprobante}">       
+                                                <p:outputPanel  style="width: 100%">
+                                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                            <p:outputLabel value="Comprobante:" for="comprobanteS"
+                                                                           style="width: 100%;"/>
+                                                            <p:selectOneMenu id="comprobanteS" 
+                                                                             converter="#{utilConverter}"
+                                                                             value="#{retencionView.liquidacion.comprobanteModifica}"
+                                                                             style="font-weight: bolder; width: 100%"  
+                                                                             disabled="#{retencionView.readOnlyInput}">
+                                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                                <f:selectItems value="#{retencionView.comprobantes}"
+                                                                               var="comprobante"
+                                                                               itemLabel="#{comprobante.descripcion}"
+                                                                               itemValue="#{comprobante}"/>
+                                                                <p:ajax process="comprobanteS"/>
+                                                            </p:selectOneMenu>
+                                                        </p:panelGrid>
+                                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                            <p:outputLabel value="Emisión" for="emision"
+                                                                           style="width: 100%;" />
+                                                            <p:selectOneMenu id="emision" 
+                                                                             value="#{retencionView.liquidacion.tipoEmision}"
+                                                                             style="font-weight: bolder; width: 100%"
+                                                                             disabled="#{retencionView.readOnlyInput}">
+                                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                                <f:selectItem itemLabel="ELECTRÓNICA" itemValue="ELECTRÓNICA" noSelectionOption="true" />
+                                                                <f:selectItem itemLabel="FÍSICA" itemValue="FÍSICA"  />
+                                                            </p:selectOneMenu>
+                                                        </p:panelGrid>
+                                                    </p:panelGrid>
+                                                    <p:panelGrid id="panelGridFactura" columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                                                 rendered="#{retencionView.accesoComprobante}">
+                                                        <p:commandButton id="btnAggFactura" value="Añadir Factura"
+                                                                         update="formComprobantesFacturas"
+                                                                         onclick="PF('dataTableFacturasRegistradas').clearFilters()"
+                                                                         rendered="#{retencionView.renderedBotones}"
+                                                                         actionListener="#{retencionView.formFactura(null)}"
+                                                                         immediate="true"
+                                                                         style="width: 150px;" icon="fa fa-plus"/>
+                                                    </p:panelGrid>
+                                                    <p:dataTable  id="dataTableFacturas" 
+                                                                  widgetVar="dataTableFacturas"
+                                                                  var="_factura" lazy="false"
+                                                                  value="#{retencionView.facturas}"
+                                                                  selection="#{retencionView.facturasSeleccionadas}" 
+                                                                  rowKey="#{_factura.numFactura}" 
+                                                                  disabledSelection="#{retencionView.disabledAjaxSelection}">
+                                                        <p:ajax event="rowSelect" listener="#{retencionView.facturaSeleccionadaDataTable}"
+                                                                process="fdInfoDocumentoRetencion" update="pnlValores, btnAgregarDetalle"/>
+                                                        <p:ajax event="rowSelectCheckbox" listener="#{retencionView.facturaSeleccionadaDataTable}"
+                                                                process="fdInfoDocumentoRetencion" update="pnlValores, btnAgregarDetalle"/>
+                                                        <p:ajax event="toggleSelect" listener="#{retencionView.facturaSeleccionadaDataTable}"
+                                                                process="fdInfoDocumentoRetencion" update="pnlValores, btnAgregarDetalle"/>
+                                                        <p:column selectionMode="multiple" style="width:15px;text-align:center">
+                                                        </p:column>
+                                                        <p:column headerText="N° Factura" style="text-align: center; width: 20%">
+                                                            <h:outputText value="#{_factura.numFactura}" />
+                                                        </p:column>
+                                                        <p:column headerText="N° Autorización" style="text-align: center; width: 30%" >
+                                                            <h:outputText value="#{_factura.numAutorizacion}" />
+                                                        </p:column>
+                                                        <p:column headerText="Fecha Emisión" style="text-align: center; width: 15%">
+                                                            <h:outputText value="#{_factura.fechaFactura}">
+                                                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                                            </h:outputText>
+                                                        </p:column>
+                                                        <p:column headerText="Monto" style="text-align: center; width: 15%">
+                                                            <h:outputText value="#{_factura.subtotalRenta}" />
+                                                        </p:column>
+                                                        <p:column headerText="I.V.A" style="text-align: center; width: 15%">
+                                                            <h:outputText value="#{_factura.montoIva}" />
+                                                        </p:column>
+                                                        <p:column headerText="Acciones" style="text-align: center; width: 20%"
+                                                                  rendered="#{retencionView.renderedBotones}">
+                                                            <center>
+                                                                <p:commandLink title="Editar Datos" process="@this" 
+                                                                               actionListener="#{retencionView.formFactura(_factura)}">
+                                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Editar Valores IVA" process="@this" 
+                                                                               actionListener="#{retencionView.agregarValoresIVAFactura(_factura)}">
+                                                                    <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Editar Datos Pago" process="fdInfoDocumentoRetencion" 
+                                                                               actionListener="#{retencionView.desplegarDialogDatosPago(_factura)}">
+                                                                    <i class="fa fa-credit-card" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Eliminar" process="@this" 
+                                                                               rendered="#{retencionView.renderedBotones}"
+                                                                               actionListener="#{retencionView.eliminarFactura(_factura)}">
+                                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                                                    <p:confirm header="Confirmación de eliminación"
+                                                                               message="¿Está seguro de eliminar la factura?"
+                                                                               icon="fa fa-exclamation-triangle" />
+                                                                </p:commandLink>        
+                                                            </center>
+                                                        </p:column>                                                  
+                                                    </p:dataTable>
+                                                </p:outputPanel>
+                                                <br/>
+                                            </p:fieldset>
+                                        </div>
+                                        <div class="ui-g-6">
+                                            <p:fieldset id="fldInfoComprobante" legend="Sujeto Retenido"
+                                                        style="margin-bottom:27px; font-weight: bold;" 
+                                                        rendered="#{retencionView.accesoComprobante}">
+                                                <p:panelGrid id="pnlDatos" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="identificacion"  value="Identificacion:" style="width: 100%"/>
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="identificacion" class="panelInput" 
+                                                                         required="false"   
+                                                                         value="#{retencionView.liquidacion.identificacionProveedor}"
+                                                                         readonly="#{retencionView.readOnlyInput}"/>
+                                                            <p:commandButton title="Lista de Proveedores" icon="fa fa-search"
+                                                                             actionListener="#{retencionView.buscarProveedor()}"
+                                                                             process="identificacion"
+                                                                             update="pnlDatos"
+                                                                             styleClass="green-button button-group"
+                                                                             rendered="#{retencionView.renderedBotones}">
+                                                                <p:ajax event="dialogReturn" listener="#{retencionView.selectData}" 
+                                                                        update="fldInfoComprobante" />
+                                                            </p:commandButton>
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="sujetoRetenido" value="Datos:" style="width: 100%;"/>
+                                                        <p:inputText id="sujetoRetenido" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.liquidacion.proveedor.cliente.nombreCompleto}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="direccion" value="Dirección" style="width: 100%;"/>
+                                                        <p:inputText id="direccion" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.liquidacion.proveedor.cliente.direccion}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="correo" value="Correo Electrónico:" style="width: 100%;"/>
+                                                        <p:inputText id="correo" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.liquidacion.proveedor.cliente.email}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="telefono" value="Télefono:" style="width: 100%;"/>
+                                                        <p:inputText id="telefono" class="panelInput" readonly="true" 
+                                                                     value="#{retencionView.liquidacion.proveedor.cliente.telefono}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/><br/><br/><br/><br/>
+                                            </p:fieldset>
+
+                                            <p:fieldset id="fldInfoDetalleRetencion" legend="Cuentas Contables Retenciones"
+                                                        style="margin-bottom:27px; font-weight: bold;" 
+                                                        rendered="#{retencionView.accesoComprobante}">
+                                                <p:dataTable id="dataTableDetallesCuentas" 
+                                                             widgetVar="dataTableDetallesCuentas"
+                                                             var="detallesCuenta" 
+                                                             value="#{retencionView.detalleTransacciones}"
+                                                             selection="#{retencionView.detalleTransaccionesSeleccionados}" 
+                                                             rowKey="#{detallesCuenta.id}" disabledSelection="#{retencionView.disabledAjaxSelection}">
+
+                                                    <!--                                                    <p:ajax event="rowSelect" listener="# {retencionView.cargarCuentaRubro}"
+                                                                                                                update="rubrosCuenta"/>-->
+                                                    <p:column selectionMode="multiple" style="width:5px;text-align:center">
+                                                    </p:column>
+                                                    <p:column headerText="Cuenta" width="20" style="text-align: center">
+                                                        <h:outputText value="#{detallesCuenta.idContCuentas.codigo}" />
+                                                    </p:column>
+                                                    <p:column headerText="Nombre" width="60">
+                                                        <h:outputText value="#{detallesCuenta.idContCuentas.descripcion}" />
+                                                    </p:column>
+                                                    <p:column headerText="Valor" width="15" style="text-align: center">
+                                                        <h:outputText value="#{detallesCuenta.haber}" >
+                                                            <f:convertNumber type="currency" currencySymbol="$ "/>
+                                                        </h:outputText>
+                                                    </p:column>  
+                                                    <f:facet name="footer">
+                                                        <p:commandButton process="dataTableDetallesCuentas" 
+                                                                         update="rubrosCuenta" style="width: auto;"
+                                                                         icon="fa fa-check-circle" 
+                                                                         value="Aceptar" actionListener="#{retencionView.cargarCuentaRubro}"/>
+                                                    </f:facet>
+                                                </p:dataTable>
+                                                <br/>
+
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Sustento Comprobante" for="sustentoComp" style="width: 100%;"/>
+                                                    <p:selectOneMenu id="sustentoComp" 
+                                                                     style="width: 100%;font-weight: bolder;"
+                                                                     value="#{retencionView.detalleCompras.codSustento}"
+                                                                     panelStyle="width:25%"
+                                                                     disabled="#{retencionView.readOnlyInput}"
+                                                                     filter="true" filterMatchMode="startsWith">
+                                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                        <f:selectItems value="#{retencionView.sustentosComprobantes}"
+                                                                       var="sustcomp"
+                                                                       itemLabel="#{sustcomp.codigo} - #{sustcomp.tipoSustento}"
+                                                                       itemValue="#{sustcomp.codigo}"/>
+                                                    </p:selectOneMenu>
+                                                </p:panelGrid>
+
+                                                <p:panelGrid id="rubrosCuenta" columns="1" layout="grid" 
+                                                             styleClass="ui-panelgrid-blank form-group">
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Rubros de Cuenta Contable"/> <br/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup style="display: block; text-align: center">
+                                                        <p:selectOneMenu id="retencionCuentaRubro" panelStyle="width:200px"
+                                                                         value="#{retencionView.cuentaContableRetencion}" 
+                                                                         style="width: 300px;"
+                                                                         converter="#{utilConverter}">
+                                                            <p:ajax listener="#{retencionView.cargarRetencionValor()}" 
+                                                                    process="retencionCuentaRubro,baseImponible" update="pnlValores,btnAgregarDetalle"/>
+                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                                          noSelectionOption="true" />
+                                                            <f:selectItems value="#{retencionView.cuentaContableRetenciones}"
+                                                                           var="cuentaRetencion"
+                                                                           itemLabel="#{cuentaRetencion.retencion.codigo} - #{cuentaRetencion.retencion.descripcion}"
+                                                                           itemValue="#{cuentaRetencion}"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                    <br/>
+                                                </p:panelGrid>  
+
+                                                <p:panelGrid id="pnlValores"  columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Base Imponible"/> <br/>
+                                                        <p:inputNumber id="baseImponible" value="#{retencionView.baseImponible}" 
+                                                                       decimalPlaces="2"
+                                                                       inputStyleClass="text-align: right"
+                                                                       readonly="#{!retencionView.renderedBotones}">
+                                                            <p:ajax event="blur" listener="#{retencionView.calcularValorRetencion()}" 
+                                                                    update="pnlValores, btnAgregarDetalle"/>
+                                                        </p:inputNumber>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="% Retención"/> <br/>
+                                                        <p:inputNumber id="valorRetencion" value="#{retencionView.impuesto}" inputStyleClass="text-align: right"
+                                                                       symbol="%" symbolPosition="s" emptyValue="always"
+                                                                       style="text-align: right" readonly="true"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Valor Retenido"/> <br/>
+                                                        <p:inputText id="valorTotal" value="#{retencionView.valorTotal}"  style="text-align: right" readonly="true"/> 
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/>
+                                                <center>
+                                                    <p:commandButton id="btnAgregarDetalle" value="Añadir Retención"
+                                                                     disabled="#{!retencionView.activarBtnDetalle}"
+                                                                     actionListener="#{retencionView.agregarDetalle()}"
+                                                                     process="formMain"
+                                                                     update="pnlValores,detalleRetencion,
+                                                                     btnAgregarDetalle"
+                                                                     style="width: 30%" icon="fa fa-plus"/>
+                                                </center>
+                                                <br/>
+                                            </p:fieldset>
+                                        </div>
+
+                                        <p:fieldset legend="Detalle de comprobante de retención"   
+                                                    style="margin-bottom:20px; font-weight: bold;" 
+                                                    rendered="#{retencionView.accesoComprobante}" id="fieldSetDetalleComprobante">
+                                            <p:dataTable id="detalleRetencion" 
+                                                         widgetVar="detalleRetencion"
+                                                         rowIndexVar="i"
+                                                         value="#{retencionView.liquidacionDetalles}"
+                                                         var="detalle"
+                                                         emptyMessage="No existen impuestos">
+                                                <p:column headerText="#" width="13">
+                                                    #{i+1}
+                                                </p:column>
+                                                <p:column headerText="N° Factura" width="100">
+                                                    #{detalle.factura.numFactura}
+                                                </p:column>
+                                                <p:column headerText="Impuesto" width="75">
+                                                    #{detalle.rubro.rubroTipo.descripcion}
+                                                </p:column>
+                                                <p:column headerText="Código" width="75">
+                                                    #{detalle.rubro.codigo}
+                                                </p:column>
+                                                <p:column headerText="Descripción">
+                                                    #{detalle.rubro.descripcion}
+                                                </p:column>
+                                                <p:column headerText="Base imponible" width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.baseImponible}"  />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="% Retención"  width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.impuesto}" style="text-align: right !important" />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="Valor Retenido" width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.valor}" style="text-align: right !important" />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="Acción"  width="70" rendered="#{retencionView.renderedBotones}">
+                                                    <center>
+                                                        <p:commandLink title="Eliminar" 
+                                                                       actionListener="#{retencionView.removerDetalle(detalle)}"
+                                                                       update="detalleRetencion">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" 
+                                                                       message="¿Está seguro de eliminar el detalle?,
+                                                                       El registro se eliminará y no se podra recuperar" 
+                                                                       icon="fa fa-exclamation-triangle"/>
+                                                        </p:commandLink>                                                
+                                                    </center>
+                                                </p:column>
+                                            </p:dataTable>
+                                            <br></br> 
+                                            <br></br> 
+                                            <center>
+                                                <p:commandButton value="Generar Retención" 
+                                                                 process="@form"
+                                                                 actionListener="#{retencionView.guardarGenerarRetenciones()}" 
+                                                                 rendered="#{retencionView.renderedBotones}"
+                                                                 style="font-size: 9px; width: 15%" icon="fa fa-save"  />
+                                                <p:commandButton value="Cancelar Retención" style="font-size: 9px; width: 15%; margin-left: 15px" process="@this"
+                                                                 styleClass="red-btn" icon="ui-icon-clear" update="formMain" 
+                                                                 actionListener="#{retencionView.cancelar()}"/>
+                                                <p:commandLink title="Consulta Comprobantes" immediate="true" 
+                                                               action="comprobantesRegistrados.xhtml?faces-redirect=true" style="float: right">
+                                                    <p:graphicImage value="/resources/icons/search.png"
+                                                                    width="40" height="40"/>
+                                                </p:commandLink>
+                                            </center>
+                                            <br></br>
+                                        </p:fieldset>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br></br>
+            </div>
+        </h:form>
+        <p:dialog id="dialogComprobante" closeOnEscape="true" header="Comprobante Objeto de Retención" widgetVar="dialogComprobante" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionView.accesoComprobante}"
+                  width="600">
+            <h:form id="formComprobantesFacturas" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formComprobante" style="width: 100%;" >
+                                <p:tabView id="TabViewFacturas" prependId="false" >
+                                    <p:tab title="Crear Factura">
+                                        <center>
+                                            <p:panelGrid columns="2" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank">
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Fecha de Emisión:" for="fechaEmision"/>
+                                                    <p:calendar id="fechaEmision"  
+                                                                placeholder="dd/MM/yyyy"
+                                                                pattern="dd/MM/yyyy"
+                                                                showOn="button" 
+                                                                navigator="true"
+                                                                locale="es"
+                                                                value="#{retencionView.factura.fechaFactura}" required="true"
+                                                                onkeypress="focusNextOnEnter(event, 'fechaCaducidad')"
+                                                                maxdate="#{retencionView.factura.fechaCaducidad}">
+                                                        <p:ajax event="dateSelect" update="fechaCaducidad"/>
+                                                        <p:ajax event="change" update="fechaCaducidad"/>
+                                                    </p:calendar>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Fecha de Caducidad:" for="fechaCaducidad"/>
+                                                    <p:calendar id="fechaCaducidad"  
+                                                                placeholder="dd/MM/yyyy"
+                                                                pattern="dd/MM/yyyy"
+                                                                showOn="button" 
+                                                                navigator="true"
+                                                                value="#{retencionView.factura.fechaCaducidad}"
+                                                                onkeypress="focusNextOnEnter(event, 'numeroComprobante')"
+                                                                mindate="#{retencionView.factura.fechaFactura}"
+                                                                disabled="#{empty retencionView.factura.fechaFactura}">
+                                                    </p:calendar>
+                                                </p:panelGrid>
+                                                <p:panelGrid id="panelNumFactura" columns="1" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:outputLabel value="Número de Comprobante:"/>
+                                                    <p:panelGrid columns="3"  >
+                                                        <p:inputText  id="entidad"
+                                                                      placeholder="001"
+                                                                      maxlength="3"
+                                                                      style="width: 25px;"
+                                                                      value="#{retencionView.factura.entidad}"
+                                                                      onkeypress="focusNextOnEnter(event, 'establecimiento')">
+                                                            <p:ajax event="change" process="entidad" update="entidad"
+                                                                    listener="#{retencionView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                        <p:inputText  id="establecimiento"
+                                                                      placeholder="001"
+                                                                      maxlength="3"
+                                                                      style="width: 25px;"
+                                                                      value="#{retencionView.factura.establecimiento}"
+                                                                      onkeypress="focusNextOnEnter(event, 'secuencia')">
+                                                            <p:ajax event="change" process="establecimiento" update="establecimiento"
+                                                                    listener="#{retencionView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                        <p:inputText  id="secuencia"
+                                                                      placeholder="00000001"
+                                                                      maxlength="9"
+                                                                      style="width: 60px;"
+                                                                      value="#{retencionView.factura.secuencia}"
+                                                                      onkeypress="focusNextOnEnter(event, 'numeroAutorizacion')">
+                                                            <p:ajax event="change" process="secuencia" update="secuencia"
+                                                                    listener="#{retencionView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                    </p:panelGrid>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Número de Autorización" for="numeroAutorizacion"/>
+                                                    <p:inputText  id="numeroAutorizacion"
+                                                                  style="width: 100% !important;"
+                                                                  value="#{retencionView.factura.numAutorizacion}" required="true">
+                                                        <!--                                                        <p:ajax event="keyup" update="guardar-valores-f" process="numeroAutorizacion" 
+                                                                                                                        listener="# {retencionView.validateNumAutorizacion()}"/>-->
+                                                    </p:inputText>   
+                                                </p:panelGrid> 
+                                            </p:panelGrid>
+                                        </center>
+                                        <br/>
+                                        <center>
+                                            <p:commandButton value="Guardar" update="formComprobante"
+                                                             id="guardar-valores-f"
+                                                             icon="ui-icon-save" actionListener="#{retencionView.aggFactura()}"
+                                                             styleClass="Fs16"/>
+                                            <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                             styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogComprobante').hide();"/>
+
+                                        </center>
+                                    </p:tab>
+                                    <p:tab title="Facturas registradas" rendered="#{retencionView.renderTabFactura}">
+                                        <br/>
+                                        <p:dataTable  id="dataTableFacturasRegistradas"
+                                                      widgetVar="dataTableFacturasRegistradas"
+                                                      reflow="true" 
+                                                      paginator="true" 
+                                                      lazy="true" rows="10"
+                                                      var="facturaRegistradas"
+                                                      value="#{retencionView.facturasLazyRegis}"
+                                                      rowKey="#{facturaRegistradas.id}"
+                                                      rowsPerPageTemplate="10,20" 
+                                                      paginatorPosition="bottom"
+                                                      selection="#{retencionView.facturasAgregadas}"
+                                                      filterEvent="enter"
+                                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                      emptyMessage="No se encontraron resultados"
+                                                      style="font-size: 11px" tableStyle="table-layout:auto">
+                                            <p:column selectionMode="multiple" style="width:10px;text-align:center">
+                                            </p:column>
+                                            <p:column headerText="N° Factura" filterBy="#{facturaRegistradas.numFactura}">
+                                                <h:outputText value="#{facturaRegistradas.numFactura}" />
+                                            </p:column>
+                                            <p:column headerText="N° Autorización" filterBy="#{facturaRegistradas.numAutorizacion}">
+                                                <h:outputText value="#{facturaRegistradas.numAutorizacion}" />
+                                            </p:column>
+                                            <p:column headerText="Fecha Emisión" sortBy="#{facturaRegistradas.fechaFactura}">
+                                                <h:outputText value="#{facturaRegistradas.fechaFactura}">
+                                                    <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                                </h:outputText>
+                                            </p:column>
+<!--                                            <p:column headerText="Acciones" style="font-weight: 500;" width="100">
+                                                <center>
+                                                    <p:commandLink title="Seleccionar Factura" process="@this" 
+                                                                   update="dataTableFacturas"
+                                                                   actionListener="# {retencionView.aggFacturaSeleccionada(facturaRegistradas)}">
+                                                        <i class="fa fa-arrow-circle-o-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                                                    </p:commandLink>    
+                                                </center>
+                                            </p:column>                                                  -->
+                                        </p:dataTable>
+                                        <br></br>
+                                        <center>
+                                            <p:commandButton value="Agregar" process="dataTableFacturasRegistradas" 
+                                                             update="dataTableFacturas"
+                                                             actionListener="#{retencionView.aggFacturaSeleccionada()}"/>
+                                        </center>
+                                        <br></br>
+                                    </p:tab>
+                                </p:tabView>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dialogDetalleBases" closeOnEscape="true" header="Detalle de Bases Imponibles y Retenciones de Impuesto
+                  Al Valor Agregado" widgetVar="dialogDetalleBases" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionView.accesoComprobante}">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outputBase" style="width: 100%;" >
+                                <p:fieldset legend="Bases Imponibles" style="font-weight: bold;">
+                                    <p:panelGrid  id="pnlDatosBasesIva" columns="2" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="baseImponibleCero"  value="Base Imponible IVA 0%" style="width: 100%"/>
+                                            <p:inputNumber id="baseImponibleCero" decimalPlaces="2" 
+                                                           value="#{retencionView.factura.baseImponibleIva}"
+                                                           readonly="#{retencionView.readOnlyInput}">
+                                                <p:ajax event="keyup" update="subtotal" listener="#{retencionView.actualizarSubtotalFactura}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="baseImponibleDif" value="Base imponible IVA diferente de 0%" style="width: 100%;"/>
+                                            <p:inputNumber id="baseImponibleDif" decimalPlaces="2" 
+                                                           readonly="#{retencionView.readOnlyInput}" 
+                                                           value="#{retencionView.factura.baseImponibleDiferente}">
+                                                <p:ajax event="keyup" update="montoIva,subtotal" listener="#{retencionView.calculoIvaDiferenteCero}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid  id="pnlDatosBases" columns="3" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="subtotal" value="Subtotal" style="width: 100%;"/>
+                                            <p:inputNumber id="subtotal" value="#{retencionView.factura.subtotalRenta}" 
+                                                           decimalPlaces="2" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="montoIva" value="Monto IVA" style="width: 100%;"/>
+                                            <p:inputText id="montoIva" class="panelInput" 
+                                                         value="#{retencionView.factura.montoIva}"  readonly="true">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="montoICE" value="Monto ICE" style="width: 100%;"/>
+                                            <p:inputText id="montoICE" class="panelInput"
+                                                         value="#{retencionView.factura.montoIce}">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <br/><br/>
+                                <center>
+                                    <p:commandButton value="Guardar" update="outputBase, panelGridFactura,fldInfoDetalleRetencion,dataTableFacturas" 
+                                                     id="guardar-bases"
+                                                     disabled="#{retencionView.disabledguardarBases}"
+                                                     icon="ui-icon-save" actionListener="#{retencionView.guardarValoresIVAFactura()}"
+                                                     styleClass="Fs16"/>
+                                    <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                     update="dataTableFacturas"
+                                                     styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogDetalleBases').hide();"/>
+
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dialogDetallePagos" closeOnEscape="true" header="Detalle Información de Pago"
+                  widgetVar="dialogDetallePagos" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionView.accesoComprobante}">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outputDatosPagos" style="width: 100%;" >
+                                <p:panelGrid id="pnlDatosPagos" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <h:panelGroup>
+                                        <p:outputLabel for="pagos_A"  value="Pago a:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="pagos_A" style="width: 275px"
+                                                         value="#{retencionView.factura.pagoExterior.pagoLocExt}" required="true">
+                                            <f:selectItem itemLabel="PAGO A RESIDENTE/ESTABLECIMIENTO PERMANENTE" 
+                                                          itemValue="01"/>
+                                            <f:selectItem itemLabel="PAGO A NO RESIDENTE" 
+                                                          itemValue="02"/>
+                                            <p:ajax listener="#{retencionView.loadDatosPago}" process="pagos_A"
+                                                    update="typereg,paisRegimenGeneral,paisParaisoFiscal,
+                                                    denomi,paisesPago,dobleTributacion,normaLegal"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="typereg"  value="Tipo Régimen:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="typereg" style="width: 275px"
+                                                         value="#{retencionView.factura.pagoExterior.tipoRegi}"
+                                                         disabled="#{retencionView.disabledPago}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItem itemLabel="Régimen general" 
+                                                          itemValue="01"/>
+                                            <f:selectItem itemLabel="Paraíso fiscal" 
+                                                          itemValue="02"/>
+                                            <f:selectItem itemLabel="Régimen fiscal preferente o jurisdicción de menor imposición" 
+                                                          itemValue="03"/>
+                                            <p:ajax listener="#{retencionView.loadDatosRegimenExterior}" 
+                                                    update="typereg,paisRegimenGeneral,paisParaisoFiscal,
+                                                    denomi,paisesPago,dobleTributacion,normaLegal"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisRegimenGeneral"  value="Régimen General:" style="width: 100%"/>
+                                        <p:selectOneMenu id="paisRegimenGeneral" style="width: 275px"
+                                                         value="#{retencionView.factura.pagoExterior.paisEfecPagoGen}"
+                                                         disabled="#{retencionView.disabledRegimenGeneral}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionView.paises}"
+                                                           var="paises"
+                                                           itemLabel="#{paises.descripcion}"
+                                                           itemValue="#{paises.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisParaisoFiscal"  value="Paraíso Fiscal:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="paisParaisoFiscal" style="width: 275px"
+                                                         value="#{retencionView.factura.pagoExterior.paisEfecPagoParFis}"
+                                                         disabled="#{retencionView.disabledParaisoFiscal}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionView.paisParaisoFiscal}"
+                                                           var="paisParaisoFiscal"
+                                                           itemLabel="#{paisParaisoFiscal.paisElegir}"
+                                                           itemValue="#{paisParaisoFiscal.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="denomi"  value="Denominación" style="width: 100%"/><br/>
+                                        <p:inputText id="denomi" value="#{retencionView.factura.pagoExterior.denopago}"
+                                                     disabled="#{retencionView.disabledDenominacion}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisesPago"  value="País" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="paisesPago" style="width: 275px"
+                                                         value="#{retencionView.factura.pagoExterior.paisEfecPago}"
+                                                         disabled="#{retencionView.disabledDenominacion}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionView.paises}"
+                                                           var="paisEfecP"
+                                                           itemLabel="#{paisEfecP.descripcion}"
+                                                           itemValue="#{paisEfecP.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <br/> 
+                                <h:panelGrid columns="2" cellpadding="3">
+                                    <p:outputLabel for="dobleTributacion"  
+                                                   value="¿Aplica convenio de doble tributación?" 
+                                                   style="width: 100%"/>
+                                    <p:selectOneRadio id="dobleTributacion" 
+                                                      value="#{retencionView.factura.pagoExterior.aplicConvDobTrib}" 
+                                                      unselectable="true"
+                                                      disabled="#{retencionView.disabledPago}">
+                                        <f:selectItem itemLabel="SI" itemValue="NO" />
+                                        <f:selectItem itemLabel="NO" itemValue="SI" />
+                                    </p:selectOneRadio>
+                                    <p:outputLabel for="normaLegal"  
+                                                   value="¿Pago sujeto a retención en aplicación de la norma legal?" 
+                                                   style="width: 100%"/>
+                                    <p:selectOneRadio id="normaLegal" 
+                                                      value="#{retencionView.factura.pagoExterior.pagExtSujRetNorLeg}"
+                                                      unselectable="true"
+                                                      disabled="#{retencionView.disabledPago}">
+                                        <f:selectItem itemLabel="SI" itemValue="NO" />
+                                        <f:selectItem itemLabel="NO" itemValue="SI"/>
+                                    </p:selectOneRadio>
+                                </h:panelGrid>
+                                <br/> 
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <h:panelGrid columns="1">                    
+                                        <p:outputLabel value="Formas de Pago" 
+                                                       style="width: 100%"/>
+                                        <p:selectOneMenu id="select-forma-pago" style="width: 275px"
+                                                         value="#{retencionView.formaPagoSelection}"
+                                                         converter="#{utilConverter}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionView.formasPagos}"
+                                                           var="formaPagos"
+                                                           itemLabel="#{formaPagos.descripcion}"
+                                                           itemValue="#{formaPagos}"/>
+                                            <p:ajax update="select-forma-pago,dataTableFormasPago" listener="#{retencionView.aggFormasPago}"
+                                                    process="select-forma-pago"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGrid>
+                                    <h:panelGrid columns="1">
+                                        <p:dataTable  id="dataTableFormasPago" 
+                                                      widgetVar="dataTableFormasPago"
+                                                      var="formasPago"  
+                                                      value="#{retencionView.facturaFormasPago}"
+                                                      style="font-size: 11px" tableStyle="table-layout:auto">
+                                            <p:column headerText="Codigo">
+                                                <h:outputText value="#{formasPago.formaPago.codigo}" />
+                                            </p:column>
+                                            <p:column headerText="N° Autorización">
+                                                <h:outputText value="#{formasPago.formaPago.descripcion}" />
+                                            </p:column>
+                                            <p:column headerText="Acciones" style="font-weight: 500;" width="100"
+                                                      rendered="#{retencionView.renderedBotones}">
+                                                <center>
+                                                    <p:commandLink title="Eliminar" process="@this"
+                                                                   actionListener="#{retencionView.eliminarFormasPago(formasPago)}">
+                                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                                        <p:confirm header="Confirmación de eliminación"
+                                                                   message="¿Está seguro de eliminar la forma de pago?"
+                                                                   icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>        
+                                                </center>
+                                            </p:column>                                                  
+                                        </p:dataTable>
+                                    </h:panelGrid>
+                                </p:panelGrid>
+                                <br/>
+                                <center>
+                                    <p:commandButton value="Guardar" update="outputDatosPagos,panelGridFactura" 
+                                                     process="outputDatosPagos"
+                                                     icon="ui-icon-save" actionListener="#{retencionView.guardarDatosPago()}"
+                                                     styleClass="Fs16"/>
+                                    <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                     update="dataTableFacturas"
+                                                     styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogDetallePagos').hide();"/>
+
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,269 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Días Laborados
+    </ui:define>
+    <ui:param name="tittle" value="Días Laborados" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <p:outputPanel id="fomInfo">                        
+                        <p:fieldset id="fieldsetanticipo" legend="REGISTRO DE DIAS LABORADOS" 
+                                    toggleable="true" toggleSpeed="500" collapsed="false"
+                                    style="width: 90%;margin-left: 5%">
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Período " for="periodo"/>
+                                    <p:selectOneMenu id="periodo" value="#{diasLaboradosView.busqueda.anio}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{diasLaboradosView.periodos}"
+                                                       var="p"
+                                                       itemLabel="#{p.anio}"
+                                                       itemValue="#{p.anio}"/>
+                                        <p:ajax listener="#{diasLaboradosView.mesesRoles()}" update="mes" process="@this"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Rol: " for="@next"/>
+                                    <p:selectOneMenu id="mes" value="#{diasLaboradosView.diaLaborado.tipoRol}"
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{diasLaboradosView.rolesMensuales}"
+                                                       var="m"
+                                                       itemLabel="#{m.descripcion}"
+                                                       itemValue="#{m}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Tipo Rol" for="tipoRol"/>
+                                    <p:inputText id="tipoRol" value="#{diasLaboradosView.diaLaborado.tipoRol.tipoRol.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Mes Rol" for="mesRol"/>
+                                    <p:inputText id="mesRol" value="#{diasLaboradosView.diaLaborado.tipoRol.mes.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <center>
+                                <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:commandButton value="Buscar" id="buscar-btn" 
+                                                     update="dataTabledias,tipoRol,mesRol,panelDiaLab"
+                                                     actionListener="#{diasLaboradosView.buscar()}"
+                                                     icon="ui-icon-search"
+                                                     process="mes"
+                                                     styleClass="Fs16"
+                                                     style="width: 15%;float: right"/>
+                                </p:panelGrid>
+                            </center>
+                        </p:fieldset>
+                        <br/><br/>
+                        <h:panelGroup id="panelDiaLab">
+                            <div>
+                                <p:commandButton value="Agregar Servidor Público"                                             
+                                                 process="mes"
+                                                 disabled="#{diasLaboradosView.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? true: false}"
+                                                 icon="ui-icon-plus"                                             
+                                                 update="panelDiaLab"
+                                                 actionListener="#{diasLaboradosView.openDlgServidor()}"
+                                                 style="width: auto;float: left;margin-left:5%;"/>
+                            </div>
+                            <br/><br/><br/>
+                            <p:dataTable id="dataTabledias" widgetVar="dataTabledias" var="dia" value="#{diasLaboradosView.lazy}" 
+                                         paginator="true" rows="15"
+                                         paginatorPosition="bottom"
+                                         lazy="true"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="15,20,30,40,50,100" 
+                                         editable="#{diasLaboradosView.tipoRol.estadoAprobacion.codigo != 'registrado-rol' ? false: true}"
+                                         editMode="cell"
+                                         rowIndexVar="num"
+                                         emptyMessage="No existen criterio de busqueda especificado"
+                                         selection="#{diasLaboradosView.diaLaboradoSeleccion}" selectionMode="single" rowKey="#{dia.id}"
+                                         style="width: 91%;margin-left: 5%">
+                                <f:facet name="header">
+                                    #{diasLaboradosView.diaLaborado.tipoRol.descripcion}
+                                </f:facet>
+                                <p:ajax event="cellEdit" listener="#{diasLaboradosView.guardarDia(dia)}" update="dataTabledias" />
+                                <p:column headerText="N°" style="width: 2%;text-align: center">
+                                    <h:outputText value="#{num+1}"/>
+                                </p:column>
+                                <p:column headerText="Cédula Servidor" style="text-align: center;width: 5%" filterBy="#{dia.servidor.persona.identificacion}" filterMatchMode="contains">
+                                    <h:outputText value="#{dia.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre Servidor" style="width: 10%" filterBy="#{dia.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                    <h:outputText value="#{dia.servidor.persona.nombreCompleltoSql}"/>
+                                </p:column>                                
+                                <p:column headerText="Cargo" style="width: 10%" filterBy="#{dia.servidor.distributivo.cargo.nombreCargo}" filterMatchMode="contains">
+                                    <h:outputText value="#{dia.servidor.distributivo.cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Unidad Administrativa" style="width: 20%" filterBy="#{dia.servidor.distributivo.unidadAdministrativa.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{dia.servidor.distributivo.unidadAdministrativa.nombre}" />
+                                </p:column>
+                                <p:column headerText="Mes" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{dia.mes}" />
+                                </p:column>
+                                <p:column headerText="Fecha de Ingreso" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{dia.servidor.fechaIngreso}"/>
+                                </p:column>
+                                <p:column headerText="Días Laborados" style="text-align: center;width: 5%">
+                                    <p:cellEditor disabled="#{diasLaboradosView.tipoRol.diasLaborados == true}">
+                                        <f:facet name="input" >
+                                            <p:inputNumber id="presInicial" maxValue="30"
+                                                           value="#{dia.dias}" style="width:100%;" decimalPlaces="0">
+
+                                            </p:inputNumber>
+                                        </f:facet>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{dia.dias}" style="text-align: center">
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Acciones" style="width: 5%;text-align: center"
+                                          rendered="#{!diasLaboradosView.disabledbtnBiometrico}">
+                                    <p:commandLink title="Eliminar"
+                                                   update="formMain"
+                                                   process="@this"
+                                                   actionListener="#{diasLaboradosView.eliminar(dia)}">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar ?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>   
+                                </p:column> 
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="servidorPublicoDialog" header="Formulario de Servidor Público" widgetVar="servidorPublicoDialog"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="frmdlg" prependId="false">
+                <div class="ui-g"> 
+                    <div class="ui-g-12">
+                        <p:outputPanel id="formServidorPublico"  style="width: auto;" >
+                            <p:dataTable id="dtServidor" widgetVar="ser" var="ser" style="width: 100%;" 
+                                         reflow="true" paginator="false" lazy="true" rows="20000"
+                                         rowsPerPageTemplate="15,30" filterEvent="enter"
+                                         scrollable="true" scrollHeight="350" rowKey="#{ser.id}"
+                                         value="#{diasLaboradosView.listaServidoresMostrar}"
+                                         selection="#{diasLaboradosView.servidorList}"
+                                         paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                                <f:facet name="header">
+                                    LISTADO DE SERVIDORES PÚBLICOS
+                                </f:facet>
+                                <p:column selectionMode="multiple" style="width:10%;text-align:center"/>
+                                <p:column headerText="Identificación" style="width: 10%;text-align: center">
+                                    <h:outputText value="#{ser.persona.identificacion}"/>
+                                </p:column>
+                                <p:column headerText="Servidor" style="width: 35%;">
+                                    <h:outputText  value="#{ser.persona.nombreCompleltoSql}"/>
+                                </p:column>
+                                <p:column headerText="Cargo" style="width: 35%;" >
+                                    <h:outputText value="#{ser.distributivo.cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Fecha Ingreso" style="width: 10%;text-align: center">
+                                    <h:outputText value="#{ser.fechaIngreso}" >
+                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                    </h:outputText>
+                                </p:column>
+                                <f:facet name="footer">
+                                    <p:commandButton process="dtServidor"  icon="fa fa-plus-circle"
+                                                     styleClass="Fs16" value="Seleccionar" actionListener="#{diasLaboradosView.servidoresSeleccionados()}"/>
+                                </f:facet>
+                            </p:dataTable>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog id ="dlgMarcacionBiometrico" header="Detalle Marcaciones" 
+                  widgetVar="dlgMarcacionBiometrico" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="50%" >
+            <h:form prependId="false" id="frmMarcacion" style="width: auto;">
+                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="NOMBRE:" for="@next"/>
+                        <p:inputText id="nombreServ" value="#{diasLaboradosView.diaLaborado.servidor.persona.nombreCompleltoSql}"
+                                     readonly="true" style="width: 100%">
+                        </p:inputText>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="CARGO:" for="@next"/>
+                        <p:inputText id="cargoServ" value="#{diasLaboradosView.diaLaborado.servidor.distributivo.cargo.nombreCargo}"
+                                     readonly="true" style="width: 100%">
+                        </p:inputText>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:tabView>
+                    <p:tab title="Dias Laborados">
+                        <p:dataTable id="dataDetalle" widgetVar="dataDetalle" 
+                                     var="dt"
+                                     value="#{diasLaboradosView.listMarcacionModel}"
+                                     paginator="true" rows="10"
+                                     paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,20,30,40,50,100"
+                                     emptyMessage="No existe criterio de búsqueda especificado" >
+                            <f:facet name="header">
+                                MARCACIONES
+                            </f:facet>
+                            <p:column headerText="Fecha" style="text-align: center;width: 8%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.date}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="INGRESO" style="text-align: center;width: 10%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.hora_ingreso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="SALIDA" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.hora_salida}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>   
+                            <p:column headerText="INGRESO DESCANSO" style="text-align: center;width: 10%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.ingreso_descanso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="SALIDA DESCANSO" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.salida_descanso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="HORAS LABORADAS" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.horas_laboras}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>   
+                        </p:dataTable>
+                    </p:tab>                        
+                </p:tabView>             
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

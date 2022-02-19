@@ -1,0 +1,273 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Revisión de Registro de Pólizas del Contrato
+    </ui:define>
+
+    <ui:define name="content">
+        <style type="text/css">
+            .vencido {
+                background-color: #ffe8e8 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            .devuelto {
+                background-color: #e4e4e4 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            .vigente {
+                background-color: #ffffff !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            #input_asunto,#input_cc,#input_mensaje{
+                width: 100%;
+            }
+            #input_correo{
+                width: 50%;
+            }
+        </style>
+        <div class="ui-g ui-fluid">
+            <comp:titleTask task="#{revisionGarantiaView.tarea}" tramite="#{revisionGarantiaView.tramite}" />
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:messages id="mensaje" showDetail="true" closable="true"/>
+                    <h:panelGroup id="tableGarantias" layout="block" >
+                        <p:dataTable id="polizas" widgetVar="polizas" var="vaca" paginator="true" rows="5"
+                                     style="width: 100%;text-align:center" paginatorPosition="bottom" value="#{revisionGarantiaView.garantiaLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="5,10,15,20,50" lazy="true"
+                                     emptyMessage="No existen garantías registradas con #{revisionGarantiaView.adquisicion.numeroContrato} "
+                                     rowStyleClass="#{!revisionGarantiaView.polizaVigente(vaca.fechaHasta) ? 'vencido': vaca.devolucion ? 'devuelto':'vigente'}"
+                                     tableStyle="table-layout:auto">
+                            <p:columnGroup type="header">
+                                <p:row>
+                                    <p:column rowspan="2" headerText="No Contrato" style="width: 10%;"/>
+                                    <p:column rowspan="2" headerText="Riesgo Asegurado" style="width: 13%"/>
+                                    <p:column rowspan="2" headerText="Tipo de Documento" style="width: 12%"/>
+                                    <p:column rowspan="2" headerText="No Póliza" style="width: 7%"/>
+                                    <p:column rowspan="2" headerText="No Referencia" style="width: 7%"/>
+                                    <p:column colspan="2" headerText="Período de Cálculo" style="width: 18%"/>
+                                    <p:column rowspan="2" headerText="Vigencia" style="width: 8%"/>
+                                    <p:column rowspan="2" headerText="Duracion del Seguro" style="width: 10%"/>
+                                    <p:column rowspan="2" headerText="Valor" style="width: 8%"/>
+                                    <p:column rowspan="2" headerText="Accion" style="width: 7%"/>
+                                </p:row>
+                                <p:row>
+                                    <p:column headerText="Desde"/>
+                                    <p:column headerText="Hasta"/>
+                                </p:row>
+                            </p:columnGroup>
+                            <p:column>
+                                <h:outputText value="#{vaca.adquisicion.numeroContrato}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.riesgoAsegurado}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.tipoDocumento}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.numPoliza}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.numReferencia}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.fechaDesde}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"  />
+                                </h:outputText>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.fechaHasta}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.devolucion ? 'Devuelto':revisionGarantiaView.polizaVigente(vaca.fechaHasta) ? 'Vigente':'Vencido'}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.duracionDias}"/>
+                            </p:column>
+                            <p:column>
+                                <h:outputText value="#{vaca.suma}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column >
+                                <p:commandLink update="formMain,formPoliza" title="Vizualizar Garantia" process="@this"
+                                               actionListener="#{revisionGarantiaView.openDlgGarantia(vaca)}">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <center>
+                        <p:commandButton value="Notificar Correo"  actionListener="#{revisionGarantiaView.notificarCorreoTesoreria()}" disabled="#{!revisionGarantiaView.garantiaBol}"
+                                         icon="fa fa-bullhorn delete" process="@this" style="width: auto; background: #999; margin-top: 2%;"/>
+                        <p:spacer width="7"/>
+                        <p:commandButton value="Continuar Tarea"  actionListener="#{revisionGarantiaView.abriDlogo()}" disabled="#{revisionGarantiaView.garantiaBol}"
+                                         icon="fa fa-external-link" process="@this" style="width: auto; background: #0081cb; margin-top: 2%;"/>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{revisionGarantiaView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Culminar tarea"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{revisionGarantiaView.completarTarea()}" style="width: 100%;"  />
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgNotificar" id="dlgNotificar" header="NOTIFICACIÓN" modal="true" width="600" height="500" >
+            <div class="ui-g-12">
+                <p:fieldset legend="Detalles" title="CORREO DE NOTIFICACIÓN">
+                    <h:form id="frmFormulario" prependId="false">
+                        <center style="font-size: 14px; font-weight: bold;">
+                            <p:outputLabel value="CORREO DE NOTIFICACIÓN"/>
+                            <br/>
+                        </center>
+                        <p:panelGrid style="width: 100%;" columns="1"  layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="Correo: " for="input_correo" indicateRequired="true" />
+                            <p:inputText  required="true" value="#{revisionGarantiaView.email}" id="input_correo"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1"  layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="CC:" for="input_cc" indicateRequired="false" />
+                            <p:inputText required="false" value="#{revisionGarantiaView.ccdestinat}" id="input_cc"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1"  layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="Asunto:" for="input_asunto" indicateRequired="true" />
+                            <p:inputTextarea required="true" value="#{revisionGarantiaView.asunto}" id="input_asunto" rows="2"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1"  layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="Mensaje:" for="input_mensaje" indicateRequired="true" />
+                            <p:inputTextarea required="true" value="#{revisionGarantiaView.mensaje}" id="input_mensaje" rows="5" style="border: 1px solid #cccccc"/>
+                        </p:panelGrid>
+                        <br></br>
+                        <br></br>
+                        <center>
+                            <p:commandButton icon="fa fa-envelope-o" value="Enviar Correo" process="frmFormulario"  update="frmFormulario"
+                                             actionListener="#{revisionGarantiaView.enviarCorreo()}"/>
+                        </center>
+                        <br></br>
+                    </h:form>
+                </p:fieldset>  
+            </div>
+        </p:dialog>
+
+
+        <p:dialog id="dialogViewGarantia" closeOnEscape="true" header="Datos de la Póliza - Garantía" 
+                  widgetVar="dialogViewGarantia" modal="true" width="600" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formPoliza" prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <!--<div class="card card-w-title">-->
+                        <p:fieldset id="fieldset" legend="Consulta de Garantia" >
+                            <p:outputPanel id="outPutRegistro">
+
+                                <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="Asignación de Contrato" style="font-weight: bold"/>
+                                        <p:outputLabel value="#{revisionGarantiaView.garantia.adquisicion.numeroContrato}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:outputLabel value="Descripción" style="font-weight: bold"/>
+                                        <p:outputLabel id="numContrato" value="#{revisionGarantiaView.garantia.adquisicion.descripcion}" 
+                                                       style="width: 200px"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="Riesgo Asegurado" for="riesgo" style="font-weight: bold"/>
+                                        <p:outputLabel id="riesgo" value="#{revisionGarantiaView.garantia.riesgoAsegurado.texto}"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="Tipo de Documento" for="doc" style="font-weight: bold"/>
+                                        <p:outputLabel id="doc" value="#{revisionGarantiaView.garantia.tipoDocumento.texto}" />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="Tipo de Moneda" for="moneda" style="font-weight: bold"/>
+                                        <p:outputLabel id="moneda" value="#{revisionGarantiaView.garantia.tipoMoneda}" 
+                                                       style="text-transform: uppercase"  />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="N° Poliza" for="poliza" style="font-weight: bold"/>
+                                        <p:outputLabel id="poliza" value="#{revisionGarantiaView.garantia.numPoliza}"
+                                                       style="text-transform: uppercase" />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel value="N° Referencia" for="referencia" style="font-weight: bold"/>
+                                        <p:outputLabel id="referencia" value="#{revisionGarantiaView.garantia.numReferencia}"
+                                                       style="text-transform: uppercase" />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Fecha Desde " for="desde" style="font-weight: bold" />
+                                        <p:outputLabel value="#{revisionGarantiaView.garantia.fechaDesde}" id="desde" >
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Fecha Hasta " for="hasta" style="font-weight: bold"/>
+                                        <p:outputLabel value="#{revisionGarantiaView.garantia.fechaHasta}" id="hasta" >
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="Dias" for="dias" style="font-weight: bold"/>
+                                        <p:outputLabel id="dias" value="#{revisionGarantiaView.dias}" 
+                                                       style="text-transform: uppercase; width: 100%" />
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Suma" for="suma" style="font-weight: bold"/>
+                                        <p:outputLabel id="suma" value="#{revisionGarantiaView.garantia.suma}">
+                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                        </p:outputLabel>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:outputLabel value="Cuenta Contable" style="font-weight: bold"/>
+                                        <p:outputLabel id="cuentaContable" value="#{revisionGarantiaView.garantia.cuentaContable eq null ? 'N/A':revisionGarantiaView.garantia.cuentaContable.nombre}" 
+                                                       style="width: 100%"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" style="width: 100%">
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel value="Detalle de Garantía" style="font-weight: bold; width: 100%"/>
+                                        <p:outputLabel value="#{revisionGarantiaView.garantia.detalle}" 
+                                                       style="width: 100%" />
+                                    </p:panelGrid>
+                                </p:panelGrid> 
+                            </p:outputPanel>
+                        </p:fieldset>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

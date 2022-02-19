@@ -1,0 +1,1021 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pe="http://primefaces.org/ui/extensions"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+
+    <ui:define name="title">
+        Registrar Local
+    </ui:define>
+    <ui:define name="head">
+        <style type="text/css">
+            .ui-datepicker .ui-datepicker-title select {
+                font-size: 1em;
+                margin: 1px 0;
+                color: black;
+            }
+            h1{
+                color:white;
+            }
+        </style>
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g">
+            <div class="ui-g-12">
+                <div class="car card-w-title" >
+                    <!--<comp:ventaComisaria solicitudVentanilla="#{liquidacionInquilinatoMB.solicitud}" task="#{liquidacionInquilinatoMB.tarea}" tramite="#{liquidacionInquilinatoMB.tramite}"/>-->   
+                </div>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form id="frmMain" >
+                    <center>                        
+                        <p:commandButton value="Continuar a Generar liquidación" actionListener="#{registrarLocalPFJMB.opendlg()}"  process="@this"
+                                         update="frmMain, frmDlgObser" icon="fa fa-save" style="width: auto; border-top: 25px"  />                                                   
+                        <br/>
+                        <br/>
+                        <p:tabView id="tabViewPatentes">
+                            <p:tab title="Listado de patentes">
+                                <div style="text-align: left">
+                                    <p:commandButton icon="fa fa-plus" value="Nueva Patente" style="width: auto;" styleClass="btnStyle"
+                                                     actionListener="#{registrarLocalPFJMB.nuevaPatente()}"/>
+                                    <p:spacer width="10"/>
+                                    <p:commandButton icon="fa fa-refresh" value="Actualizar" style="width: auto;" styleClass="btnStyle"
+                                                     actionListener="#{registrarLocalPFJMB.init()}" update="frmMain"/> 
+                                </div> 
+                                <br/>
+                                <p:dataTable id="dtPatentes" lazy="true" value="#{registrarLocalPFJMB.patentes}"
+                                             var="patente" rows="20" paginator="true" paginatorPosition="top"
+                                             emptyMessage="No existen patentes registradas" rowIndexVar="patIndex"
+                                             rowsPerPageTemplate="10, 20, 50, 100" filterEvent="enter" widgetVar="dtPatentes" >
+                                    <p:ajax event="rowToggle" update="dtLocales" listener="#{registrarLocalPFJMB.executarLocales(patente)}"/>
+                                    <p:column style="width:2rem">
+                                        <p:rowToggler/>                                        
+                                    </p:column>
+                                    <p:column headerText="RUC" filterBy="#{patente.propietario.identificacion}" width="12%;" filterStyle="width:95%;">
+                                        <center><h:outputText value="#{patente.propietario.identificacion}"/></center>
+                                    </p:column>
+                                    <p:column headerText="Contribuyente" filterBy="#{patente.propietario.apellido}" width="30%;">
+                                        <h:outputText value="#{patente.propietario.apellido} #{patente.propietario.nombre}"  style="text-transform: uppercase;"/>
+                                    </p:column>
+                                    <p:column headerText="Razón Social" filterBy="#{patente.propietario.razonSocial}" width="30%;">
+                                        <h:outputText value="#{patente.propietario.razonSocial}"  style="text-transform: uppercase;"/>
+                                    </p:column>
+                                    <p:column headerText="Actividad Comercial" width="24%;">
+                                        <center>
+                                            <h:outputText value="#{patente.actividadPrincipal.descripcion}" style="text-transform: uppercase; font-size: 11px"/>
+                                        </center>
+                                    </p:column>
+                                    <p:column headerText="Estado" width="10%;">
+                                        <center>
+                                            <h:outputText value="#{patente.estado eq null?'Inactivo':(patente.estado eq true?'Activo':'Inactivo')}"/>
+                                        </center>
+                                    </p:column>
+                                    <p:column headerText="Acción" width="8%;">
+                                        <center>
+                                            <p:commandLink rendered="false" title="Informacion" actionListener="#{registrarLocalPFJMB.viewPatente(patente, false )}" styleClass="btnStyle">
+                                                <i class="fa fa-fw fa-file-text" style="font-size: 1.5em"></i>
+                                            </p:commandLink>
+                                            <p:spacer width="2"/>
+                                            <p:commandLink title="Editar" actionListener="#{registrarLocalPFJMB.editarPatente(patente, true)}" styleClass="btnStyle">
+                                                <i class="fa fa-fw fa-edit" style="font-size: 1.5em"></i>
+                                            </p:commandLink>
+                                            <p:spacer width="2"/>
+                                            <p:commandLink title="Inhabilitar" actionListener="#{registrarLocalPFJMB.eliminarPatente(patente)}" process="@this" update="frmMain,dtPatentes"
+                                                           styleClass="btnStyle">
+                                                <i class="fa fa-fw fa-trash" style="font-size: 1.5em"></i>
+                                                <p:confirm header="Confirmación" message="Estaa Seguro de Eliminar esta Patente" icon="ui-icon-alert" />
+                                            </p:commandLink>
+                                            <p:commandLink title="Ver liquidaciones" actionListener="#{registrarLocalPFJMB.verLiquidaciones(patente.renLocalComercialList)}"
+                                                           update="frmMain" styleClass="btnStyle" >
+                                                <i class="fa fa-fw fa-eye" style="font-size: 1.5em"></i>
+                                            </p:commandLink>
+                                        </center>
+                                    </p:column>
+                                    <p:rowExpansion >
+                                        <p:dataTable id="dtLocales"  value="#{registrarLocalPFJMB.localesLista}"                                                      
+                                                     style="width: 100%;" var="local" rows="5" paginator="true" paginatorPosition="bottom"                                                                                                          
+                                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" widgetVar="dtLocales"
+                                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">                                                     
+                                            <f:facet name="header">
+                                                LISTADO DE LOCALES
+                                            </f:facet>
+                                            <p:column headerText="RUC" filterBy="#{local.propietario.identificacionCompleta}" width="15%" filterStyle="width:95%">
+                                                <center><h:outputText value="#{local.propietario.identificacionCompleta}"/></center>
+                                            </p:column>
+                                            <p:column headerText="Clave Predial" filterBy="#{local.clavePreial}" width="15%;" filterStyle="width:95%">
+                                                <center><h:outputText value="#{local.clavePreial}"/></center>
+                                            </p:column>
+                                            <p:column headerText="Num Local" filterBy="#{local.numLocal}" width="15%;" filterStyle="width:95%">
+                                                <center><h:outputText value="#{local.numLocal}"/></center>
+                                            </p:column>
+                                            <p:column headerText="Tipo Predio" filterBy="#{local.tipoPredio}" width="15%" filterStyle="width:95%">
+                                                <center><h:outputText value="#{local.tipoPredio}"/></center>
+                                            </p:column>
+                                            <p:column headerText="Nombre Local" width="40%;" filterBy="#{local.nombreLocal}">
+                                                <h:outputText value="#{local.nombreLocal}" />
+                                            </p:column>
+                                            <p:column headerText="Contribuyente" width="40%;" filterBy="#{local.patente.propietario.nombreCompleto}">
+                                                <h:outputText value="#{local.patente.propietario.nombreCompleto}" />
+                                            </p:column>
+                                            <p:column headerText="Razón Social" filterBy="#{local.propietario.razonSocial}"  width="40%">
+                                                <h:outputText value="#{local.propietario.razonSocial}" style="text-transform: uppercase;"/>
+                                            </p:column>
+                                            <p:column headerText="LLeva Contabilitdad" width="11%" filterBy="#{local.patente.contabilidad}" style="text-align: center;">
+                                                <f:facet name="filter">
+                                                    <p:selectOneMenu onchange="PF('dtLocales').filter()" styleClass="custom-filter">
+                                                        <f:converter converterId="javax.faces.Boolean" />
+                                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                                        <f:selectItem itemLabel="SI" itemValue="true" />
+                                                        <f:selectItem itemLabel="NO" itemValue="false" />
+                                                    </p:selectOneMenu>
+                                                </f:facet>
+                                                <h:outputText value="#{local.patente.contabilidad?'SI':'NO'}"/>
+                                            </p:column>
+                                            <p:column headerText="Nombre Local" filterBy="#{local.nombreLocal}" width="20%">
+                                                <h:outputText value="#{local.nombreLocal}" />
+                                            </p:column>
+                                            <p:column headerText="Acción" width="7%">
+                                                <center>
+                                                    <p:commandLink title="Memo" actionListener="#{registrarLocalPFJMB.openMemo(local)}"
+                                                                   update="frmMain" styleClass="btnStyle" >
+                                                        <i class="fa fa-print" style="font-size: 1.5em"></i>
+                                                    </p:commandLink>
+                                                </center>
+                                            </p:column>
+                                        </p:dataTable>
+                                    </p:rowExpansion>
+                                </p:dataTable>
+                            </p:tab>
+                            <p:tab title="Documentos">
+                                <p:commandButton icon="fa fa-upload" value="Subir Archivo" style="float: left" actionListener="#{registrarLocalPFJMB.openDialogUpload()}"/>
+                                <br/><br/>  
+                                <u:documents id="listDocumentos"  entiti="#{registrarLocalPFJMB.tramite}"/>  
+                                <!--                                <p:panelGrid layout="grid" columns="1">
+                                                                    <p:commandButton value="Nueva actividad" icon="fa fa-plus" onclick="PF('dlgAct').show()" style="float: right; width: auto; " 
+                                                                                     actionListener="#{registrarLocalPFJMB.initRegistroActividad()}" styleClass="btnStyle" update="frmAct"/>
+                                                                </p:panelGrid>
+                                                                <p:dataTable id="datActividades"
+                                                                             value="#{registrarLocalPFJMB.actividades}" var="cat1" rows="10"
+                                                                             paginator="true"
+                                                                             paginatorPosition="bottom"
+                                                                             lazy="true">
+                                                                    <p:column headerText="CIIU" width="20%">
+                                                                        <h:outputText value="#{cat1.ciu}"/>
+                                                                    </p:column>
+                                                                    <p:column headerText="Descripción" width="100%" filterBy="#{cat1.descripcion}" filterStyle="width: 90%">
+                                                                        <h:outputText value="#{cat1.descripcion}"/>
+                                                                    </p:column>
+                                                                    <p:column headerText="Valor" width="10%">
+                                                                        <h:outputText value="#{cat1.valor}"/>
+                                                                    </p:column>
+                                                                    <p:column headerText="Acción" width="20%">
+                                                                        <center>
+                                                                            <p:commandLink title="Editar" actionListener="#{registrarLocalPFJMB.initEditActividad(cat1)}" styleClass="btnStyle"
+                                                                                           onclick="PF('dlgAct').show()" update="frmAct" >
+                                                                                <i class="fa fa-fw fa-edit" style="font-size: 1.5em"></i>
+                                                                            </p:commandLink>
+                                                                            <p:spacer width="6S"/>
+                                                                            <p:commandLink title="Eliminar" actionListener="#{registrarLocalPFJMB.eliminarActividad(cat1)}" styleClass="btnStyle"
+                                                                                           update="frmMain:tabViewPatentes:datActividades" >
+                                                                                <i class="fa fa-fw fa-remove" style="font-size: 1.5em;color: red"></i>
+                                                                            </p:commandLink>
+                                                                        </center>
+                                                                    </p:column>
+                                                                </p:dataTable>-->
+                            </p:tab>
+                        </p:tabView>
+                    </center>
+                </h:form>
+                <!--                <p:dialog widgetVar="dlgAct" position="center" header="Ingreso de Actividad Comercial"
+                                          appendTo="@(body)" modal="true" width="50%" resizable="false"
+                                          closable="true" closeOnEscape="true">
+                                    <h:form id="frmAct">
+                                        <center>
+                                            <h:panelGrid columns="2" style="width: 100%;">
+                                                <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                    <p:outputLabel for="ciiu-form" value="CIIU:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                                    <br></br>
+                                                    <p:inputText id="ciiu-form" value="#{registrarLocalPFJMB.actividad.ciu}" styleClass="inputWidth90" style="width: 80%" readonly="false" required="false">
+                                                        <c:choose>
+                                                            <c:when test="true">
+                                                                <f:attribute name="onkeypress" value="validateIntegerValueAndFocusNext(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:when test="false">
+                                                                <f:attribute name="onkeypress" value="validateFloatValueAndFocusNext(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:when test="false">
+                                                                <f:attribute name="onkeypress" value="focusNextOnEnter(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <f:attribute name="onkeypress" value="focusNextOnEnter(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                        <c:if test="false" >
+                                                            <f:convertNumber pattern="#" locale="us"/>
+                                                        </c:if>
+                                                        <c:if test="false" >
+                                                            <f:convertNumber type="currency" currencySymbol="" locale="en_US"/>
+                                                        </c:if>
+                                                        <c:if test="false" >
+                                                        </c:if>
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                    <p:outputLabel for="nivel_act-form" value="Nivel:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                                    <br></br>
+                                                    <p:inputText id="nivel_act-form" value="#{registrarLocalPFJMB.actividad.nivel}" styleClass="inputWidth90" style="width: 80%" readonly="true" required="false">
+                                                        <c:choose>
+                                                            <c:when test="true">
+                                                                <f:attribute name="onkeypress" value="validateIntegerValueAndFocusNext(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:when test="true">
+                                                                <f:attribute name="onkeypress" value="validateFloatValueAndFocusNext(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:when test="true">
+                                                                <f:attribute name="onkeypress" value="focusNextOnEnter(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:when>
+                                                            <c:otherwise>
+                                                                <f:attribute name="onkeypress" value="focusNextOnEnter(event,'tdatos:frmCaracSolar:frt1:frt1-form')" />
+                                                            </c:otherwise>
+                                                        </c:choose>
+                                                        <c:if test="r" >
+                                                            <f:convertNumber pattern="#" locale="us"/>
+                                                        </c:if>
+                                                        <c:if test="$}" >
+                                                            <f:convertNumber type="$" currencySymbol="" locale="en_US"/>
+                                                        </c:if>
+                                                        <c:if test="false" >
+                                                        </c:if>
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGrid columns="1" style="width: 100%;">
+                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                        <p:outputLabel value="Descripción" for="act_descrip"  style="font-weight: bolder !important; margin-bottom: 0px;" /> <br/>
+                                                        <p:inputText id="act_descrip" value="#{registrarLocalPFJMB.actividad.descripcion}" onkeypress="focusNextOnEnter(event, '')" style="width: 80% !important;"/>
+                                                    </h:panelGroup>
+                                                </h:panelGrid>
+                                                <h:panelGrid columns="1" style="width: 100%;">
+                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                        <p:outputLabel value="Valor"  style="font-weight: bolder !important; margin-bottom: 0px;" /> <br/>
+                                                        <p:inputText  value="#{registrarLocalPFJMB.actividad.valor}" onkeypress="focusNextOnEnter(event, '')" style="width: 80% !important;">
+                                                            <p:keyFilter mask="num"/>
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                </h:panelGrid>
+                                            </h:panelGrid>
+                                        </center>
+                                        <br/>
+                                        <center style="margin-top: 10px;">
+                                            <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{registrarLocalPFJMB.guardarActividadComercial()}" styleClass="btnStyle" update=":frmMain" oncomplete="PF('dlgAct').hide()"/>
+                                            <p:spacer width="10"/>
+                                            <p:commandButton value="Cancelar" icon="fa fa-close" onclick="PF('dlgAct').hide()" styleClass="btnStyle"/>
+                                        </center>
+                                    </h:form>
+                                </p:dialog>-->
+
+                <p:dialog widgetVar="dlogoNewPatente" position="center" header="Ingreso de Actividad Comercial"
+                          appendTo="@(body)" modal="true" width="90%" resizable="false" id="dlogoNewPatente" height="600"
+                          closable="true" closeOnEscape="true" >
+                    <h:form id="frmNew" prependId="false" >
+                        <center>
+                            <h:panelGroup layout="block" id="wizarContainer"  class="Container Wid100 MarTop10" >
+                                <h:panelGroup layout="block" class="Container90"  rendered="#{registrarLocalPFJMB.patente.id gt 0 and registrarLocalPFJMB.esEditable}">
+                                    <h1>Edición de Patentes</h1>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" class="Container90"  rendered="#{registrarLocalPFJMB.patente.id gt 0 and !registrarLocalPFJMB.esEditable}">
+                                    <h1>Información de Patentes</h1>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" class="Container90"  rendered="#{registrarLocalPFJMB.patente.id eq null}">
+                                    <h1>Registro de Patentes</h1>
+                                </h:panelGroup>
+                            </h:panelGroup>
+                        </center>
+                        <p:panel>
+                            <h:panelGroup layout="block" class="Wid100 Responsive100" >
+                                <h:panelGroup layout="block" class="MarRight10 MarLeft10" id="wizarContainer1">
+                                    <p:wizard id="wizardFlow" flowListener="#{registrarLocalPFJMB.onFlowProcess}" nextLabel="Siguiente" backLabel="Anterior">
+                                        <p:tab id="informacionPatente" title="Información de Patente" >
+                                            <!--                                            <ui:include src="/moduloGestionTributario/rentas/_informacionPatente.xhtml" />-->
+                                            <h:panelGroup layout="block" class="Container Wid100">
+                                                <h1 class="BigTopic Fs16" style="color: black;">Patente</h1>
+                                                <hr></hr>
+                                                <br/>
+                                                <div class="p-grid ui-fluid">
+                                                    <div class="p-col-12 p-md-3">
+                                                        <div class="ui-inputgroup" >
+                                                            <p:inputText value="#{registrarLocalPFJMB.patente.propietario.identificacion}" placeholder="C.I" readonly="true" style="width: 20%;" id="identificacionPatente"/>
+                                                            <p:commandButton id="busSolicitante" actionListener="#{registrarLocalPFJMB.openDlgContribuyentes()}" process="identificacionPatente"
+                                                                             icon="fa fa-search" styleClass="ui-button-warning" update="frmContribuyentes"/>
+                                                            <p:spacer width="20"/>
+                                                            <p:inputText placeholder="Razón Social" readonly="true"  style="width: 30%;" id="patenteRazonSocial"
+                                                                         value="#{registrarLocalPFJMB.patente.propietario.id != null ? registrarLocalPFJMB.patente.propietario.nombreCompleto:'No Encontrado'}" />
+                                                            <p:spacer width="10"/>
+                                                            <p:inputText  placeholder="Representante Legal"  id="patenteRepresntanteLegal"
+                                                                          style="width: 30%;" readonly="true" value="#{registrarLocalPFJMB.representanteLegal.id != null ? registrarLocalPFJMB.representanteLegal.nombreCompleto:'No encontrado'} " />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <br/><br/>
+                                                    <h:panelGrid columns="5" style="width: 100%">
+                                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                            <p:outputLabel  value="Fecha inicio actividades:" class="DispBlock Wid100" style="margin-bottom: 0px;" />
+                                                            <br/>
+                                                            <p:calendar value="#{registrarLocalPFJMB.patente.fechaInicioActividad}" navigator="true" pattern="dd/MM/yyyy" disabled="#{!registrarLocalPFJMB.esEditable}"/>
+                                                        </h:panelGroup>
+                                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                            <p:outputLabel  value="Fecha constitución:" class="DispBlock Wid100" style="margin-bottom: 0px;" />
+                                                            <br/>
+                                                            <p:calendar value="#{registrarLocalPFJMB.patente.fechaConstitucion}" navigator="true" pattern="dd/MM/yyyy" disabled="#{!registrarLocalPFJMB.esEditable}"/>
+                                                        </h:panelGroup>
+                                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                            <p:outputLabel  value="Fecha inscripción:" class="DispBlock Wid100" style="margin-bottom: 0px;" />
+                                                            <br/>
+                                                            <p:calendar value="#{registrarLocalPFJMB.patente.fechaInscripcion}" navigator="true" pattern="dd/MM/yyyy" disabled="#{!registrarLocalPFJMB.esEditable}"/>
+                                                        </h:panelGroup>
+                                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                            <p:outputLabel  value="Fecha actualización:" class="DispBlock Wid100" style="margin-bottom: 0px;" />
+                                                            <br/>
+                                                            <p:calendar value="#{registrarLocalPFJMB.patente.fechaActualizacion}" navigator="true" pattern="dd/MM/yyyy" disabled="#{!registrarLocalPFJMB.esEditable}"/>
+                                                        </h:panelGroup>
+                                                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                            <p:outputLabel  value="Lleva contabilidad:" class="DispBlock Wid100 FontBold" style="margin-bottom: 0px;"  />
+                                                            <br/>
+                                                            <p:selectBooleanCheckbox value="#{patenteView.patente.contabilidad}" disabled="#{!patenteView.esEditable}"/>
+                                                        </h:panelGroup>
+                                                    </h:panelGrid>
+                                                    <h:panelGrid columns="1" style="width: 100%" rendered="#{!registrarLocalPFJMB.esEditable}">
+                                                        <h1 class="BigTopic Fs16" style="color: black">Actividad Econòmica Principal: #{registrarLocalPFJMB.actividad.descripcion}</h1>
+                                                        <hr></hr>
+                                                    </h:panelGrid>
+                                                    <h:panelGrid columns="1" style="width: 100%" rendered="#{!registrarLocalPFJMB.esEditable}">
+                                                        <h1 class="BigTopic Fs16" style="color: black;">Locales Comerciales: #{registrarLocalPFJMB.locales.size()}</h1>
+                                                        <hr></hr>
+                                                        <p:dataTable id="dtLocalesAgregados" value="#{registrarLocalPFJMB.locales}" rowIndexVar="index"
+                                                                     var="local" rows="10" paginator="true" paginatorPosition="top" 
+                                                                     emptyMessage="No se han Agregado Locales Comerciales"
+                                                                     rowsPerPageTemplate="10, 20, 50, 100" filterEvent="enter" widgetVar="dtLocales" >
+                                                            <f:facet name="header">
+                                                                Establecimientos Agregados
+                                                            </f:facet>
+
+                                                            <p:column headerText="Número" filterBy="#{local.numLocal}" width="10%;"  filterStyle="width:60%;">
+                                                                <center><h:outputText value="#{local.numLocal}"/></center>
+                                                            </p:column>
+                                                            <p:column headerText="Nombre" >
+                                                                <center><h:outputText value="#{local.nombreLocal}"/></center>
+                                                            </p:column>
+                                                            <p:column headerText="Predio" >
+                                                                <center><h:outputText value="#{registrarLocalPFJMB.clavePredial(local.predio)}"/></center>
+                                                            </p:column>
+                                                            <p:column headerText="Matriz" >
+                                                                <center><h:outputText value="SI" rendered="#{local.matriz}"/></center>
+                                                                <center><h:outputText value="NO" rendered="#{!local.matriz}"/></center>
+                                                            </p:column>
+                                                            <p:column headerText="Actividades" >
+                                                                <center><ui:repeat id="actividadesLocales" value="#{local.renActividadComercialCollection}" var="act">
+                                                                        <p:outputLabel value="#{act.descripcion} ;" style="text-transform: uppercase; font-size: 11px"/>
+                                                                    </ui:repeat></center>                                                                                                                                        
+                                                            </p:column>
+                                                            <p:column headerText="Estado" width="15%;" >
+                                                                <center>
+                                                                    <h:outputText value="Habilitado" rendered="#{local.estadoLocalComercial eq 1}"   />
+                                                                    <h:outputText value="Inhabilitado" rendered="#{local.estadoLocalComercial eq 2}"   />
+                                                                    <h:outputText value="Clausurado" rendered="#{local.estadoLocalComercial eq 3}" />
+                                                                </center>
+                                                            </p:column>
+                                                        </p:dataTable>
+                                                    </h:panelGrid>
+                                                </div>
+                                            </h:panelGroup>
+                                        </p:tab>
+                                        <p:tab id="actvidadEconomica" title="Actividad Ecónomica Principal" rendered="#{registrarLocalPFJMB.esEditable}">
+                                            <!--                                            <ui:include src="/moduloGestionTributario/rentas/_actividadesEconomicas.xhtml" />-->
+                                            <h:panelGroup layout="block" class="Container Wid100">
+                                                <h1 class="BigTopic Fs16" style="color: black;">Seleccione Actividad Econòmica Principal</h1>
+                                                <h:panelGrid columns="1" style="width: 100%" rendered="#{registrarLocalPFJMB.patente.actividadPrincipal ne null}">
+                                                    <h1 class="BigTopic Fs16" style="color: black;">Actividad Econòmica Principal: #{registrarLocalPFJMB.actividad.descripcion}</h1>
+                                                    <hr></hr>
+                                                </h:panelGrid>
+                                                <hr></hr>
+                                                <div class="ContainerIndent">
+                                                    <p:dataTable id="dtSingleAct" value="#{registrarLocalPFJMB.actividades}" var="act" selection="#{registrarLocalPFJMB.actividad}" 
+                                                                 rowKey="#{act.id}" style="width: 100%" lazy="true" reflow="true" paginator="true" rows="10"  filterEvent="enter" paginatorPosition="top">
+
+                                                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                                                        <p:column headerText="CIIU" sortBy="#{act.ciu}" filterBy="#{act.ciu}" filterMatchMode="contains" filterStyle="width: 30%;" width="20%">
+                                                            <h:outputText value="#{act.ciu}"/>
+                                                        </p:column>
+                                                        <p:column headerText="Descripción" sortBy="#{act.descripcion}" filterBy="#{act.descripcion}" filterMatchMode="contains" filterStyle="width: 80%;" width="80%">
+                                                            <h:outputText value="#{act.descripcion}" style="text-transform: uppercase"/>
+                                                        </p:column>
+                                                    </p:dataTable>  
+
+                                                </div>
+                                            </h:panelGroup>
+                                        </p:tab>
+                                        <p:tab id="establecimientos" title="Establecimientos" rendered="#{registrarLocalPFJMB.esEditable}">
+                                            <!--                                            <ui:include src="/moduloGestionTributario/rentas/_establecimientos.xhtml" />-->
+                                            <h:panelGroup layout="block" class="Container Wid100">
+                                                <div class="ContainerIndent">       
+                                                    <p:fieldset legend="Informaciòn del Establecimiento" id="fieldLocales" toggleable="true"> 
+                                                        <p:accordionPanel widgetVar="basic" id="dataTabItems">
+                                                            <p:tab title="Datos Ubicación">
+                                                                <p:panelGrid layout="grid" styleClass="ui-panelgrid-blank" columns="4">
+                                                                    <p:panelGrid columns="1">
+                                                                        <p:outputLabel value="Predio" class="FontBold"/>
+                                                                        <h:panelGroup layout="block">
+                                                                            <p:inputText value="#{registrarLocalPFJMB.predio.claveCat}" placeholder="Predio" readonly="true" />
+                                                                            <p:commandButton id="btnPredio" actionListener="#{registrarLocalPFJMB.openDlgPredios()}" update="frmPredios"
+                                                                                             icon="fa fa-search" styleClass="ui-button-warning" immediate="true"/>
+                                                                        </h:panelGroup>
+                                                                    </p:panelGrid>
+                                                                    <p:panelGrid columns="1">
+                                                                        <p:outputLabel value="Num.Predio:" class="FontBold"/>
+                                                                        <p:inputText placeholder="Num.Predio" readonly="true" value="#{registrarLocalPFJMB.predio.numPredio}"/>
+                                                                    </p:panelGrid>
+
+                                                                    <p:panelGrid columns="1">
+                                                                        <p:outputLabel value="Propietario" class="FontBold"/>
+                                                                        <p:inputText style="width: 100%" readonly="true"  placeholder="asignar propietario"
+                                                                                     value="#{registrarLocalPFJMB.predio.nombrePropietarios}"/>
+                                                                    </p:panelGrid>
+                                                                    <p:panelGrid columns="1">
+                                                                        <p:outputLabel value="Dirección" class="FontBold"/>
+                                                                        <p:inputText style="width: 100%"  placeholder="Dirección" readonly="true" 
+                                                                                     value="#{registrarLocalPFJMB.predio.direccion}"/>
+                                                                    </p:panelGrid>
+                                                                </p:panelGrid>
+                                                            </p:tab>
+                                                            <p:tab title="Local">
+                                                                <h:panelGrid columns="3" style="width: 100%" id="dataLocal">
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive" >
+                                                                        <p:outputLabel for="nombreLocal" value="Nombre comercial:" class="DispBlock Wid100" 
+                                                                                       style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                                                        <br/>
+                                                                        <p:inputTextarea rows="4"   cols="70" id="nombreLocal" 
+                                                                                         value="#{registrarLocalPFJMB.local.nombreLocal}"/>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="# Establecimiento:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputTextarea rows="4" cols="60" value="#{registrarLocalPFJMB.local.numLocal}" style="font-weight: bolder !important; margin-bottom: 0px; text-transform: uppercase" >
+                                                                            <p:keyFilter mask="num"/>
+                                                                        </p:inputTextarea>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Dirección:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputTextarea rows="4" cols="70" value="#{registrarLocalPFJMB.local.actividadComercial}" style="text-transform: uppercase"/>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Zona:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:selectOneMenu   value="#{registrarLocalPFJMB.local.factorUbicacion}" converter="entityConverter" style="width: 300px;">
+                                                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}"/>
+                                                                            <f:selectItems value="#{registrarLocalPFJMB.ubicacionList}" var="ubi" itemLabel="#{ubi.texto}" itemValue="#{ubi}"/>
+                                                                        </p:selectOneMenu>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:selectOneRadio  value="#{registrarLocalPFJMB.local.avenida}" unselectable="true">
+                                                                            <f:selectItem itemLabel="Avenida" itemValue="true"/>
+                                                                            <f:selectItem itemLabel="Calle" itemValue="false"/>
+                                                                        </p:selectOneRadio>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:selectOneRadio value="#{registrarLocalPFJMB.local.mediterraneo}" unselectable="true">
+                                                                            <f:selectItem itemLabel="Mediterraneo" itemValue="true"/>
+                                                                            <f:selectItem itemLabel="Esquinero" itemValue="false"/>
+                                                                        </p:selectOneRadio>
+                                                                    </h:panelGroup>
+                                                                </h:panelGrid>
+                                                            </p:tab>
+                                                            <p:tab title="Datos Del Negocio">
+                                                                <h:panelGrid columns="4" style="width: 100%">
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel for="estadoCmb"  value="Estado local:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:selectOneMenu id="estadoCmb" value="#{registrarLocalPFJMB.local.estadoLocalComercial}" style="font-size: 10px;" >
+                                                                            <f:selectItem itemLabel="Estado Local" itemValue="#{null}" noSelectionOption="true"/>
+                                                                            <f:selectItem itemLabel="HABILITADO" itemValue="#{1}" />
+                                                                            <f:selectItem itemLabel="INHABILITADO" itemValue="#{2}" />
+                                                                            <f:selectItem itemLabel="CLAUSURADO" itemValue="#{3}" />
+                                                                        </p:selectOneMenu>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel for="@next" value="Tipo Local:" class="DispBlock Wid100" 
+                                                                                       style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputText value="#{registrarLocalPFJMB.tipoLocalCalculado.descripcion}" readonly="true" id="itemTipoLocal"/>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Inicio de Actividades:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:calendar value="#{registrarLocalPFJMB.local.inicioActividad}" navigator="true" pattern="dd/MM/yyyy" />
+                                                                    </h:panelGroup> 
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <center>
+                                                                            <p:outputLabel  value="Es Propio ?:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        </center>
+                                                                        <br/>
+                                                                        <center>
+                                                                            <p:selectBooleanCheckbox  value="#{registrarLocalPFJMB.local.esPropio}"/>
+                                                                        </center>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <center>
+                                                                            <p:outputLabel  value="Es Matriz ?:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        </center>
+                                                                        <br/>
+                                                                        <center>
+                                                                            <p:selectBooleanCheckbox  value="#{registrarLocalPFJMB.local.matriz}"/>
+                                                                        </center>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Ancho:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputNumber value="#{registrarLocalPFJMB.local.ancho}" id="ancho">
+                                                                            <p:ajax event="keyup" process="ancho,altura" listener="#{registrarLocalPFJMB.calcularTipoLocal()}" update="itemTipoLocal,areaCal"/>
+                                                                        </p:inputNumber>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Altura" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputNumber value="#{registrarLocalPFJMB.local.altura}" id="altura">
+                                                                            <p:ajax event="keyup" process="ancho,altura" listener="#{registrarLocalPFJMB.calcularTipoLocal()}" update="itemTipoLocal,areaCal"/>
+                                                                        </p:inputNumber>
+                                                                    </h:panelGroup>
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <p:outputLabel  value="Área" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"  />
+                                                                        <br/>
+                                                                        <p:inputNumber id="areaCal" value="#{registrarLocalPFJMB.local.area}">
+                                                                            <p:ajax event="keyup" listener="#{registrarLocalPFJMB.calcularTipoLocal()}" update="itemTipoLocal,areaCal"/>
+                                                                        </p:inputNumber>
+                                                                    </h:panelGroup>
+                                                                </h:panelGrid>
+                                                            </p:tab>
+                                                            <p:tab title="Destino del negocio" >
+                                                                <p:panelGrid layout="grid" columns="2" columnClasses="ui-g-6,ui-g-6" styleClass="ui-panelgrid-blank"  >
+                                                                    <p:panelGrid columns="1" layout="grid">
+                                                                        <p:outputLabel value="Tipo Negocio" class="FontBold"/>
+                                                                        <p:selectManyMenu value="#{registrarLocalPFJMB.tipoNegoicoSeleccionados}"
+                                                                                          converter="#{utilConverter}"
+                                                                                          var="c" filter="true" filterMatchMode="contains" showCheckbox="true" styleClass="manymenu-advanced">
+                                                                            <f:selectItems value="#{registrarLocalPFJMB.tipoNegocioList}" var="i"
+                                                                                           itemLabel="#{i.texto}" itemValue="#{i}"/>
+                                                                            <p:column>
+                                                                                <h:outputText value="#{c.texto}"/>
+                                                                            </p:column>
+                                                                        </p:selectManyMenu>
+                                                                    </p:panelGrid> 
+                                                                    <p:panelGrid columns="1" layout="grid" id="grupo_accesorios">
+                                                                        <p:panel header="Accesorio">
+                                                                            <p:panelGrid layout="grid" styleClass="ui-panelgrid-blank" columns="2" columnClasses="ui-g-6,ui-g-6">
+                                                                                <h:panelGrid columns="1">
+                                                                                    <p:outputLabel value="Cantidad"/>
+                                                                                    <p:inputText type="number" value="#{registrarLocalPFJMB.cantidad.cantidad}"/>
+                                                                                </h:panelGrid>
+                                                                                <h:panelGrid columns="1">
+                                                                                    <p:outputLabel value="Tipo"/>
+                                                                                    <p:selectOneMenu value="#{registrarLocalPFJMB.cantidad.tipo}" converter="#{utilConverter}" filter="true">
+                                                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                                                        <f:selectItems value="#{registrarLocalPFJMB.tiposAccesorios}" var="ad" itemLabel="#{ad.texto}" itemValue="#{ad}"/>
+                                                                                    </p:selectOneMenu>
+                                                                                </h:panelGrid>
+                                                                            </p:panelGrid>
+                                                                            <center>
+                                                                                <p:commandButton value="Agregar" style="width: auto;"  process="grupo_accesorios"
+                                                                                                 actionListener="#{registrarLocalPFJMB.agregarAccesorios(0,null)}" 
+                                                                                                 update="listAccesorios"/>
+                                                                            </center>
+                                                                        </p:panel>
+                                                                        <p:dataTable rowIndexVar="index" rows="4" 
+                                                                                     value="#{registrarLocalPFJMB.listAccesorios}" var="ac" id="listAccesorios" widgetVar="listAccesorios">
+                                                                            <f:facet name="header">
+                                                                                ACCESORIOS
+                                                                            </f:facet>
+                                                                            <p:column headerText="No.">#{index+1} </p:column>
+                                                                            <p:column headerText="Tipo"><h:outputText value="#{ac.tipo.texto}"/> </p:column>
+                                                                            <p:column headerText="Cantidad"><h:outputText value="#{ac.cantidad}"/> </p:column>
+                                                                            <p:column headerText="Anio"><h:outputText value="#{ac.anio}"/> </p:column>
+                                                                            <p:column headerText="Fecha Ingreso">
+                                                                                <h:outputText value="#{ac.fechaIngreso}">
+                                                                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                                                                </h:outputText> 
+                                                                            </p:column>
+                                                                            <p:column headerText="*****">
+                                                                                <p:commandButton icon="fa fa-edit" process="@this" actionListener="#{registrarLocalPFJMB.editAcc(index)}" 
+                                                                                                 update="dataTabItems:grupo_accesorios,listAccesorios"/>
+                                                                                <p:commandButton icon="fa fa-close" process="@this" actionListener="#{registrarLocalPFJMB.eliminarAcesorios(index)}" 
+                                                                                                 update="listAccesorios"/>
+                                                                            </p:column>
+                                                                        </p:dataTable>
+                                                                    </p:panelGrid>
+                                                                </p:panelGrid>
+                                                            </p:tab>
+                                                            <p:tab title="Turismo">
+                                                                <p:panelGrid layout="grid" columns="3" styleClass="ui-panelgrid-blank" id="destino_negocio" >
+                                                                    <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                                        <center>
+                                                                            <p:outputLabel  value="Es Turistico ?:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;"/>
+                                                                        </center>
+                                                                        <br/>
+                                                                        <center>
+                                                                            <p:selectBooleanCheckbox  value="#{registrarLocalPFJMB.local.turismo}">
+                                                                                <p:ajax update="destino_negocio"/>
+                                                                            </p:selectBooleanCheckbox>
+                                                                        </center>
+                                                                    </h:panelGroup>
+                                                                    <p:panelGrid columns="1" layout="grid" id="listTursitca"  rendered="#{registrarLocalPFJMB.local.turismo}">
+                                                                        <p:outputLabel value="Tipo de Actividad Turistica" class="FontBold"/>
+                                                                        <p:selectOneMenu  value="#{registrarLocalPFJMB.padreTuristico}" converter="#{utilConverter}"
+                                                                                          panelStyle="width:180px" effect="fade" style="width: 280px;"
+                                                                                          filter="true" filterMatchMode="contains">
+                                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                                            <f:selectItems value="#{registrarLocalPFJMB.padreTuristicoList}" var="itemi"
+                                                                                           itemLabel="#{itemi.descripcion}" itemValue="#{itemi}" />
+                                                                            <p:ajax listener="#{registrarLocalPFJMB.ajaxTipoActividadTuristica()}" update="listTursitcaHijos"/>
+                                                                        </p:selectOneMenu>
+                                                                    </p:panelGrid>        
+                                                                    <p:panelGrid id="listTursitcaHijos" columns="1" layout="grid"   rendered="#{registrarLocalPFJMB.local.turismo}">
+                                                                        <p:outputLabel value="Categoría" class="FontBold"/>
+                                                                        <p:selectOneMenu   value="#{registrarLocalPFJMB.local.categoria}" converter="#{utilConverter}"
+                                                                                           panelStyle="width:180px" effect="fade" style="width: 280px;"
+                                                                                           filter="true" filterMatchMode="contains">
+                                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                                            <f:selectItems value="#{registrarLocalPFJMB.listaTuristicasActividad}" var="item"
+                                                                                           itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                                                                        </p:selectOneMenu>
+                                                                    </p:panelGrid>        
+                                                                </p:panelGrid>
+                                                            </p:tab>
+                                                            <p:tab title="Información Adicional">
+                                                                <p:panelGrid columns="2"  style="width: 100%;" columnClasses="ui-g-6,ui-g-6" styleClass="ui-panelgrid-blank">
+                                                                    <p:panelGrid columns="1" style="width: 100%" >
+                                                                        <center>
+                                                                            <h:outputLabel  value="Actividades Comerciales" class="FontBold"  />
+                                                                        </center>
+
+                                                                        <p:pickList id="PojoPickList" value="#{registrarLocalPFJMB.dualListActividades}" var="act" 
+                                                                                    style="text-align: center;vertical-align: middle; width:100%" 
+                                                                                    itemValue="#{act}" itemLabel="#{act.descripcion}"  responsive="true"  
+                                                                                    addAllLabel="Agregar todas" addLabel="Adicionar" removeAllLabel="Eliminar todas" removeLabel="Eliminar"
+                                                                                    showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains" converter="entityConverter">
+                                                                            <f:facet name="sourceCaption">Actividades disponibles</f:facet>
+                                                                            <f:facet name="targetCaption">Actividades del local</f:facet>
+                                                                            <p:ajax event="transfer" listener="#{registrarLocalPFJMB.onTranferActividad}" update="PojoPickList"/>0
+                                                                            <p:column style="width:auto;">
+                                                                                <h:outputText value="#{act.descripcion}" />
+                                                                            </p:column>
+                                                                        </p:pickList>
+                                                                    </p:panelGrid>
+
+                                                                    <p:panelGrid columns="1" style="width: 100%" id="listaFotos" >
+                                                                        <h:outputLabel  value="Fotos" class="DispBlock Wid100" />
+
+                                                                        <p:commandButton id="btnaddFoto" value="Agregar foto" onclick="PF('dlgSubida').show()" immediate="true" update=":frmSubFotos"/>
+                                                                        <br></br>
+                                                                        <br/>
+
+                                                                        <p:dataTable var="f" value="#{registrarLocalPFJMB.fotosLocalesComerciales}" rows="2" paginator="true" widgetVar="datGrFotos"
+                                                                                     id="datGrFotos" rowIndexVar="i" style="width: 100%;"
+                                                                                     emptyMessage="No existen fotos registradas en la tabla de datos"
+                                                                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                                                     rowsPerPageTemplate="2,4,6">
+                                                                            <p:column headerText="Nombre" >
+                                                                                <h:outputText value="#{f.nombre}"/>
+                                                                            </p:column>
+                                                                            <p:column headerText="tipo" width="10%">
+                                                                                <h:outputText value="#{f.contentType}"/>
+                                                                            </p:column>
+                                                                            <p:column headerText="tipo" width="10%">
+                                                                                <h:outputText value="#{f.sisEnabled eq null?'Inactivo':(f.sisEnabled?'Activo':'Inactivo')}"/>
+                                                                            </p:column>
+                                                                            <p:column headerText="****" width="20%">
+                                                                                <p:commandButton icon="fa fa-search" process="@this" actionListener="#{registrarLocalPFJMB.loadValueFotoLocal(f, i)}"
+                                                                                                 oncomplete="PF('dlgFoto').show()" update=":frmFotos"/>
+
+                                                                                <p:commandButton icon="fa fa-close" process="@this" actionListener="#{registrarLocalPFJMB.eliminarFoto(f, i)}"
+                                                                                                 disabled="#{f.sisEnabled eq null?true:(!f.sisEnabled)}"
+                                                                                                 update="datGrFotos" style="background: red;"/>
+                                                                            </p:column>
+                                                                        </p:dataTable>
+                                                                    </p:panelGrid>
+                                                                </p:panelGrid>
+                                                            </p:tab>
+                                                        </p:accordionPanel>
+                                                        <center>
+                                                            <p:commandLink id="btnAgregar"  actionListener="#{registrarLocalPFJMB.guardarEstablecimiento()}"  style="padding-left: 5px" update="frmNew">
+                                                                <p:commandButton value="Agregar" icon="fa fa-fw fa-save" type="button"/>
+                                                            </p:commandLink>
+                                                            <br/>
+                                                        </center>
+                                                    </p:fieldset>
+                                                    <br/><br/>
+                                                    <p:dataTable id="dtLocales" value="#{registrarLocalPFJMB.locales}" rowIndexVar="index"
+                                                                 var="local" rows="10" paginator="true" paginatorPosition="top" 
+                                                                 emptyMessage="No se han Agregado Locales Comerciales"
+                                                                 rowsPerPageTemplate="10, 20, 50, 100" filterEvent="enter" widgetVar="dtLocales" >
+                                                        <f:facet name="header">
+                                                            Establecimientos Agregados
+                                                        </f:facet>
+
+                                                        <p:column headerText="Número" filterBy="#{local.numLocal}" width="10%;"  filterStyle="width:60%;">
+                                                            <center><h:outputText value="#{local.numLocal}"/></center>
+                                                        </p:column>
+                                                        <p:column headerText="Nombre" width="15%">
+                                                            <center><h:outputText value="#{local.nombreLocal}"/></center>
+                                                        </p:column>
+                                                        <p:column headerText="Matriz" width="10%">
+                                                            <center><h:outputText value="SI" rendered="#{local.matriz}"/></center>
+                                                            <center><h:outputText value="NO" rendered="#{!local.matriz}"/></center>
+                                                        </p:column>
+                                                        <p:column headerText="Actividades" >
+                                                            <center>
+                                                                <ui:repeat id="actividadesLocales" value="#{local.renActividadComercialCollection}" var="act">
+                                                                    <p:outputLabel value="#{act.descripcion} ;" style="text-transform: uppercase; font-size: 11px"/>
+                                                                </ui:repeat>    
+                                                            </center>
+                                                        </p:column>
+
+                                                        <p:column headerText="Estado Local" width="15%" >
+                                                            <center>
+                                                                <h:outputText value="Habilitado" rendered="#{local.estadoLocalComercial eq 1}"   />
+                                                                <h:outputText value="Inhabilitado" rendered="#{local.estadoLocalComercial eq 2}"   />
+                                                                <h:outputText value="Clausurado" rendered="#{local.estadoLocalComercial eq 3}" />
+                                                            </center>
+                                                        </p:column>
+                                                        <p:column headerText="Estado Logico" width="15%" >
+                                                            <h:outputText value="#{local.estado eq null? 'Inactivo': (local.estado eq true?'Activo':'Inactivo')}"/>
+                                                        </p:column>
+                                                        <p:column headerText="Acción"  style="width: 8%;">
+                                                            <center>
+                                                                <p:commandButton icon="fa fa-edit"  title="Editar" process="@this" rendered="#{registrarLocalPFJMB.patente.id ne null}"
+                                                                                 actionListener="#{registrarLocalPFJMB.initEditarLocal(local)}" 
+                                                                                 update="establecimientos" />
+                                                                <p:spacer width="10"/>
+                                                                <p:commandButton  icon="fa fa-close" style="background: red;" title="Eliminar" process="@this"
+                                                                                  actionListener="#{registrarLocalPFJMB.removeLocal(index)}" update="dtLocales"  />
+                                                            </center>
+                                                        </p:column>
+                                                    </p:dataTable>
+                                                </div>
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Wid100">
+                                                <p:commandButton id="guardarPhs" immediate="true"
+                                                                 icon="fa fa-save" action="#{registrarLocalPFJMB.guardarPatente()}"
+                                                                 value="Grabar Patente" style="float: right">
+                                                    <p:confirm header="Confirmación" message="Cofirmación" icon="ui-icon-alert" />
+                                                </p:commandButton>
+                                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                                    <h:panelGroup layout="block" class="Wid100 MarBot10">
+                                                        <h:outputText value="Esta Seguro de Grabar Patente?" style="display:block; text-align: center; padding-bottom: 5px;" styleClass="FontBold"/>
+                                                    </h:panelGroup>
+                                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                                                </p:confirmDialog>
+                                            </h:panelGroup>
+                                        </p:tab>
+                                    </p:wizard>
+                                </h:panelGroup>
+                            </h:panelGroup>
+                        </p:panel>
+                    </h:form>
+                </p:dialog>
+                <p:dialog id="dlgContribuyentes" widgetVar="dlgContribuyentes" header="LISTADO DE CONTRIBUYENTES" appendTo="@(body)" 
+                          width="50%" responsive="true" closable="true" 
+                          closeOnEscape="true" modal="true" position="center">
+                    <h:form id="frmContribuyentes">
+                        <div align="center">
+                            <p:dataTable id="dtContribuyente" value="#{registrarLocalPFJMB.contribuyentes}" 
+                                         var="s" selection="#{registrarLocalPFJMB.propietario}" 
+                                         rowKey="#{s.id}" style="width: 98%" lazy="true" reflow="true" paginator="true" rows="10" filterEvent="enter" paginatorPosition="top">
+                                <p:ajax event="rowSelect" update="frmContribuyentes:btnSelectProp" />
+                                <p:ajax event="rowUnselect"  update="frmContribuyentes:btnSelectProp" />
+                                <p:ajax event="rowSelectRadio"  update="frmContribuyentes:btnSelectProp" />
+                                <p:column headerText="*" selectionMode="single" style="width:5%" />
+                                <p:column headerText="Identificación" sortBy="#{s.identificacion}" filterBy="#{s.identificacion}" filterMatchMode="contains" filterStyle="width: 59%;" style="width: 15%;text-align:center">
+                                    <h:outputText value="#{s.identificacion}"/>
+                                </p:column>
+                                <p:column headerText="Apellidos" sortBy="#{s.apellido}" filterBy="#{s.apellido}" filterMatchMode="contains" filterStyle="width: 59%;" style="width: 40%;text-align:center">
+                                    <h:outputText value="#{s.apellido}"/>
+                                </p:column>
+                                <p:column headerText="Nombre" sortBy="#{s.nombre}" filterBy="#{s.nombre}" filterMatchMode="contains" filterStyle="width: 59%;" style="width: 40%;text-align:center">
+                                    <h:outputText value="#{s.nombre}"/>
+                                </p:column>
+                            </p:dataTable>  
+                        </div>
+                        <center>
+                            <p:commandButton disabled="#{registrarLocalPFJMB.propietario.id eq null}" id="btnSelectProp" update=":frmNew" 
+                                             actionListener="#{registrarLocalPFJMB.seleccionarContribuyente()}" value="Seleccionar"  style="height: 30px; margin-top: 10px;" />
+                        </center>
+                    </h:form>
+                </p:dialog> 
+
+                <p:dialog id="dlgPredios" widgetVar="dlgPredios" header="Listado de Predios" appendTo="@(body)" width="70%" responsive="true" 
+                          closable="true" closeOnEscape="true" modal="true" position="center">
+                    <h:form id="frmPredios">
+                        <div align="center">
+                            <p:dataTable id="dtPredios" lazy="true" value="#{registrarLocalPFJMB.predioListLazy}" reflow="true"
+                                         var="predio" rows="5" paginator="true" paginatorPosition="top" filterEvent="enter" 
+                                         style="width: 98%"  selection="#{registrarLocalPFJMB.predio}" rowKey="#{predio.id}" emptyMessage="No tiene datos">
+                                <p:ajax event="rowSelectRadio"  update="frmPredios:btnSelectPredio" />
+                                <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" filterMatchMode="contains"/>
+                                <p:column headerText="# Predio" filterBy="#{predio.numPredio}" width="80" filterStyle="width: 80%;">
+                                    <center><h:outputText value="#{predio.numPredio}"/></center>
+                                </p:column>
+                                <p:column headerText="Clave catastral" filterBy="#{predio.claveCat}" width="200" filterMatchMode="contains">
+                                    <center><h:outputText value="#{predio.claveCat}"/></center>
+                                </p:column>
+                                <p:column headerText="Tipo" filterBy="#{predio.tipoPredio}" width="200" filterMatchMode="contains">
+                                    <center><h:outputText value="#{predio.tipoPredio}"/></center>
+                                </p:column>
+                                <p:column headerText="Contibuyentes" filterBy="#{predio.nombrePropietarios}" width="200" filterMatchMode="contains">
+                                    <center><h:outputText value="#{predio.nombrePropietarios}"/></center>
+                                </p:column>
+                                <p:column headerText="Direccion" filterBy="#{predio.direccion}" filterMatchMode="contains">
+                                    <center><h:outputText value="#{predio.direccion}"/></center>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                        <center>
+                            <p:commandButton disabled="#{registrarLocalPFJMB.predio.id eq null}" id="btnSelectPredio"   update=":frmNew"
+                                             actionListener="#{registrarLocalPFJMB.predioSeleccionado()}" value="Aceptar"  style="height: 30px; margin-top: 10px;" />                                            
+                        </center>
+                    </h:form>
+                </p:dialog> 
+
+                <p:dialog id="dlgSubida" widgetVar="dlgSubida" appendTo="@(body)" modal="true" header="Carga de fotos" width="65%" height="500" closable="true" closeOnEscape="true">
+                    <h:form id="frmSubFotos">
+                        <p:fileUpload mode="advanced" multiple="false" uploadLabel="Subir"        
+                                      label="Seleccionar"  immediate="true"
+                                      sequential="true"
+                                      cancelLabel="Cancelar"
+                                      oncomplete="PF('dlgSubida').hide()"
+                                      allowTypes="/(\.|\/)(gif|jpe?g|png)$/"
+                                      invalidFileMessage="solo se acepta extensiones como gif | jpg | jpeg | png"
+                                      update="frmSubFotos,:frmNew"
+                                      fileUploadListener="#{registrarLocalPFJMB.subirIamgenes}"/>
+                    </h:form>
+                </p:dialog>
+
+                <!--Visualizador de Fotos-->
+                <p:dialog   widgetVar="dlgFoto" appendTo="@(body)" modal="true" header="Foto: " width="45%" height="80%" closable="true" closeOnEscape="true">
+                    <h:form id="frmFotos">
+                        <!--<p:growl autoUpdate="true" showDetail="true"/>-->
+                        <center>
+                            <h2 style="color: #0033FF">#{registrarLocalPFJMB.localComercialFotoSeleccionada.nombre}</h2>
+                        </center>
+                        <hr/>
+                        <br/>
+<!--                        <p:graphicImage id="myImage" url="/images?ruta=#{registrarLocalPFJMB.localComercialFotoSeleccionada.ruta}" 
+                                        alt="Descripcion: #{registrarLocalPFJMB.localComercialFotoSeleccionada.descripcion}"
+                                        title="#{registrarLocalPFJMB.localComercialFotoSeleccionada.nombre}" style="width: 100%; height: 400px"/> 
+                        <pe:imageRotateAndResize id="rotateAndResize" for="myImage" widgetVar="rotateAndResizeWidget"/>-->
+                        <!--                                <f:facet name="footer">
+                                                            <div align="center">
+                                                                <p:panelGrid columns="5" layout="grid">
+                                                                    <p:commandButton icon="ui-icon-arrowreturnthick-1-w" onclick="PF('rotateAndResizeWidget').rotateLeft(90)"/>
+                                                                    <p:commandButton icon="ui-icon-arrowreturnthick-1-e" onclick="PF('rotateAndResizeWidget').rotateRight(90)"/>
+                                                                    <p:commandButton icon="ui-icon-zoomin" onclick="PF('rotateAndResizeWidget').scale(1.05)"/>
+                                                                    <p:commandButton icon="ui-icon-zoomout" onclick="PF('rotateAndResizeWidget').scale(0.95)"/>
+                                                                </p:panelGrid>
+                                                            </div>
+                                                        </f:facet>-->
+                    </h:form>
+                </p:dialog>
+                <p:confirmDialog global="true">
+                    <center>
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                    </center>
+                </p:confirmDialog>
+            </div>
+        </div>
+        <p:dialog widgetVar="dlogoView" position="center" header="Patente" 
+                  modal="true" width="90%" resizable="false" id="dlogoView" height="500"
+                  closable="true" closeOnEscape="true" >
+            <h:form id="frmView" >
+                <ui:include src="/moduloGestionTributario/rentas/_informacionPatente.xhtml" />
+            </h:form>
+        </p:dialog>
+        <p:dialog widgetVar="dlogMemo" position="center" header="MEMO" modal="true" width="90%" resizable="false" id="dlogMemo" closable="true" closeOnEscape="true">
+            <h:form id="frmMemo" prependId="false">
+                <!--                <center>
+                                    <p:commandButton  value="mantenimiento Secuencial" actionListener="# {registrarLocalPFJMB.opneSecuencia()}"/>
+                                </center>-->
+                <p:panelGrid columns="3" layout="grid" columnClasses="ui-g-4,ui-g-4,ui-g-4" styleClass="ui-panelgrid-blank">
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="No.Memo: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.numMemorandum}" style="width: 100%;" readonly="true">
+                            <p:keyFilter mask="num"/>
+                        </p:inputText>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Fecha: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.fechaMemo}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Para: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.para}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Asunto: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.asunto}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="No.Trámite: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.numTramite}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Memo Descriptivo: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.memoDescripcion}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Pertenciente: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.nombres}"  style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Código Local: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.codigoLocal}"  style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Ubicación: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.ubicacionLocal}"  style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="No.Memorándum (Adjuntar): " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.descrpcioFinal}"  style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%;">
+                        <p:outputLabel value="Director del Dpto. Justicia y Vigilancia: " class="FontBold"/>
+                        <p:inputText value="#{registrarLocalPFJMB.director}" style="width: 100%;"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Generar Memo" icon="fa fa-print" actionListener="#{registrarLocalPFJMB.generarMemo()}" process="frmMemo" style="width: auto;"/>
+                </center>
+            </h:form>           
+        </p:dialog>
+
+        <!--        <p:dialog widgetVar="dlogoManSecuen" position="center" header="Mantenimiento Secuencia" 
+                          modal="true" width="300" resizable="false" id="dlogoManSecuen" closable="true" closeOnEscape="true">           
+                    <h:form id="frmManSecuencia" prependId="false">
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-g-6,ui-g-6" styleClass="ui-panelgrid-blank">
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Ultimo Secuencial:" class="FontBold"/>
+                                <p:inputText value="# {registrarLocalPFJMB.mantenimientoSecuencia.num}">
+                                    <p:keyFilter mask="num"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Año:" class="FontBold"/>
+                                <p:inputText value="# {registrarLocalPFJMB.anioMan}">
+                                    <p:keyFilter mask="num"/>
+                                </p:inputText>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <center>
+                                            <p:commandButton icon="fa fa-save" value="Guardar" style="width: auto;" actionListener="#{registrarLocalPFJMB.saveSecuencia()}"  process="frmManSecuencia"/>
+                        </center>
+                    </h:form>           
+                </p:dialog>-->
+
+        <p:dialog id="dlgoUpload" width="40%"  header="Documentos" widgetVar="dlgoUpload" modal="true" showEffect="fade"
+                  hideEffect="fade" resizable="false" >
+            <h:form id="formUpload"  prependId="false" enctype="multipart/form-data">
+                <p:growl id="messages2" showDetail="true"/>
+                <p:fileUpload fileUploadListener="#{informeComisariaPFJMB.handleFileUpload}"  style="width: 100%" accept=".pdf"
+                              skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false"
+                              messageTemplate="Solo puede subir archivos PDF"
+                              label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" update="frmMain" previewWidth="60" />
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="25%" position="center" draggable="false" header="Observación" height="150"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{registrarLocalPFJMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aceptar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{registrarLocalPFJMB.completarTareaNatural()}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+    </ui:define>
+</ui:composition>

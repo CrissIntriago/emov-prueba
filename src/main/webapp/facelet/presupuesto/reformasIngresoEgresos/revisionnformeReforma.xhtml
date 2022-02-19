@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Revisión Informe Reforma</ui:define> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">         
+            <div class="ui-g-12">
+                <u:titleTask task="#{revisionInformeIeView.tarea}" tramite="#{revisionInformeIeView.tramite}" />
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformas">
+                    <p:panel  rendered="#{cupoView.consultaRe}">
+                        <center>
+                            <h1>Datos Reformas</h1>
+                        </center>
+                        <p:dataTable id="datareformas" widgetVar="datareformas" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,100" value="#{revisionInformeIeView.lazyReforma}" 
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  rowIndexVar="index" >
+                            <p:column headerText="No.REFORMA" style="text-align: center ;padding: 10px 10px 10px 10px;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO " style="text-align: center">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="SUPLEMENTO" style="text-align: center">
+                                <p:outputLabel  value="#{revisionInformeIeView.totalSuplemento(item)}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto}"/>   
+                            </p:column>
+
+                            <p:column headerText="ACCIONES" style="width: 10%; text-align: center;">
+                                <p:commandLink disabled="#{item.tipo==true and item.estado.codigo!='APRO' ?false:true}"  title="Revisión" 
+                                               process="@this" actionListener="#{revisionInformeIeView.revisionInforme(item)}">
+                                    <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+
+                                <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="Enviar Notificación a las Unidades" process="@this"  
+                                                actionListener="#{revisionInformeIeView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+
+
+                            </p:column>
+
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog width="1100" height="600" id="DlogoRevisionPlanificacion"  header="REVISIÓN-PLANIFICACIÓN" widgetVar="DlogoRevisionPlanificacion" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false" id="fmDlogoRevision">
+                <p:accordionPanel>
+                    <p:tab title="REFORMA INGRESO">
+                        <p:dataTable id="cuentas" widgetVar="cuentas" var="pl" value="#{revisionInformeIeView.lazyIngresos}" paginator="true" rows="20"
+                                     style="width: 100%;" paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,40,50,100"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado" >                
+                            <f:facet name="header">                           
+                                <h2 style="font-weight: bold; font-size: 12px">Lista de Item </h2>
+                            </f:facet>
+                            <p:column headerText="Código" style="width: 5%; font-weight: bold;text-align: center;" filterBy="#{pl.proformaIngreso.item.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{pl.proformaIngreso.item.codigo}"/>
+                            </p:column>
+                            <p:column headerText="Fuente" style="width: 8%;">
+                                <h:outputText value="#{pl.proformaIngreso.fuente.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style=" width: 20%">
+                                <h:outputText value="#{pl.proformaIngreso.item.descripcion.toUpperCase()}" />
+                            </p:column>
+                            <p:column headerText="Nivel" style="width: 80px; text-align: center;" filterBy="#{pl.proformaIngreso.item.confId.nivel}"  >
+<!--                                <f:facet name="filter">
+                                    <p:selectOneMenu   effect="fade" panelStyle="width:180px" filter="true" filterMatchMode="startsWith" label="Nivel" onchange="PF('cuentas').filter()">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="" />
+                                        <f:selectItems value="#{revisionInformeIeView.listaFiltroNivel}" var="i" itemLabel="#{i.nombre}" itemValue="#{i.nombre}" />
+                                    </p:selectOneMenu>
+                                </f:facet>-->
+                                <h:outputText value="#{pl.proformaIngreso.item.confId.nivel}" />
+                            </p:column>
+                            <p:column filterBy="#{pl.proformaIngreso.item.clasificacion.texto}" headerText="Clasificación" filterMatchMode="contains"  style="width: 14%;">
+<!--                                <f:facet name="filter">
+                                    <p:selectOneMenu  label="Clasificación" onchange="PF('cuentas').filter()" effect="fade" panelStyle="width:180px" filter="true" filterMatchMode="startsWith">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="" />
+                                        <f:selectItems value="#{revisionInformeIeView.listaFiltroItem}" var="i" itemLabel="#{i.texto}" itemValue="#{i.texto}" />
+                                    </p:selectOneMenu>
+                                </f:facet>-->
+                                <h:outputText value="#{pl.proformaIngreso.item.clasificacion.texto.toUpperCase()}" />
+                            </p:column>
+                            <p:column headerText="Tipo Item" filterBy="#{pl.proformaIngreso.item.movimiento}"  filterMatchMode="exact" style="width: 6%;text-align: center;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="A" itemValue="false" />
+                                        <f:selectItem itemLabel="M" itemValue="true" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{pl.proformaIngreso.item.movimiento ? 'M':'A' }" />
+                            </p:column>
+                            <p:column headerText="Presupuesto Codificado" style="width: auto;">
+                                <h:outputText value="#{pl.proformaIngreso.presupuestoCodificado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>      
+                            <p:column headerText="Suplemento" style="width: auto;">
+                                <h:outputText value="#{pl.suplemento}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Reducción" style="width: auto;">
+                                <h:outputText value="#{pl.reducido}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Presupuesto Reformado" style="width: auto;">
+                                <h:outputText value="#{pl.codificado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:columnGroup type="footer">
+                                <p:row>
+                                    <p:column colspan="6" style="text-align:right;font-weight: bold; font-size: 12px;" footerText="Suma:" />
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 12px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{revisionInformeIeView.totalPresupuestoInicial}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                    <p:column  style="text-align: right;font-weight: bold; font-size: 12px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{revisionInformeIeView.totalSuplemeto}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                    <p:column  style="text-align: right;font-weight: bold; font-size: 12px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{revisionInformeIeView.totalReduccion}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                    <p:column style="text-align: right;font-weight: bold; font-size: 12px;">
+                                        <f:facet name="footer">
+                                            <h:outputText value="#{revisionInformeIeView.totalCodificado}">
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:column>
+                                </p:row>
+                            </p:columnGroup>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="CUPOS">
+                        <p:dataTable id="dataCupos" widgetVar="dataCupos" var="item" paginator="true" rows="30"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="30,40,50,100" value="#{revisionInformeIeView.lazyCupos}" 
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                            <p:column headerText="Nombre" sortBy="#{item.unidadAdministrativa.nombre}" filterBy="#{item.unidadAdministrativa.nombre}" style="width: 20%;">
+                                <h:outputText value="#{item.unidadAdministrativa.nombre.toUpperCase()==null?'':item.unidadAdministrativa.nombre.toUpperCase()}" />
+                                <p:outputLabel value="#{item.otros=='PD'?'PARTIDAS DIRECTAS':''}"/>
+                                <p:outputLabel value="#{item.otros=='D'?'DISTRIBUTIVO':''}"/>
+                                <p:outputLabel value="#{item.otros=='DA'?'DISTRIBUTIVO ANEXO':''}"/>
+                            </p:column>
+                            <p:column filterBy="#{item.unidadAdministrativa.tipoUnidad.texto}" headerText="Tipo de Unidad"  style="width: 10%;">
+                                <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.texto==null?'':item.unidadAdministrativa.tipoUnidad.texto}" />
+                            </p:column>
+                            <p:column headerText="Cupo" style="width: 8%; text-align: right">
+                                <h:outputText value="#{item.montoCupo}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="Reponsable" style="width: 10%; text-align: center;">
+                                <h:outputText value="#{item.responsable}" /> 
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:accordionPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{revisionInformeIeView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{revisionInformeIeView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

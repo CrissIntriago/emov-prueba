@@ -1,0 +1,725 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Movimiento de Bienes
+    </ui:define>
+    <ui:param name="tittle" value="MOVIMIENTO DE BIENES"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block">
+                        <p:commandButton value="NUEVA ASIGNACIÓN" id="entregaActivoFijo" process="@this"
+                                         icon="fa fa-user-plus" actionListener="#{bienMovimientoView.form(null,'ASIGNAR')}"
+                                         styleClass="Fs16" style="width: 150px; margin-right: 15px;float: left"/> 
+                        <p:commandButton value="LIMPIAR FILTROS"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('activosFijosCustodioTable').clearFilters()" update="activosFijosCustodioTable"
+                                         styleClass="Fs16" style="width: 150px; margin-right: 15px;"/>
+                        <p:commandButton id="mostrarColumnas" type="button" value="COLUMNAS VISIBLES" style="width: 150px; float: right;" icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="activosFijosCustodioTable" trigger="mostrarColumnas" />
+                        <p:dataTable id="activosFijosCustodioTable" widgetVar="activosFijosCustodioTable" var="custodio" 
+                                     paginator="true" rows="20" style="width: 100%;margin-top: 15px" paginatorPosition="bottom"
+                                     value="#{bienMovimientoView.activoFijoCustodioLazyModel}" 
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,60,100" lazy="true" selectionMode="single" rowKey="#{custodio.id}" 
+                                     emptyMessage="No existe información con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                Movimientos de Bienes
+                            </f:facet>
+                            <p:column headerText="Nº de Acta" style="width: 2vw;text-align:center" filterBy="#{custodio.numeroActa}">
+                                <h:outputText value="#{custodio.numeroActa}" />
+                            </p:column> 
+                            <p:column headerText="Servidor Público" style="width: 12vw;" filterBy="#{custodio.servidor.id}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('activosFijosCustodioTable').filter()" styleClass="custom-filter"  filter="true" style="width: 100%" filterMatchMode="contains">>
+                                        <f:selectItem itemLabel="-Servidor-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{bienMovimientoView.servidores}" var="s" itemLabel="#{s.persona.nombreCompleto}" itemValue="#{s.id}" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{custodio.servidor.persona.nombreCompleto}" />
+                            </p:column> 
+                            <p:column headerText="Unidad Adminitrativa de Custodio" style="width: 12vw;" filterBy="#{custodio.servidor.distributivo.unidadAdministrativa.id}">
+                                <!--                                <f:facet name="filter">
+                                                                    <p:selectOneMenu onchange="PF('activosFijosCustodioTable').filter()" style="width: 100%" styleClass="custom-filter" filter="true" filterMatchMode="contains">
+                                                                        <f:selectItem itemLabel="-Unidad Administrativa-" itemValue="#{null}" noSelectionOption="true" />
+                                                                        <f:selectItems value="#{bienMovimientoView.unidades}" var="s" itemLabel="#{s.nombre}" itemValue="#{s.id}" />
+                                                                    </p:selectOneMenu>
+                                                                </f:facet>-->
+                                <h:outputText value="#{bienMovimientoView.getServidorByThServidorCargo(custodio.servidor).idCargo.idUnidad.nombre}" />
+                            </p:column> 
+                            <p:column headerText="Cargo" style="width: 10vw;" filterBy="#{custodio.servidor.distributivo.cargo.id}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('activosFijosCustodioTable').filter()" style="width: 100%" styleClass="custom-filter" filter="true" filterMatchMode="contains">
+                                        <f:selectItem itemLabel="-Cargo-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{bienMovimientoView.cargos}" var="s" itemLabel="#{s.nombreCargo}" itemValue="#{s.id}" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{bienMovimientoView.getServidorByThServidorCargo(custodio.servidor).idCargo.nombreCargo}" />
+                            </p:column> 
+                            <p:column headerText="Cantidad Asignadas" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{custodio.cantidadBienes}" />
+                            </p:column>
+                            <p:column headerText="Fecha de Asignación" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{custodio.fechaEntrega}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="Acciones" style="width: 5vw;text-align: center">
+                                <p:commandLink actionListener="#{bienMovimientoView.form(custodio,'VIZUALIZAR')}" title="Visualizar Asignación" 
+                                               update="bienesTable" process="@this">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{bienMovimientoView.form(custodio,'TRASPASO')}" title="Traspaso de bien o bienes" 
+                                               update="bienesTable" process="@this">
+                                    <i class="fa fa-exchange" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{bienMovimientoView.form(custodio,'DEVOLUCION')}" title="Devoluciones de bien o bienes" 
+                                               update="activosFijosCustodioTable" process="@this">
+                                    <i class="fa fa-arrow-circle-down" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{bienMovimientoView.form(custodio,'DAR DE BAJA')}" title="Dar de Baja todos los bienes del servidor" 
+                                               update="activosFijosCustodioTable" process="@this">
+                                    <i class="fa fa-close" style="font-size: 1.5em; margin-right: 8px; color: #999999"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="asignacionCustodioDLG" header="Formulario de Asignación" width="80%"
+                  widgetVar="asignacionCustodioDLG" modal="true" showEffect="fade" style="margin-top: 50px"
+                  hideEffect="fade" resizable="false" position="top" >
+            <h:form prependId="false">
+                <div class="ui-g-12">
+                    <p:outputPanel id="asignacionPanel" style="width: 100%;" >
+                        <div class="ui-g-7">
+                            <p:fieldset legend="Detalles del Servidor">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="servidorGrid">
+                                    <h:panelGroup>
+                                        <p:commandButton value="Buscar Servidor" id="buscarServidor" process="@this" update="servidorGrid, ActivosGrid"
+                                                         icon="fa fa-user-plus" actionListener="#{bienMovimientoView.openDlgServidor('NUEVO')}"
+                                                         style="width: 70%" styleClass="Fs16"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                        <p:inputText id="identificacion" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                    </h:panelGroup>  
+                                    <h:panelGroup>
+                                        <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreCompleto" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                    </h:panelGroup>  
+                                    <h:panelGroup>
+                                        <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                        <p:inputText id="unidadAdminitrativa" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.thServidorCargo.idCargo.idUnidad.nombre}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel  for="@next" value="Cargo:" style="font-weight: bold"/>
+                                        <p:inputText id="cargoServidor" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.thServidorCargo.idCargo.nombreCargo}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup id="ActivosGrid">
+                                        <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                        <p:inputText id="cantidadBienes" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.cantidadBienes}" />
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+
+                        <div class="ui-g-5">
+                            <p:fieldset legend="Descripción">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <p:inputTextarea  id="descripcion" rows="9" style="border: 1px solid #cccccc;width: 100%;text-transform: uppercase"
+                                                      value="#{bienMovimientoView.activoFijoCustodio.descripcion}" onkeyup="toUpperCase(this)">
+                                    </p:inputTextarea>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+
+                        <div class="ui-g-12">
+                            <p:commandButton value="Buscar Bienes" id="buscarBienes" process="@this" update="bienesTable"
+                                             icon="fa fa-plus-circle" actionListener="#{bienMovimientoView.openDlgBienes()}"
+                                             style="width: 100px;margin-bottom: 10px" styleClass="Fs16"/> 
+                            <p:dataTable id="bienesTable" widgetVar="bienesTable" var="bienes" style="width: 100%;" 
+                                         reflow="true" editable="true" editMode="cell"
+                                         value="#{bienMovimientoView.bienesSeleccionados}" scrollHeight="150"
+                                         paginator="true" paginatorPosition="bottom" scrollable="true"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No hay datos seleccionados">
+                                <f:facet name="header">
+                                    LISTADO DE BIENES A ASIGNAR
+                                </f:facet>
+                                <p:column headerText="Código" style="width: 8vw;text-align: center">
+                                    <h:outputText value="#{bienes.bienesItem.codigoBienAgrupado}"/>
+                                </p:column>
+                                <p:column headerText="Descripción" style="width: 12vw">
+                                    <h:outputText value="#{bienes.bienesItem.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Marca" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.marca}"/>
+                                </p:column>
+                                <p:column headerText="Modelo" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.modelo}"/>
+                                </p:column>
+                                <p:column headerText="Serie" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.serie1}"/>
+                                </p:column>
+                                <p:column headerText="Color" style="width: 5vw">
+                                    <h:outputText value="#{bienes.bienesItem.color1}"/>
+                                </p:column>
+                                <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                    <h:outputText value="#{bienes.bienesItem.estadoBien.texto}"/>
+                                </p:column>
+                                <p:column headerText="Observaciones" style="width: 12vw">
+                                    <p:cellEditor>
+                                        <f:facet name="output"><h:outputText value="#{bienes.observacionInicial}" /></f:facet>
+                                        <f:facet name="input"><p:inputText value="#{bienes.observacionInicial}" style="width:100%"/></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Quitar" style="width: 3vw;text-align: center">
+                                    <p:commandLink actionListener="#{bienMovimientoView.removerBien(bienes)}" title="Quitar" 
+                                                   update="bienesTable" process="@this">
+                                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                        </div>
+                        <center>
+                            <p:commandButton value="Asignar Bienes" id="save" update="activosFijosCustodioTable" style="margin: 10px"
+                                             icon="ui-icon-save" actionListener="#{bienMovimientoView.guardarAsignacion()}"
+                                             styleClass="Fs16" process="@(:input:not(hidden))"/>
+                        </center>
+                    </p:outputPanel>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="traspasoCustodioDLG" header="Formulario de Traspaso" width="90%"  height="450"
+                  widgetVar="traspasoCustodioDLG" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false" position="center" >
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="traspasoPanel" style="width: 90%;" >
+                            <p:fieldset legend="Traspasar De:" style="width: 90%">
+                                <div class="ui-g-4">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                                <p:inputText id="identificacionServidorDe" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                            </h:panelGroup>  
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                                <p:inputText id="cantidadBienesServidorDe" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.activoFijoCustodio.cantidadBienes}" />
+                                            </h:panelGroup> 
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                                <p:inputText id="nombreCompletoServidorDe" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                            </h:panelGroup> 
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                                <p:inputText id="unidadAdminitrativaServidorDe" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.thServidorCargo.idCargo.idUnidad.nombre}"/>
+                                            </h:panelGroup>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </div>
+                                <div class="ui-g-8">
+                                    <p:dataTable id="bienesDeTraspasoTable" widgetVar="bienesDeTraspasoTable" var="bienesDeTraspaso" style="width: 100%;
+                                                 text-align: center" reflow="true" scrollable="true" scrollHeight="140"
+                                                 value="#{bienMovimientoView.bienesAsignados}" 
+                                                 paginator="true" paginatorPosition="bottom"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 emptyMessage="No hay datos seleccionados">
+                                        <f:facet name="header">
+                                            LISTADO DE BIENES A ASIGNADOS
+                                        </f:facet>
+                                        <p:column headerText="Traspasar" style="width: 3vw;text-align: center">
+                                            <p:commandLink actionListener="#{bienMovimientoView.botonDeAccionDevolucionTraspaso(bienesDeTraspaso,'TRASPASO')}" title="Traspasar Bien" 
+                                                           update="bienesDeTraspasoTable,bienesTraspasadosTable" process="@this">
+                                                <i class="fa fa-arrow-circle-right" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                                            </p:commandLink>
+                                        </p:column>
+                                        <p:column headerText="Código" style="width: 8vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.codigoBienAgrupado}"/>
+                                        </p:column>
+                                        <p:column headerText="Descripción" style="width: 12vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.descripcion}"/>
+                                        </p:column>
+                                        <p:column headerText="Marca" style="width: 10vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.marca}"/>
+                                        </p:column>
+                                        <p:column headerText="Modelo" style="width: 10vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.modelo}"/>
+                                        </p:column>
+                                        <p:column headerText="Serie" style="width: 10vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.serie1}"/>
+                                        </p:column>
+                                        <p:column headerText="Color" style="width: 10vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.color1}"/>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="width: 5vw">
+                                            <h:outputText value="#{bienesDeTraspaso.bienesItem.estadoBien.texto}"/>
+                                        </p:column>
+                                        <p:column headerText="Observaciones" style="width: 12vw">
+                                            <h:outputText value="#{bienesDeTraspaso.observacionInicial}"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                </div>
+                            </p:fieldset>
+                            <p:fieldset legend="Traspasar A:" style="width: 90%" >
+                                <div class="ui-g-4">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id = "servidorDeTraspaso">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:commandButton value="Buscar Servidor" id="buscarServidorTraspasar" process="@this" update="servidorDeTraspaso"
+                                                                 icon="fa fa-user-plus" actionListener="#{bienMovimientoView.openDlgServidor('TRASPASAR')}"
+                                                                 style="width: 100%" styleClass="Fs16"/>
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                                <p:inputText id="identificacionServidorTraspasar" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.activoFijoCustodioTraspaso.servidor.persona.identificacion}" />
+                                            </h:panelGroup>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                                <p:inputText id="nombreCompletoServidorTraspasar" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.activoFijoCustodioTraspaso.servidor.persona.nombreCompleto}" />
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                                <p:inputText id="unidadAdminitrativaServidorTraspasar" style="width: 100%;" readonly="true" 
+                                                             value="#{bienMovimientoView.thServidorCargoTraspaso.idCargo.idUnidad.nombre}"/>
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel for="@next" value="Descripción:" style="width: 100%; font-weight: bold"/>
+                                                <p:inputTextarea  id="descripcionTraspasar" rows="3" style="border: 1px solid #cccccc;width: 100%" required="true"
+                                                                  value="#{bienMovimientoView.activoFijoCustodioTraspaso.descripcion}" >
+                                                </p:inputTextarea>
+                                            </h:panelGroup> 
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </div>
+                                <div class="ui-g-8">
+                                    <p:dataTable id="bienesTraspasadosTable" widgetVar="bienesTraspasadosTable" var="bienesTraspasados" style="width: 100%;
+                                                 text-align: center" reflow="true" scrollable="true" scrollHeight="140"
+                                                 value="#{bienMovimientoView.bienesTraspasar}" 
+                                                 editable="true" editMode="cell"
+                                                 paginator="true" paginatorPosition="bottom"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 emptyMessage="No hay datos seleccionados">
+                                        <f:facet name="header">
+                                            LISTADO DE BIENES A TRASPASAR
+                                        </f:facet>
+                                        <p:column headerText="Quitar" style="width: 3vw;text-align: center">
+                                            <p:commandLink actionListener="#{bienMovimientoView.removerItemDevolucionTraspaso(bienesTraspasados,'TRASPASO')}" title="Quitar bien" 
+                                                           update="bienesDeTraspasoTable,bienesTraspasadosTable" process="@this">
+                                                <i class="fa fa-arrow-circle-right" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                            </p:commandLink>
+                                        </p:column>
+                                        <p:column headerText="Código" style="width: 8vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.codigoBienAgrupado}"/>
+                                        </p:column>
+                                        <p:column headerText="Descripción" style="width: 12vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.descripcion}"/>
+                                        </p:column>
+                                        <p:column headerText="Marca" style="width: 10vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.marca}"/>
+                                        </p:column>
+                                        <p:column headerText="Modelo" style="width: 10vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.modelo}"/>
+                                        </p:column>
+                                        <p:column headerText="Serie" style="width: 10vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.serie1}"/>
+                                        </p:column>
+                                        <p:column headerText="Color" style="width: 10vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.color1}"/>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="width: 5vw">
+                                            <h:outputText value="#{bienesTraspasados.bienesItem.estadoBien.texto}"/>
+                                        </p:column>
+                                        <p:column headerText="Observaciones" style="width: 12vw">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{bienesTraspasados.observacionFinal}" /></f:facet>
+                                                <f:facet name="input"><p:inputText value="#{bienesTraspasados.observacionFinal}" style="width:100%"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable>
+                                </div>
+                            </p:fieldset>
+                            <center>
+                                <p:commandButton value="Guardar Cambios" id="saveTraspaso" update="activosFijosCustodioTable" style="margin-top: 10px"
+                                                 icon="ui-icon-save" actionListener="#{bienMovimientoView.guardarTraspaso()}"
+                                                 styleClass="Fs16"/>
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>             
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="devolucionCustodioDLG" header="Formulario de Devolución" width="90%" 
+                  widgetVar="devolucionCustodioDLG" modal="true" showEffect="fade" style="margin-top: 50px"
+                  hideEffect="fade" resizable="false" position="top"  closeOnEscape="true">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="devolucionPanel" style="width: 100%;" >
+                            <div class="ui-g-5">
+                                <p:fieldset legend="Detalles de Bienes Asignados" style="margin-bottom: 15px">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                            <p:inputText id="identificacionServidor" style="width: 100%;" readonly="true" 
+                                                         value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreCompletoServidor" style="width: 100%;" readonly="true" 
+                                                         value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                            <p:inputText id="unidadAdminitrativaServidor" style="width: 100%;" readonly="true" 
+                                                         value="#{bienMovimientoView.thServidorCargo.idCargo.idUnidad.nombre}"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                            <p:inputText id="cantidadBienesServidor" style="width: 100%;" readonly="true" 
+                                                         value="#{bienMovimientoView.activoFijoCustodio.cantidadBienes}" />
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel for="@next" value="Descripción de Devolución:" style="width: 100%; font-weight: bold"/>
+                                        <p:inputTextarea  id="descripcionDevolucion" rows="5" style="border: 1px solid #cccccc;width: 100%;text-transform: uppercase"
+                                                          value="#{bienMovimientoView.descripcionDevolucion}" onkeyup="toUpperCase(this)">
+                                        </p:inputTextarea>
+                                    </p:panelGrid> 
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-7">
+                                <p:dataTable id="bienesDevolucionTable" widgetVar="bienesDevolucionTable" var="bienesDevolucion" style="width: 100%;" 
+                                             reflow="true" lazy="true" scrollable="true" scrollHeight="200"
+                                             value="#{bienMovimientoView.bienesAsignados}"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No hay datos seleccionados">
+                                    <f:facet name="header">
+                                        LISTADO DE BIENES A ASIGNADOS
+                                    </f:facet>
+                                    <p:column headerText="Devolver" style="width: 3vw;text-align: center">
+                                        <p:commandLink actionListener="#{bienMovimientoView.botonDeAccionDevolucionTraspaso(bienesDevolucion,'DEVOLUCION')}" title="Devolver Bien" 
+                                                       update="bienesDevolucionTable,devolucionTable" process="@this">
+                                            <i class="fa fa-arrow-circle-right" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:column headerText="Código" style="width: 8vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.codigoBienAgrupado}"/>
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 12vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.descripcion}"/>
+                                    </p:column>
+                                    <p:column headerText="Marca" style="width: 10vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.marca}"/>
+                                    </p:column>
+                                    <p:column headerText="Modelo" style="width: 10vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.modelo}"/>
+                                    </p:column>
+                                    <p:column headerText="Serie" style="width: 10vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.serie1}"/>
+                                    </p:column>
+                                    <p:column headerText="Color" style="width: 10vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.color1}"/>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 10vw">
+                                        <h:outputText value="#{bienesDevolucion.estadoBien}"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </div>
+                            <div class="ui-g-12">
+                                <p:dataTable id="devolucionTable" widgetVar="devolucionTable" var="bienesDevolucion" style="width: 100%;" 
+                                             reflow="true" editable="true" editMode="cell" scrollable="true" scrollHeight="150"
+                                             value="#{bienMovimientoView.bienesDevolver}" 
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No hay datos seleccionados">
+                                    <f:facet name="header">
+                                        LISTADO DE BIENES A DEVOLVER
+                                    </f:facet>
+                                    <p:column headerText="Código" style="width: 8vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.codigoBienAgrupado}"/>
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 12vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.descripcion}"/>
+                                    </p:column>
+                                    <p:column headerText="Marca" style="width: 7vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.marca}"/>
+                                    </p:column>
+                                    <p:column headerText="Modelo" style="width: 7vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.modelo}"/>
+                                    </p:column>
+                                    <p:column headerText="Serie" style="width: 7vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.serie1}"/>
+                                    </p:column>
+                                    <p:column headerText="Color" style="width: 7vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.color1}"/>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 7vw">
+                                        <h:outputText value="#{bienesDevolucion.bienesItem.estadoBien.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Observaciones" style="width: 12vw">
+                                        <p:cellEditor>
+                                            <f:facet name="output"><h:outputText value="#{bienesDevolucion.observacionFinal}" /></f:facet>
+                                            <f:facet name="input"><p:inputText value="#{bienesDevolucion.observacionFinal}" style="width:100%"/></f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Quitar" style="width: 3vw;text-align: center">
+                                        <p:commandLink actionListener="#{bienMovimientoView.removerItemDevolucionTraspaso(bienesDevolucion,'DEVOLUCION')}" title="Quitar bien" 
+                                                       update="bienesDevolucionTable,devolucionTable" process="@this">
+                                            <i class="fa fa-arrow-circle-right" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                                <center>
+                                    <p:commandButton value="Guardar Cambios" id="save1" style="margin: 15px" update="activosFijosCustodioTable"
+                                                     icon="ui-icon-save" actionListener="#{bienMovimientoView.guardarDevoluciones()}"
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </div>
+                        </p:outputPanel>
+                    </div>
+                </div>                
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="viewCustodioDLG" header="Visualizador de Datos" width="80%" 
+                  widgetVar="viewCustodioDLG" modal="true" showEffect="fade" style="margin-top: 90px"
+                  hideEffect="fade" resizable="false" position="top" closeOnEscape="true">
+            <h:form prependId="false">
+                <div class="ui-g-12">
+                    <p:outputPanel id="ViewPanel" style="width: 100%;" >
+                        <div class="ui-g-7">
+                            <p:fieldset legend="Detalles del Servidor" >
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Identificación:" style="font-weight: bold"/>
+                                        <p:inputText id="identificacionView" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.identificacion}" />
+                                    </h:panelGroup>  
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Nombre y Apellidos:" style="font-weight: bold"/>
+                                        <p:inputText id="nombreCompletoView" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.servidor.persona.nombreCompleto}" />
+                                    </h:panelGroup>  
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                        <p:inputText id="unidadAdminitrativaView" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.thServidorCargo.idCargo.idUnidad.nombre}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Cargo:" style="font-weight: bold"/>
+                                        <p:inputText id="cargoServidorView" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.thServidorCargo.idCargo.nombreCargo}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Cantidad de Bienes:" style="font-weight: bold"/>
+                                        <p:inputText id="cantidadBienesView" style="width: 100%;" readonly="true" 
+                                                     value="#{bienMovimientoView.activoFijoCustodio.cantidadBienes}" />
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-5">
+                            <p:fieldset legend="Descripción">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <p:inputTextarea  id="descripcionView" rows="6" style="border: 1px solid #cccccc;width: 100%" readonly="true"
+                                                      value="#{bienMovimientoView.activoFijoCustodio.descripcion}" >
+                                    </p:inputTextarea>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </div>
+                        <div class="ui-g-12">
+                            <p:dataTable id="bienesViewTable" widgetVar="bienesViewTable" var="bienesView" style="width: 100%;"
+                                         reflow="true" scrollable="true" scrollHeight="200"
+                                         value="#{bienMovimientoView.bienesItemList}"
+                                         paginator="true" paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No hay datos seleccionados">
+                                <f:facet name="header">
+                                    LISTADO DE BIENES A ASIGNADOS
+                                </f:facet>
+                                <p:column headerText="Código" style="width: 8vw">
+                                    <h:outputText value="#{bienesView.bienesItem.codigoBienAgrupado}"/>
+                                </p:column>
+                                <p:column headerText="Descripción" style="width: 12vw">
+                                    <h:outputText value="#{bienesView.bienesItem.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Marca" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.marca}"/>
+                                </p:column>
+                                <p:column headerText="Modelo" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.modelo}"/>
+                                </p:column>
+                                <p:column headerText="Serie" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.serie1}"/>
+                                </p:column>
+                                <p:column headerText="Color" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.color1}"/>
+                                </p:column>
+                                <p:column headerText="Estado" style="width: 7vw">
+                                    <h:outputText value="#{bienesView.bienesItem.estadoBien.texto}"/>
+                                </p:column>
+                                <p:column headerText="Observaciones" style="width: 12vw">
+                                    <h:outputText value="#{bienesView.observacionInicial}"/>
+                                </p:column>
+                            </p:dataTable>
+                        </div>                            
+                    </p:outputPanel>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="servidorDLG" widgetVar="servidorDLG" width="70%"
+                  header="Listado de los Servidores Públicos" height="405" closeOnEscape="true"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form  prependId="false">
+                <h:panelGroup id="servidorForm" layout="block">
+                    <p:dataTable id="ServidorTable" widgetVar="ServidorTable" var="thLazy" style="width: 100%;" 
+                                 reflow="true" paginator="true" lazy="true" rows="15"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 filterEvent="enter" value="#{bienMovimientoView.thServidorLazyModel}" 
+                                 paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                        <p:column headerText="Identificación" filterMatchMode="contains"
+                                  filterBy="#{thLazy.idServidor.persona.identificacion}" style="width: 7vw;text-align: center">
+                            <h:outputText value="#{thLazy.idServidor.persona.identificacion}"/>
+                        </p:column>
+                        <p:column headerText="Nombre" filterMatchMode="contains"
+                                  filterBy="#{thLazy.idServidor.persona.nombre}" style="width: 10vw">
+                            <h:outputText value="#{thLazy.idServidor.persona.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Apellido" filterMatchMode="contains"
+                                  filterBy="#{thLazy.idServidor.persona.apellido}" style="width: 10vw">
+                            <h:outputText value="#{thLazy.idServidor.persona.apellido}"/>
+                        </p:column>
+                        <p:column headerText="Cargo" filterMatchMode="contains"
+                                  filterBy="#{thLazy.idCargo.nombreCargo}" style="width: 10vw">
+                            <h:outputText value="#{thLazy.idCargo.nombreCargo}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Administrativa" style="width: 15vw" filterBy="#{thLazy.idCargo.idUnidad.nombre}">
+                            <h:outputText value="#{thLazy.idCargo.idUnidad.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Añadir" style="width: 4vw;text-align: center">
+                            <p:commandLink  actionListener="#{bienMovimientoView.aniadirServidor(thLazy.idServidor,'NUEVO')}" update="servidorGrid" 
+                                           title="Añadir Servidor" rendered="#{bienMovimientoView.ocultarBoton}"
+                                           >
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em;"></i>
+                            </p:commandLink>  
+                            <p:commandLink  actionListener="#{bienMovimientoView.aniadirServidor(thLazy.idServidor,'TRASPASAR')}" update="servidorDeTraspaso" 
+                                           title="Añadir Servidor de Traspaso" rendered="#{!bienMovimientoView.ocultarBoton}"
+                                           >
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; "></i>
+                            </p:commandLink>  
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="BienesDLG" widgetVar="BienesDLG" width="70%" position="center" height="400" closeOnEscape="true"
+                  modal="true" showEffect="fade" hideEffect="fade"  header="LISTADO DE BIENES REGISTRADOS" >
+            <div class="ui-g-12" >
+                <h:form  prependId="false">
+                    <h:panelGroup id="formBienes" layout="block">
+                        <p:commandButton process="bienesRegistradoTable" update="bienesTable" icon="fa fa-plus-circle"  style="margin: 10px 0px;width: 100px"
+                                         value="Asignar Bienes"  actionListener="#{bienMovimientoView.añadirBienes()}" />
+                        <!--                        <p:commandButton value="Limpiar filtros"  process="@this"
+                                                                 icon="ui-icon-refresh" onclick="PF('bienesRegistradoTable').clearFilters()" update="bienesRegistradoTable"
+                                                                 styleClass="Fs16" style="width: 100px; margin-left: 15px;"/>-->
+                        <p:dataTable id="bienesRegistradoTable" widgetVar="bienesRegistradoTable" var="bienesRegistrado" 
+                                     reflow="true" lazy="true" rows="20000" 
+                                     selection="#{bienMovimientoView.bienesSeleccionados}" rowKey="#{bienesRegistrado.id}"
+                                     value="#{bienMovimientoView.bienesLazyModel}" 
+                                     paginatorAlwaysVisible="true" paginatorPosition="bottom" >
+                            <p:column selectionMode="multiple" style="width:2vw;text-align:center"/>
+                            <p:column headerText="Código" style="width: 6vw;text-align: center" filterBy="#{bienesRegistrado.bienesItem.codigoBienAgrupado}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.codigoBienAgrupado}"/>
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 10vw" filterBy="#{bienesRegistrado.bienesItem.descripcion}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Marca" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.marca}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.marca}"/>
+                            </p:column>
+                            <p:column headerText="Modelo" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.modelo}"/>
+                            </p:column>
+                            <p:column headerText="Serie" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.serie1}"/>
+                            </p:column>
+                            <p:column headerText="Color" style="width: 6vw" filterBy="#{bienesRegistrado.bienesItem.modelo}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.color1}"/>
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 6vw;text-align: center" filterBy="#{bienesRegistrado.bienesItem.estadoBien.texto}">
+                                <h:outputText value="#{bienesRegistrado.bienesItem.estadoBien.texto}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                </h:form>    
+            </div>
+        </p:dialog>
+
+
+        <p:dialog id="descripcionDevolucionDLG" header="Formulario de Baja de Bienes" width="50%"
+                  widgetVar="descripcionDevolucionDLG" modal="true" showEffect="fade" closeOnEscape="true" 
+                  hideEffect="fade" resizable="false" position="center" >
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="descripcionDevolucionPanel" style="width: 100%;" >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel for="@next" value="Descripción:" style="width: 100%; font-weight: bold"/>
+                                    <p:inputTextarea  id="descripcionDevoluciondlg" rows="5" cols="100" style="border: 1px solid #cccccc;width: 100%;text-transform: uppercase"
+                                                      value="#{bienMovimientoView.descripcionDevolucion}" required="true" onkeyup="toUpperCase(this)">
+                                    </p:inputTextarea>
+                                </p:panelGrid> 
+                            </p:panelGrid> 
+                            <center>
+                                <p:commandButton value="Dar de Baja" id="darDeBaja" update="formMain" style="margin-top: 30px"
+                                                 icon="ui-icon-save" actionListener="#{bienMovimientoView.darDeBajaCustodio()}"
+                                                 styleClass="Fs16"/>
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

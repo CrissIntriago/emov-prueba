@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="title">
+        Reimpresión de comprobantes
+    </ui:define>
+    <ui:param name="tittle" value="Reimpresión de comprobantes" />
+    <ui:define name="head">
+        <style type="text/css">
+            body .ui-inputfield {
+                border-width: 1px 1px 1px 1px;
+            }
+
+            body .ui-inputfield.ui-state-focus {
+                border-width: 1px 1px 1px 1px;
+            }
+
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.5em;
+                font-size: 1em;
+            }
+
+            .ui-panelgrid .ui-panelgrid-cell {
+                border-style: hidden;
+            }
+
+            body .ui-fieldset {
+                padding: 0.5em;
+            }
+
+            .ui-panelgrid {
+                border-collapse: inherit;
+            }
+
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.1px 0.1px 0.1px 0.1px;
+                font-size: 1em;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <p:panel>
+                <p:fieldset legend="Consultas" id="fieldConsultas" >
+                    <h:panelGroup>
+                        <p:inputText class="panel-input" value="#{reimpresionComprobantesMB.finaRenPago.numComprobante}"
+                            maxlength="20" placeholder="Número de comprobante"
+                            style="font-size: 13px; font-weight: bolder; width: 30%">
+                            <p:keyFilter regEx="/[\d]/" />
+                        </p:inputText>
+                    </h:panelGroup>
+
+                    <h:panelGroup style="margin-left: 20px;"  >
+
+                        <p:commandButton value="CONSULTAR" icon="fa fa-search"
+                            actionListener="#{reimpresionComprobantesMB.buscarLiquidaciones}"
+                            style="font-size: 15px; font-weight: bolder;"
+                            styleClass="btnStyle" />
+                        
+                        <p:commandButton  id="btnImprimirComprobante" value="IMPRIMIR" icon="fa fa-print" disabled="#{!reimpresionComprobantesMB.is_print}"
+                                         actionListener="#{reimpresionComprobantesMB.generarComprobante()}"
+                            style="font-size: 15px; font-weight: bolder;color: white;"
+                             class="amber-btn"/>
+                        
+                        
+                    </h:panelGroup>
+                    
+                    
+                </p:fieldset>
+                <br />
+                <p:dataTable id="dtDatos" reflow="true" paginator="true" lazy="true" rows="30"
+                    rowsPerPageTemplate="10,20,30" filterEvent="enter" rowIndexVar="i"
+                    paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                    paginatorPosition="bottom" widgetVar="dtDatos" value="#{reimpresionComprobantesMB.emisionesPrediales}"
+                    tableStyle="table-layout:auto" var="emi" emptyMessage="No se encontró ningún Item">
+                    <f:facet name="header">
+                        Comprobantes
+                    </f:facet>
+                    <p:column headerText="**" width="30">
+                        <center>
+                            <h:outputText value="#{i + 1}" />
+                        </center>
+                    </p:column>
+                    <p:column headerText="Año" width="5" style="text-align: center" sortBy="#{emi.anio}">
+                        <p:outputLabel value="#{emi.anio}" />
+                    </p:column>
+                    <p:column headerText="Contribuyente" width="20">
+                        <p:outputLabel value="#{emi.nombreComprador}" />
+                    </p:column>
+                    <p:column headerText="Código" width="15">
+                        <p:outputLabel value="#{emi.codigoLocal}" />
+                    </p:column>
+                    <p:column headerText="Total" width="7">
+                        <p:outputLabel value="#{emi.totalPago}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC" />
+                        </p:outputLabel>
+                    </p:column>
+                    
+                    <p:column headerText="Acciones" width="10">
+                        <center>
+                            <p:commandLink actionListener="#{reimpresionComprobantesMB.verDetalle(emi)}" title="Ver detalles" process="@this" class="editar">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                          
+                        </center>
+                    </p:column>
+                    
+                    
+<!--                    <p:column headerText="Saldo" width="7">
+                        <p:outputLabel value="#{emi.saldo}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC" />
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Adicionales" width="7">
+                        <h:outputText id="adi"
+                            value="#{emi.recargo.add(emi.interes).subtract(emi.descuento).subtract(emi.valorExoneracion)}"
+                            style="float: right">
+                            <f:convertNumber pattern="$ #,##0.00" />
+                        </h:outputText>
+                        <p:tooltip for="adi">
+                            <p:panelGrid columns="2">
+                                <p:outputLabel value="Descuento: " style="color: #000000" />
+                                <h:outputText value="#{emi.descuento}" style="color: #000000">
+                                    <f:convertNumber pattern="$ #,##0.00" />
+                                </h:outputText>
+                                <p:outputLabel value="Exoneración: " style="color: #000000" />
+                                <h:outputText value="#{emi.valorExoneracion}" style="color: #000000">
+                                    <f:convertNumber pattern="$ #,##0.00" />
+                                </h:outputText>
+                                <p:outputLabel value="Recargo: " style="color: #000000" />
+                                <h:outputText value="#{emi.recargo}" style="color: #000000">
+                                    <f:convertNumber pattern="$ #,##0.00" />
+                                </h:outputText>
+                                <p:outputLabel value="Interes: " style="color: #000000" />
+                                <h:outputText value="#{emi.interes}" style="color: #000000">
+                                    <f:convertNumber pattern="$ #,##0.00" />
+                                </h:outputText>
+                            </p:panelGrid>
+                        </p:tooltip>
+                    </p:column>
+                    <p:column headerText="Coactiva" width="7">
+                        <p:outputLabel value="#{emi.valorCoactiva}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC" />
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Total" width="7">
+                        <p:outputLabel value="#{emi.pagoFinal}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC" />
+                        </p:outputLabel>
+                    </p:column>-->
+                    
+                    
+                </p:dataTable>
+<!--                <p:contextMenu id="opLiquidaciones" for="dtDatos">
+                   <p:menuitem value="Detalle" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" process="@this"  />
+                </p:contextMenu>-->
+            </p:panel>
+        </h:form>
+        
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false"
+                closeOnEscape="true" modal="true" width="50%" position="center">
+              <h:form id="formDetEmision">
+                  <dialog:detalleLiquidacion liquidacion="#{reimpresionComprobantesMB.liquidacion}"/>
+                  <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+              </h:form>
+          </p:dialog>
+    </ui:define>
+</ui:composition>

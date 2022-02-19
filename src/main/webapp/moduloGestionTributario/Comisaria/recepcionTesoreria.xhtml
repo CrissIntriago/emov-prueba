@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="title">
+        Recepción Tesorería
+    </ui:define> 
+    <ui:define name="content">
+        <div class="ui-g-12">
+            <div class="car card-w-title" style="background: #00796b;">
+               <comp:ventaComisaria solicitudVentanilla="#{liquidacionInquilinatoMB.solicitud}" task="#{liquidacionInquilinatoMB.tarea}" tramite="#{liquidacionInquilinatoMB.tramite}"/>              
+            </div>
+        </div>
+        <h:form id="mainForm">
+            <div class="ui-g-12">
+<!--                <p:tabView id="tvRecaudaciones">
+                    <p:tab id="tituloCredito" title="Titulos de Credito Generales">-->
+                        <p:dataTable id="dataTitulosGenerados" widgetVar="dataTitulosGenerados" reflow="true"
+                                     value="#{recepcionTesoreriaMB.lazyTitulosGenerados}" var="liq"
+                                     lazy="true" paginator="true" rows="10" emptyMessage="No se encontraron resultados solicitado..."
+                                     rowsPerPageTemplate="10,20,50,100,200" filterEvent="enter" selectionMode="single"  paginatorPosition="bottom"
+                                     rowKey="#{liq.id}" selection="#{recepcionTesoreriaMB.liquidacion}"> 
+                            <p:ajax event="rowSelect" update="mainForm:opLiquidaciones" />
+                            <p:column headerText="Tipo Liquidación" width="7%" field="tipoLiquidacion" style="text-align: center"
+                                      filterBy="#{liq.tipoLiquidacion.nombreTitulo}" filterStyle="width: 95%">
+<!--                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('dataTitulosGenerados').filter()" converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="# {recepcionTesoreriaMB.tipoLiquidacionList}" var="tp" itemLabel="#{tp.prefijo} - #{tp.nombreTitulo}" itemValue="#{tp}" />
+                                    </p:selectOneMenu>
+                                </f:facet>-->
+                                <p:outputLabel value="#{liq.tipoLiquidacion.prefijo}"/>
+                            </p:column>
+                            <p:column headerText="Año" width="5%" filterBy="#{liq.anio}">
+                                <p:outputLabel value="#{liq.anio}" />
+                            </p:column>
+                            <p:column headerText="ID Liquidación" width="5%" filterBy="#{liq.idLiquidacion}" filterMatchMode="contains">
+                                <p:outputLabel value="#{liq.idLiquidacion}" />
+                            </p:column>
+                            <p:column headerText="Fecha" width="10%" style="text-align: center">
+                                <p:outputLabel value="#{liq.fechaIngreso}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Código" width="10%" filterBy="#{liq.codigoLocal}" filterMatchMode="contains" >
+                                <p:outputLabel value="#{liq.codigoLocal}" />
+                            </p:column>
+                            <p:column headerText="Identificación" width="10%" filterBy="#{liq.identificacion}" filterMatchMode="contains">
+                                <p:outputLabel value="#{liq.identificacion}" />
+                            </p:column>
+                            <p:column headerText="Solicitante" width="15%" filterBy="#{liq.nombreComprador}" filterMatchMode="contains">
+                                <p:outputLabel value="#{liq.nombreComprador}" />
+                            </p:column>
+                            <p:column headerText="Valor" width="4%" >
+                                <p:outputLabel value="#{liq.totalPago != null ? liq.totalPago:0.00}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Saldo" width="4%" >
+                                <p:outputLabel value="#{liq.saldo != null ? liq.saldo:0.00}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Intereses" width="4%" >
+                                <p:outputLabel value="#{recepcionTesoreriaMB.interes(liq)}" >
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Coactiva" width="4%"></p:column>
+                            <p:column headerText="Total Pago" width="4%" >
+                                <p:outputLabel value="#{recepcionTesoreriaMB.interes(liq)+liq.totalPago}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                        <p:contextMenu id="opLiquidaciones" for="dataTitulosGenerados">
+                            <p:menuitem value="Detalle" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" process="@this"  />
+                            <p:menuitem value="Procesar" oncomplete="PF('dlgProcesar').show();" update="formProcesar" process="@this" actionListener="#{recepcionTesoreriaMB.procesarPago()}"/>
+                        </p:contextMenu>
+<!--                    </p:tab>
+                </p:tabView>-->
+            </div>
+            <center>
+                <p:commandButton value="Registrar Y continuar" actionListener="#{recepcionTesoreriaMB.opendlg()}"  process="@this"
+                                 update="mainForm" icon="fa fa-save" style="width: auto;"/>
+            </center>            
+        </h:form>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="25%" position="center" draggable="false" header="Observación" height="150"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{recepcionTesoreriaMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aceptar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{recepcionTesoreriaMB.completarTarea()}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false"
+                  closeOnEscape="true" modal="true" width="50%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{recepcionTesoreriaMB.liquidacion}"/>
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <!--DIALOGO PARA PODER PROCESAR EL PAGO DE OTROS RUBROS-->
+        <p:dialog id="dlgProcesarPagoCobroGeneral" header="Procesar Pago" widgetVar="dlgProcesar"
+                  resizable="false" closeOnEscape="true" modal="true" width="70%" height="6%" position="center">
+            <h:form id="formProcesar" prependId="false">
+                <dialog:procesarPago id="processPagoDialog"  liquidacion="#{recepcionTesoreriaMB.liquidacion}"
+                                     procesarPago="#{recepcionTesoreriaMB.pago}" updateComponent="processPagoDialog" isCuotaConvenio="false"
+                                     modelPago="#{recepcionTesoreriaMB.modelPago}" isList="false" variosPagos="false"
+                                     oncompleteClose="PF('dlgProcesar').hide();" isAgua="false"/>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

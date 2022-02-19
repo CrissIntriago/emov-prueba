@@ -1,0 +1,172 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Consulta de Tareas</ui:define>
+    <ui:param name="tittle" value="Consulta de Tareas" />
+    <ui:define name="content">
+        <style type="text/css">
+            .old {
+                background-color: #E7D0E7 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+        </style>
+        <h:form id="formMain" prependId="false">
+            <div class="ui-g" style="float: right; width: 25% !important;margin-bottom: 15px">
+                <p:fieldset legend="Período:" style="width: 100%;padding: 5px;font-weight: bold">
+                    <p:selectOneMenu value="#{consultarProcesosView.opcionBusqueda.anio}"  style="width: 100%;">
+                        <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                        <f:selectItems value="#{consultarProcesosView.listaPeriodo}" var="p" itemLabel="TRÁMITES - #{p}" itemValue="#{p}"/>
+                        <p:ajax listener="#{consultarProcesosView.filterByEstado(-1)}" update="taskGrid"/> 
+                    </p:selectOneMenu>  
+                </p:fieldset>
+            </div>
+            <div style="width: 100% !important; display: inline-block">
+                <div class="ui-g" style="float: left; width: 25% !important; text-align: center;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="finalizados();">FINALIZADO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="inactivos();">INACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="activos();">ACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="todos();">TODOS</div>
+                </div>
+            </div>
+            <p:remoteCommand actionListener="#{consultarProcesosView.filterByEstado(1)}" name="inactivos" update="taskGrid" />
+            <p:remoteCommand actionListener="#{consultarProcesosView.filterByEstado(2)}" name="activos" update="taskGrid" />
+            <p:remoteCommand actionListener="#{consultarProcesosView.filterByEstado(3)}" name="finalizados" update="taskGrid" />
+            <p:remoteCommand actionListener="#{consultarProcesosView.filterByEstado(-1)}" name="todos" update="taskGrid" />
+
+            <p:dataTable var="ht1" widgetVar="taskGrid" id="taskGrid" paginator="true" rows="30" value="#{consultarProcesosView.lazy}" paginatorPosition="bottom"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" filterEvent="enter" rowsPerPageTemplate="30,50,70"
+                         rowStyleClass="#{ht1.deleteReason ne null ? 'estado-inactivo' : (ht1.endTime ne null? 'estado-activo' : 'estado-normal')}"
+                         emptyMessage="No existen datos con los parámetros especificados"> 
+                <p:column headerText="No. Trámite" filterBy="#{ht1.numTramite}" class="TexAlCenter" style="width: 10%">
+                    <p:outputLabel value="#{ht1.numTramite}" />
+                </p:column>
+                <p:column headerText="Fecha Ingreso" class="TexAlCenter" style="width: 10%">
+                    <p:outputLabel value="#{ht1.tramite.fechaIngreso}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Fecha Finalización" class="TexAlCenter" style="width: 10%">
+                    <p:outputLabel value="#{ht1.endTime}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Referencia" filterBy="#{ht1.tramite.nombreBeneficiario}" filterMatchMode="contains" style="width: 25%">
+                    <p:outputLabel value="#{ht1.tramite.nombrePropietario}" />
+                </p:column>
+                <p:column headerText="Tipo Trámite" filterBy="#{ht1.tramite.tipoTramite.descripcion}" class="TexAlCenter" filterMatchMode="contains" style="width: 25%">
+                    <p:outputLabel value="#{ht1.tramite.tipoTramite.descripcion}" />
+                </p:column>
+                <p:column headerText="Período" class="TexAlCenter" style="width: 10%">
+                    <p:outputLabel value="#{ht1.periodo}" />
+                </p:column>
+                <p:column headerText="Acciones" class="TexAlCenter" style="width: 10%">
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{consultarProcesosView.viewProcess(ht1)}"
+                                   title="Ver detalle del trámite" class="ver" process="@this" >
+                        <i class="fa fa-eye newi" style="font-size: 20px"></i>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog modal="true" closeOnEscape="true" closable="true" height="480" width="70%" id="dlgTramite" minHeight="250"
+                  widgetVar="dlgTramite" header="Detalle del trámite numero: #{consultarProcesosView.instTramite.numTramiteCom}">
+            <h:form id="frmDetalleTarea">
+                <p:panelGrid columns="4" style="width: 100%; padding: 5px;" styleClass="ui-panelgrid-blank">
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Tipo de Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{consultarProcesosView.instTramite.tramite.tipoTramite.descripcion}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Instancia Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{consultarProcesosView.instTramite.procInstId}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Ingreso:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{consultarProcesosView.instTramite.tramite.fechaIngreso}" readonly="true" style="width: 100%;" >
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Finalizacion:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{consultarProcesosView.instTramite.endTime}" readonly="true" style="width: 100%;" >
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" rendered="#{consultarProcesosView.instTramite.deleteReason ne null}" >
+                        <p:outputLabel value="Razon de Eliminación:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{consultarProcesosView.instTramite.deleteReason}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                </p:panelGrid><br/>
+                <p:tabView id="tbDetalletramite">
+                    <p:tab title="Tarea">
+                        <p:dataTable value="#{consultarProcesosView.tasks}" emptyMessage="El trámite no ha sido ingresado."
+                                     var="trm1" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Nombre Tarea">
+                                <p:outputLabel value="#{trm1.name}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="20%">
+                                <p:outputLabel value="#{trm1.assignee}" rendered="#{trm1.assignee ne null}"/>
+                            </p:column>
+                            <p:column headerText="Fech.Inicio" width="15%">
+                                <p:outputLabel value="#{trm1.createTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Fech.Fin" width="15%">
+                                <p:outputLabel value="#{trm1.endTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"    />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Observaciones">
+                        <p:dataTable value="#{consultarProcesosView.instTramite.tramite.observaciones}" emptyMessage="Sin elementos..."
+                                     var="obs" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Tarea" width="150">
+                                <p:outputLabel value="#{obs.tarea}"/>
+                            </p:column>
+                            <p:column headerText="Observacion">
+                                <p:outputLabel value="#{obs.observacion}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="100">
+                                <p:outputLabel value="#{obs.userCre}"/>
+                            </p:column>
+                            <p:column headerText="Fecha" width="14%">
+                                <p:outputLabel value="#{obs.fecCre}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Flujo">
+                        <p:graphicImage value="#{consultarProcesosView.imageProcessInstance}" stream="false" width="100%"   />
+                    </p:tab>
+                    <p:tab title="Documentos">
+                        <comp:documents entiti="#{consultarProcesosView.instTramite.tramite}" showDelete="#{userSession.nameUser eq 'anavarro'}" id="docTramite" />
+                    </p:tab>
+                    <p:tab title="Referencia">
+                        <p:outputLabel value="#{consultarProcesosView.instTramite.tramite.nombreBeneficiario}" escape="false" />
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgView" header="Documentos" widgetVar="dlgView" modal="true" showEffect="fade" hideEffect="fade" resizable="false"  closable="true" height="470" width="50%" >
+            <h:form prependId="false" id="frmView">
+                <p:outputLabel value="Archivo: #{consultarProcesosView.requisitosObjeto.file.fileName}" /><br/>
+                <h:panelGroup rendered="#{consultarProcesosView.requisitosObjeto.file ne null}" style="text-align: center;" >
+                    <h:panelGroup style="text-align: center;" >
+                        <iframe src="#{request.contextPath}/ViewDocs" align="center" frameBorder="0" style="text-align: center !important; width: 46vw; height: 46vw; align-content: center;" />
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

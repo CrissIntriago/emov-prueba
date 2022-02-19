@@ -1,0 +1,164 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">        
+        Abogados Coactiva
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO DE ABOGADOS" />
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <div class="car card-w-title">
+                <h:panelGroup id="dataTable" layout="block"  style="margin: 10px">
+                    <p:commandButton value="Nuevo." actionListener="#{abogadosCoactivaMB.seleccionarAbogado(null)}" 
+                                     oncomplete="PF('dlgAbogado').show();" update="formAbogado" styleClass="btnStyle" icon="ui-icon-plus" />
+                </h:panelGroup>
+            </div>
+            <br></br>
+            <p:dataTable id="dtAb" reflow="true" paginator="true" lazy="true" rows="15" rowsPerPageTemplate="15,50,100" paginatorPosition="bottom" style="text-align: center;"
+                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         value="#{abogadosCoactivaMB.abogados}" var="abogado" emptyMessage="No se encontraron elementos..." rowKey="#{abogado.id}" filterEvent="enter">
+                <f:facet name="header"> 
+                    <h1>Lista de Abogados</h1>
+                </f:facet>
+                <p:column headerText="Id" filterBy="#{abogado.id}" filterStyle="width: 95%;"><p:outputLabel value="#{abogado.id}"/></p:column>
+                <p:column headerText="Abreviatura" ><p:outputLabel value="#{abogado.abreviatura}"/></p:column>
+                <p:column headerText="Abogado" filterBy="#{abogado.detalle}"  filterMatchMode="contains" filterStyle="width: 95%;">
+                    <p:outputLabel value="#{abogado.detalle}"/>
+                </p:column>
+                <p:column headerText="F. Ingreso"><p:outputLabel value="#{abogado.fechaIngreso}"><f:convertDateTime pattern="dd-MM-YYYY"/></p:outputLabel></p:column>
+                <p:column headerText="Tipo Abogado"><p:outputLabel value="#{abogado.abogadoInterno eq true?'INTERNO':'EXTERNO'}"/></p:column>
+                <p:column headerText="Estado"><p:outputLabel value="#{abogado.estado?'ACTIVO':'INACTIVO'}"/></p:column>
+                <p:column headerText="Acción">
+                    <p:commandLink title="Editar" 
+                                   actionListener="#{abogadosCoactivaMB.seleccionarAbogado(abogado)}" 
+                                   oncomplete="PF('dlgAbogadoEdit').show();" update="formEditAbogado" styleClass="btnStyle">
+                        <i class="fa fa-fw fa-edit" style="font-size: 1.5em" />
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog header="#{abogadosCoactivaMB.abogado.id eq null?'REGISTRO DE ABOGADOS':'EDICION DE ABOGADOS'}" widgetVar="dlgAbogado" modal="true" resizable="false" width="60%" closeOnEscape="true">
+            <h:form id="formAbogado" >
+                <p:tabView id="tadForAbogado">
+                    <p:tab title="ABOGADO INTERNO">
+                        <p:panelGrid columns="2" style="width: 90%;" styleClass="form-group ui-panelgrid-blank" >
+                            <p:outputLabel value="Usuario: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:selectOneMenu id="user" value="#{abogadosCoactivaMB.usuario}" 
+                                             style="font-weight: bold; font-size: 14px; width: 80%;" 
+                                             dynamic="true" converter="entityConverter" filter="true" 
+                                             filterMatchMode="contains">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                                <f:selectItems value="#{abogadosCoactivaMB.listUser}" var="user"  
+                                               itemLabel="#{user.funcionario.persona.nombreCompleto}" itemValue="#{user}" />
+                                <p:ajax update="formAbogado" listener="#{abogadosCoactivaMB.setAbogadoUser()}"/>
+                            </p:selectOneMenu>
+                            <p:outputLabel value="ABOGADO: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.abogado.detalle}" style="font-weight: bold; font-size: 14px; width: 80%;"/>
+                            <p:outputLabel value="ABREV: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.abogado.abreviatura}" style="font-weight: bold; font-size: 14px; width: 80%;"/>
+                        </p:panelGrid>
+                    </p:tab>
+                    <p:tab title="ABOGADO EXTERNO" >
+                        <p:panelGrid columns="6" style="width: 90%;" styleClass="form-group ui-panelgrid-blank" id="abogadoExt" >
+                            <p:outputLabel value="Cedula: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.cliente.identificacion}" style="font-weight: bold; font-size: 14px; width: 100%;" >
+                                <p:ajax event="blur"  listener="#{abogadosCoactivaMB.consultarExistenciaUsuario()}"></p:ajax>
+                            </p:inputText>
+                            <p:outputLabel value="Nombres: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.cliente.nombre}" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Apellidos: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.cliente.apellido}" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Fecha de Nacimiento: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:calendar value="#{abogadosCoactivaMB.cliente.fechaNacimiento}" navigator="true" pattern="dd/MM/yyyy" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Estado Civil: " style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.cliente.estadoCivil}" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Email:" style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText value="#{abogadosCoactivaMB.cliente.email}" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Direccion:" style="font-weight: bold; font-size: 14px;"/>
+                             <p:inputTextarea rows="4" cols="33" value="#{abogadosCoactivaMB.cliente.direccion}" style="font-weight: bold; font-size: 14px; width: 100%;"/>
+                            <p:outputLabel value="Titulo:" style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText style="font-weight: bold; font-size: 14px; width: 80%;"/>
+                            <p:outputLabel value="Usuario" style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText style="font-weight: bold; font-size: 14px; width: 100%;" value="#{abogadosCoactivaMB.nombreUsuario}" placeholder="INGRESE NOMBRE DE USUARIO"/>
+                            <p:outputLabel value="Titulo" style="font-weight: bold; font-size: 14px;"/>
+                            <p:inputText style="font-weight: bold; font-size: 14px; width: 100%;" value="#{abogadosCoactivaMB.cliente.profesion}"/>
+                        </p:panelGrid>
+                    </p:tab>
+                </p:tabView>
+                <br/><br/><br/>
+                <center>
+                    <p:commandButton value="Grabar" actionListener="#{abogadosCoactivaMB.guardarAbogado()}" 
+                                     oncomplete="PF('dlgAbogado').hide();" update="@form" styleClass="btnStyle" 
+                                     icon="fa fa-floppy-o">
+                        <p:confirm header="Confirmacion" message="Grabar Datos?" icon="ui-icon-alert" />
+                    </p:commandButton>
+                    <p:spacer width="30"/>
+                    <p:commandButton rendered="#{abogadosCoactivaMB.abogado.id ne null}" value="#{abogadosCoactivaMB.abogado.estado?'INACTIVAR':'ACTIVAR'}" 
+                                     actionListener="#{abogadosCoactivaMB.inactivarActivarAbogado()}" oncomplete="PF('dlgAbogado').hide();" 
+                                     update="mainForm" styleClass="btnStyle" icon="#{abogadosCoactivaMB.abogado.estado?'fa fa-thumbs-up':'fa fa-thumbs-down'}">
+                        <p:confirm header="Confirmacion" message="Grabar Datos?" icon="fa fa-check" />
+                    </p:commandButton>
+                    <p:spacer width="30"/>
+                    <p:commandButton value="Cancelar" oncomplete="PF('dlgAbogado').hide();" styleClass="btnStyle" icon="fa fa-trash" onclick="#{abogadosCoactivaMB.limpiarDatos()}"/>
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check"/>
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+        <p:dialog header="EDICION DE ABOGADOS" id="dlgAbogadoEdit" widgetVar="dlgAbogadoEdit" modal="true" resizable="false" width="auto" closeOnEscape="true">
+            <h:form id="formEditAbogado" >
+                <div class="ui-g">
+                    <div class="ui-g-6">
+                        <p:outputLabel  value="Usuario" /> <br/>
+                        <br/>
+                        <p:selectOneMenu id="user" value="#{abogadosCoactivaMB.abogado.authUsuarios}" 
+                                         style="font-size: 14px; width: 80%;" 
+                                         dynamic="true" converter="entityConverter" filter="true" 
+                                         filterMatchMode="contains">
+                            <f:selectItems value="#{abogadosCoactivaMB.listUser}" var="user"  
+                                           itemLabel="#{user.funcionario.persona.nombre} #{user.funcionario.persona.apellido}" itemValue="#{user}" />
+                            <p:ajax update="formEditAbogado" listener="#{abogadosCoactivaMB.setAbogadoUser()}"/>
+                        </p:selectOneMenu>
+                    </div>
+                    <div class="ui-g-6">
+                        <p:outputLabel  value="Abogado" /> <br/>
+                        <br/>
+                        <p:inputText value="#{abogadosCoactivaMB.abogado.detalle}" style="font-size: 14px; width: 80%;"/>
+                    </div>
+                    <div class="ui-g-6">
+                        <p:outputLabel  value="Abreviatura" /> <br/>
+                        <br/>
+                        <p:inputText value="#{abogadosCoactivaMB.abogado.abreviatura}" style="font-size: 14px; width: 80%;"/>
+                    </div>
+                    <div class="ui-g-6">
+                        <p:outputLabel  value="Tipo Abogado" /> <br/>
+                        <br/>
+                        <p:selectBooleanCheckbox value="#{abogadosCoactivaMB.abogado.abogadoInterno}">
+                            <p:ajax update="check"/>
+                        </p:selectBooleanCheckbox>
+                        <p:outputLabel id="check"  value="#{abogadosCoactivaMB.abogado.abogadoInterno eq true ?'Interno':'Externo'}"/>
+                    </div>
+                </div>
+                <div class="ui-g-12">
+                    <center>
+                        <p:commandButton value="Grabar" actionListener="#{abogadosCoactivaMB.guardarAbogado()}" style="margin: 10px"
+                                     oncomplete="PF('dlgAbogadoEdit').hide();" update="@form" styleClass="btnStyle" 
+                                     icon="fa fa-floppy-o">
+                        <p:confirm header="Confirmacion" message="Grabar Datos?" icon="ui-icon-alert" />
+                    </p:commandButton>
+                        <p:commandButton value="Cancelar" oncomplete="PF('dlgAbogadoEdit').hide();"  styleClass="btnStyle" 
+                                     icon="fa fa-ban">
+                    </p:commandButton>
+                </center>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

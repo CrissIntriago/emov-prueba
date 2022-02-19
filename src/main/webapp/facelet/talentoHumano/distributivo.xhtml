@@ -1,0 +1,404 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Distributivo
+    </ui:define>
+    <ui:define name="content">
+
+        <h:form id="formMain">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="car card-w-title">
+                            <br></br>
+
+                            <comp:titleTask task="#{cupoPresupuestoView.tarea}" tramite="#{cupoPresupuestoView.tramite}" /> 
+
+                            <h:panelGroup id="dataTableDistributivo" layout="block">
+                                <p:commandButton value="Agregar Cargo Distributivo" icon="ui-icon-plus" update="panelDistributivo"
+                                                 styleClass="Fs16" style="width: auto; height:30px; border: 2px solid; border-color: #E7C402; border-radius: 10px 0px 10px 0px;" actionListener="#{distributivoBeansView.form(null)}"/>
+
+                                <p:spacer width="10"/>
+
+                                <p:commandButton value="Limpiar Filtro" icon="ui-icon-refresh" styleClass="Fs16" process="@this" update="dtDistributivo"
+                                                 style="width: 150px; height:30px; border: 2px solid; border-color: #E7C402; border-radius: 10px 0px 10px 0px;" onclick="PF('dtDistributivo').clearFilters()" />
+
+                                <p:spacer width="10"/>
+
+                                <p:commandButton rendered="false" value="Imprimir" icon="ui-icon-print" styleClass="Fs16" process="@this"  
+                                                 style="width: 150px; border: 2px solid; border-color: #E7C402;"  actionListener="#{distributivoBeansView.opendlgPrint()}" />
+
+                                <p:spacer width="10"/>
+                                <p:commandButton id="btnCompletarea" actionListener="#{distributivoBeansView.dlogoObservaciones()}" 
+                                                 icon="fa fa-check-circle-o"  style=" width: 150px;
+                                                 height: 30px;                                              
+                                                 background: #0081cb;
+                                                 border: 2px solid;
+                                                 border-radius: 10px 0px 10px 0px;
+                                                 margin-bottom:  2%;
+                                                 position: relative; " 
+                                                 value="Completar Tarea"/>
+
+                                <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" >
+
+                                    <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                                        <p:outputLabel style="font-size: 18px; margin-top: 2%0; font-weight: bold;" value="Cupo:"/><br/>
+                                        <p:outputLabel style="font-size: 18px;margin-top: 2%; " value="#{distributivoBeansView.totalCupo}"> 
+                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                        </p:outputLabel>
+                                    </h:panelGroup>
+                                    <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                                        <p:outputLabel style="font-size: 18px; margin-top: 2%; font-weight: bold;" value="Cupo Asignado:"/><br/>
+                                        <p:outputLabel style="font-size: 18px;margin-top: 2%; " value="#{distributivoBeansView.cupoAsignado}"> 
+                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                        </p:outputLabel>
+                                    </h:panelGroup>
+                                    <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                                        <p:outputLabel style="font-size: 18px; margin-top: 2%; font-weight: bold;" value="Período:"/><br/>
+                                        <p:outputLabel style="font-size: 18px;margin-top: 2%; "  value="#{distributivoBeansView.busqueda.anio}"/> 
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <div style="width: 100% !important; display: inline-block">
+                                    <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;" onclick="activos();">ACTIVO</div>
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;" onclick="vacantes();">VACANTE</div>
+                                        <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;" onclick="inactivos();">INACTIVO</div>
+                                    </div>
+                                </div>
+                                <p:remoteCommand actionListener="#{distributivoBeansView.filtroActivosInactivos(1)}" name="activos" />
+                                <p:remoteCommand actionListener="#{distributivoBeansView.filtroActivosInactivos(2)}" name="vacantes" />
+                                <p:remoteCommand actionListener="#{distributivoBeansView.filtroActivosInactivos(3)}" name="inactivos" />
+                                <p:dataTable id="dtDistributivo" widgetVar="dtDistributivo" var="dis" style="width: 100%;text-align:center"
+                                             reflow="true" paginator="true"  lazy="true" rows="20" rowsPerPageTemplate="20,40,80,100"
+                                             value="#{distributivoBeansView.distributivoLazy}" emptyMessage="No se encontró ningun Distributivo."
+                                             selection="#{distributivoBeansView.distributivo}" rowKey="#{dis.id}" selectionMode="single"  
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             scrollable="true"  rowExpandMode="single" paginatorPosition="bottom"
+                                             rowStyleClass="#{dis.estadoActivo eq false ? 'estado-inactivo':(dis.servidorPublico ne null ? 'estado-normal':'estado-activo')}"
+                                             rowIndexVar="num">
+                                    <f:facet name="header" >
+                                        LISTADO DISTRIBUTIVO
+                                    </f:facet>
+                                    <p:column headerText="N°" style="text-align: center;width: 5px">
+                                        <h:outputText value="#{num + 1}" />   
+                                    </p:column>
+                                    <p:column headerText="CEDULA SERVIDOR" style="width: 36px"   
+                                              filterBy="#{dis.servidorPublico.persona.identificacion}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.servidorPublico.persona.identificacion}"/>
+                                    </p:column>
+                                    <p:column headerText="NOMBRE SERVIDOR" style="width: 80px; font-weight: bold" 
+                                              filterBy="#{dis.servidorPublico.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.servidorPublico.persona.nombreCompleltoSql == null?'VACANTE':dis.servidorPublico.persona.nombreCompleto.toUpperCase()}"/>
+                                    </p:column>
+                                    <p:column headerText="CÓDIGO " style="width: 28px; " >                                      
+                                        <h:outputText value="#{distributivoBeansView.loadCodigo(dis.id)}"/>
+                                    </p:column>
+                                    <p:column headerText="CARGO" style="width: 92px" filterBy="#{dis.cargo.nombreCargo}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.cargo.nombreCargo}"/>
+                                    </p:column>
+                                    <p:column  headerText="VIGENCIA DESDE" style="width: 52px">
+                                        <h:outputText value="#{dis.vigenciaDesde}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="VIGENCIA HASTA" style="width: 40px;  ">
+                                        <h:outputText value="#{dis.vigenciaHasta == null?'NO HAY FECHA CADUCIDAD':dis.vigenciaHasta}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="UNIDAD" style="width: 90px;  " filterBy="#{dis.unidadAdministrativa.nombre}" filterMatchMode="contains" >
+                                        <h:outputText value="#{dis.unidadAdministrativa.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="SUPERVISA" style="width: 90px" filterBy="#{dis.unidadAdministrativa.padre.nombre}" filterMatchMode="contains">
+                                        <h:outputText value="#{dis.unidadAdministrativa.padre.nombre}"/>
+                                    </p:column>
+                                    <!--                                    <p:column headerText="TIPO DE UNIDAD" style="width: 90px; font-size: 13px" filterBy="# {dis.unidadAdministrativa.tipoUnidad.descripcion}">
+                                                                            <h:outputText value="# {dis.unidadAdministrativa.tipoUnidad.descripcion}"/>
+                                                                        </p:column>-->
+                                    <p:column headerText="REGIMEN" style="width:80px" filterBy="#{dis.regimen.nombre}">
+                                        <h:outputText value="#{dis.regimen.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="TIPO DE CONTRATO" style="width: 105px" filterBy="#{dis.tipoContrato.nombre}">
+                                        <h:outputText value="#{dis.tipoContrato.nombre}"/>
+                                    </p:column>
+                                    <p:column headerText="ACCIONES" style="text-align: center; width: 40px">
+                                        <p:commandLink  title="Editar Distributivo" process="@this" actionListener="#{distributivoBeansView.form(dis)}"
+                                                        rendered="#{dis.estadoActivo}">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+
+                                    </p:column>
+
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog id="distributivoDialogo" header="Formulario de Distributivo" widgetVar="distributivoDialogo" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="860" closeOnEscape="true">
+            <h:form id="frmdlg" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title" style="padding-left: 7px; padding-right: 7px; margin-bottom: 0px; padding-bottom: 6px">
+                            <p:outputPanel id="panelDistributivo" style="width: 100%;">
+                                <div style="display: block">
+                                    <!--                                <p:panelGrid id="paneldeFieldset" columns="2" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">-->
+                                    <p:fieldset legend="DATOS CARGO" style="width: 53%; float: left; margin-left: 15px">
+                                        <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel for="selectCargo" value="Cargo:" style="width: 100%;"/>
+                                                <p:selectOneMenu  id="selectCargo" value="#{distributivoBeansView.distributivo.cargo}" converter="#{utilConverter}"
+                                                                  panelStyle="width:300px" style="max-width: 100%" filter="true" filterMatchMode="startsWith"
+                                                                  required="false">
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                    <f:selectItems value="#{distributivoBeansView.listCargo}" var="list"
+                                                                   itemLabel="#{list.nombreCargo}" itemValue="#{list}"
+                                                                   itemLabelEscaped="false"/>
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel for="@next" value="Unidad A:" style="width: 100%;" title="Unidad Administrativa"/>
+                                                <p:selectOneMenu value="#{distributivoBeansView.distributivo.unidadAdministrativa}" converter="#{utilConverter}"
+                                                                 panelStyle="width:300px" style="max-width: 100%" filter="true" filterMatchMode="startsWith"
+                                                                 required="false">
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                    <f:selectItems value="#{distributivoBeansView.listUnidad}" var="unidad"
+                                                                   itemLabel="#{unidad.nombre}" itemValue="#{unidad}"
+                                                                   itemLabelEscaped="false"/>
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel for="@next" value="Regimen Laboral:" style="width: 100%;"/>
+                                                <p:selectOneMenu value="#{distributivoBeansView.distributivo.regimen}" converter="#{utilConverter}"
+                                                                 panelStyle="width:300px" style="max-width: 100%" filter="true" filterMatchMode="startsWith"
+                                                                 disabled="#{distributivoBeansView.editar}"
+                                                                 >
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{distributivoBeansView.listRegimen}" var="listRe"
+                                                                   itemLabel="#{listRe.nombre}" itemValue="#{listRe}"
+                                                                   itemLabelEscaped="false" 
+                                                                   />
+                                                    <p:ajax update="tipoCont" listener="#{distributivoBeansView.update}" />
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel for="@next" value="Tipo de contrato:"  style="width: 100%;"/>
+                                                <p:selectOneMenu disabled="#{distributivoBeansView.editar1}" value="#{distributivoBeansView.distributivo.tipoContrato}" converter="#{utilConverter}"
+                                                                 panelStyle="width:300px" style="max-width: 100%" filter="true"
+                                                                 filterMatchMode="startsWith" id="tipoCont">
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{distributivoBeansView.regimen}" var="tipoC"
+                                                                   itemLabel="#{tipoC.nombre}" itemValue="#{tipoC}"
+                                                                   itemLabelEscaped="false" id="regim"
+                                                                   />
+                                                    <p:ajax update="panelfieldsetDetalle"/>
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank"  layout="grid">
+                                                <p:outputLabel for="@next" value="Fecha Desde:"  style="width: 100%;"/>
+                                                <p:calendar  id="fecha-desde" value="#{distributivoBeansView.distributivo.vigenciaDesde}" navigator="true" locale="de" pattern="dd-MM-yyyy" mask="true" />
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank"  layout="grid">
+                                                <p:outputLabel for="@next" value="Fecha Hasta:"  style="width: 100%;" />
+                                                <p:calendar required="false" id="fecha-hasta" value="#{distributivoBeansView.distributivo.vigenciaHasta}" navigator="true" locale="de" pattern="dd-MM-yyyy" mask="true" />
+                                            </p:panelGrid>
+
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                    <p:fieldset legend="DATOS ESCALA SALARIAL" id="fieldsetEscala" style="width: 38%; float: right;margin-right: 15px;height: 170px">
+                                        <p:panelGrid id="panelEscala" columns="1" style="width: 100% ; padding-left: 9px " layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                <p:outputLabel for="grupoo" value="Grupo Ocupacional:" style="width: 50px;"/>
+                                                <div class="ui-inputgroup">
+                                                    <p:inputText id="grupoo" class="panelInput" readonly="true" 
+                                                                 value="#{distributivoBeansView.distributivoEscala.escalaSalarial.grupoOrganizacional}" />
+                                                    <!--value="# {distributivoBeansView.distributivo.escalaSalarial.grupoOrganizacional}" />-->
+                                                    <p:commandButton disabled="#{distributivoBeansView.bloqueo}" title="Lista de Escala Salarial" icon="fa fa-search"  
+                                                                     styleClass="green-button button-group" style="width: 25px"
+                                                                     actionListener="#{distributivoBeansView.openDlgEscala()}"
+                                                                     process="@this"
+                                                                     >
+                                                        <!--<p:ajax event="dialogReturn" listener="# {distributivoBeansView.selectDataEscala}" update="fieldsetEscala,paneldetalle" />-->
+                                                        <p:ajax event="dialogReturn" listener="#{distributivoBeansView.selectDataEscala}" update="fieldsetEscala" />
+
+                                                    </p:commandButton>
+                                                </div>
+                                            </h:panelGroup>
+                                        </p:panelGrid>
+                                        <p:panelGrid id="panelgrado" columns="2" style="width: 100%; " layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel for="grado" value="Grado:" style="width: 100%;"/>
+                                                <p:inputText id="grado" class="panelInput" readonly="true" 
+                                                             value="#{distributivoBeansView.distributivoEscala.escalaSalarial.grado}">                                            
+                                                    <!--value="# {distributivoBeansView.distributivo.escalaSalarial.grado}">-->                                            
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel title="Remuneración Mensual Unificada" for="RMU" value="R.M.U:" style="width: 100%;"/>
+                                                <p:inputNumber  id="RMU" class="panelInput" readonly="true" required="false"
+                                                                value="#{distributivoBeansView.distributivoEscala.remuneracionDolares}">                                            
+                                                    <!--value=" # { distributivoBeansView.distributivo.rmu}">-->                                            
+                                                </p:inputNumber>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                </div>
+                                <!--                                </p:panelGrid>-->
+                                <p:panelGrid id="panelfieldsetDetalle" columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:fieldset legend="PROYECCIÓN ANUAL" >
+                                        <!--                                        <h:form id="formValorR">-->
+                                        <h:panelGroup id="dataTableDistributivo" layout="block" style="margin: 20px">
+                                            <div style="display: block; width: 100%">
+                                                <p:commandButton id="btnRubroAdd" value="Agregar Rubros" icon="ui-icon-plus"
+                                                                 styleClass="Fs16" style="width: auto; display: block ; float: left; margin-bottom: 15px;" 
+                                                                 actionListener="#{distributivoBeansView.openDlgValoresParametrizables()}"
+                                                                 process="@this">
+                                                    <p:ajax event="dialogReturn" listener="#{distributivoBeansView.selectDataRubros}" update="dtValores" />
+                                                </p:commandButton>
+
+                                                <div style="text-align: right; font-size: 18px;">
+
+                                                    <p:selectOneMenu  value="#{distributivoBeansView.busqueda.anio}" style=" font-size: 18px; height:30px; width: 20%; text-align: right; border: 1px solid #009688;">
+                                                        <!--                                                        <f:selectItem itemLabel="Seleccione un año"   itemValue="0"/>-->
+                                                        <f:selectItems value="#{distributivoBeansView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                                    </p:selectOneMenu>
+
+                                                    <p:commandButton  
+                                                        actionListener="#{distributivoBeansView.buscarP()}" icon="fa fa-search" styleClass="green-button button-group" update="dtValores,fieldsetEscala,panelEscala,btnRubroAdd,guardar1" style="height: 30px"  />
+                                                </div>
+                                            </div>
+                                            <p:remoteCommand name="onCellE" update="dtValores" />
+                                            <p:dataTable paginator="true" paginatorPosition="bottom" style="text-align: center; margin-top:5px" rowIndexVar="index"
+                                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                         rows="5" rowsPerPageTemplate="5,10" value="#{distributivoBeansView.valoresDistributivoList}" var="rubro" 
+                                                         emptyMessage="No existen Rubros Seleccionados." id="dtValores"  editable="true" editMode="cell" 
+                                                         >
+                                                <f:facet  name="header">Rubros Seleccionados</f:facet>
+                                                <p:ajax event="cellEdit" listener="#{distributivoBeansView.onCellEdit(rubro)}" oncomplete="onCellE()" update="dtValores"/>
+                                                <p:column headerText="Nombre Rubro" >
+                                                    <h:outputText value="#{rubro.valoresParametrizados.tipo}"/>
+
+                                                </p:column>
+                                                <p:column headerText="Estado Rubro" >
+                                                    <h:outputText value="#{rubro.valoresParametrizados.tipoEstado.texto}"/>
+
+                                                </p:column>
+                                                <p:column headerText="Valor Rubro" >
+                                                    <p:cellEditor disabled="#{rubro.valoresParametrizados.tipoEstado.texto == 'FIJO' or distributivoBeansView.habilitar(rubro) ? true:false}">
+                                                        <f:facet name="output"><h:outputText value="#{rubro.valorRubro}"/></f:facet>
+                                                        <f:facet name="input"><p:inputText value="#{rubro.valorRubro}" style="width: 100%"/></f:facet>
+                                                    </p:cellEditor>
+                                                </p:column>
+                                                <p:column headerText="Proyeccion" >
+                                                    <p:cellEditor  disabled="#{distributivoBeansView.habilitar(rubro)}">
+                                                        <f:facet name="output"><h:outputText value="#{rubro.proyeccion}"   /></f:facet>
+                                                        <f:facet name="input"><p:spinner id="rotate" value="#{rubro.proyeccion}" min="1" max="12" style="width: 100%">
+                                                                <p:keyFilter regEx="/[\d]/" />
+                                                            </p:spinner>
+                                                        </f:facet>
+                                                    </p:cellEditor>
+                                                </p:column>
+                                                <p:column headerText="Monto" >
+                                                    <h:outputText value="#{rubro.valorResultante}" />
+
+                                                </p:column>
+                                                <p:column  headerText="Acciones" style="text-align: center; width: 70px ; font-size: 13px ">
+                                                    <p:commandLink  disabled="#{distributivoBeansView.habilitar(rubro)}" title="Eliminar Rubro" process="@this" actionListener="#{distributivoBeansView.borrarRubroListaTest(index)}" update="dtValores" >
+                                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                        <p:confirm header="Confirmación de eliminación" 
+                                                                   message="Esta seguro de eliminar el Rubro?" icon="fa fa-exclamation-triangle"/>
+                                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el Rubro  del distributivo ?" icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </h:panelGroup>
+                                        <!--                                        </h:form>-->
+                                    </p:fieldset>
+                                </p:panelGrid>
+                                <br></br>
+                                <center>
+                                    <p:commandButton  value="Guardar" id="guardar1"
+                                                      actionListener="#{distributivoBeansView.guardar()}"
+                                                      icon="ui-icon-save"  
+                                                      styleClass="Fs16"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>     
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgPrint" header="Formulario de Impresion de Distributivo" widgetVar="dlgPrint" modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="250">
+            <h:form id="frmldlgprint" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+
+                            <p:outputPanel id="panelDisAnexo" style="width: 100%">
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+
+                                        <p:outputLabel title="Año de Impresion Distributivo" for="anio" value="Año de Distributivo:" style="width: 100%;"/>
+                                        <!--                                        <p:inputText  value="# {distributivoBeansView.anio}" id="anio" class="panelInput" readonly="false" required="false">                                            
+                                                                                </p:inputText>-->
+                                        <p:selectOneMenu  id="anio" value="#{distributivoBeansView.anio}" style=" width: 100%">
+                                            <f:selectItem itemLabel="Seleccione un año"   itemValue="0"/>
+                                            <f:selectItems value="#{distributivoBeansView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <br></br>
+                                <center>
+                                    <p:commandButton value="Imprimir" id="print"
+                                                     actionListener="#{distributivoBeansView.printReport()}"
+                                                     icon="ui-icon-print"  
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{distributivoBeansView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{distributivoBeansView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

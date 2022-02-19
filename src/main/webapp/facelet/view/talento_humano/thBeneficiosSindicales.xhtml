@@ -1,0 +1,182 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Beneficios Sindicales
+    </ui:define>
+    <ui:param name="tittle" value="Beneficios Sindicales" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Parámetros de busqueda">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodo" value="#{thBeneficiosSindicalesView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thBeneficiosSindicalesView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="tipoRoles" listener="#{thBeneficiosSindicalesView.updateTipoRolList()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="tipoRoles">
+                                    <p:outputLabel for="@next" value="Tipo de rol:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="dgPeriodo" value="#{thBeneficiosSindicalesView.thTipoRol}" converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thBeneficiosSindicalesView.tipoRolList}" var="item" itemValue="#{item}" itemLabel="#{item.descripcion}"/>
+                                        <p:ajax update="fieldsetDatos,btnCargarDatos,thBeneficiosSindicalesTable" listener="#{thBeneficiosSindicalesView.updateLazyModel()}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos del rol" id="fieldsetDatos">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Mes:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoMes" value="#{thBeneficiosSindicalesView.thTipoRol.idMes.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoMes')"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoTipo" value="#{thBeneficiosSindicalesView.thTipoRol.idTipo.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoTipo')"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Cargar datos">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Configuración"
+                                                     icon="fa fa-fw fa-gears" actionListener="#{thBeneficiosSindicalesView.openDlgConfig()}"
+                                                     styleClass="Fs16" style="width: 100%;">
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="btnCargarDatos">
+                                    <p:commandButton value="Cargar/Actualizar datos" icon="fa fa-refresh" process="@this" styleClass="Fs16"
+                                                     style="width: 100%;background: teal" rendered="#{thBeneficiosSindicalesView.btnLoadData}"
+                                                     actionListener="#{thBeneficiosSindicalesView.loadData()}" title="Cargar/Actualizar datos"/>
+                                </h:panelGroup>                               
+                            </p:panelGrid>                           
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="thBeneficiosSindicalesTable" widgetVar="thBeneficiosSindicalesTable" var="thBeneficiosSindicales" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{thBeneficiosSindicales.id}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{thBeneficiosSindicalesView.thBeneficiosSindicalesLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <p:column headerText="Identificación" style="width: 10%;text-align: center" filterMatchMode="contains" filterBy="#{prestamo.idServidor.persona.identificacion}">
+                                <h:outputText value="#{thBeneficiosSindicales.idServidor.persona.identificacion}"/>
+                            </p:column>
+                            <p:column headerText="Servidor" style="width: 22%;" filterMatchMode="contains" filterBy="#{prestamo.idServidor.persona.nombreCompleltoSql}">
+                                <h:outputText value="#{thBeneficiosSindicales.idServidor.persona.nombreCompleltoSql}"/>
+                            </p:column>  
+                            <p:column headerText="Cuota proporcional" style="width: 13%">
+                                <h:outputText value="#{thBeneficiosSindicales.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acción" style="width: 7%;text-align: center" rendered="#{thBeneficiosSindicalesView.btnLoadData}">
+                                <p:commandLink title="Ver" process="@this" actionListener="#{thBeneficiosSindicalesView.openDlgForm(thBeneficiosSindicales,true)}"  
+                                               update="thBeneficiosSindicalesForm">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Editar" process="@this" actionListener="#{thBeneficiosSindicalesView.openDlgForm(thBeneficiosSindicales,false)}"  
+                                               update="thBeneficiosSindicalesForm">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar" process="@this" actionListener="#{thBeneficiosSindicalesView.delete(thBeneficiosSindicales)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thBeneficiosSindicalesView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thBeneficiosSindicalesView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" 
+                                     icon="fa fa-save" actionListener="#{thBeneficiosSindicalesView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+        <p:dialog id="thBeneficiosSindicalesDlg" widgetVar="thBeneficiosSindicalesDlg" width="25%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thBeneficiosSindicalesForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="exampleeee">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                        <p:inputText id="identificacion" class="panelInput" style="width: 100%" readonly="true"
+                                         onkeypress="focusNextOnEnter(event, 'identificacion')"
+                                         value="#{thBeneficiosSindicalesView.thBeneficiosSindicales.idServidor.persona.identificacion}">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Servidor:" style="font-weight: bold"/><br/>
+                        <p:inputText id="nombreCompleltoSql" class="panelInput" style="width: 100%" readonly="true"
+                                         onkeypress="focusNextOnEnter(event, 'nombreCompleltoSql')"
+                                         value="#{thBeneficiosSindicalesView.thBeneficiosSindicales.idServidor.persona.nombreCompleltoSql}">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Cod. contable" style="font-weight: bold"/>
+                        <p:inputText id="codigo" class="panelInput" style="width: 100%" readonly="true"
+                                         onkeypress="focusNextOnEnter(event, 'identificacion')"
+                                         value="#{thBeneficiosSindicalesView.thBeneficiosSindicales.idCuentas.codigo}">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Partida presupuestaria:" style="font-weight: bold"/>
+                        <p:inputText id="partidaPresupuestaria" class="panelInput" style="width: 100%" readonly="true"
+                                         onkeypress="focusNextOnEnter(event, 'partidaPresupuestaria')"
+                                         value="#{thBeneficiosSindicalesView.thBeneficiosSindicales.partidaPresupuestaria}">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Valor:" for="valor"/><br/>
+                        <p:inputNumber id="valor"  decimalSeparator="." thousandSeparator="," symbol="$"
+                                       onkeypress="focusNextOnEnter(event, 'valor')" style="width: 100%"
+                                       value="#{thBeneficiosSindicalesView.thBeneficiosSindicales.valor}"
+                                       inputStyle="text-align:right" readonly="#{thBeneficiosSindicalesView.dataView}">
+                        </p:inputNumber>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" update="thBeneficiosSindicalesTable"
+                                     rendered="#{!thBeneficiosSindicalesView.dataView}"
+                                     icon="fa fa-save" actionListener="#{thBeneficiosSindicalesView.closeDlgForm()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+    </ui:define>
+</ui:composition>

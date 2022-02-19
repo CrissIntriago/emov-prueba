@@ -1,0 +1,130 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">        
+        Exoneraciones Aplicadas
+    </ui:define>
+    <ui:param name="tittle" value="Exoneración Aplicadas" />
+    <ui:define name="content">
+        <h:form id="frmExon">
+
+            <p:dataTable lazy="true" paginator="true" emptyMessage="No se encontrar&#243;n registros" 
+                         paginatorPosition="top" reflow="true" rows="10" rowsPerPageTemplate="10,20,50"
+                         value="#{exoneracionesMB.exoneraciones}" var="exo" filterEvent="enter" 
+                         style="padding: 1px 10px;" >
+
+                <p:column headerText="Num. de solicitud" filterStyle="width:70%;" width="15" filterBy="#{exo.id}">
+                    <center>#{exo.id}</center>
+                </p:column>
+
+                <p:column headerText="Tipo de Exoneraciòn" width="15" filterStyle="width:70%;" filterBy="#{exo.exoneracion.numResolucionSac}">
+                    <center>#{exo.exoneracion.exoneracionTipo.descripcion}</center>
+                </p:column>
+
+
+
+                <p:column headerText="Num. de resolución" filterStyle="width:70%;" width="15" filterBy="#{exo.exoneracion.numResolucionSac}">
+                    <center>#{exo.exoneracion.numResolucionSac}</center>
+                </p:column>
+
+                <p:column headerText="Num. predio"  filterStyle="width:70%;" width="15" filterBy="#{exo.liquidacionOriginal.predio.numPredio}">
+                    <center>#{exo.liquidacionOriginal.predio.numPredio}</center>
+                </p:column>
+
+                <p:column headerText="Año" filterStyle="width:70%;" width="10" filterBy="#{exo.liquidacionOriginal.anio}">
+                    <center>#{exo.liquidacionOriginal.anio}</center>
+                </p:column>
+
+                <p:column headerText="Solicitante" width="35" filterBy="#{exo.liquidacionOriginal.nombreComprador}">
+                    <center><h:outputText value="#{exo.liquidacionPosterior ne null?(exo.liquidacionPosterior.comprador == null ?  exo.liquidacionPosterior.nombreComprador : exo.liquidacionPosterior.comprador.nombreCompleto):(exo.liquidacion.comprador == null ?  exo.liquidacion.nombreComprador : exo.liquidacion.comprador.nombreCompleto)}"/></center>
+                </p:column>
+
+                <p:column headerText="Fecha de ingreso" width="15">
+                    <center>#{exo.fechaIngreso}</center>
+                </p:column>
+
+                <p:column headerText="Acción" width="15">
+                    <center>
+                        <p:commandLink actionListener="#{exoneracionesMB.verDetalles(exo)}" title="Ver detalles" 
+                                       oncomplete="PF('dlgExoAplicada').show();" update="frmExoAp">
+                            <i class="fa fa-fw fa-eye" style="font-size: 1.5em" />   
+                        </p:commandLink>
+<!--                        <p:commandLink title="Imprimir exoneracion" 
+                                       actionListener="# {exoneracionesMB.imprimirExoClase3y6(exo)}">
+                            <i class="fa fa-fw fa-file-pdf-o" style="font-size: 1.5em" />
+                        </p:commandLink>-->
+                    </center>
+                </p:column>
+                <!--ELIMINAR EXONERACION JC-->
+                <p:column headerText="Eliminar" width="5">
+                    <center>
+                        <p:commandLink title="Anular Exoneracion"  update="frmExon"
+                                       rendered="#{exo.liquidacionPosterior.estadoLiquidacion.id == 2}"
+                                       actionListener="#{exoneracionesMB.anularExoneracion(exo)}">
+                            <i class="fa fa-fw fa-remove" style="font-size: 1.5em;color: red" /> 
+                            <p:confirm header="Advertencia" message="Esta Seguro de Continuar?" icon="ui-icon-alert" />
+                        </p:commandLink>
+                    </center>    
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <!-- -->
+
+        <p:dialog id="dlgExoAplicada" widgetVar="dlgExoAplicada" header="Solicitud de Exoneración Aplicada" appendTo="@(body)" modal="true" width="80%" resizable="false" closable="true" closeOnEscape="true">
+            <h:form id="frmExoAp">
+                <p:panel id="pobs" header="Datos de la exoneración" style="width: 100%">
+                    <div align="center">
+                        <h:outputText value="NUMERO DE SOLICITUD: #{exoneracionesMB.exoConsulta.id}" style="font-weight:bold"/>
+                        <!--<h:outputText value="# {exoneracionesMB.mensajeExoneracion}" style="font-weight:bold"/>-->
+                        <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" >
+                            <p:fieldset legend="Liquidación Original" style="font-size: 13px;">
+                                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" >
+                                    <h:outputText value="Total a pagar"/>
+                                    <p:inputText value="#{exoneracionesMB.original.totalPago}" readonly="true" />
+                                </p:panelGrid>
+                                <p:dataTable value="#{exoneracionesMB.detList1}" var="t1" rows="7" paginator="true"
+                                             paginatorPosition="top">
+                                    <f:facet name="header">
+                                        Rubros
+                                    </f:facet>
+                                    <p:column>
+                                        <center>#{t1.descripcion}</center>
+                                    </p:column>
+                                    <p:column>
+                                        <center>#{t1.valor}</center>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:fieldset>
+
+                            <!-- -->
+
+                            <p:fieldset legend="Liquidación Posterior" style="font-size: 13px;">
+                                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group">
+                                    <h:outputText value="Total a pagar"/>
+                                    <p:inputText value="#{exoneracionesMB.posterior.totalPago}" readonly="true" />
+                                </p:panelGrid>
+                                <p:dataTable value="#{exoneracionesMB.detList2}" var="t2" rows="7" paginator="true"
+                                             paginatorPosition="top">
+                                    <f:facet name="header">
+                                        Rubros
+                                    </f:facet>
+                                    <p:column>
+                                        <center>#{t2.descripcion}</center>
+                                    </p:column>
+                                    <p:column>
+                                        <center>#{t2.valor}</center>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:fieldset>
+                        </p:panelGrid>
+                    </div>
+                </p:panel>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

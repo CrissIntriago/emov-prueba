@@ -1,0 +1,174 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Préstamo Quirografario
+    </ui:define>
+    <ui:param name="tittle" value="Préstamo Quirografario"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Parámetros de busqueda">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodo" value="#{thPrestamoQuirografarioView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thPrestamoQuirografarioView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="tipoRoles" listener="#{thPrestamoQuirografarioView.updateTipoRolList()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="tipoRoles">
+                                    <p:outputLabel for="@next" value="Tipo de rol:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="dgPeriodo" value="#{thPrestamoQuirografarioView.thTipoRol}" converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thPrestamoQuirografarioView.tipoRolList}" var="item" itemValue="#{item}" itemLabel="#{item.descripcion}"/>
+                                        <p:ajax update="fieldsetDatos,btnCargarDatos,prestamoTable" listener="#{thPrestamoQuirografarioView.updateLazyModel()}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos del rol" id="fieldsetDatos">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Mes:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoMes" value="#{thPrestamoQuirografarioView.thTipoRol.idMes.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoMes')"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                    <p:inputText id="thTipoTipo" value="#{thPrestamoQuirografarioView.thTipoRol.idTipo.texto}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoTipo')"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Cargar datos">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="btnCargarDatos">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Formato EXCEL" icon="fa fa-download" process="@this" styleClass="Fs16"
+                                                     actionListener="#{thPrestamoQuirografarioView.download()}" disabled="#{!thPrestamoQuirografarioView.btnCargarDatos}"
+                                                     style="width: 100%;background: gray" ajax="false" title="Descargar">
+                                        <p:fileDownload value="#{thPrestamoQuirografarioView.downloadFormato}"/>
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Configuración"
+                                                     icon="fa fa-fw fa-gears" actionListener="#{thPrestamoQuirografarioView.openDlgConfig()}"
+                                                     styleClass="Fs16" style="width: 100%;">
+                                    </p:commandButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Subir EXCEL" icon="fa fa-upload" process="@this" styleClass="Fs16"
+                                                     style="width: 100%;background: teal" disabled="#{thPrestamoQuirografarioView.thTipoRol ==null?true:(!thPrestamoQuirografarioView.btnCargarDatos)}"
+                                                     oncomplete="PF('subirdocu').show()" update="forMainDocu" title="Cargar Diario Ajuste"/>
+                                </h:panelGroup>                                 
+                            </p:panelGrid>                           
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="prestamoTable" widgetVar="prestamoTable" var="prestamo" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{prestamo.id}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{thPrestamoQuirografarioView.thPrestamoQuirografarioLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <p:column headerText="Identificación" style="width: 10%;text-align: center" filterMatchMode="contains" filterBy="#{prestamo.servidor.persona.identificacion}">
+                                <h:outputText value="#{prestamo.servidor.persona.identificacion}"/>
+                            </p:column>
+                            <p:column headerText="Servidor" style="width: 50%;" filterMatchMode="contains" filterBy="#{prestamo.servidor.persona.nombreCompleltoSql}">
+                                <h:outputText value="#{prestamo.servidor.persona.nombreCompleltoSql}"/>
+                            </p:column>  
+                            <p:column headerText="Valor" style="width: 15%" rendered="#{!thPrestamoQuirografarioView.btnCargarDatos}">
+                                <h:outputText value="#{prestamo.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 15%" rendered="#{thPrestamoQuirografarioView.btnCargarDatos}">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{prestamo.valor}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{prestamo.valor}">
+                                            <p:ajax update="prestamoTable" listener="#{thPrestamoQuirografarioView.edit(prestamo)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 10%;text-align: center" rendered="#{thPrestamoQuirografarioView.btnCargarDatos}">
+                                <p:commandLink title="Eliminar" actionListener="#{thPrestamoQuirografarioView.delete(prestamo)}" 
+                                               update="prestamoTable" process="@this">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink> 
+                            </p:column>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog width="40%" id="subirdocu" header="Cargar archivo" widgetVar="subirdocu" modal="true" showEffect="fold" hideEffect="fold" 
+                  closable="false" resizable="false">
+            <p:outputLabel value="Instrucciones" style="font-weight:bold;font-size:150%"/>
+            <br/>
+            <ul style="font-size:100%">
+                <li>El número de identificación debe iniciar con el simbolo (')</li>
+                <li>formato de número: 00.00 sin miles</li>
+                <li>No dejar celdas de valores en blanco</li>
+                <li>No dejar espacios al inicio o final de los valores</li>
+            </ul>
+            <h:form prependId="false" id="forMainDocu">  
+                <p:fileUpload mode="advanced"  onstart="PF('loadingDlg').show()"
+                              multiple="false"
+                              cancelLabel="Cancelar"
+                              uploadLabel="Subir"
+                              label="Seleccionar"
+                              invalidFileMessage="El archivo seleccionado no tiene el formato de la plantilla"
+                              fileUploadListener="#{thPrestamoQuirografarioView.cargarFormato}"/>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="thConfigDlg" widgetVar="thConfigDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Configuración">
+            <h:form prependId="false" id="thConfigForm">
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">                    
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Configuración:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="codConfig" value="#{thPrestamoQuirografarioView.thConfig.codConfig}"
+                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{thPrestamoQuirografarioView.listCatalogo}" var="item" itemLabel="#{item.texto}" itemValue="#{item.texto}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>                    
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" 
+                                     icon="fa fa-save" actionListener="#{thPrestamoQuirografarioView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>   
+        <p:dialog width="25%" id="loadingDlg" header="Mensaje de espera" widgetVar="loadingDlg" modal="true" showEffect="fold" hideEffect="fold" resizable="false">
+            <div class="card">
+                <h:form id="procesandoForm">
+                    <h:panelGroup>
+                        <h1>Procesando...</h1>
+                        <center>
+                            <p:graphicImage value="/resources/images/loading.gif" library="barcelona-layout" 
+                                            style="background: transparent" width="50%"/>
+                        </center>
+                    </h:panelGroup>
+                </h:form>
+            </div>                            
+        </p:dialog>
+    </ui:define>        
+</ui:composition>

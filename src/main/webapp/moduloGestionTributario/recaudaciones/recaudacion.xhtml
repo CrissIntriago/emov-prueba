@@ -1,0 +1,949 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+
+    <ui:define name="title">Recaudación</ui:define>
+    <ui:param name="tittle" value="Pago de Impuestos" />
+    <ui:define name="head">
+        <style type="text/css">
+            body .ui-inputfield {
+                border-width: 1px 1px 1px 1px;
+            }
+            body .ui-inputfield.ui-state-focus {
+                border-width: 1px 1px 1px 1px;
+            }
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.5em;
+                font-size: 1em;
+            }
+            .ui-panelgrid .ui-panelgrid-cell{
+                border-style: hidden;
+            }
+            body .ui-fieldset {
+                padding: 0.5em;
+            }
+            .ui-panelgrid {
+                border-collapse: inherit;
+            }
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.1px 0.1px 0.1px 0.1px;
+                font-size: 1em;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <p:outputPanel rendered="#{!recaudacionMB.accesoComprobante}">
+                <center>
+                    <div class="exception-band">
+                        <div class="exception-content">
+                            <h1>ACCESO DENEGADO</h1>
+                            <p>No tienes los permisos</p>
+                            <p:graphicImage name="images/logo.png" library="barcelona-layout" />
+                        </div>
+                    </div>
+                </center>
+            </p:outputPanel>
+            <p:outputPanel rendered="#{recaudacionMB.accesoComprobante}">
+                <p:panelGrid columns="3" columnClasses="ui-grid-col-1, ui-grid-col-8, ui-grid-col-3" layout="grid">
+                    <p:panelGrid columns="1">
+                        <p:selectOneRadio value="#{recaudacionMB.tipoBusqueda}" columns="1" layout="grid">
+                            <f:selectItem itemLabel="Urbano" itemValue="2" />
+                            <f:selectItem itemLabel="Rural" itemValue="3" />
+                            <!--<f:selectItem itemLabel="Todos" itemValue="1" />-->
+                            <p:ajax update="mainForm" />
+                        </p:selectOneRadio>
+                        <center>
+                            <p:commandButton icon="fa fa-search" value="Consultar"
+                                             rendered="#{recaudacionMB.tipoConsulta eq 3 and (recaudacionMB.tipoBusqueda ne null)}"
+                                             actionListener="#{recaudacionMB.consultarTipoLiquidacionesEmisiones()}"
+                                             update="mainForm:datatipoliq,mainForm:dataPrediosList" />
+                            <p:commandButton icon="fa fa-search" value="Consultar PF"
+                                             rendered="#{recaudacionMB.tipoConsulta eq 8 and (recaudacionMB.tipoBusqueda ne null)}"
+                                             actionListener="#{recaudacionMB.liquidacionesdirectas()}"
+                                             update="mainForm" />
+                        </center>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Tipo de Consulta" style="font-size: 15px; font-weight: bolder;"/>
+                        <p:selectOneRadio id="selecttipoconsulta" value="#{recaudacionMB.tipoConsulta}">
+                            <f:selectItem itemLabel="Cod. Catastral" itemValue="3"/>
+                            <f:selectItem itemLabel="Contribuyente" itemValue="2"/>
+                            <f:selectItem itemLabel="Cód. Predial" itemValue="1"/>
+                            <f:selectItem itemLabel="Cód. Anterior" itemValue="4"/>
+                            <!--<f:selectItem itemLabel="Código Catastral" itemValue="5"/>-->
+                            <f:selectItem itemLabel="Cód. Liquidación" itemValue="6"/>
+                            <f:selectItem itemLabel="Mercados" itemValue="7"/>
+                            <f:selectItem itemLabel="Permiso F." itemValue="8"/>
+                            <p:ajax update="mainForm" listener="#{recaudacionMB.loadMercados()}" />
+                        </p:selectOneRadio>
+                        <p:panelGrid columns="3" rendered="#{recaudacionMB.tipoConsulta eq 7}">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:selectOneMenu id="panemercado" value="#{recaudacionMB.mercado}"
+                                                 converter="#{utilConverter}" 
+                                                 filter="true" filterMatchMode="contains"
+                                                 style="width: 200px;" panelStyle="width:250px">
+                                    <f:selectItem itemLabel="Seleccionar Mercado" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{recaudacionMB.mercadosList}"
+                                                   var="m"
+                                                   itemLabel="#{m.nombre}"
+                                                   itemValue="#{m}"/>
+                                    <p:ajax update="mainForm" listener="#{recaudacionMB.loadDetalleMercado()}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+
+                                <p:selectOneMenu id="detallemercado" value="#{recaudacionMB.detalleMercado}"
+                                                 converter="#{utilConverter}" 
+                                                 filter="true" filterMatchMode="contains">
+                                    <f:selectItem itemLabel="Seleccionar Mercado" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{recaudacionMB.detalleMercadoList}"
+                                                   var="dm"
+                                                   itemLabel="#{dm.andenNivel}"
+                                                   itemValue="#{dm}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid>
+                                <div class="ui-g-12 ui-md-12">
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="#{recaudacionMB.nLocal}" placeholder="N° Local" />
+                                        <p:commandButton icon="fa fa-search" style="border-radius: 0px 5px 5px 0px;height: "
+                                                         actionListener="#{recaudacionMB.consultaMercados()}"
+                                                         update="mainForm,mainForm:panelLiquidaciones"/>
+                                    </div>
+                                </div>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid rendered="#{recaudacionMB.tipoConsulta eq 1}">
+                            <div class="ui-g-12 ui-md-6">
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{recaudacionMB.predioModel.numPredio}" style="width: 60%;border: 1px solid #00796B;" />
+                                    <p:commandButton icon="fa fa-search" style="border-radius: 0px 5px 5px 0px;height: "
+                                                     actionListener="#{recaudacionMB.consultarTipoLiquidacionesEmisiones()}"
+                                                     update="mainForm:datatipoliq"/>
+                                </div>
+                            </div>
+                        </p:panelGrid>
+                        <p:panelGrid rendered="#{recaudacionMB.tipoConsulta eq 6}">
+                            <div class="ui-g-12 ui-md-6">
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{recaudacionMB.predioModel.idLiquidacion}" 
+                                                 style="width: 60%;border: 1px solid #00796B;" onkeyup="toUpperCase(this)" />
+                                    <p:commandButton icon="fa fa-search" style="border-radius: 0px 5px 5px 0px;height: "
+                                                     actionListener="#{recaudacionMB.liquidacionesdirectas()}"
+                                                     update="mainForm,mainForm:panelLiquidaciones"/>
+                                </div>
+                            </div>
+                        </p:panelGrid>
+                        <p:panelGrid rendered="#{recaudacionMB.tipoConsulta eq 4}">
+                            <div class="ui-g-12 ui-md-6">
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{recaudacionMB.predioModel.predialAnt}" style="width: 60%;border: 1px solid #00796B;"/>
+                                    <p:commandButton icon="fa fa-search" style="border-radius: 0px 5px 5px 0px;height: "
+                                                     actionListener="#{recaudacionMB.consultarTipoLiquidacionesEmisiones()}"
+                                                     update="mainForm:datatipoliq"/>
+                                </div>
+                            </div>
+                        </p:panelGrid>
+                        <p:panelGrid rendered="#{recaudacionMB.tipoConsulta eq 2}">
+                            <div class="ui-g-12 ui-md-6">
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{recaudacionMB.identificacion}" placeholder="CI/RUC" 
+                                                 style="width: 100%"/>
+                                    <p:separator/>
+                                    <p:spacer width="20" />
+                                    <p:separator/>
+                                    <p:inputText value="#{recaudacionMB.nombreContribuyente}" placeholder="NOMBRES Y APELLIDOS" 
+                                                 style="width: 100%"/>
+                                    <p:commandButton icon="fa fa-search" style="border-radius: 0px 5px 5px 0px;height: "
+                                                     actionListener="#{recaudacionMB.consultarTipoLiquidacionesEmisiones()}"
+                                                     update="mainForm:datatipoliq,mainForm:dataPrediosList" />
+                                </div>
+                            </div>
+                        </p:panelGrid>
+                        <p:panelGrid columns="#{recaudacionMB.tipoConsulta eq 8 ? 11:10}" 
+                                     style="width: 95%;" styleClass="ui-responsive"
+                                     rendered="#{(recaudacionMB.tipoConsulta eq 3 or recaudacionMB.tipoConsulta eq 8) and recaudacionMB.tipoBusqueda eq 2}">
+                            <p:column><h:outputText value="PARROQ." style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="SECTOR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="MZ. " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="SOLAR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV1 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV2 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV3 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV4 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="PHV " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="PHH " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column rendered="#{recaudacionMB.tipoConsulta eq 8}"><h:outputText value="N° LOCAL " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.parroquia}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.sector}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.mz}" maxlength="4" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.solar}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div1}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div2}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div3}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div4}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>   </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.phv}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.phh}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>                            
+                            <p:column rendered="#{recaudacionMB.tipoConsulta eq 8}">
+                                <p:inputText value="#{recaudacionMB.predioModel.numLocal}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>                            
+                        </p:panelGrid>
+                        <p:panelGrid columns="#{recaudacionMB.tipoConsulta eq 8 ? 6:5}" style="width: 95%;" styleClass="ui-responsive"
+                                     rendered="#{(recaudacionMB.tipoConsulta eq 3 or recaudacionMB.tipoConsulta eq 8) and recaudacionMB.tipoBusqueda eq 3}">
+                            <p:column><h:outputText value="PARROQ." style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="SECTOR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="CÓDIGO" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV1" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column><h:outputText value="DIV2" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column rendered="#{recaudacionMB.tipoConsulta eq 8}"><h:outputText value="N° LOCAL" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.parroquia}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.sector}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.numPredio}" maxlength="5" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div1}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column>
+                                <p:inputText value="#{recaudacionMB.predioModel.div2}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                            <p:column rendered="#{recaudacionMB.tipoConsulta eq 8}">
+                                <p:inputText value="#{recaudacionMB.predioModel.numLocal}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                    <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                </p:inputText>
+                            </p:column>
+                        </p:panelGrid>
+                    </p:panelGrid> 
+                    <p:dataTable id="datatipoliq" value="#{recaudacionMB.tipoLiquidaciones}" var="tipoliq"
+                                 scrollable="true" scrollHeight="150" 
+                                 selectionMode="single" selection="#{recaudacionMB.tipoSelect}"
+                                 rowKey="#{tipoliq.id}" rows="100">
+                        <p:ajax event="rowSelect" listener="#{recaudacionMB.consultaLiquidacones}" update="mainForm"/>
+                        <p:ajax event="rowUnselect" listener="#{recaudacionMB.consultaLiquidacones}" update="mainForm"/>
+                        <p:column headerText="Tipo Liquidacion" filterBy="#{tipoliq.nombreTitulo}" filterMatchMode="contains">
+                            <h:outputText value="#{tipoliq.nombreTitulo}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:panelGrid>
+                <p:panelGrid id="panelPrediosConsulta" columns="1" layout="grid"
+                             styleClass="ui-panelgrid-blank form-group">
+                    <p:dataTable id="dataPrediosList" value="#{recaudacionMB.prediosConsulta}"
+                                 rendered="#{not empty recaudacionMB.prediosConsulta and recaudacionMB.prediosConsulta.size() > 1}"
+                                 var="p" scrollable="true" scrollHeight="150" 
+                                 emptyMessage="No se encontraron elementos..." selectionMode="single"
+                                 rowKey="#{p.id}" selection="#{recaudacionMB.predioConsulta}" 
+                                 reflow="true" rows="100">                    
+                        <p:ajax event="rowSelect" listener="#{recaudacionMB.seleccionarPredio(recaudacionMB.predioConsulta.tipoPredio eq 'U' ? 1:2)}" update="mainForm" process="@this"/>
+                        <p:column headerText="Tipo Predio" width="5%" filterBy="#{p.tipoPredio}">
+                            <p:outputLabel value="#{p.tipoPredio}"/>
+                        </p:column>
+                        <p:column headerText="No. Predio" sortBy="#{p.numPredio}" width="5%" 
+                                  filterBy="#{p.numPredio}" filterMatchMode="contains" filterStyle="width: 95%;">
+                            <p:outputLabel value="#{p.numPredio}"/>
+                        </p:column>
+                        <p:column headerText="Cód. Predial" width="10%" filterBy="#{p.claveCat}" 
+                                  filterMatchMode="contains" filterStyle="width: 90%;">
+                            <p:outputLabel value="#{p.claveCat}"/>
+                        </p:column>
+                        <p:column headerText="Propietario" width="30%" filterBy="#{p.nombrePropietarios}" 
+                                  filterMatchMode="contains"  filterStyle="width: 90%;">
+                            <p:outputLabel value="#{p.nombrePropietarios}"/>
+                        </p:column>
+                        <p:column headerText="Dirección"   width="45%" filterBy="#{p.direccion}" 
+                                  filterMatchMode="contains" filterStyle="width: 90%;">
+                            <p:outputLabel value="#{p.direccion}"/>
+                        </p:column>
+                        <p:column headerText="Mz" width="5%" filterBy="#{p.urbMz}" filterMatchMode="exact" 
+                                  filterStyle="width: 90%;">
+                            <p:outputLabel value="#{p.urbMz}"/>
+                        </p:column>
+                        <p:column headerText="Sl" width="5%" filterBy="#{p.urbSolarnew}">
+                            <p:outputLabel value="#{p.urbSolarnew}"/>
+                        </p:column>
+                    </p:dataTable> 
+                </p:panelGrid>
+                <p:panelGrid id="panelLiquidaciones" columns="#{recaudacionMB.columnsDetalle()}" columnClasses="#{recaudacionMB.getColumnClasses()}" 
+                             layout="grid"
+                             styleClass="ui-panelgrid-blank form-group">
+                    <p:fieldset legend="Liquidaciones Generadas" rendered="#{recaudacionMB.renderedDetalle}">
+                        <p:dataTable id="dataLiqEmi2" value="#{recaudacionMB.emisionesPrediales}"
+                                     rendered="#{recaudacionMB.tipoSelect.id eq 257 ? true:false}"
+                                     var="liq" scrollable="true" scrollHeight="250" rowIndexVar="index"
+                                     emptyMessage="No se encontraron elementos..." selectionMode="multiple"
+                                     rowKey="#{liq.id}" selection="#{recaudacionMB.liquidacionList}" 
+                                     reflow="true" rows="100">
+
+                            <p:ajax event="rowSelect" listener="#{recaudacionMB.emisionSeleccionada(liq)}" update="mainForm"/>
+                            <p:ajax event="rowUnselect" listener="#{recaudacionMB.emisionSeleccionada(liq)}" update="mainForm"/>
+                            <p:ajax event="toggleSelect" listener="#{recaudacionMB.emisionSeleccionada(liq)}" update="mainForm"/>
+                            <p:ajax event="rowSelectCheckbox" listener="#{recaudacionMB.emisionSeleccionada(liq)}" update="mainForm"/>
+                            <p:ajax event="rowUnselectCheckbox" listener="#{recaudacionMB.emisionSeleccionada(liq)}" update="mainForm"/>
+                            <p:column selectionMode="multiple" style="text-align:center" width="5" 
+                                      rendered="#{recaudacionMB.tipoSelect.id eq 2 ? false:recaudacionMB.tipoSelect.id eq 3 ? false:true}"/>
+                            <p:column headerText="#Cuota" width="5" style="text-align: center">
+                                <p:outputLabel value="#{recaudacionMB.getCuotaConvenioByLiquidacion(liq).mes}" />
+                            </p:column>
+                            <p:column headerText="Fecha pago" width="20">
+                                <p:outputLabel value="#{recaudacionMB.getCuotaConvenioByLiquidacion(liq).fechaMaximaPago}" >
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="N° CONVENIO" width="15" style="text-align: center">
+                                <p:outputLabel value="#{recaudacionMB.getCuotaConvenioByLiquidacion(liq).convenio.id}" />
+                            </p:column>
+                            <p:column headerText="Total" width="7">
+                                <p:outputLabel value="#{liq.totalPago}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                        <p:dataTable id="dataLiqEmi" value="#{recaudacionMB.emisionesPrediales}"
+                                     rendered="#{recaudacionMB.tipoSelect.id eq 257 ? false:true}"
+                                     var="liquidacion" scrollable="true" scrollHeight="250" rowIndexVar="index"
+                                     emptyMessage="No se encontraron elementos..." selectionMode="multiple"
+                                     rowKey="#{liquidacion.id}" selection="#{recaudacionMB.liquidacionList}" reflow="true" rows="100">
+
+                            <p:ajax event="rowSelect" listener="#{recaudacionMB.emisionSeleccionada(liquidacion)}" update="mainForm"/>
+                            <p:ajax event="rowUnselect" listener="#{recaudacionMB.emisionSeleccionada(liquidacion)}" update="mainForm"/>
+                            <p:ajax event="toggleSelect" listener="#{recaudacionMB.emisionSeleccionada(liquidacion)}" update="mainForm"/>
+                            <p:ajax event="rowSelectCheckbox" listener="#{recaudacionMB.emisionSeleccionada(liquidacion)}" update="mainForm"/>
+                            <p:ajax event="rowUnselectCheckbox" listener="#{recaudacionMB.emisionSeleccionada(liquidacion)}" update="mainForm"/>
+                            <p:column selectionMode="multiple" style="width:16px;text-align:center" rendered="#{recaudacionMB.tipoSelect.id eq 2 ? false:recaudacionMB.tipoSelect.id eq 3 ? false:true}"/>
+
+                            <p:column headerText="Año" width="5" style="text-align: center">
+                                <p:outputLabel value="#{liquidacion.anio}" />
+                            </p:column>
+                            <p:column headerText="Contribuyente" width="20">
+                                <p:outputLabel value="#{liquidacion.nombreComprador}" />
+                            </p:column>
+                            <p:column headerText="Código" width="15">
+                                <p:outputLabel value="#{liquidacion.codigoLocal}" />
+                            </p:column>
+                            <p:column headerText="Total" width="7">
+                                <p:outputLabel value="#{liquidacion.pagoFinal}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                        <p:contextMenu id="opLiquidaciones" for="dataLiqEmi">
+                            <p:menuitem value="Detalle Emision" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" process="@this"  />
+                            <p:menuitem value="Detalle pago" oncomplete="PF('dlgDetallePagos').show();" update="formDetPagos" process="@this"  />
+                        </p:contextMenu>
+                    </p:fieldset>
+                    <p:fieldset legend="Liquidaciones a Cobrar">
+                        <p:outputLabel value="Total:" style="font-size: 15px; font-weight: bolder;"/>
+                        <p:spacer width="10" />
+                        <h:outputText value="#{recaudacionMB.modelPago.valorCobrar}" style="font-size: 15px; font-weight: bolder;"/>
+                        <p:dataTable id="dataEmisiones" value="#{recaudacionMB.emisionesCobro}" var="emi"
+                                     sortMode="single"
+                                     emptyMessage="No se encontraron elementos..." sortOrder="#{emi.anio}" >
+                            <p:column headerText="Acciones" width="3" style="text-align: center">
+                                <p:commandLink title="Eliminar" actionListener="#{recaudacionMB.eliminarList(emi)}" 
+                                               rendered="#{recaudacionMB.renderedList(emi)}"
+                                               update="mainForm" >
+                                    <i class="fa fa-remove" style="font-size: 1.3em;color: red"/>
+                                </p:commandLink>
+                            </p:column>
+                            <p:column headerText="Año" width="5" style="text-align: center" sortBy="#{emi.anio}" >
+                                <p:outputLabel value="#{emi.anio}" />
+                            </p:column>
+                            <p:column headerText="Tipo Liquidación" width="25" style="text-align: center" sortBy="#{emi.anio}" 
+                                      rendered="#{recaudacionMB.tipoConsulta eq 8}">
+                                <p:outputLabel value="#{emi.tipoLiquidacion.nombreTitulo}" />
+                            </p:column>
+                            <p:column headerText="Contribuyente" width="20">
+                                <p:outputLabel value="#{emi.nombreComprador  eq null ? emi.comprador.nombreCompleltoSql:emi.nombreComprador}" />
+                            </p:column>
+                            <p:column headerText="Código" width="15">
+                                <p:outputLabel value="#{emi.codigoLocal eq null ? emi.predio.claveCat:emi.codigoLocal}" />
+                            </p:column>
+                            <p:column headerText="Total" width="7">
+                                <p:outputLabel value="#{emi.totalPago.add(emi.getExoneracionSumValor())}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Saldo" width="7" >
+                                <p:outputLabel value="#{emi.saldo.add(emi.getExoneracionSumValor())}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Adicionales" width="7">
+                                <h:outputText id="adi" value="#{emi.recargo.add(emi.interes).subtract(emi.descuento).subtract(emi.valorExoneracion)}" style="float: right">
+                                    <f:convertNumber pattern="$ #,##0.00" />
+                                </h:outputText>
+                                <p:tooltip for="adi">
+                                    <p:panelGrid columns="2">
+                                        <p:outputLabel value="Descuento: " style="color: #000000"/>
+                                        <h:outputText value="#{emi.descuento}" style="color: #000000">
+                                            <f:convertNumber pattern="$ #,##0.00" />
+                                        </h:outputText>
+                                        <p:outputLabel value="Exoneración: " style="color: #000000"/>
+                                        <h:outputText value="#{emi.valorExoneracion}" style="color: #000000">
+                                            <f:convertNumber pattern="$ #,##0.00" />
+                                        </h:outputText>
+                                        <p:outputLabel value="Recargo: " style="color: #000000"/>
+                                        <h:outputText value="#{emi.recargo}" style="color: #000000">
+                                            <f:convertNumber pattern="$ #,##0.00" />
+                                        </h:outputText>
+                                        <p:outputLabel value="Interes: " style="color: #000000"/>
+                                        <h:outputText value="#{emi.interes}" style="color: #000000">
+                                            <f:convertNumber pattern="$ #,##0.00" />
+                                        </h:outputText>
+                                    </p:panelGrid>
+                                </p:tooltip>
+                            </p:column>
+                            <p:column headerText="Coactiva" width="7">
+                                <p:outputLabel value="#{emi.valorCoactiva}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Total" width="7">
+                                <p:outputLabel value="#{emi.pagoFinal}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                        <p:contextMenu id="opEmision" for="dataEmisiones">
+                            <p:menuitem value="Detalle" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" process="@this"  />
+                            <!--<p:menuitem value="Procesar" oncomplete="PF('dlgProcesar').show();" update="formProcesar" process="@this" actionListener="#{recaudacionGeneralMB.procesarPago()}"/>-->
+                        </p:contextMenu>
+                        <br></br>
+                        <center>
+                            <p:commandButton value="Generar Proforma"
+                                             actionListener="#{recaudacionMB.generarProforma()}" process="@this" />
+                            <p:commandButton value="Cancelar" update="mainForm"  style="background: red"
+                                             actionListener="#{recaudacionMB.clearData()}" process="@this" />
+                            <p:commandButton value="Procesar Pago" oncomplete="PF('dlgProcesar').show();"
+                                             actionListener="#{recaudacionMB.procesarPago()}" process="@this" />
+
+                        </center>
+                    </p:fieldset>
+                </p:panelGrid>
+            </p:outputPanel>
+        </h:form>
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false"
+                  closeOnEscape="true" modal="true" width="50%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{recaudacionMB.liquidacion}"/>
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgDetallePagos" header="Detalle de Pagos" widgetVar="dlgDetallePagos" resizable="false"
+                  closeOnEscape="true" modal="true" width="50%" position="center">
+            <h:form id="formDetPagos">
+                <p:outputLabel value="Valor de Titulo: #{recaudacionMB.liquidacion.totalPago}" style="font-size: 14px; font-weight: bold"/>
+                <br/><br/>
+                <p:outputLabel value="Saldo: #{recaudacionMB.liquidacion.saldo}" style="font-size: 14px; font-weight: bold"/>
+                <br/><br/>
+                <p:outputLabel value="Valor a Pagar: #{recaudacionMB.liquidacion.pagoFinal}" style="font-size: 14px; font-weight: bold"/>
+                <br/><br/>
+                <dialog:detallePago liquidacion="#{recaudacionMB.liquidacion}" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetallePagos').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgProcesar" widgetVar="dlgProcesar" width="60%" modal="true" >
+            <h:form id="formProcesar">
+                <p:tabView id="tabviewpago">
+                    <p:tab id="panelInfoAdc" title="Datos Factura">
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-5,ui-grid-col-7">
+                            <h:panelGroup>
+                                <p:inputText value="#{recaudacionMB.ciBeneficiario}" size="50"
+                                             placeholder="No. Identificacion"  style="width: auto;" maxlength="10">
+                                    <p:ajax listener="#{recaudacionMB.buscarEnte()}" process="@form" 
+                                            update="tabviewpago" />
+                                </p:inputText>
+
+                                <p:inputText value="#{recaudacionMB.comprador.apellido}" size="50" 
+                                             placeholder="Apellidos" 
+                                             onkeydown="this.value = this.value.toUpperCase();" />
+
+                                <p:inputText value="#{recaudacionMB.comprador.direccion}" size="50" 
+                                             placeholder="Dirección" 
+                                             onkeydown="this.value = this.value.toUpperCase();" />
+
+                                <p:inputText value="#{recaudacionMB.comprador.nombre}" size="50"
+
+                                             placeholder="Nombres" 
+                                             onkeydown="this.value = this.value.toUpperCase();" />
+
+                                <p:inputText value="#{recaudacionMB.comprador.razonSocial}" size="50" 
+
+                                             placeholder="Razon Social" 
+                                             onkeydown="this.value = this.value.toUpperCase();" />
+
+                                <p:inputText value="#{recaudacionMB.comprador.nombreComercial}" size="50"  
+
+                                             placeholder="Nombre Comercial" 
+                                             onkeydown="this.value = this.value.toUpperCase();" />
+
+                                <p:inputText value="#{recaudacionMB.comprador.email}" size="50" 
+                                             placeholder="Email"/>
+
+                                <p:inputText value="#{recaudacionMB.comprador.celular}" size="50" 
+                                             placeholder="Celular"/>
+
+                                <p:inputText value="#{recaudacionMB.comprador.telefono}" size="50" 
+                                             placeholder="telefono"/>
+
+                                <p:column>
+                                    <center>
+                                        <p:commandButton value="Buscar" styleClass="btnStyle" style="font-size: 12px; width: auto;"
+                                                         icon="ui-icon-search" 
+                                                         actionListener="#{recaudacionMB.showDlgEntes(1)}" 
+                                                         update="tabviewpago"/>
+                                        <p:spacer width="10" />
+                                        <p:commandButton value="Limpiar" style="font-size: 12px; width: auto;" icon="ui-icon-refresh"
+                                                         actionListener="#{recaudacionMB.limpiarDatosContribuyente()}"
+                                                         update="tabviewpago"/>
+                                        <!--NUEVO, ENRIQUE-->
+                                        <p:spacer width="10" />
+                                        <p:commandButton value="Actualizar Datos" styleClass="btnStyle" 
+                                                         actionListener="#{recaudacionMB.actualizarSolicitante()}"
+                                                         style="font-size: 12px; width: auto;" 
+                                                         update="formProcesar:tabviewpago"
+                                                         icon="ui-icon-pencil"/>
+                                    </center>
+                                </p:column>
+                            </h:panelGroup>
+                            <p:dataTable value="#{recaudacionMB.emisionesCobro}" var="emision" scrollable="true" scrollHeight="150"
+                                         rowKey="#{emision.id}" resizeMode="expand" style="width: 100%" >
+                                <p:column headerText="Titulo" style="text-align: center;"  width="25%">
+                                    <p:outputLabel value="#{emision.tipoLiquidacion.nombreTitulo}"/>
+                                </p:column>
+                                <p:column headerText="Año" style="text-align: center;" width="10%">
+                                    <p:outputLabel value="#{emision.anio}"/>
+                                </p:column>
+                                <!--                        <p:column headerText="N. Predio" style="text-align: center;" width="20%">
+                                                            <p:outputLabel value="# {emision.predio.numPredio}"/>
+                                                            <p:outputLabel value="# {emision.predioRustico.numPredioRustico}"/></p:column>-->
+                                <p:column headerText="Contribuyente" style="text-align: center" width="45%">
+                                    <p:outputLabel value="#{emision.identificacion}-#{emision.comprador==null?emision.nombreComprador :emision.comprador.nombreCompleto}"/>
+                                </p:column>
+                                <p:column headerText="Valor" style="text-align: center;" width="15%">
+                                    <p:outputLabel value="#{emision.pagoFinal}"/>
+                                </p:column>
+                            </p:dataTable>
+                        </p:panelGrid>
+                    </p:tab>
+                    <p:tab id="tabpago" title="PAGO">
+                        <p:fieldset legend="PAGO: DE IMPUESTOS"
+                                    style="font-weight: bold;">                            
+                            <p:panelGrid id="infEmisiones" columns="1" styleClass="noBorder" style="width: 100%;">
+                                <p:row>
+                                    <p:column>
+                                        <p:outputLabel value="Valor a Cobrar: " style="font-size: 14px; font-weight: bolder;"/>
+                                        <p:outputLabel value="#{recaudacionMB.modelPago.valorCobrar}" style="font-size: 14px; font-weight: bolder; color: blue;"/>
+                                    </p:column>
+                                    <p:spacer width="5%"/>
+                                    <p:column>
+                                        <p:outputLabel value="Saldo: " style="font-size: 14px; font-weight: bolder;"/>
+                                        <p:outputLabel value="#{recaudacionMB.modelPago.valorSaldoPagoFinal}" style="font-size: 14px; font-weight: bolder; color: blue;"/>
+                                    </p:column>
+                                </p:row>
+                            </p:panelGrid>
+                        </p:fieldset>
+
+                        <!--<p:fieldset legend="Detalle de Cobro">-->
+                        <p:panelGrid id="detCobro" columns="2" style="width: 100%;" styleClass="noBorder">
+                            <p:panelGrid columns="2">
+                                <p:column><p:outputLabel value="Contado: " style="font-weight: bolder;" /></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotalEfectivo}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;" /></p:column>
+                                <p:column><p:outputLabel value="Notas Credito: " style="font-weight: bolder;"/><br/></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotalNotasCredito}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                                <p:column><p:outputLabel value="Cheque: " style="font-weight: bolder;"/><br/></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotalCheques}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                                <p:column><p:outputLabel value="Tarjeta: " style="font-weight: bolder;"/><br/></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotalTarjetas}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>    
+                                <p:column><p:outputLabel value="Transferencia: " style="font-weight: bolder;"/><br/></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotalTransferencias}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                                <!--                            <p:column><p:outputLabel value="Cruce de Cuentas: " style="font-weight: bolder;"/><br/></p:column>
+                                                            <p:column><p:inputText value="# {recaudacionMB.modelPago.valorTotalCruceCuenta}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>    -->
+                                <p:column><p:outputLabel value="Total: " style="font-weight: bolder;"/><br/></p:column>
+                                <p:column><p:inputText value="#{recaudacionMB.modelPago.valorTotal}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px; color: red;"/></p:column>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:column>
+                                    <p:selectBooleanCheckbox value="#{recaudacionMB.variosPagos}" style="font-weight: bold; font-size: 14px;">
+                                        <p:ajax update="detCobro" />
+                                    </p:selectBooleanCheckbox>
+                                    <p:outputLabel value="** REALIZAR VARIOS PAGOS **" style="font-weight: bolder;"/>
+                                </p:column>                                
+                                <p:tabView>                        
+                                    <p:tab title="1. EFECTIVO">
+                                        <!--<p:fieldset legend="1. EFECTIVO">-->
+                                        <p:panelGrid columns="2">
+                                            <p:panelGrid columns="2">
+                                                <p:outputLabel value="Valor Recibido"/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.valorRecibido}" style="font-weight: bolder; font-size: 12px;"
+                                                             onkeypress="focusNextOnEnter(event, 'valorCobrar')">
+                                                    <p:ajax event="change" listener="#{recaudacionMB.modelPago.calcularEfectivo()}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones" process="@form"/>
+                                                </p:inputText>
+                                                <p:outputLabel value="Valor a Cobrar"/>
+                                                <p:inputText id="valorCobrar" value="#{recaudacionMB.modelPago.valorCobrar}"
+                                                             style="font-weight: bolder; font-size: 12px;"
+                                                             onkeypress="focusNextOnEnter(event, 'valorCambio')">
+                                                    <p:ajax event="change" listener="#{recaudacionMB.modelPago.calcularEfectivo()}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones" process="@form"/>
+                                                </p:inputText>
+                                                <p:outputLabel value="Cambio"/>
+                                                <p:inputText id="valorCambio" value="#{recaudacionMB.modelPago.valorCambio}" readonly="true"
+                                                             style="font-weight: bolder; font-size: 12px;"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="2">
+                                                <p:outputLabel value="*****Valores Minimos de pago*****"/>
+                                                <p:outputLabel value=""/>
+                                                <p:outputLabel value="Interes: "/>
+                                                <p:outputLabel value="#{recaudacionMB.interes}" style="float: right"/>
+                                                <p:outputLabel value="Recargo: "/>
+                                                <p:outputLabel value="#{recaudacionMB.recargo}" style="float: right"/>
+                                                <p:outputLabel value="Coactiva: "/>
+                                                <p:outputLabel value="#{recaudacionMB.coactivaValor}" style="float: right"/>
+                                                <p:outputLabel value="Abono: "/>
+                                                <p:outputLabel value="#{recaudacionMB.abono}" style="float: right"/>
+                                                <p:outputLabel value="Total: "/>
+                                                <p:outputLabel value="#{recaudacionMB.valorMinimo}" style="float: right"/>
+                                                <p:outputLabel value="Valor Minimo Pago: "/>
+                                                <p:outputLabel value="#{recaudacionMB.pagoMinimo}" style="font-size: 10px; font-weight: bolder;float: right" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+
+                                        <!--</p:fieldset>-->
+                                    </p:tab>
+                                    <p:tab title="2. NOTA DE CREDITO" rendered="#{recaudacionMB.variosPagos}">
+                                        <!--<p:fieldset legend="2. NOTA DE CREDITO">-->
+                                        <p:panelGrid columns="5">
+                                            <!--AGREGADO-->
+                                            <p:column>
+                                                <h:outputLabel value="Nota de Credito" class="DispBlock Wid100 FontBold"/><br/>
+                                                <p:selectOneMenu id="not" value="#{recaudacionMB.modelPago.nota}" effect="fade" 
+                                                                 converter="#{utilConverter}" filter="true" filterMatchMode="contains" 
+                                                                 styleClass="selectWidth170" style="width: 100px" panelStyle="width:300px">
+                                                    <f:selectItem itemLabel="SELECCIONE" itemValue="#{null}" noSelectionOption="true"/>
+                                                    <f:selectItems value="#{recaudacionMB.notasCredito}" var="n" 
+                                                                   itemLabel="#{n.notaCredito  != null ? n.notaCredito.codigoComprobante:n.codigo} - #{n.contribuyente.nombreCompleltoSql}" 
+                                                                   itemValue="#{n}"/>
+                                                    <p:ajax update ="valornota , valorsaldo" />
+                                                </p:selectOneMenu>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="# Total"/><br/>
+                                                <p:inputText  id ="valornota" value="#{recaudacionMB.modelPago.nota.valor}" readonly="true"/>
+                                            </p:column>
+
+
+                                            <p:column>
+                                                <p:outputLabel for="valorsaldo" value="# Saldo"/><br/>
+                                                <p:inputText id="valorsaldo"  value="#{recaudacionMB.modelPago.nota.saldo}" readonly="true"/>
+                                            </p:column>
+
+                                            <p:column>
+                                                <p:outputLabel for="valordebitado" value="Valor"/><br/>
+                                                <p:inputText id ="valordebitado" type="number" value="#{recaudacionMB.modelPago.valorDebitado}" onkeypress="validateFloatValueAndFocusNext(event, 'agregar_nota')" >
+                                                    <p:ajax update="valorsaldo" />
+                                                </p:inputText>
+                                            </p:column>
+
+
+                                            <p:column>
+                                                <p:commandButton id="agregar_nota" value="Agregar" 
+                                                                 actionListener="#{recaudacionMB.modelPago.agregarPago(3)}" 
+                                                                 update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/>
+                                            </p:column>
+                                        </p:panelGrid>
+                                        <p:dataTable id="dtNC" var="nc" value="#{recaudacionMB.modelPago.listPagoNota}" 
+                                                     style="margin-bottom:0;width: 75%" >
+                                            <p:column headerText="# Total"><h:outputText value="#{nc.valor}" /></p:column>
+                                            <p:column headerText="# Saldo"><h:outputText value="#{nc.saldo}" /></p:column>
+                                            <p:column headerText="Valor"><h:outputText value="#{nc.valorDebitado}" /></p:column>
+                                            <p:column headerText="Accion">
+                                                <p:commandButton value="Eliminar" actionListener="#{recaudacionMB.modelPago.eliminarPagoNCOK(nc)}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/>
+                                            </p:column>
+                                        </p:dataTable>
+                                        <!--</p:fieldset>-->
+                                    </p:tab>
+                                    <p:tab title="3. CHEQUE" rendered="#{recaudacionMB.variosPagos}" >
+                                        <!--<p:fieldset legend="3. CHEQUE">-->
+                                        <p:panelGrid columns="5">
+                                            <p:column>
+                                                <p:outputLabel value="Banco"/><br/>
+                                                <p:selectOneMenu value="#{recaudacionMB.modelPago.pagoCheque.banco}" 
+                                                                 effect="fade" filter="true" filterMatchMode="startsWith"
+                                                                 converter="entityConverter" panelStyle="width:300px" 
+                                                                 style="width: 100%">
+                                                    <f:attribute name="name" value="RenEntidadBancaria"/>
+                                                    <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                                    <f:selectItems value="#{recaudacionGeneralMB.bancos}" var="banco" itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                                </p:selectOneMenu>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="# Cheque"/><br/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.pagoCheque.numCheque}"/>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="# Cuenta"/><br/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.pagoCheque.numCuenta}"/>
+                                            </p:column>
+                                            <!--                                            <p:column>
+                                                                                            <p:outputLabel value="# contribuyente"/><br/>
+                                                                                            <p:inputText value="# {recaudacionMB.modelPago.pagoCheque.contribuyente}"/>
+                                                                                        </p:column>-->
+                                            <p:column>
+                                                <p:outputLabel value="# Valor"/><br/>
+                                                <p:inputText type="number" value="#{recaudacionMB.modelPago.pagoCheque.valor}"/>
+                                            </p:column>
+                                            <p:column><p:commandButton value="Agregar" actionListener="#{recaudacionMB.modelPago.agregarPago(4)}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/></p:column>
+                                        </p:panelGrid>
+                                        <p:dataTable id="dtCh" var="ch" value="#{recaudacionMB.modelPago.listPagoCheque}"
+                                                     style="margin-bottom:0;">
+                                            <p:column headerText="BANCO"><h:outputText value="#{ch.banco.nombreBanco}" /></p:column>
+                                            <p:column headerText="# Cheque"><h:outputText value="#{ch.numCheque}" /></p:column>
+                                            <p:column headerText="# Cuenta"><h:outputText value="#{ch.numCuenta}" /></p:column>
+                                            <!--<p:column headerText="# Contribuyente"><h:outputText value="# {ch.contribuyente}" /></p:column>-->
+                                            <p:column headerText="# Valor"><h:outputText value="#{ch.valor}" /></p:column>
+                                            <p:column headerText="Accion"><p:commandButton value="Eliminar" actionListener="#{recaudacionMB.modelPago.eliminarPagoCh(ch)}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/></p:column>
+                                        </p:dataTable>
+                                        <!--</p:fieldset>-->
+                                    </p:tab>
+                                    <p:tab title="4. TARJETAS" rendered="#{recaudacionMB.variosPagos}" >
+                                        <!--<p:fieldset legend="4. TARJETA DE CREDITO">-->
+                                        <p:panelGrid columns="8">
+                                            <p:column>
+                                                <p:outputLabel value="Banco"/><br/>
+                                                <p:selectOneMenu value="#{recaudacionMB.modelPago.pagoTarjetaCredito.banco}" 
+                                                                 effect="fade" converter="entityConverter"
+                                                                 panelStyle="width:300px" style="width: 100%" 
+                                                                 filter="true" filterMatchMode="startsWith">
+                                                    <f:attribute name="name" value="RenEntidadBancaria"/>
+                                                    <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                                    <f:selectItems value="#{recaudacionGeneralMB.tarjetas}" var="banco" itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                                </p:selectOneMenu>
+                                            </p:column>                                            
+                                            <p:column>
+                                                <p:outputLabel value="TIPO" for="@next"/><br/>
+                                                <p:selectOneMenu id="selectTipoPago" value="#{recaudacionMB.modelPago.pagoTarjetaCredito.tipoPago}"
+                                                                 effect="fade"
+                                                                 panelStyle="width:300px" style="width: 100%" 
+                                                                 filter="true" filterMatchMode="startsWith">
+                                                    <f:selectItem itemLabel="Seleccione..." itemValue="#{null}"/>
+                                                    <f:selectItem itemLabel="TARJETA DÉBITO" itemValue="9"/>
+                                                    <f:selectItem itemLabel="TARJETA CRÉDITO" itemValue="2"/>
+                                                    <p:ajax process="@this" update="selectTipoPago" />
+                                                </p:selectOneMenu>
+                                            </p:column>
+                                            <!--                                            <p:column>
+                                                                                            <p:outputLabel value="Autorizacion"/><br/>
+                                                                                            <p:inputText value="# {recaudacionMB.modelPago.pagoTarjetaCredito.autorizacion}" size="14"/>
+                                                                                        </p:column>-->
+                                            <p:column>
+                                                <p:outputLabel value="Baucher"/><br/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.pagoTarjetaCredito.baucher}" size="14"/>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="Titular"/><br/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.pagoTarjetaCredito.nombreTitular}" size="14"/>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="Valor"/><br/>
+                                                <p:inputText type="number" value="#{recaudacionMB.modelPago.pagoTarjetaCredito.valor}" style="width: 90px;"/>
+                                            </p:column>
+                                            <center>
+                                                <p:column><br/>
+                                                    <p:commandButton value="Agregar" actionListener="#{recaudacionMB.modelPago.agregarPago(recaudacionMB.modelPago.pagoTarjetaCredito.tipoPago)}" 
+                                                                     update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/>
+                                                </p:column>
+                                            </center>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:dataTable id="dtTC" var="tc" value="#{recaudacionMB.modelPago.listPagoTarjetaCredito}" 
+                                                         style="margin-bottom:0;">
+                                                <p:column headerText="BANCO"><h:outputText value="#{tc.banco.nombreBanco}" /></p:column>
+
+                                                <!--<p:column headerText="# Tarjeta"><h:outputText value="# {tc.numTarjeta}" /></p:column>-->
+                                                <p:column headerText="TIPO"><h:outputText value="#{tc.tipoPago eq 2 ? 'TARJETA DE CRÉDITO':'TARJETA DE DÉBITO'}"><f:convertDateTime pattern="dd/MM/YYYY"/></h:outputText></p:column>
+                                                <!--<p:column headerText="# Autorizacion"><h:outputText value="# {tc.autorizacion}" /></p:column>-->
+                                                <p:column headerText="Baucher"><h:outputText value="#{tc.baucher}" /></p:column>
+                                                <p:column headerText="Titular"><h:outputText value="#{tc.nombreTitular}" /></p:column>
+                                                <p:column headerText="Valor"><h:outputText value="#{tc.valor}" /></p:column>
+                                                <p:column headerText="Accion">
+                                                    <p:commandButton value="Eliminar" actionListener="#{recaudacionMB.modelPago.eliminarPagoTC(tc)}" 
+                                                                     update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </center>
+                                        <!--</p:fieldset>-->
+                                    </p:tab>
+                                    <p:tab title="5. TRANSFERENCIA" rendered="#{recaudacionMB.variosPagos}" >
+                                        <!--<p:fieldset legend="5. TRANSFERENCIA">-->
+                                        <p:panelGrid columns="5">
+                                            <p:column>
+                                                <p:outputLabel value="Banco"/><br/>
+                                                <p:selectOneMenu value="#{recaudacionMB.modelPago.pagoTransferencia.banco}" 
+                                                                 effect="fade" converter="entityConverter"
+                                                                 panelStyle="width:300px" style="width: 100%" 
+                                                                 filter="true" filterMatchMode="startsWith">
+                                                    <f:attribute name="name" value="RenEntidadBancaria"/>
+                                                    <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                                    <f:selectItems value="#{recaudacionGeneralMB.tarjetas}" var="banco"
+                                                                   itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                                </p:selectOneMenu>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="# Transferencia"/><br/>
+                                                <p:inputText value="#{recaudacionMB.modelPago.pagoTransferencia.numTransferencia}"/>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="Fecha"/><br/>
+                                                <p:calendar value="#{recaudacionMB.modelPago.pagoTransferencia.fecha}" pattern="dd/MM/yyyy"/>
+                                            </p:column>
+                                            <p:column>
+                                                <p:outputLabel value="Valor"/><br/>
+                                                <p:inputText type="number" value="#{recaudacionMB.modelPago.pagoTransferencia.valor}"/>
+                                            </p:column>
+                                            <p:column><p:commandButton value="Agregar" actionListener="#{recaudacionMB.modelPago.agregarPago(5)}" update="formProcesar:tabviewpago:detCobro,formProcesar:tabviewpago:infEmisiones" /></p:column>
+                                        </p:panelGrid>
+                                        <p:dataTable id="dtT" var="t" value="#{recaudacionMB.modelPago.listPagoTransferencia}" 
+                                                     style="margin-bottom:0;">
+                                            <p:column headerText="Banco"><h:outputText value="#{t.banco.nombreBanco}" /></p:column>
+                                            <p:column headerText="# Transferencia"><h:outputText value="#{t.numTransferencia}" /></p:column>
+                                            <p:column headerText="Fecha"><h:outputText value="#{t.fecha}"><f:convertDateTime pattern="dd/MM/YYYY"/></h:outputText></p:column>
+                                            <p:column headerText="Valor"><h:outputText value="#{t.valor}" /></p:column>
+                                            <p:column headerText="Accion"><p:commandButton value="Eliminar" actionListener="#{recaudacionMB.modelPago.eliminarPagoTransferencia(t)}" update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/></p:column>
+                                        </p:dataTable>
+                                    </p:tab>
+                                    <p:tab title="6.- OTRAS FORMAS" rendered="#{recaudacionMB.variosPagos}" >
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Descripción"/>
+                                            <p:inputTextarea value="#{recaudacionMB.modelPago.otrasFormas.descripcion}" rows="5" cols="30" maxlength="80" />
+                                            <p:outputLabel value="Valor a Cobrar"/>
+                                            <p:inputText type="number" value="#{recaudacionMB.modelPago.valorTotalCruceCuenta}" style="font-weight: bolder; font-size: 12px;">
+                                                <p:ajax event="blur" listener="#{recaudacionMB.modelPago.calcularCruceCuenta()}" process="@all"
+                                                        update="formProcesar:tabviewpago:detCobro, formProcesar:tabviewpago:infEmisiones"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                </p:tabView>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <center>
+                            <p:commandButton value="Procesar" styleClass="btnStyle" 
+                                             actionListener="#{recaudacionMB.realizarPago}" icon="fa fa-check-circle"
+                                             style="text-align: center" 
+                                             update="mainForm" oncomplete="PF('dlgProcesar').hide();" process="@form" />
+                            <!--                        <p:commandButton value="Procesar" styleClass="btnStyle" actionListener="# {recaudacionMB.realizarPagoCuotas}" icon="fa fa-check"
+                                                                     style="text-align: center" rendered="# {!recaudacionMB.pagoRealizado and recaudacionMB.esPagoCuota}" update="mainForm" oncomplete="PF('dlgProcesar').hide();" />-->
+                            <p:spacer width="25"/>
+                            <p:commandButton value="Cancelar" style="text-align: center" styleClass="btnStyle" oncomplete="PF('dlgProcesar').hide();" icon="fa fa-close"/>
+                        </center>
+                    </p:tab>
+                </p:tabView>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgSolicitante" header="Contribuyentes" width="800" height="90%" resizable="false" closable="true" closeOnEscape="true" modal="true">
+            <h:form id="frmSolicitante">
+                <p:dataTable var="s" value="#{recaudacionMB.solicitantes}" style="width: 100%;text-align: center;" lazy="true"
+                             paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                             selectionMode="single" selection="#{recaudacionMB.comprador}" rowKey="#{s.id}">
+                    <p:column headerText="CI/RUC" sortBy="#{s.identificacion}" width="150" filterBy="#{s.identificacion}" filterStyle="width: 90%;">
+                        <h:outputText value="#{s.identificacion}"/>
+                    </p:column>
+
+                    <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <f:facet name="footer">
+                        <p:commandButton value="Seleccionar" icon="ui-icon-plus" actionListener="#{recaudacionMB.seleccionar()}" style="height: 30px"/>
+                    </f:facet>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgAbono" widgetVar="dlgAbono" header="Generar Abono" 
+                  resizable="false" closable="true" 
+                  closeOnEscape="true" modal="true">
+            <h:form id="frmAbono">
+                <p:panelGrid columns="1">
+                    <p:outputLabel value="Total: #{recaudacionMB.getTotalEmisiones()}" />
+                    <p:outputLabel value="Valor Minimo: #{recaudacionMB.getModelPago().getValorMinimoPagar()}" />
+                    <p:outputLabel value="Valor Recibido #{recaudacionMB.getModelPago().getValorTotal()}" />
+                    <br/>
+                    <br/>
+                    <p:outputLabel value="Esta Seguro de Generar Abono en este Proceso..." />
+
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Generar Abono" update="mainForm" actionListener="#{recaudacionMB.generarAbono()}" />
+                    <p:commandButton value="Cancelar" update="mainForm" style="background: red" oncomplete="PF('dlgAbono').hide();"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

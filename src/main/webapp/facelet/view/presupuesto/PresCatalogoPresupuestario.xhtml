@@ -1,0 +1,286 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Catálogo Presupuestario
+    </ui:define>
+    <ui:param name="tittle" value="Catálogo Presupuestario"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Nuevo registro" process="@this"
+                                     icon="fa fa-plus" actionListener="#{presCatalogoPresupuestarioView.form(null,false)}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Generar reporte" process="@this"
+                                     icon="fa fa-print" actionListener="#{presCatalogoPresupuestarioView.openDlgReporte()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" onclick="PF('presCatalogoPresupuestarioTable').clearFilters()" update="formMain,presCatalogoPresupuestarioTable"
+                                     styleClass="Fs16" style="width: auto; " actionListener="#{presCatalogoPresupuestarioView.clearAllFilters}"/>
+                    <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                    <p:columnToggler datasource="presCatalogoPresupuestarioTable" trigger="mostrarColumnas" />
+                    <p:dataTable  id="presCatalogoPresupuestarioTable" widgetVar="presCatalogoPresupuestarioTable" var="presupuestario" value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestarioLazy}" 
+                                  paginator="true" rows="25" style="width: 100%;margin-top: 15px" rowKey="#{presupuestario.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="25,50,75,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 10%;" filterBy="#{presupuestario.codigo}">
+                            <h:outputText value="#{presupuestario.codigo}" />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 20%;" filterBy="#{presupuestario.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{presupuestario.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Nivel" style="width: 10%;text-align: center" filterBy="#{presupuestario.confId.id}" filterMatchMode="contains">
+                            <f:facet name="filter">
+                                <p:selectOneMenu id="filtro1" onchange="PF('presCatalogoPresupuestarioTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{presCatalogoPresupuestarioView.confCuentasList}" var="n" itemLabel="#{n.nivel}" itemValue="#{n.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{presupuestario.confId.nivel}" />
+                        </p:column>
+                        <p:column headerText="Activo" style="width: 10%;text-align: center" filterBy="#{presupuestario.activo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('presCatalogoPresupuestarioTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                    <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{presupuestario.activo?'ACTIVO':'INACTIVO'}" />
+                        </p:column>
+                        <p:column headerText="Movimiento" style="width: 10%;text-align: center" filterBy="#{presupuestario.movimiento}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('presCatalogoPresupuestarioTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="Movimiento" itemValue="true" />
+                                    <f:selectItem itemLabel="Agrupación" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{presupuestario.movimiento?'MOVIMIENTO':'AGRUPACIÓN'}" />
+                        </p:column>
+                        <p:column headerText="Clasificación" style="width: 15%;text-align: center" filterBy="#{presupuestario.clasificacion.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu id="filtro2" onchange="PF('presCatalogoPresupuestarioTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{presCatalogoPresupuestarioView.clasificacionList}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{presupuestario.clasificacion}" />
+                        </p:column>                        
+                        <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                            <p:commandLink title="Ver" process="@this" actionListener="#{presCatalogoPresupuestarioView.form(presupuestario,true)}"  
+                                           update="presupuestarioForm">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{presCatalogoPresupuestarioView.form(presupuestario,false)}"  
+                                           update="presupuestarioForm">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Añadir" process="@this" actionListener="#{presCatalogoPresupuestarioView.insertPadre(presupuestario)}"  
+                                           update="presupuestarioForm">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Desactivar" process="@this" actionListener="#{presCatalogoPresupuestarioView.desactivar(presupuestario)}"  
+                                           update="presupuestarioForm">
+                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de desactivación" message="¿Esta seguro de desactivar el item?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                            <p:commandLink title="Eliminar" process="@this" actionListener="#{presCatalogoPresupuestarioView.delete(presupuestario)}"  
+                                           update="presupuestarioForm">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de desactivación" message="¿Esta seguro de desactivar el item?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>    
+                    </p:dataTable>  
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="presupuestarioDlg" widgetVar="presupuestarioDlg" width="40%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Registrar item presupuestario">
+            <h:form prependId="false" id="presupuestarioForm">
+                <p:panelGrid columns="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.padre==null?'3':'4'}" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Nivel:" style="font-weight: bold"/>
+                        <p:inputText id="confId" class="panelInput" style="width: 100%" 
+                                     value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.confId.nivel}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'confId')">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.padre==null?false:true}">
+                        <p:outputLabel for="@next" value="Código padre:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codigop" class="panelInput" style="width: 100%" 
+                                     value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.codPadre}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'codigop')">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Código:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codIngreso" class="panelInput" style="width: 100%" disabled="#{presCatalogoPresupuestarioView.edititem}"
+                                     value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.codIngreso}" maxlength="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.confId.numDigito}"
+                                     onkeypress="focusNextOnEnter(event, 'codIngreso')" readonly="#{presCatalogoPresupuestarioView.editView}">
+                            <p:ajax event="keyup" update="codigo" process="codIngreso" listener="#{presCatalogoPresupuestarioView.generarCodigo()}"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Código generado:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codigo" class="panelInput" style="width: 100%" 
+                                     value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.codigo}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'codigo')">
+                        </p:inputText>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCheckBoolean">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Activo:" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="activo" value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.activo}" disabled="#{presCatalogoPresupuestarioView.editView}"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.confId.nivel eq 1?false:true}">
+                        <p:outputLabel for="@next" value="Movimiento:" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="movimiento" value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.movimiento}" disabled="#{presCatalogoPresupuestarioView.editView}">
+                            <p:ajax update="gridCheckBoolean,exampleeee" />
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                        <p:outputLabel for="@next" value="Ingreso" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="ingreso" value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.ingreso}" disabled="#{presCatalogoPresupuestarioView.editView}">
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="exampleeee">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="clasificacion" value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.clasificacion}" converter="#{utilConverter}" 
+                                         filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{presCatalogoPresupuestarioView.editView}">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{presCatalogoPresupuestarioView.clasificacionList}" var="item_1" itemLabel="#{item_1.texto}" itemValue="#{item_1}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Descripción:" style="font-weight: bold"/><br/>
+                        <p:inputTextarea id="descripcion" class="panelInput" style="width: 100%" 
+                                         value="#{presCatalogoPresupuestarioView.presCatalogoPresupuestario.descripcion}" readonly="#{presCatalogoPresupuestarioView.editView}">
+                        </p:inputTextarea>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" update="presCatalogoPresupuestarioTable" rendered="#{!presCatalogoPresupuestarioView.editView}"
+                                     icon="fa fa-save" actionListener="#{presCatalogoPresupuestarioView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                    <p:commandButton value="Cerrar" update="presCatalogoPresupuestarioTable"
+                                     icon="fa fa-save" actionListener="#{presCatalogoPresupuestarioView.closeForm()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px;background: #ff3333"/>
+                </center>
+            </h:form>         
+        </p:dialog>
+        <p:dialog id="reporteDlg" widgetVar="reporteDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Parametros del reporte">
+            <h:form prependId="false" id="reporteForm">
+                <p:fieldset legend="Parámetros">
+                    <p:selectOneRadio id="customRadio"  layout="custom" value="#{presCatalogoPresupuestarioView.pActivo}">
+                        <f:selectItem itemLabel="todo" itemValue="#{1}" />
+                        <f:selectItem itemLabel="parametro1" itemValue="#{2}" />
+                        <f:selectItem itemLabel="parametro2" itemValue="#{3}" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio1"  layout="custom" value="#{presCatalogoPresupuestarioView.pMovimiento}">
+                        <f:selectItem itemLabel="todo" itemValue="#{1}" />
+                        <f:selectItem itemLabel="parametro1" itemValue="#{2}" />
+                        <f:selectItem itemLabel="parametro2" itemValue="#{3}" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio2"  layout="custom" value="#{presCatalogoPresupuestarioView.bCodigo}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="gridCodigo" event="valueChange" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio3"  layout="custom" value="#{presCatalogoPresupuestarioView.bNivel}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="gridNivel" event="valueChange" />
+                    </p:selectOneRadio>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridActivo">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt1" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt2" value="Activo" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt3" for="customRadio" itemIndex="3" />
+                            <h:outputLabel for="opt3" value="Inactivo" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridMovimientoP">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt4" for="customRadio1" itemIndex="0" />
+                            <h:outputLabel for="opt4" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt5" for="customRadio1" itemIndex="1" />
+                            <h:outputLabel for="opt5" value="Movimiento" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt6" for="customRadio1" itemIndex="3" />
+                            <h:outputLabel for="opt6" value="Agrupamiento" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt7" for="customRadio2" itemIndex="0" />
+                            <h:outputLabel for="opt7" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt8" for="customRadio2" itemIndex="1" />
+                            <h:outputLabel for="opt8" value="Por código:" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridCodigo">
+                            <p:outputLabel for="@next" value="Ingrese código:" style="font-weight: bold"/>
+                            <p:inputText id="bqCodigo" class="panelInput" style="width: 100%" onkeypress="focusNextOnEnter(event, 'bqCodigo')"
+                                         value="#{presCatalogoPresupuestarioView.pCodigo}" readonly="#{presCatalogoPresupuestarioView.bCodigo}">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt9" for="customRadio3" itemIndex="0" />
+                            <h:outputLabel for="opt9" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt10" for="customRadio3" itemIndex="1" />
+                            <h:outputLabel for="opt10" value="Por código:" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridNivel">
+                            <p:outputLabel for="@next" value="Seleccione nivel:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="selectNivel" style="width: 100%" value="#{presCatalogoPresupuestarioView.pNivel}" converter="#{utilConverter}" disabled="#{presCatalogoPresupuestarioView.bNivel}">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{presCatalogoPresupuestarioView.confCuentasList}" var="n" itemLabel="#{n.nivel}" itemValue="#{n}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="PDF" update="presCatalogoPresupuestarioTable"
+                                     icon="fa fa-file-pdf-o" actionListener="#{presCatalogoPresupuestarioView.printReporte('pdf')}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                    <p:commandButton value="EXCEL" update="presCatalogoPresupuestarioTable"
+                                     icon="fa fa-file-excel-o" actionListener="#{presCatalogoPresupuestarioView.printReporte('xlsx')}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                </center>
+            </h:form>       
+        </p:dialog>
+    </ui:define>
+</ui:composition>

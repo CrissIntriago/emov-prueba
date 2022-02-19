@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title"> Emisión Informe</ui:define> 
+    <ui:define name="content">
+        <style>
+            #input_parrafouno,#input_parrafodos,#input_parrafotres,#input_parrafocuatro,#input_parrafoCinco{
+                width: 100%;
+            }
+        </style>
+
+        <div class="ui-g ui-fluid">         
+            <div class="ui-g-12">
+                <comp:titleTask task="#{emisionPertinecniaReduccionView.tarea}" tramite="#{emisionPertinecniaReduccionView.tramite}" /> 
+            </div>
+
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formularioGeneral">
+                    <p:dataTable id="dataIngresoEgresoReforma2" widgetVar="dataIngresoEgresoReforma2" var="item" value="#{emisionPertinecniaReduccionView.lazyReforma}" 
+                                 paginator="true" rows="30" style="width: 100%; text-align: center; font-weight: bold;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="30,40,50,100" lazy="true"   selectionMode="single" rowKey="#{item.id}"
+                                 emptyMessage="No existen dataItemIngreso con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            <span style="font-weight: bold; font-size: 18px;"> REFORMAS </span>
+                        </f:facet>
+                        <p:column headerText="No.REFORMA">
+                            <p:outputLabel value="#{item.numeracion}"/>   
+                        </p:column>
+                        <p:column headerText="FECHA REGISTRO">
+                            <p:outputLabel value="#{item.fechaCreacion}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="TIPO" filterBy="#{item.tipo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataIngresoEgresoReforma2').filter()" styleClass="custom-filter" >
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="TODOS" itemValue=""/>
+                                    <f:selectItem itemLabel="SUPLEMENTO CRÉDITOS" itemValue="true"/>
+                                    <f:selectItem itemLabel="REDUCCIÓN CRÉDITOS" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />  
+                        </p:column>
+                        <p:column headerText="PERIODO" filterBy="#{item.periodo}">
+                            <p:outputLabel value="#{item.periodo}"/>
+                        </p:column>
+                        <p:column headerText="SUPLEMENTO" >
+                            <p:outputLabel value="#{emisionPertinecniaReduccionView.getSuplemento(item)==null?0:emisionPertinecniaReduccionView.getSuplemento(item)}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel> 
+                        </p:column>
+                        <p:column headerText="REDUCCIÓN" >
+                            <p:outputLabel value="#{emisionPertinecniaReduccionView.getReduccion(item)==null?0:emisionPertinecniaReduccionView.getReduccion(item)}" style="float: right;">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel> 
+                        </p:column>
+                        <p:column headerText="ESTADO" style="text-align: center; ">
+                            <p:outputLabel value="#{item.estado.texto}"/>
+                        </p:column>
+                        <p:column headerText="ACCIONES" style="width: 10%">
+                            <p:commandLink  title="Formulario de Pertinencia" process="@this" actionListener="#{emisionPertinecniaReduccionView.realizarFormulario(item)}">
+                                <i class="fa fa-file-text" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;" ></i>
+                            </p:commandLink>
+                            <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this"  
+                                            actionListener="#{emisionPertinecniaReduccionView.abriDlogo(item)}" >
+                                <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog widgetVar="dlgFormulario" id="dlgFormulario" header="INFORME DE PERTINENCIA" modal="true" width="1000" height="650" >
+            <div class="ui-g-10">
+
+                <p:fieldset legend="Formulario" title="FORMULARIO DE ENISIÓN DE INFORME DE PERTINENCIA">
+                    <h:form id="frmFormulario" prependId="false">
+                        <center style="font-size: 14px; font-weight: bold;">
+                            <p:outputLabel value="INFORME DE REFORMA PRESUPUESTARIA"/>
+                            <br/>
+                            <p:outputLabel value="#{emisionPertinecniaReduccionView.formulario.num}"/>
+                        </center>
+                        <p:editor controls=""  widgetVar="editor2" value="#{emisionPertinecniaReduccionView.reforma.informacion}" height="500"  style="margin-bottom:10px; margin-top: 2%;"/>
+
+                        <center>
+                            <p:commandButton value="Imprimir" icon="fa fa-print" style="margin: 2% 2% 2% 2%" actionListener="#{emisionPertinecniaReduccionView.imprimirInformePertinencia()}"/>
+                        </center>
+                    </h:form>
+
+                </p:fieldset>
+
+
+
+            </div>
+
+            <div class="ui-g-2">
+                <p:fieldset legend="Otros Reportes"  title="Otros Reportes">
+                    <h:form id="fm" prependId="false">
+                        <p:panelGrid layout="grid" columns="1" styleClass="ui-panelgrid-blank form-group">
+                            <p:commandButton style="width: 100%" icon="fa fa-file-pdf-o" title="Reforma Ingresos" value="Anexo 1"  update="fm"
+                                             actionListener="#{emisionPertinecniaReduccionView.imprimirotros(1)}" class="red-btn"/>
+                            <p:commandButton style="width: 100%" icon="fa fa-file-pdf-o" title="Reforma Egresos" value="Anexo 2" update="fm"
+                                             actionListener="#{emisionPertinecniaReduccionView.imprimirotros(2)}" class="blue-grey-btn"/>
+                            <p:commandButton style="width: 100%" icon="fa fa-file-pdf-o" title="Reforma PAPP" value="Anexo3"   update="fm"
+                                             actionListener="#{emisionPertinecniaReduccionView.imprimirotros(3)}" class="orange-btn"/>
+                        </p:panelGrid>     
+                    </h:form>
+                </p:fieldset> 
+            </div>
+        </p:dialog>
+
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{emisionPertinecniaReduccionView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{emisionPertinecniaReduccionView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

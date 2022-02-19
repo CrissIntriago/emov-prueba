@@ -1,0 +1,1340 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+
+    <ui:define name="title">
+        Diario General Integrado 
+    </ui:define>
+    <ui:param name="tittle" value="DIARIO GENERAL INTEGRADO"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <div class="ui-inputgroup" style="margin-bottom: 20px">
+                        <p:selectOneMenu value="#{diarioGeneralView.periodo}"  style="width: 30%;border:1px solid #00796B;text-align: center"
+                                         disabled="#{!diarioGeneralView.formDiarioGeneral}">
+                            <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                            <f:selectItems value="#{diarioGeneralView.listaPeriodo}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                        </p:selectOneMenu>
+                        <p:commandButton icon="fa fa-refresh"  actionListener="#{diarioGeneralView.cargarRegistros()}" 
+                                         rendered="#{diarioGeneralView.formDiarioGeneral}" update="formMain"
+                                         style="border-radius: 0px;width: 50px" title="Actualizar Registros"/>
+                        <p:commandButton icon="fa fa-plus" actionListener="#{diarioGeneralView.form(null,'nuevoDiario')}"
+                                         rendered="#{diarioGeneralView.formDiarioGeneral}"  update="formMain"
+                                         style="border-radius: 0px;width: 50px" title="Nuevo Registro"/> 
+                        <p:commandButton icon="fa fa-paint-brush" onclick="PF('diarioGeneralTable').clearFilters()"
+                                         rendered="#{diarioGeneralView.formDiarioGeneral}"
+                                         style="border-radius: 0px;width: 50px" update="diarioGeneralTable" title="Limpiar Filtro"/>
+                        <p:commandButton id="mostrarColumnas" style="border-radius: 0px;width: 50px" icon="fa fa-table" 
+                                         rendered="#{diarioGeneralView.formDiarioGeneral}" title="Columnas Visibles"/>
+                        <p:columnToggler datasource="diarioGeneralTable" trigger="mostrarColumnas" />
+                        <p:commandButton icon="fa fa-plus-circle" actionListener="#{diarioGeneralView.registrarDiarioGeneral('nuevo')}"
+                                         rendered="#{!diarioGeneralView.formDiarioGeneral}" update="formMain" disabled="#{!diarioGeneralView.botonNuevoEnlace}"
+                                         style="border-radius: 0px;width: 50px" title="Nueva Transacción"/>
+                        <p:commandButton icon="fa fa-chain" actionListener="#{diarioGeneralView.registrarDiarioGeneral('enlaces')}" class="enlace"
+                                         rendered="#{!diarioGeneralView.formDiarioGeneral}" update="formMain" disabled="#{!diarioGeneralView.botonNuevoEnlace}"
+                                         style="border-radius: 0px;width: 50px" title="Módulos"/>
+                        <p:commandButton icon="fa fa-arrow-circle-left" actionListener="#{diarioGeneralView.cancelar()}"
+                                         rendered="#{!diarioGeneralView.formDiarioGeneral}" update="formMain"
+                                         style="border-radius: 0px;width: 50px" title="Regresar"/>
+                        <p:commandButton icon="fa fa-print" actionListener="#{diarioGeneralView.imprimirDiarioGeneral()}" update="formMain"
+                                         rendered="#{!diarioGeneralView.formDiarioGeneral}" disabled="#{!diarioGeneralView.detalleDiarioTableView}"
+                                         style="border-radius: 0px;width: 50px" title="Reimprimir"/>
+                        <p:commandButton icon="fa fa fa-trash" actionListener="#{diarioGeneralView.anulacionDiarioGeneral()}"
+                                         rendered="#{!diarioGeneralView.formDiarioGeneral}" disabled="#{!diarioGeneralView.botonAnulacion}"
+                                         style="border-radius: 0px;width: 50px" title="Anular Registro" styleClass="red-button">
+                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro que desea anular el Diario general?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </div>
+
+                    <h:panelGroup id="tableDiarioGeneral" layout="block" rendered="#{diarioGeneralView.formDiarioGeneral}" >
+                        <p:dataTable  id="diarioGeneralTable" widgetVar="diarioGeneralTable" var="diarioGeneral" value="#{diarioGeneralView.diarioGeneralLazyModel}" 
+                                      paginator="true" rows="30" style="width: 100%;" rowKey="#{diarioGeneral.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="30,50,60,70,100" lazy="true" selectionMode="single" 
+                                      emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <p:column headerText="No. Transf." style="width: 3vw;text-align: center" filterBy="#{diarioGeneral.numeroTransaccion}" sortBy="#{diarioGeneral.numeroTransaccion}" >
+                                <h:outputText value="#{diarioGeneral.numeroTransaccion}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 15vw;" filterBy="#{diarioGeneral.observacion}" filterMatchMode="contains">
+                                <h:outputText value="#{diarioGeneral.observacion}" />
+                            </p:column>
+                            <p:column headerText="Total Debe" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{diarioGeneral.totalDebe}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Total Haber" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{diarioGeneral.totalHaber}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{diarioGeneral.estadoTransaccion}">
+                                <h:outputText value="#{diarioGeneral.estadoTransaccion}" />
+                            </p:column>
+                            <p:column headerText="Clase" style="width: 4vw;text-align: center" filterBy="#{diarioGeneral.clase.texto}">
+                                <h:outputText value="#{diarioGeneral.clase.texto}" />
+                            </p:column>
+                            <p:column headerText="Tipo" style="width: 3vw;text-align: center" filterBy="#{diarioGeneral.tipo.descripcion}">
+                                <h:outputText value="#{diarioGeneral.tipo.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Fecha de Registro" style="width: 4vw;text-align: center" sortBy="#{diarioGeneral.fechaElaboracion}">
+                                <h:outputText value="#{diarioGeneral.fechaElaboracion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Estado Diario" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.estadoDiario}">
+                                <h:outputText value="#{diarioGeneral.estadoDiario}" id="diarioXX" />
+                                <p:tooltip rendered="#{not empty diarioGeneral.refDiarioAnulado}" for="diarioXX">
+                                    <p:panelGrid columns="1">
+                                        <h:outputText value="Anulado con Transacción Número: #{diarioGeneral.refDiarioAnulado.numeroTransaccion}" style="color: #000000" />
+                                        <h:outputText value="Con Fecha: #{diarioGeneral.refDiarioAnulado.fechaElaboracion}" style="color: #000000" />
+                                    </p:panelGrid>
+                                </p:tooltip>
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                                <p:commandLink actionListener="#{diarioGeneralView.form(diarioGeneral,'visualizar')}" title="Visualizar" process="@this"  
+                                               update="formDiarioGeneral, detalleDiarioGeneralView" class="ver">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Editar" process="@this" actionListener="#{diarioGeneralView.form(diarioGeneral,'editar')}"  
+                                               rendered="#{empty diarioGeneral.refDiarioAnulado}"
+                                               update="formDiarioGeneral, detalleDiarioGeneralEdit" class="editar">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="formDiarioGeneral" layout="block" rendered="#{!diarioGeneralView.formDiarioGeneral}">
+                        <div class="ui-g-12">
+                            <p:fieldset legend="Detalle: Diario General Integrado - Anulado" rendered="#{not empty diarioGeneralView.diarioGeneral.refDiarioAnulado}">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Anulado con Transacción Número:" style="font-weight: bold" 
+                                                       rendered="#{diarioGeneralView.diarioGeneral.estadoDiario == 'ANULADO'?true:false}"/>
+                                        <p:outputLabel value="Anulación de la Transacción Número:" style="font-weight: bold"
+                                                       rendered="#{diarioGeneralView.diarioGeneral.estadoDiario == 'REGISTRADO'?true:false}"/>
+                                        <p:outputLabel value="#{diarioGeneralView.diarioGeneral.refDiarioAnulado.numeroTransaccion}" style="margin-left: 15px"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Fecha de Anulación:"  style="font-weight: bold"/>
+                                        <p:outputLabel value="#{diarioGeneralView.diarioGeneral.fechaAnulacion}" style="margin-left: 15px"
+                                                       rendered="#{diarioGeneralView.diarioGeneral.estadoDiario == 'ANULADO'?true:false}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </p:outputLabel>
+                                        <p:outputLabel value="#{diarioGeneralView.diarioGeneral.fechaElaboracion}" style="margin-left: 15px"
+                                                       rendered="#{diarioGeneralView.diarioGeneral.estadoDiario == 'REGISTRADO'?true:false}">
+                                            <f:convertDateTime pattern="dd/MM/yyyy" />
+                                        </p:outputLabel>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Estado:"  style="font-weight: bold"/>
+                                        <p:outputLabel value="#{diarioGeneralView.diarioGeneral.estadoDiario}"  style="margin-left: 15px"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>   
+                            <div class="ui-g-6">
+                                <p:fieldset legend="Detalle: Diario General Integrado">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{diarioGeneralView.detalleDiarioTableView}">
+                                            <p:outputLabel for="@next" value="No. Transacción:"  style="font-weight: bold"/>
+                                            <p:inputText id="numTransaccionDG" value="#{diarioGeneralView.diarioGeneral.numeroTransaccion}" readonly="true"
+                                                         style="width: 100%" onkeypress="focusNextOnEnter(event, 'numTransaccionDG')"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Periodo:"  style="font-weight: bold"/>
+                                            <p:inputText id="periodoDiarioGeneral" value="#{diarioGeneralView.diarioGeneral.periodo}" readonly="true"
+                                                         style="width: 100%" onkeypress="focusNextOnEnter(event, 'periodoDiarioGeneral')"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha de Elaboración:"  style="font-weight: bold"/>
+                                            <p:calendar id="fechaElaboracion"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                        onkeypress="focusNextOnEnter(event, 'clase')" readonlyInput="true" disabled="#{diarioGeneralView.detalleDiarioTableView}"
+                                                        value="#{diarioGeneralView.diarioGeneral.fechaElaboracion}" style="width: 100%">
+                                                <p:ajax event="dateSelect" listener="#{diarioGeneralView.consultarPeriodoElegido()}"/>
+                                            </p:calendar> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Clase:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="clase" value="#{diarioGeneralView.diarioGeneral.clase}" converter="#{utilConverter}" 
+                                                             disabled="#{diarioGeneralView.disableClaseDiarioGeneral}" 
+                                                             filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{diarioGeneralView.clasesDiarioGeneral}" var="clase" itemLabel="#{clase.texto}" itemValue="#{clase}" itemLabelEscaped="false"/>
+                                                <p:ajax update="tipo" listener="#{diarioGeneralView.actualizarTipoDiarioGeneral()}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="tipo" value="#{diarioGeneralView.diarioGeneral.tipo}" converter="#{utilConverter}" 
+                                                             disabled="#{diarioGeneralView.disableTipoDiarioGeneral}" 
+                                                             filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{diarioGeneralView.tiposDiarioGeneral}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                                <p:ajax update="detalleAsiento" listener="#{diarioGeneralView.actualizarBotonCuentasContables()}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{diarioGeneralView.botonEnlaces}">
+                                            <p:outputLabel value="Módulos:" style="font-weight: bold"/>
+                                            <p:selectOneMenu id="moduloEnlace" value="#{diarioGeneralView.moduloDeEnlaceSeleccionado}" converter="#{utilConverter}" 
+                                                             disabled="#{diarioGeneralView.diarioGeneral.tipo==null?false:true}"
+                                                             filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{diarioGeneralView.modulosDeEnlaces}" var="modulo" itemLabel="#{modulo.texto}" itemValue="#{modulo}" itemLabelEscaped="false"/>
+                                                <p:ajax update="moduloEnlace" listener="#{diarioGeneralView.enlaceSeleccionado()}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{diarioGeneralView.detalleDiarioTableView}">
+                                            <p:outputLabel for="@next" value="Módulo:"  style="font-weight: bold"/>
+                                            <p:inputText id="moduloDiarioGeneral" value="#{diarioGeneralView.diarioGeneral.enlace.padre == null?diarioGeneralView.diarioGeneral.enlace.texto:diarioGeneralView.diarioGeneral.enlace.padre.texto }" readonly="true"
+                                                         style="width: 100%" onkeypress="focusNextOnEnter(event, 'moduloDiarioGeneral')"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid"  
+                                                  rendered="#{diarioGeneralView.tramite ne null}">
+                                        <h:panelGroup >
+                                            <p:outputLabel value="No. Trámite" style="font-weight: 500 !important " /><br></br>
+                                            <p:outputLabel value="#{diarioGeneralView.tramite}" style="margin-left:  15px; font-weight: bold;"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup >
+                                            <p:outputLabel value="Tarea"  style="font-weight: 500 !important " /><br></br>
+                                            <p:outputLabel value="#{diarioGeneralView.tarea} " style="margin-left:  15px; font-weight: bold;"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup >
+                                            <p:outputLabel value="Tipo"  style="font-weight: 500 !important " /><br></br>
+                                            <p:outputLabel value="#{diarioGeneralView.tipo} " style="margin-left:  15px; font-weight: bold;"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Detalle:"  style="font-weight: bold"/>
+                                            <p:inputTextarea id="observacionDiarioGeneral" rows="6" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                             readonly="#{diarioGeneralView.detalleDiarioTableView}" onkeypress="focusNextOnEnter(event, 'guardarDiarioGeneral')"
+                                                             value="#{diarioGeneralView.diarioGeneral.observacion}"/>    
+                                        </h:panelGroup>                                        
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-6">
+                                <p:fieldset legend="Detalle:Reserva de Compromiso">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nº de Certificado:" style="font-weight: bold"/>
+                                            <p:inputText id="numeroCertificado" style="width: 100%;"  readonly="true" onkeypress="focusNextOnEnter(event, 'numeroCertificado')"
+                                                         value="#{diarioGeneralView.reservaCompromiso==null?'':diarioGeneralView.formatoCodigo(diarioGeneralView.reservaCompromiso.secuencial)}"/> 
+                                        </h:panelGroup>  
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{diarioGeneralView.booleanAdquisiciones}">
+                                            <p:outputLabel for="@next" value="CI/RUC del Beneficiario" style="font-weight: bold"/>
+                                            <p:inputText id="identificacionBeneficiario2" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionBeneficiario2')"
+                                                         value="#{diarioGeneralView.diarioGeneral.beneficiario.identificacionCompleta}" />
+                                        </h:panelGroup>  
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{diarioGeneralView.booleanAdquisiciones}">
+                                            <p:outputLabel for="@next" value="Nombre del beneficiario:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreBeneficiario2" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'nombreBeneficiario2')"
+                                                         value="#{diarioGeneralView.diarioGeneral.beneficiario.nombre}" /> 
+                                        </h:panelGroup>                                          
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{!diarioGeneralView.booleanAdquisiciones}" >
+                                            <p:outputLabel for="@next" value="CI/RUC del Beneficiario" style="font-weight: bold"/>
+                                            <p:inputText id="identificacionBeneficiario" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionBeneficiario')"
+                                                         value="#{diarioGeneralView.reservaCompromiso.nomina==true?'NOMINA':diarioGeneralView.reservaCompromiso.beneficiario.identificacionCompleta}" />
+                                        </h:panelGroup>  
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{!diarioGeneralView.booleanAdquisiciones}">
+                                            <p:outputLabel for="@next" value="Nombre del beneficiario:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreBeneficiario" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'nombreBeneficiario')"
+                                                         value="#{diarioGeneralView.reservaCompromiso.nomina == true ? 'NÓMINA':(diarioGeneralView.reservaCompromiso.tipoBeneficiario == true ? diarioGeneralView.reservaCompromiso.beneficiario.nombre:diarioGeneralView.reservaCompromiso.beneficiario.nombreCompleto)}" /> 
+                                        </h:panelGroup>  
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha de Certificado:"  style="font-weight: bold"/>
+                                            <p:inputText id="fechaCertificado" value="#{diarioGeneralView.reservaCompromiso.fechaSolicitud}" readonly="true"
+                                                         style="width: 100%" onkeypress="focusNextOnEnter(event, 'observacionCP')">
+                                                <f:convertDateTime type="date" pattern="dd-MM-yyyy" />
+                                            </p:inputText>
+                                        </h:panelGroup>  
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Detalle:"  style="font-weight: bold"/>
+                                            <p:inputTextarea id="observacionCP" rows="6" style="width: 100%;border: 1px solid #cccccc"  readonly="true"
+                                                             value="#{diarioGeneralView.reservaCompromiso.descripcion}" onkeypress="focusNextOnEnter(event, 'observacionCP')"/>   
+                                        </h:panelGroup>        
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </div>
+                        </div>
+                        <div class="ui-g-12">
+                            <p:fieldset legend="Detalle del Asiento" id="detalleAsiento">
+                                <p:messages id="mensaje" showDetail="true" closable="true"/>
+                                <p:commandButton value="Cuentas Contables" id="botonCuentasContables" update="cuentasPresupuestarioTable" process="@this"
+                                                 icon="fa fa-th-list" actionListener="#{diarioGeneralView.openDlgCuentasContables()}" 
+                                                 rendered="#{diarioGeneralView.botonCuentasContables}"
+                                                 styleClass="Fs16" style="width: auto; margin: 15px 0px"/>  
+                                <p:commandButton value="Partidas Presupuestarias" id="botonPartidasPresupuestarias" rendered="#{diarioGeneralView.botonPartidasPresupuestarias}"
+                                                 icon="fa fa-th-list" actionListener="#{diarioGeneralView.openDlgPartidasPresupuestarias()}" 
+                                                 styleClass="Fs16" style="width: auto; margin: 15px 0px;"/>    
+                                <p:dataTable id="detalleDiarioGeneralEdit" widgetVar="detalleDiarioGeneralEdit" var="detalleDiarioGeneral" style="width: 100%;" 
+                                             lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{detalleDiarioGeneral.contador}" 
+                                             paginator="true" paginatorPosition="bottom" value="#{diarioGeneralView.detalleDiarioGeneral}" rendered="#{diarioGeneralView.detalleDiarioTableEdit}"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No existen datos con los parámetros especificados">
+                                    <p:column headerText="Quitar" style="width: 1vw;text-align: center">
+                                        <p:commandLink actionListener="#{diarioGeneralView.quitarDetalleDiarioGeneral(detalleDiarioGeneral)}" title="Quitar" rendered="#{!detalleDiarioGeneral.datoCargado}">
+                                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #ff3333;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta contable ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:column headerText="C.P." style="width: 1vw;text-align: center">
+                                        <p:selectBooleanCheckbox value="#{detalleDiarioGeneral.comprobantePago}" >
+                                            <p:ajax update="detalleDiarioGeneralEdit" process="@this"/>
+                                        </p:selectBooleanCheckbox>
+                                    </p:column>
+                                    <p:column headerText="Línea" style="width: 1vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.contador}" />
+                                    </p:column>
+                                    <p:column headerText="Cuenta Contable" style="width: 3vw;text-align: center">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleDiarioGeneral.cuentaContable.codigo}" />
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:selectOneMenu value="#{detalleDiarioGeneral.cuentaContable}" style="width:100%" 
+                                                                 panelStyle="width:600px" 
+                                                                 converter="#{utilConverter}"
+                                                                 filter="true" filterMatchMode="startsWith" var="t">
+                                                    <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                                    <f:selectItems value="#{detalleDiarioGeneral.seleccionarCuentaContable}" var="cuentacontable" 
+                                                                   itemLabel="#{cuentacontable.codigo}" itemValue="#{cuentacontable}" />
+                                                    <p:ajax update="detalleDiarioGeneralEdit" process="@this"/>
+                                                    <p:column style="width:10%" >
+                                                        <f:facet name="header">
+                                                            <h:outputText value="codigo"/>
+                                                        </f:facet>
+                                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                                    </p:column>
+                                                    <p:column style="width: 50%;">
+                                                        <f:facet name="header">
+                                                            <h:outputText value="Nombre"/>
+                                                        </f:facet>
+                                                        <h:outputText value="#{t.descripcion}" />
+                                                    </p:column>
+                                                </p:selectOneMenu>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Nombre de la Cuenta" style="width: 12vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.cuentaContable.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Debe" style="width: 3vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleDiarioGeneral.debe}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{detalleDiarioGeneral.debe}" readonly="#{detalleDiarioGeneral.datoCargado}">
+                                                    <p:ajax update="detalleDiarioGeneralEdit" process="fechaElaboracion"
+                                                            listener="#{diarioGeneralView.determinarRelacionPresupuestaria(detalleDiarioGeneral,true)}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Haber" style="width: 3vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleDiarioGeneral.haber}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{detalleDiarioGeneral.haber}" readonly="#{detalleDiarioGeneral.datoCargado}">
+                                                    <p:ajax update="detalleDiarioGeneralEdit" process="fechaElaboracion"
+                                                            listener="#{diarioGeneralView.determinarRelacionPresupuestaria(detalleDiarioGeneral,false)}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Tipo" style="width: 3vw;text-align: center" id="columnTipo" >
+                                        <h:outputText value="#{detalleDiarioGeneral.tipoTransaccion.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Partida Presupuestaria" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.cedulaPresupuestaria}" />
+                                    </p:column>
+                                    <p:column headerText="Comprometido" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.comprometido}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Devengado" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.devengado}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Ejecutado" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.ejecutado}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="5" footerText="TOTALES " style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.diarioGeneral.totalDebe.doubleValue()}" style="text-align:right;font-weight: bold" />
+                                            <p:column footerText="$#{diarioGeneralView.diarioGeneral.totalHaber.doubleValue()}" style="text-align:right;font-weight: bold"/>
+                                            <p:column colspan="2" footerText="#{diarioGeneralView.diarioGeneral.estadoTransaccion} " style="text-align:center;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalComprometido}"  style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalDevengado}" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalEjecutado}" style="text-align:right;font-weight: bold"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                                <p:dataTable id="detalleDiarioGeneralView" widgetVar="detalleDiarioGeneralView" var="detalleDiarioGeneral" style="width: 100%;" 
+                                             lazy="true" rows="50" rowKey="#{detalleDiarioGeneral.id}" rendered="#{diarioGeneralView.detalleDiarioTableView}"
+                                             paginator="true" paginatorPosition="bottom" value="#{diarioGeneralView.detalleDiarioGeneral}" 
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No existen datos con los parámetros especificados">
+                                    <p:column headerText="C.P." style="width: 1vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.comprobantePago==true?'SI':''}" />
+                                    </p:column>
+                                    <p:column headerText="Línea" style="width: 1vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.contador}" />
+                                    </p:column>
+                                    <p:column headerText="Cuenta Contable" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.cuentaContable.codigo}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre de la Cuenta" style="width: 8vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.cuentaContable.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Debe" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.debe}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Haber" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.haber}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Tipo" style="width: 3vw;text-align: center" id="columnTipo" >
+                                        <h:outputText value="#{detalleDiarioGeneral.tipoTransaccion.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Partida Presupuestaria" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{detalleDiarioGeneral.cedulaPresupuestaria}" />
+                                    </p:column>
+                                    <p:column headerText="Comprometido" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.comprometido}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Devengado" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.devengado}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Ejecutado" style="width: 3vw;">
+                                        <h:outputText value="#{detalleDiarioGeneral.ejecutado}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="4" footerText="TOTALES " style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.diarioGeneral.totalDebe.doubleValue()}" style="text-align:right;font-weight: bold" />
+                                            <p:column footerText="$#{diarioGeneralView.diarioGeneral.totalHaber.doubleValue()}" style="text-align:right;font-weight: bold"/>
+                                            <p:column colspan="2" footerText="#{diarioGeneralView.diarioGeneral.estadoTransaccion} " style="text-align:center;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalComprometido}"  style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalDevengado}" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalEjecutado}" style="text-align:right;font-weight: bold"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                                <p:dataTable id="presupuestoDiarioGeneralTable" widgetVar="presupuestoDiarioGeneralTable" var="presupuestoDiarioGeneral" style="width: 100%;" 
+                                             lazy="true" rows="50" rowKey="#{detalleDiarioGeneral.id}" rendered="#{diarioGeneralView.presupuestoTable}"
+                                             paginator="true" paginatorPosition="bottom" value="#{diarioGeneralView.detalleDiarioGeneral}" editable="true" editMode="cell" 
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No existen datos con los parámetros especificados">
+                                    <p:column headerText="Quitar" style="width: 1vw;text-align: center">
+                                        <p:commandLink actionListener="#{diarioGeneralView.quitarDetalleDiarioGeneral(presupuestoDiarioGeneral)}" title="Quitar">
+                                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #ff3333;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:column headerText="Línea" style="width: 1vw;text-align: center">
+                                        <h:outputText value="#{presupuestoDiarioGeneral.contador}" />
+                                    </p:column>
+
+                                    <p:column headerText="Cédula Presupuestaria" style="width: 3vw;text-align: center" id="columnTipo" >
+                                        <h:outputText value="#{presupuestoDiarioGeneral.cedulaPresupuestaria}"/>
+                                    </p:column>
+                                    <p:column headerText="Saldo Disponible" style="width: 3vw;">
+                                        <h:outputText value="#{presupuestoDiarioGeneral.haber}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Comprometido" style="width: 3vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{presupuestoDiarioGeneral.comprometido}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{presupuestoDiarioGeneral.comprometido}" readonly="#{presupuestoDiarioGeneral.datoCargado}">
+                                                    <p:ajax update="presupuestoDiarioGeneralTable" listener="#{diarioGeneralView.validarMontosPresupueto(presupuestoDiarioGeneral,'1')}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Devengado" style="width: 3vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{presupuestoDiarioGeneral.devengado}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{presupuestoDiarioGeneral.devengado}">
+                                                    <p:ajax update="presupuestoDiarioGeneralTable" listener="#{diarioGeneralView.validarMontosPresupueto(presupuestoDiarioGeneral,'2')}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Ejecutado" style="width: 3vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{presupuestoDiarioGeneral.ejecutado}" style="float: right"> 
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputNumber value="#{presupuestoDiarioGeneral.ejecutado}">
+                                                    <p:ajax update="presupuestoDiarioGeneralTable" listener="#{diarioGeneralView.validarMontosPresupueto(presupuestoDiarioGeneral,'3')}" />
+                                                </p:inputNumber>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:columnGroup type="footer">
+                                        <p:row >
+                                            <p:column colspan="4" footerText="TOTALES " style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalComprometido}"  style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalDevengado}" style="text-align:right;font-weight: bold"/>
+                                            <p:column footerText="$#{diarioGeneralView.totalEjecutado}" style="text-align:right;font-weight: bold"/>
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                            </p:fieldset>
+                            <center>
+                                <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{diarioGeneralView.save()}" update="diarioGeneralTable"
+                                                 rendered="#{!diarioGeneralView.detalleDiarioTableView}" id="guardarDiarioGeneral"
+                                                 styleClass="Fs16" style="width: 100px; margin: 10px;"/> 
+
+                                <p:commandButton value="Cancelar" icon="fa fa-remove" actionListener="#{diarioGeneralView.cancelar()}" update="formMain"
+                                                 rendered="#{!diarioGeneralView.detalleDiarioTableView}" id="cancelarDiarioGeneral"
+                                                 styleClass="red-button" style="width: 100px; margin: 10px;"/> 
+                            </center>
+                        </div>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="moduloAnulacionCPTDLG" header="MÓDULO: ANULACIÓN DE COMPROBANTE DE PAGO/TRANSFERENCIAS" widgetVar="moduloAnulacionCPTDLG" width="60%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloAnulacionCPTForm" style="width: 100%;" >
+                    <p:dataTable id="anuladosTable" widgetVar="anuladosTable" var="anulado" value="#{diarioGeneralView.detalleTransferenciaLazyModel}" 
+                                 scrollable="true" scrollHeight="300" lazy="true" rows="20000" style="width: 100%" 
+                                 rowKey="#{inventario.id}" emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="No. Comprobante de Pago" style="width: 4vw;text-align: center" >
+                            <h:outputText value="#{anulado.comprobantePago.numComprobante}" />
+                        </p:column>  
+                        <p:column headerText="No. Transferencia" style="width: 4vw;text-align: center" >
+                            <h:outputText value="#{anulado.referencia}" />
+                        </p:column>  
+                        <p:column headerText="Identificación Beneficiario" style="width: 4vw;">
+                            <h:outputText value="#{anulado.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" style="width: 10vw;">
+                            <h:outputText value="#{anulado.nombreBeneficiario}" />
+                        </p:column> 
+                        <p:column headerText="Banco" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{anulado.institucionFinanciera.cuentaCorriente}" />
+                        </p:column> 
+                        <p:column headerText="Valor" style="width: 4vw;" >
+                            <h:outputText value="#{anulado.valor}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>  
+                        <p:column headerText="Seleccionar" style="width:2vw;text-align: center">
+                            <p:commandLink actionListener="#{diarioGeneralView.registrarTransferenciaEnDiarioGeneral(anulado)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-check-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="moduloInventarioDlg" header="MÓDULO: INVENTARIO" widgetVar="moduloInventarioDlg" width="30%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloInventarioForm" style="width: 100%;" >
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="MOTIVO MOVIMIENTO" style="font-weight: bold"/>
+                            <p:selectOneMenu id="motivoMovimiento" value="#{diarioGeneralView.catalogoMovimientoSeleccionado}" converter="#{utilConverter}" 
+                                             filter="true" filterMatchMode="startsWith" style="width: 50%">
+                                <f:selectItem itemLabel="SELECCIONAR" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.motivoMovimientosList}" var="motivo" itemLabel="#{motivo.texto}" itemValue="#{motivo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloInventarioForm" listener="#{diarioGeneralView.actualizarTablaInventario()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>
+                    <p:dataTable id="inventarioTable" widgetVar="inventarioTable" var="inventario" value="#{diarioGeneralView.inventarioLazyModel}" 
+                                 scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%" 
+                                 rowKey="#{inventario.id}" selection="#{diarioGeneralView.inventariosSeleccionadoList}"
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:2vw;text-align:center"/>
+                        <p:column headerText="No" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{inventario.codigo}" />
+                        </p:column>
+                        <p:column headerText="Motivo Movimiento" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{inventario.motivoMovimiento.texto}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Egreso" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{inventario.fechaMovimiento}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <f:facet name="footer" >
+                            <p:commandButton process="inventarioTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle" style="margin: 5px"
+                                             styleClass="Fs16" value="Registrar"  actionListener="#{diarioGeneralView.registrarInventarioEnDiarioGeneral()}" />
+                        </f:facet>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="moduloNominaDlg" header="MÓDULO: NÓMINA" widgetVar="moduloNominaDlg" width="30%" style="margin-top: 200px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloNominaForm" style="width: 100%;" >
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="TIPO NÓMINA" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoNomina" value="#{diarioGeneralView.subEnlaceSeleccionado}" style="width:70%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="#{null}" />
+                                <f:selectItems value="#{diarioGeneralView.subEnlace}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloNominaForm,tipoRol,tipoRolBeneficios" listener="#{diarioGeneralView.listadoTipoNomina()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{diarioGeneralView.renderedRoles}">
+                            <p:outputLabel for="@next" value="ROLES" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoRol" value="#{diarioGeneralView.tipoRolSeleccionado}" 
+                                             rendered="#{diarioGeneralView.renderedListRol}" converter="#{utilConverter}" style="width: 70%">
+                                <f:selectItem itemLabel="-SELECCIONAR-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.rolesList}" var="tipo" itemLabel="#{tipo.descripcion}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloNominaForm" listener="#{diarioGeneralView.fondosReservaRolGeneral()}"/>
+                            </p:selectOneMenu>
+                            <p:selectOneMenu id="tipoRolMensuales" value="#{diarioGeneralView.tipoRolSeleccionado}" 
+                                             rendered="#{!diarioGeneralView.renderedListRol}" converter="#{utilConverter}" style="width: 70%">
+                                <f:selectItem itemLabel="-SELECCIONAR-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.rolesList}" var="tipo" itemLabel="#{tipo.descripcion}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloNominaForm" listener="#{diarioGeneralView.rolBeneficiosMensuales()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{diarioGeneralView.renderedRolesBeneficios}"> 
+                            <p:outputLabel for="@next" value="ROLES BENEFICIOS SOCIALES" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoRolBeneficios" value="#{diarioGeneralView.tipoRolBeneficiosSeleccionado}" converter="#{utilConverter}" style="width: 70%">
+                                <f:selectItem itemLabel="-SELECCIONAR-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.rolesBeneficiosList}" var="tipo" itemLabel="#{tipo.descripcion}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloNominaForm" listener="#{diarioGeneralView.rolBeneficioSociales()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>                  
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="moduloNominaReservaCompromisoDlg" header="MÓDULO: NÓMINA (RESERVA DE COMPROMISO)" widgetVar="moduloNominaReservaCompromisoDlg" width="70%" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloNominaReservaCompromiso" style="width: 100%;" >
+                    <div class="ui-g-5">
+                        <p:fieldset legend="Detalle de la Reserva de Compromiso">
+                            <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Nº de Solicitud:" style="font-weight: bold"/>
+                                    <p:inputText id="numRC" style="width: 100%;" 
+                                                 value="#{diarioGeneralView.reservaCompromiso.secuencial}" readonly="true" /> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Período:"  style="font-weight: bold"/>
+                                    <p:inputText id="periodoRC" value="#{diarioGeneralView.reservaCompromiso.periodo}" readonly="true"
+                                                 style="width: 100%"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Fecha Solicitud:"  style="font-weight: bold"/>
+                                    <p:inputText id="fechaRC" style="width: 100%;" 
+                                                 value="#{diarioGeneralView.reservaCompromiso.fechaSolicitud}" readonly="true" >
+                                        <f:convertDateTime pattern="dd/MM/yyyy" />
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Unidad Administrativa:" style="font-weight: bold"/>
+                                    <p:inputText id="unidadRC" style="width: 100%;" 
+                                                 value="#{diarioGeneralView.reservaCompromiso.unidadRequiriente.nombre}" readonly="true" /> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Liquidación Rol:" style="font-weight: bold;"/>
+                                    <p:inputText id="totalLiquidacion" value="$#{diarioGeneralView.totalLiquidacion}" readonly="true" style="width: 100%"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Descripción:"  style="font-weight: bold"/>
+                                    <p:inputTextarea id="detalleRC" rows="6" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                     value="#{diarioGeneralView.reservaCompromiso.descripcion}"/> 
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Beneficiarios" id="fieldsetBeneficiario">
+                            <p:commandButton value="Registrar Proveedor" process="@this" rendered="#{diarioGeneralView.botonBeneficiarioFondosReserva}"
+                                             icon="fa fa-plus" actionListener="#{diarioGeneralView.openDlgProveedor()}"
+                                             styleClass="Fs16" style="width: auto; margin-bottom: 15px;"/>
+                            <p:dataTable  id="beneficiariosRCTable" widgetVar="beneficiariosRCTable" var="beneficiariosRC" value="#{diarioGeneralView.beneficiarioReservaCompromisoList}" 
+                                          scrollable="true" scrollHeight="100" lazy="true" rows="20000" style="width: 100%" 
+                                          emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                                <p:column headerText="C.I./RUC" style="width: 5vw" >
+                                    <h:outputText value="#{beneficiariosRC.tipoBeneficiario==false?beneficiariosRC.beneficiario.identificacion:beneficiariosRC.beneficiario.identificacionCompleta}" />
+                                </p:column> 
+                                <p:column headerText="Nombre Beneficiario" style="width: 15vw;">
+                                    <h:outputText value="#{beneficiariosRC.tipoBeneficiario==false?beneficiariosRC.beneficiario.nombreCompleto:beneficiariosRC.beneficiario.nombre}" />
+                                </p:column> 
+                            </p:dataTable>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-7">
+                        <p:dataTable id="cuentaContablePresupuestoTable" widgetVar="cuentaContablePresupuestoTable" var="cuentaContablePresupuesto" 
+                                     value="#{diarioGeneralView.cuentasConPartida}" scrollable="true" scrollHeight="200" lazy="true" rows="20000" style="width: 100%"
+                                     emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <p:column headerText="Partida" style="width: 5vw;text-align: center">
+                                <h:outputText value="#{cuentaContablePresupuesto.partidaPresupuestaria}" />
+                            </p:column>
+                            <p:column headerText="Nombre Partida" style="width: 12vw;">
+                                <h:outputText value="#{cuentaContablePresupuesto.catalogoPresupuesto.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Disponible" style="width: 5vw;">
+                                <h:outputText value="#{cuentaContablePresupuesto.monto_1}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column headerText="Liquidación Rol" style="width: 5vw;">
+                                <h:outputText value="#{cuentaContablePresupuesto.monto_2}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+
+                            <p:column headerText="Reserva Comprometida" style="width: 5vw;">
+                                <h:outputText value="#{cuentaContablePresupuesto.monto_3}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                        <center>
+                            <p:commandButton value="Generar Reserva de Compromiso" icon="fa fa-plus" actionListener="#{diarioGeneralView.generarResevaCompromiso()}" 
+                                             styleClass="Fs16" style="width: auto;margin: 15px"/> 
+                        </center>
+                    </div>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="moduloReservaCompromisoDlg" header="MÓDULO: RESERVA DE COMPROMISO" widgetVar="moduloReservaCompromisoDlg" width="45%" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloReservaCompromisoForm" style="width: 100%;" >
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="TIPOS DE ADQUISICIONES" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoAdquisicionSelect" value="#{diarioGeneralView.tipoSeleccionado}" converter="#{utilConverter}" style="width: 60%">
+                                <f:selectItem itemLabel="MOSTRAR TODAS LAS RESERVAS" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.tiposAdquisiciones}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax listener="#{diarioGeneralView.actualizarTablaReservaCompromiso()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>
+                    <p:dataTable id="reservaCompromisoTable" widgetVar="reservaCompromisoTable" var="reservaCompromiso" value="#{diarioGeneralView.reservaCompromisoList}" 
+                                 scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%" 
+                                 selectionMode="single" rowKey="#{reservaCompromiso.id}"
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Nº" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{reservaCompromiso.secuancialForFilter}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 12vw;">
+                            <h:outputText value="#{reservaCompromiso.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Tipo Beneficiario" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{reservaCompromiso.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR'}" />
+                        </p:column>
+                        <p:column headerText="Fecha Aprobación" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{reservaCompromiso.fechaAprobacion}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Seleccionar" style="width: 3vw;text-align: center">
+                            <p:commandLink title="SELECCIONAR" process="@this" actionListener="#{diarioGeneralView.openDlgDetalleReservaCompromiso(reservaCompromiso)}" >
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="moduloTesoreriaDlg" header="MÓDULO: TESORERÍA" widgetVar="moduloTesoreriaDlg" width="30%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="moduloTesoreriaForm" style="width: 100%;" >
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="PROCESOS DE TESORERÍA" style="font-weight: bold"/>
+                            <p:selectOneMenu id="subTipoTesoreria" value="#{diarioGeneralView.subEnlaceSeleccionado}" style="width:50%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="#{null}" />
+                                <f:selectItems value="#{diarioGeneralView.subEnlace}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloTesoreriaForm,fielsetDetArriendo,gridDetArriendo" listener="#{diarioGeneralView.procesoTesoreriaSeleccionado()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>
+                    <p:fieldset legend="Detalle de las Recaudaciones" style="margin-bottom: 10px"
+                                rendered="#{diarioGeneralView.subEnlaceSeleccionado !=null and diarioGeneralView.subEnlaceSeleccionado.codigo == 'retenciones' ? true:false}">
+                        <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="PERIODO FISCAL" style="font-weight: bold"/>
+                                <p:selectOneMenu id="periodosFiscalesSelect" value="#{diarioGeneralView.periodoSeleccionado}" style="width:100%">
+                                    <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="" />
+                                    <f:selectItems value="#{diarioGeneralView.periodosFiscales}" var="r" itemValue="#{r}"/>
+                                    <p:ajax update="moduloTesoreriaForm, retencionTable" listener="#{diarioGeneralView.actualizarTablaRetenciones()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="TIPO RETENCIÓN" style="font-weight: bold"/>
+                                <p:selectOneMenu id="tipoRetención" value="#{diarioGeneralView.tipoRetencionSeleccionado}" style="width:100%">
+                                    <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="" />
+                                    <f:selectItems value="#{diarioGeneralView.tipoRetenciones}" var="r" itemValue="#{r}"/>
+                                    <p:ajax update="moduloTesoreriaForm, retencionTable" listener="#{diarioGeneralView.actualizarTablaRetenciones()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:dataTable id="corteOrdenCobroTable" widgetVar="corteOrdenCobroTable" var="corteOrdenCobro" value="#{diarioGeneralView.corteOrdenCobroLazyModel}" 
+                                 scrollable="true" scrollHeight="200" lazy="true" rows="20000" style="width: 100%" 
+                                 selectionMode="single" rowKey="#{corteOrdenCobro.id}" rendered="#{diarioGeneralView.tableCorteOrdenCobro}"
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 5vw;text-align: center" filterBy="#{recaudacion.codigo}">
+                            <h:outputText value="#{corteOrdenCobro.codigo}" />
+                        </p:column>  
+                        <p:column headerText="Estado" style="width: 5vw;text-align: center" >
+                            <h:outputText value="#{corteOrdenCobro.estadoCorte}" />
+                        </p:column>  
+                        <p:column headerText="Fecha Emisión" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{corteOrdenCobro.fechaCorte}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column> 
+                        <p:column headerText="Seleccionar" style="width:2vw;text-align: center">
+                            <p:commandLink actionListener="#{diarioGeneralView.corteOrdenSeleccionada(corteOrdenCobro)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                    <p:dataTable  id="recaudacionTable" widgetVar="recaudacionTable" var="recaudacion" value="#{diarioGeneralView.recaudacionlLazyModel}" 
+                                  scrollable="true" scrollHeight="200" lazy="true" rows="20000" style="width: 100%" 
+                                  selectionMode="single" rowKey="#{recaudacion.id}" rendered="#{diarioGeneralView.tableRecaudaciones}"
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 5vw;text-align: center" filterBy="#{recaudacion.codigo}">
+                            <h:outputText value="#{recaudacion.codigo}" />
+                        </p:column>  
+                        <p:column headerText="Tipo" style="width: 5vw;text-align: center" >
+                            <h:outputText value="#{recaudacion.tipoRecaudacion.texto}" />
+                        </p:column>  
+                        <p:column headerText="Fecha Afectación" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{recaudacion.fechaAfeccion}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column> 
+                        <p:column headerText="Seleccionar" style="width:5vw;text-align: center">
+                            <p:commandLink actionListener="#{diarioGeneralView.recaudacionSeleccionada(recaudacion)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                    <p:dataTable  id="retencionTable" widgetVar="retencionTable" var="retencion" value="#{diarioGeneralView.liquidacionDetalleList}" 
+                                  scrollable="true" scrollHeight="150" lazy="true" rows="20000" style="width: 100%" 
+                                  selection="#{diarioGeneralView.retencionesSeleccionadas}" rowKey="#{retencion.id}" rendered="#{diarioGeneralView.tableRetenciones}"
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                        <p:column headerText="No. Transacción" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{retencion.liquidacion.diarioGeneral.numeroTransaccion}" />
+                        </p:column>  
+                        <p:column headerText="Cuenta Contable" style="width: 5vw;text-align: center" filterBy="#{retencion.cuentaContableRetencion.cuentaContable.codigo}">
+                            <h:outputText value="#{retencion.cuentaContableRetencion.cuentaContable.codigo}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{retencion.rubro.rubroTipo.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Valor" style="width: 5vw;">
+                            <h:outputText value="#{retencion.valor}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column> 
+                        <f:facet name="footer">
+                            <p:commandButton process="retencionTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle"
+                                             styleClass="Fs16"  value="Registrar" actionListener="#{diarioGeneralView.retencionesSeleccionadas()}"/>
+                        </f:facet>
+                    </p:dataTable>
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"
+                                      rendered="#{diarioGeneralView.subEnlaceSeleccionado.codigo == 'garantias'?true:false}">
+                            <p:outputLabel for="@next" value="TIPOS DE GARANTIAS" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipoGarantia" value="#{diarioGeneralView.tipoGarantia}" style="width:50%">
+                                <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="" />
+                                <f:selectItem itemLabel="Vigentes" itemValue="1" />
+                                <f:selectItem itemLabel="Vencidos" itemValue="2" />
+                                <f:selectItem itemLabel="Devueltos" itemValue="3" />
+                                <p:ajax update="moduloTesoreriaForm" listener="#{diarioGeneralView.tipoGarantiaSeleccionado()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>
+                    <p:dataTable id="garantiasTable" widgetVar="garantiasTable" var="garantia" 
+                                 rendered="#{diarioGeneralView.subEnlaceSeleccionado.codigo == 'garantias'?true:false}"
+                                 selection="#{diarioGeneralView.garantiasSeleccionadasList}" rowKey="#{garantia.id}" editable="true" editMode="cell"
+                                 value="#{diarioGeneralView.garantiasList}" scrollable="true" scrollHeight="300" lazy="true" rows="20000" style="width: 100%"
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                        <p:column headerText="No.Póliza" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{garantia.numPoliza}" />
+                        </p:column>
+                        <p:column headerText="No. Referencia" style="width: 5vw;text-align:center">
+                            <h:outputText value="#{garantia.numReferencia}" />
+                        </p:column>
+                        <p:column headerText="Desde" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{garantia.fechaDesde}">
+                                <f:convertDateTime pattern="dd-MMM-yyyy"/>
+                            </h:outputText>
+                        </p:column>    
+                        <p:column headerText="Hasta" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{garantia.fechaHasta}">
+                                <f:convertDateTime pattern="dd-MMM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Suma" style="width: 5vw;">
+                            <h:outputText value="#{garantia.suma}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column> 
+                        <f:facet name="footer">
+                            <p:commandButton process="garantiasTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle"
+                                             styleClass="Fs16"  value="Registrar" actionListener="#{diarioGeneralView.garantiasSeleccionadas()}"/>
+                        </f:facet>
+                    </p:dataTable>
+                    <p:fieldset legend="Detalle de las Ordenes de Pago" style="margin-bottom: 10px" id="fielsetDetArriendo"
+                                rendered="#{diarioGeneralView.subEnlaceSeleccionado !=null and 
+                                            diarioGeneralView.subEnlaceSeleccionado.codigo == 'ordenes_cobro' or
+                                            diarioGeneralView.subEnlaceSeleccionado.codigo == 'ordenes_ingreso' ? true:false}">
+                        <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" id="gridDetArriendo">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="PERIODO " style="font-weight: bold"/>
+                                <p:inputText id="periodoCobroPagoSelect" style="width: 100%;" 
+                                             value="#{diarioGeneralView.periodo}"/>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="MES" style="font-weight: bold"/>
+                                <p:selectOneMenu id="mesesArriendo" value="#{diarioGeneralView.mesSeleccionado}" converter="#{utilConverter}" 
+                                                 filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{diarioGeneralView.mesesArriendoList}" var="clase" itemLabel="#{mes.texto}" itemValue="#{mes}" />
+                                    <p:ajax update="moduloTesoreriaForm, retencionTable" listener="#{diarioGeneralView.actualizarTablaArriendos()}" process="mesesArriendo,periodoCobroPagoSelect"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel for="@next" value="#{diarioGeneralView.periodoBoolean?'Fecha Pago:':'Fecha Emisión:'}" style="font-weight: bold"/>
+                                <p:calendar id="fechaPagoArriendo"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" readonlyInput="true"
+                                            value="#{diarioGeneralView.fechaBusquedaArriendo}" style="width: 100%">
+                                    <p:ajax event="dateSelect" listener="#{diarioGeneralView.actualizarTablaArriendos()}" update="moduloTesoreriaForm, retencionTable"
+                                            process="mesesArriendo,periodoCobroPagoSelect,fechaPagoArriendo"/>
+                                </p:calendar> 
+                            </p:panelGrid> 
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:dataTable  id="arriendosTable" widgetVar="arriendosTable" var="arriendo" value="#{diarioGeneralView.ordenesEmitidasLazyModel}" 
+                                  scrollable="true" scrollHeight="150" lazy="true" rows="20000" style="width: 100%" 
+                                  selection="#{diarioGeneralView.ordenesEmitidasList}" rowKey="#{arriendo.id}" rendered="#{diarioGeneralView.tableArriendo}"
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                        <p:column headerText="No. Local" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{arriendo.idArrendamiento.local.numeroLocal}" />
+                        </p:column>  
+                        <p:column headerText="Tarifa" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{arriendo.idArrendamiento.local.idTarifa.codigo}" />
+                        </p:column>
+                        <p:column headerText="RUC" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{arriendo.idArrendatario.idOperador.cliente.identificacionCompleta}" />
+                        </p:column>
+                        <p:column headerText="Monto a Pagar" style="width: 5vw;">
+                            <h:outputText value="#{arriendo.montoPagar}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column> 
+                        <f:facet name="footer">
+                            <p:commandButton process="arriendosTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle"
+                                             styleClass="Fs16"  value="Registrar" actionListener="#{diarioGeneralView.arriendosSeleccionados()}"/>
+                        </f:facet>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="detalleReservaCompromisoDlg" header="MÓDULO: RESERVA DE COMPROMISO(DETALLE DE LA RESERVA)" widgetVar="detalleReservaCompromisoDlg" width="60%" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="detalleReservaCompromisoForm" style="width: 100%;" >
+                    <p:fieldset legend="Detalle del Contrato" style="margin-bottom: 5px"  
+                                rendered="#{diarioGeneralView.adquisicion.id!=null and !diarioGeneralView.booleanAdquisiciones ? true:false}">
+                        <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="ID del Proceso:" style="font-weight: bold"/>
+                                <p:inputText id="idProceso" style="width: 100%;" 
+                                             value="#{diarioGeneralView.adquisicion.idProceso}" readonly="true" /> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Nº de Contrato:" style="font-weight: bold"/>
+                                <p:inputText id="numeroContrato" style="width: 100%;" 
+                                             value="#{diarioGeneralView.adquisicion.numeroContrato}" readonly="true" /> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo Adquisición:" style="font-weight: bold"/>
+                                <p:inputText id="tipoAdquisicion" style="width: 100%;" 
+                                             value="#{diarioGeneralView.adquisicion.tipoAdquisicion.texto}" readonly="true" /> 
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel for="@next" value="Tipo Proceso:" style="font-weight: bold"/>
+                                <p:inputText id="subTipoAdquisicion" style="width: 100%;" 
+                                             value="#{diarioGeneralView.adquisicion.tipoProceso.texto}" readonly="true" /> 
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Contratos:" style="margin-bottom: 15px"  
+                                rendered="#{diarioGeneralView.booleanAdquisiciones}">
+                        <p:dataTable id="contratosTable" widgetVar="contratosTable" var="contrato" rowKey="#{contrato.id}" selection="#{diarioGeneralView.adquisicion}"
+                                     value="#{diarioGeneralView.adquisicionesList}" scrollable="true" scrollHeight="100" lazy="true" rows="20000" style="width: 100%"
+                                     emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <p:column selectionMode="single" style="width:5%;text-align:center"/>
+                            <p:column headerText="No. Contrato" style="width: 15%">
+                                <h:outputText value="#{contrato.numeroContrato}" />
+                            </p:column>
+                            <p:column headerText="Proveedor" style="width: 70%">
+                                <h:outputText value="#{contrato.proveedor.cliente.nombre}" />
+                            </p:column>
+                            <p:column headerText="Valor Contrato" style="width: 10%">
+                                <h:outputText value="#{contrato.valorContratado}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                        </p:dataTable>
+                    </p:fieldset>
+                    <p:dataTable id="detalleReservaCompromisoTable" widgetVar="detalleReservaCompromisoTable" var="detalleReservaCompromiso" 
+                                 selection="#{diarioGeneralView.cuentasConPartida}" rowKey="#{detalleReservaCompromiso.idTemporal}" editable="true" editMode="cell"
+                                 value="#{diarioGeneralView.cuentaContablePresupuestoModelList}" scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%"
+                                 emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                        <p:column headerText="Partida" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{detalleReservaCompromiso.partidaPresupuestaria}" />
+                        </p:column>
+                        <p:column headerText="Nombre Partida" style="width: 12vw;">
+                            <h:outputText value="#{detalleReservaCompromiso.catalogoPresupuesto.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Monto Comprometido" style="width: 5vw;">
+                            <h:outputText value="#{detalleReservaCompromiso.monto_1}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Monto Disponible" style="width: 5vw;">
+                            <h:outputText value="#{detalleReservaCompromiso.monto_2}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>    
+                        <p:column headerText="Devengado Total" style="width: 5vw;text-align: center">
+                            <p:selectBooleanCheckbox value="#{detalleReservaCompromiso.devengadoTotal}">
+                                <p:ajax update="detalleReservaCompromisoTable" listener="#{diarioGeneralView.tipoDevengado(detalleReservaCompromiso)}"/>
+                            </p:selectBooleanCheckbox>
+                        </p:column>
+                        <p:column headerText="Monto Devengado" style="width: 5vw;">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{detalleReservaCompromiso.monto_3}" style="float: right"> 
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:inputNumber value="#{detalleReservaCompromiso.monto_3}" readonly="#{detalleReservaCompromiso.devengadoTotal}">
+                                        <p:ajax update="detalleReservaCompromisoTable" listener="#{diarioGeneralView.validarValorDevengado(detalleReservaCompromiso)}"/>
+                                    </p:inputNumber>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                    </p:dataTable>
+                    <center>
+                        <p:commandButton process="detalleReservaCompromisoTable,contratosTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle" style="margin: 5px"
+                                         styleClass="Fs16" value="Registrar" actionListener="#{diarioGeneralView.cargarPartidasDiarioGeneral()}" />
+                    </center>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="cuentasContablesDlg" header="CUENTAS CONTABLES DEL PERIODO #{diarioGeneralView.opcionBusqueda.anio}" 
+                  widgetVar="cuentasContablesDlg" width="30%" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form prependId="false">
+                <p:outputPanel id="cuentasContablesForm" style="width: 100%;" >
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" actionListener="#{diarioGeneralView.quitarFiltros()}"
+                                     styleClass="Fs16" style="width: auto;margin-bottom: 5px"/>
+                    <p:dataTable  id="cuentasPresupuestarioTable" widgetVar="cuentasPresupuestarioTable" var="cuentaContable" value="#{diarioGeneralView.cuentaContableLazyModel}" 
+                                  scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%" 
+                                  selectionMode="single" rowKey="#{cuentaContable.id}" selection="#{diarioGeneralView.cuentaContableSeleccionado}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <p:ajax event="rowSelect" listener="#{diarioGeneralView.aniadirCuentaContable()}" process="@this"/>
+                        <p:column headerText="Código" style="width: 3vw;" filterBy="#{cuentaContable.codigo}">
+                            <h:outputText value="#{cuentaContable.codigo}" />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 12vw;" filterBy="#{cuentaContable.nombre}">
+                            <h:outputText value="#{cuentaContable.nombre}" />
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="proveedorDlg" widgetVar="proveedorDlg" width="30%" position="center" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de Proveedores" >
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="proveedorForm" style="width: 100%;" >
+                        <p:dataTable  id="proveedorTable" widgetVar="proveedorTable" var="proveedor" value="#{diarioGeneralView.proveedorLazyModel}" 
+                                      scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%" rowKey="#{proveedor.id}"
+                                      emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                            <p:column headerText="RUC" filterBy="#{proveedor.cliente.identificacion}"  style="width: 4vw;text-align: center">
+                                <h:outputText value="#{proveedor.cliente.identificacionCompleta}" />
+                            </p:column> 
+                            <p:column headerText="Nombre Beneficiario" filterBy="#{proveedor.cliente.nombre}"  style="width: 10vw;">
+                                <h:outputText value="#{proveedor.cliente.nombre}" />
+                            </p:column>
+                            <p:column headerText="Seleccionar"  style="width: 4vw;text-align: center">
+                                <p:commandLink actionListener="#{diarioGeneralView.añadirBeneficiarioProveedor(proveedor)}" title="SELECCIONAR" process="@this">
+                                    <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+
+        <p:dialog id="presupuestoDlg" header="Listado de Presupuesto" widgetVar="presupuestoDlg" width="60%" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" blockScroll="true" >
+            <h:form prependId="false">
+                <p:outputPanel id="presupuestoForm" style="width: 100%;" >
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" onclick="PF('presupuestoTable').clearFilters()" update="presupuestoTable"
+                                     styleClass="Fs16" style="width: auto;margin-bottom: 5px"/>
+                    <p:dataTable  id="presupuestoTable" widgetVar="presupuestoTable" var="presupuesto" value="#{diarioGeneralView.presupuestoLazyModel}" 
+                                  scrollable="true" scrollHeight="450" lazy="true" rows="20000" style="width: 100%" 
+                                  rowKey="#{presupuesto.id}" emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <p:column headerText="Tipo Presupuesto" style="width: 4vw;text-align: center" filterBy="#{presupuesto.tipo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('presupuestoTable').filter()" styleClass="custom-filter" filter="true" filterMatchMode="startsWith">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="INGRESO" itemValue="true" />
+                                    <f:selectItem itemLabel="EGRESO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{presupuesto.tipo==true?'INGRESO':'EGRESO'}"  />
+                        </p:column>
+                        <p:column headerText="Código de Partida" style="width: 4vw;" filterBy="#{presupuesto.partida}">
+                            <h:outputText value="#{presupuesto.partida}" />
+                        </p:column>
+                        <p:column headerText="Estructura Programática" style="width: 4vw;text-align: center" filterBy="#{presupuesto.estructura.codigo}">
+                            <h:outputText value="#{presupuesto.estructura.codigo}" />
+                        </p:column>
+                        <p:column headerText="Ítem Presupuestario" style="width: 4vw;text-align: center" filterBy="#{presupuesto.item.codigo}">
+                            <h:outputText value="#{presupuesto.item.codigo}" />
+                        </p:column>
+                        <p:column headerText="Nombre de Ítem Presupuestario" style="width: 10vw;" filterBy="#{presupuesto.item.codigo}">
+                            <h:outputText value="#{presupuesto.item.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{diarioGeneralView.añadirPartidasPresupuestarias(presupuesto)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>    
+        </p:dialog>
+
+
+        <p:dialog id="partidaEstructuraRelacionadaDlg" widgetVar="partidaEstructuraRelacionadaDlg" width="30%" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="LISTADO PRESUPUESTO" >
+            <div class="ui-g-12" >
+                <h:form prependId="false">
+                    <p:outputPanel id="partidaEstructuraRelacionadaForm" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="gridPartidas">
+                            <p:outputLabel for="@next" value="Cédula Presupuestaria" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{diarioGeneralView.presupuestoSeleccionado}" style="width:100%" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="startsWith" var ="t" id="listPresupuesto" panelStyle="width:180px">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" />
+                                <f:selectItems value="#{diarioGeneralView.presupuestoRelacionado}" 
+                                               var="itemP" itemLabel="#{itemP.partida}" 
+                                               itemValue="#{itemP}" />
+                                <p:column style="width:10%" >
+                                    <f:facet name="header">
+                                        <h:outputText value="Código"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.partida}" style="font-weight: bold;" />
+                                </p:column>
+                                <p:column style="width: 30%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Nombre"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.item.descripcion}" />
+                                </p:column>
+                                <p:column style="width: 10%;">
+                                    <f:facet name="header">
+                                        <h:outputText value="Saldo"/>
+                                    </f:facet>
+                                    <h:outputText value="#{t.montoDisponible}" >
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="SELECCIONAR" icon="fa fa-save" actionListener="#{diarioGeneralView.guardarRelacionesPresupuestarias()}" 
+                                             update="detalleDiarioGeneralEdit"
+                                             styleClass="Fs16" style="width: auto; margin: 15px;"/> 
+                        </center>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="bienesDlg" header="MÓDULO: BIENES" widgetVar="bienesDlg" width="50%" height="550"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" draggable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="bienesForm" style="width: 100%;height: auto" >
+                    <center>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel for="@next" value="PROCESOS DE BIENES" style="font-weight: bold"/>
+                            <p:selectOneMenu id="subbienes" value="#{diarioGeneralView.subEnlaceSeleccionado}" style="width:50%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="#{null}" />
+                                <f:selectItems value="#{diarioGeneralView.subEnlace}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}" itemLabelEscaped="false"/>
+                                <p:ajax update="bienesForm" listener="#{diarioGeneralView.procesoBienesSeleccionado()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{diarioGeneralView.renderDepreciacion}">
+                            <p:outputLabel for="@next" value="DEPRECIACIONES" style="font-weight: bold"/>
+                            <p:selectOneMenu id="listDepreciaciones" value="#{diarioGeneralView.depreciacion}" style="width:50%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="-SELECCIONAR-"  itemValue="#{null}" />
+                                <f:selectItems value="#{diarioGeneralView.depreciacionList}" var="item" itemLabel="#{item.codigoDepreciacion}" itemValue="#{item}" itemLabelEscaped="false"/>
+                                <p:ajax update="bienesForm" listener="#{diarioGeneralView.depreciacionSeleccionado()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" 
+                                      rendered="#{!diarioGeneralView.renderDepreciacion}">
+                            <p:outputLabel for="@next" value="MOTIVO MOVIMIENTO" style="font-weight: bold"/>
+                            <p:selectOneMenu id="motivoMovimientoBienes" value="#{diarioGeneralView.catalogoMovimientoSeleccionado}" converter="#{utilConverter}" 
+                                             filter="true" filterMatchMode="startsWith" style="width: 50%">
+                                <f:selectItem itemLabel="SELECCIONAR" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{diarioGeneralView.motivoMovimientosList}" var="motivo" itemLabel="#{motivo.texto}" itemValue="#{motivo}" itemLabelEscaped="false"/>
+                                <p:ajax update="moduloInventarioForm" listener="#{diarioGeneralView.actualizarRegistros()}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </center>
+                    <p:dataTable id="bienesTable" widgetVar="bienesTable" var="bien" value="#{diarioGeneralView.bienesList}" 
+                                 lazy="true" rows="14" style="width: 100%;height: auto" rendered="#{!diarioGeneralView.renderDepreciacion}"
+                                 rowKey="#{bien.id}" selection="#{diarioGeneralView.bienesListSeleccionados}" paginator="true" paginatorPosition="top"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 emptyMessage="No existen datos con los parámetros especificados">
+                        <p:column selectionMode="multiple" style="width:10%;text-align:center"/>
+                        <p:column headerText="No" style="width: 30%;text-align: center">
+                            <h:outputText value="#{bien.codigo}" />
+                        </p:column>
+                        <p:column headerText="Motivo Movimiento" style="width: 30%;text-align: center">
+                            <h:outputText value="#{bien.motivoMovimiento.texto}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Ingreso" style="width: 30%;text-align: center" sortBy="#{bien.fechaIngreso}">
+                            <h:outputText value="#{bien.fechaIngreso}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <f:facet name="footer" >
+                            <p:commandButton process="bienesTable" update="detalleDiarioGeneralEdit" icon="fa fa-plus-circle" style="margin: 5px"
+                                             styleClass="Fs16" value="Registrar"  actionListener="#{diarioGeneralView.bienesListSeleccionado()}" />
+                        </f:facet>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>        
+        </p:dialog>
+
+        <p:dialog id="DlogoGlobalImpresion" widgetVar="DlogoGlobalImpresion" width="400" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="DIARIO GENERAL INTEGRADO" >
+            <h:form prependId="false" id="formImpresionGlobal">
+
+                <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                    <p:panelGrid  columns="1" >
+                        <p:outputLabel value="Fecha Desde:" style="font-weight: bold;"/>
+                        <p:datePicker value="#{diarioGeneralView.desde}" locale="es"   monthNavigator="true" pattern="yyyy-MM-dd"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid  columns="1" >
+                        <p:outputLabel value="Fecha Hasta:" style="font-weight: bold;"/>
+                        <p:datePicker value="#{diarioGeneralView.hasta}" locale="es"   monthNavigator="true" pattern="yyyy-MM-dd"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+
+                <center style="margin-top: 2%; ">
+                    <p:commandButton value="Imprimir" actionListener="#{diarioGeneralView.imprimirDiarioGlobal()}" class="blue-grey-btn"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" actionListener="#{diarioGeneralView.cerrarDlogoImpresion()}" class="red-btn"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

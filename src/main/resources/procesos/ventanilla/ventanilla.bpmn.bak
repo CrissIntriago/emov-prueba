@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <collaboration id="Collaboration">
+    <participant id="poolventanilla" name="Proceso de Ventanilla Unica" processRef="VUR"></participant>
+  </collaboration>
+  <process id="VUR" name="Proceso de Ventanilla Unica" isExecutable="true">
+    <laneSet id="laneSet_VUR">
+      <lane id="lane_solicitante" name="Ventanilla">
+        <flowNodeRef>startevent1</flowNodeRef>
+      </lane>
+      <lane id="lane_director_general" name="Asistente del departamento">
+        <flowNodeRef>asignarTramite</flowNodeRef>
+      </lane>
+      <lane id="lane1" name="Técnico del departamento">
+        <flowNodeRef>revisionDocumentos</flowNodeRef>
+        <flowNodeRef>exclusivegateway1</flowNodeRef>
+        <flowNodeRef>notificacionObservaciones</flowNodeRef>
+        <flowNodeRef>generarInformeInspeccion</flowNodeRef>
+        <flowNodeRef>generarLiquidacion</flowNodeRef>
+        <flowNodeRef>exclusivegateway2</flowNodeRef>
+      </lane>
+      <lane id="lane2" name="Jefe y Director del departamento">
+        <flowNodeRef>aprobacionInformeJefe</flowNodeRef>
+        <flowNodeRef>exclusivegateway3</flowNodeRef>
+        <flowNodeRef>aprobacionInformeDirector</flowNodeRef>
+        <flowNodeRef>endevent1</flowNodeRef>
+		<flowNodeRef>entregarDocumentos</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <sequenceFlow id="flow1" sourceRef="startevent1" targetRef="asignarTramite"></sequenceFlow>
+    <userTask id="revisionDocumentos" name="Revisión de documentos" activiti:assignee="${usuario_2}" activiti:formKey="/ventanillaUnica/proceso/revisionDocumentos"></userTask>
+    <userTask id="asignarTramite" name="Asignar trámite" activiti:assignee="${usuario_1}" activiti:formKey="/ventanillaUnica/proceso/asignarTramite"></userTask>
+    <sequenceFlow id="flow2" sourceRef="asignarTramite" targetRef="revisionDocumentos"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway1" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow3" sourceRef="revisionDocumentos" targetRef="exclusivegateway1"></sequenceFlow>
+    <userTask id="notificacionObservaciones" name="Notificación de Observaciones" activiti:assignee="${usuario_3}" activiti:formKey="/ventanillaUnica/proceso/notificacionObservaciones"></userTask>
+    <sequenceFlow id="flow4" sourceRef="exclusivegateway1" targetRef="notificacionObservaciones">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado==0}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="generarInformeInspeccion" name="Generar informe" activiti:assignee="${usuario_4}" activiti:formKey="/ventanillaUnica/proceso/generarInformeInspeccion"></userTask>
+    <sequenceFlow id="flow5" sourceRef="exclusivegateway1" targetRef="generarInformeInspeccion">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado==1}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="generarLiquidacion" name="Generar liquidación" activiti:assignee="${usuario_5}" activiti:formKey="/ventanillaUnica/proceso/generarliquidacion"></userTask>
+    <sequenceFlow id="flow6" sourceRef="exclusivegateway1" targetRef="generarLiquidacion">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado==2}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow8" sourceRef="generarInformeInspeccion" targetRef="exclusivegateway2"></sequenceFlow>
+    <sequenceFlow id="flow9" sourceRef="exclusivegateway2" targetRef="generarLiquidacion">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${liquidacion==0}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow10" sourceRef="exclusivegateway2" targetRef="aprobacionInformeJefe">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${liquidacion==1}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="aprobacionInformeJefe" name="Aprobación Jefe" activiti:assignee="${usuario_6}" activiti:formKey="/ventanillaUnica/proceso/aprobarInformeJefe"></userTask>
+    <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow11" sourceRef="aprobacionInformeJefe" targetRef="exclusivegateway3"></sequenceFlow>
+    <sequenceFlow id="flow12" sourceRef="exclusivegateway3" targetRef="generarInformeInspeccion">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${inspeccion==0}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="aprobacionInformeDirector" name="Aprobación Director" activiti:assignee="${usuario_7}" activiti:formKey="/ventanillaUnica/proceso/aprobarInformeDirector"></userTask>
+    <sequenceFlow id="flow13" sourceRef="exclusivegateway3" targetRef="aprobacionInformeDirector">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${inspeccion==1}]]></conditionExpression>
+    </sequenceFlow>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <sequenceFlow id="flow22" sourceRef="generarLiquidacion" targetRef="aprobacionInformeJefe"></sequenceFlow>
+    <sequenceFlow id="flow24" sourceRef="notificacionObservaciones" targetRef="revisionDocumentos"></sequenceFlow>
+    <sequenceFlow id="flow26" sourceRef="exclusivegateway3" targetRef="entregarDocumentos"></sequenceFlow>
+    <sequenceFlow id="flow27" sourceRef="aprobacionInformeDirector" targetRef="entregarDocumentos"></sequenceFlow>
+    <sequenceFlow id="flow29" sourceRef="exclusivegateway3" targetRef="generarLiquidacion"></sequenceFlow>
+    <userTask id="entregarDocumentos" name="Entrega de Documentos" activiti:assignee="${usuario_8}" activiti:formKey="/ventanillaUnica/proceso/entregarDocumentos"></userTask>
+    <sequenceFlow id="flow23" sourceRef="entregarDocumentos" targetRef="endevent1"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration">
+    <bpmndi:BPMNPlane bpmnElement="Collaboration" id="BPMNPlane_Collaboration">
+      <bpmndi:BPMNShape bpmnElement="poolventanilla" id="BPMNShape_poolventanilla">
+        <omgdc:Bounds height="1083.0" width="1091.0" x="10.0" y="10.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="lane_solicitante" id="BPMNShape_lane_solicitante">
+        <omgdc:Bounds height="153.0" width="1071.0" x="30.0" y="10.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="lane_director_general" id="BPMNShape_lane_director_general">
+        <omgdc:Bounds height="184.0" width="1071.0" x="30.0" y="163.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="lane1" id="BPMNShape_lane1">
+        <omgdc:Bounds height="364.0" width="1071.0" x="30.0" y="347.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="lane2" id="BPMNShape_lane2">
+        <omgdc:Bounds height="381.0" width="1071.0" x="30.0" y="710.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="41.0" width="41.0" x="140.0" y="70.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="revisionDocumentos" id="BPMNShape_revisionDocumentos">
+        <omgdc:Bounds height="61.0" width="151.0" x="190.0" y="459.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="asignarTramite" id="BPMNShape_asignarTramite">
+        <omgdc:Bounds height="71.0" width="121.0" x="100.0" y="230.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway1" id="BPMNShape_exclusivegateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="402.0" y="469.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="notificacionObservaciones" id="BPMNShape_notificacionObservaciones">
+        <omgdc:Bounds height="81.0" width="121.0" x="362.0" y="360.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="generarInformeInspeccion" id="BPMNShape_generarInformeInspeccion">
+        <omgdc:Bounds height="67.0" width="131.0" x="540.0" y="456.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="generarLiquidacion" id="BPMNShape_generarLiquidacion">
+        <omgdc:Bounds height="71.0" width="105.0" x="370.0" y="562.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway2" id="BPMNShape_exclusivegateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="585.0" y="577.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="aprobacionInformeJefe" id="BPMNShape_aprobacionInformeJefe">
+        <omgdc:Bounds height="71.0" width="131.0" x="540.0" y="759.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway3" id="BPMNShape_exclusivegateway3">
+        <omgdc:Bounds height="40.0" width="40.0" x="740.0" y="774.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="aprobacionInformeDirector" id="BPMNShape_aprobacionInformeDirector">
+        <omgdc:Bounds height="74.0" width="105.0" x="870.0" y="758.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="600.0" y="949.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="entregarDocumentos" id="BPMNShape_entregarDocumentos">
+        <omgdc:Bounds height="71.0" width="105.0" x="708.0" y="931.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow1" id="BPMNEdge_flow1">
+        <omgdi:waypoint x="160.0" y="111.0"></omgdi:waypoint>
+        <omgdi:waypoint x="160.0" y="230.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="160.0" y="301.0"></omgdi:waypoint>
+        <omgdi:waypoint x="160.0" y="488.0"></omgdi:waypoint>
+        <omgdi:waypoint x="190.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow3" id="BPMNEdge_flow3">
+        <omgdi:waypoint x="341.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="402.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow4" id="BPMNEdge_flow4">
+        <omgdi:waypoint x="422.0" y="469.0"></omgdi:waypoint>
+        <omgdi:waypoint x="422.0" y="441.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow5" id="BPMNEdge_flow5">
+        <omgdi:waypoint x="442.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="540.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow6" id="BPMNEdge_flow6">
+        <omgdi:waypoint x="422.0" y="509.0"></omgdi:waypoint>
+        <omgdi:waypoint x="422.0" y="562.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="605.0" y="523.0"></omgdi:waypoint>
+        <omgdi:waypoint x="605.0" y="577.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow9" id="BPMNEdge_flow9">
+        <omgdi:waypoint x="585.0" y="597.0"></omgdi:waypoint>
+        <omgdi:waypoint x="475.0" y="597.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="605.0" y="617.0"></omgdi:waypoint>
+        <omgdi:waypoint x="605.0" y="759.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="671.0" y="794.0"></omgdi:waypoint>
+        <omgdi:waypoint x="740.0" y="794.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="760.0" y="774.0"></omgdi:waypoint>
+        <omgdi:waypoint x="759.0" y="489.0"></omgdi:waypoint>
+        <omgdi:waypoint x="671.0" y="489.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="780.0" y="794.0"></omgdi:waypoint>
+        <omgdi:waypoint x="870.0" y="795.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow22" id="BPMNEdge_flow22">
+        <omgdi:waypoint x="422.0" y="633.0"></omgdi:waypoint>
+        <omgdi:waypoint x="424.0" y="795.0"></omgdi:waypoint>
+        <omgdi:waypoint x="540.0" y="794.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow24" id="BPMNEdge_flow24">
+        <omgdi:waypoint x="362.0" y="400.0"></omgdi:waypoint>
+        <omgdi:waypoint x="265.0" y="401.0"></omgdi:waypoint>
+        <omgdi:waypoint x="265.0" y="459.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow26" id="BPMNEdge_flow26">
+        <omgdi:waypoint x="760.0" y="814.0"></omgdi:waypoint>
+        <omgdi:waypoint x="760.0" y="931.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow27" id="BPMNEdge_flow27">
+        <omgdi:waypoint x="922.0" y="832.0"></omgdi:waypoint>
+        <omgdi:waypoint x="922.0" y="967.0"></omgdi:waypoint>
+        <omgdi:waypoint x="813.0" y="966.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow29" id="BPMNEdge_flow29">
+        <omgdi:waypoint x="760.0" y="814.0"></omgdi:waypoint>
+        <omgdi:waypoint x="759.0" y="863.0"></omgdi:waypoint>
+        <omgdi:waypoint x="251.0" y="863.0"></omgdi:waypoint>
+        <omgdi:waypoint x="251.0" y="598.0"></omgdi:waypoint>
+        <omgdi:waypoint x="370.0" y="597.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+        <omgdi:waypoint x="708.0" y="966.0"></omgdi:waypoint>
+        <omgdi:waypoint x="635.0" y="966.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

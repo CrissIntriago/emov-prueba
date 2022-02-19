@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <collaboration id="Collaboration">
+    <participant id="pool1" name="Proceso de Pago de Anticipo de RMU" processRef="pagoAnticipoRMU"></participant>
+  </collaboration>
+  <process id="pagoAnticipoRMU" name="Pago de Anticipo de RMU" isExecutable="true">
+    <laneSet id="laneSet_pagoAnticipoRMU">
+      <lane id="area_responsable" name="Responsable o Delegado">
+        <flowNodeRef>startevent1</flowNodeRef>
+        <flowNodeRef>solicitudAnticipo</flowNodeRef>
+      </lane>
+      <lane id="area_financiero" name="Director Financiero">
+        <flowNodeRef>exclusivegateway4</flowNodeRef>
+        <flowNodeRef>endevent2</flowNodeRef>
+        <flowNodeRef>informeTecnico</flowNodeRef>
+      </lane>
+      <lane id="asignacionControlPrevio" name="Control Previo">
+        <flowNodeRef>asignacion_previo</flowNodeRef>
+        <flowNodeRef>control_previo</flowNodeRef>
+        <flowNodeRef>exclusivegateway5</flowNodeRef>
+      </lane>
+      <lane id="contabilidad" name="Contabilidad">
+        <flowNodeRef>generacionCpago</flowNodeRef>
+      </lane>
+      <lane id="autorizadorGasto" name="Autorizador de Gasto">
+        <flowNodeRef>autorizacionGasto</flowNodeRef>
+        <flowNodeRef>exclusivegateway3</flowNodeRef>
+      </lane>
+      <lane id="autorizadorPago" name="Autorizador de Pago">
+        <flowNodeRef>autorizacionPago</flowNodeRef>
+      </lane>
+      <lane id="tesoreria" name="Tesoreria">
+        <flowNodeRef>archivoTransferencia</flowNodeRef>
+        <flowNodeRef>exclusivegateway2</flowNodeRef>
+        <flowNodeRef>endevent1</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <userTask id="solicitudAnticipo" name="Ingreso de Solicitud de Anticipo" activiti:assignee="${usuario}" activiti:formKey="/proceso/pagos/solicitud/anticipo"></userTask>
+    <userTask id="archivoTransferencia" name="Generación de Archivo de Transferencia" activiti:assignee="${usuarioTesoreria}" activiti:formKey="/proceso/pagos/generar/spi"></userTask>
+    <sequenceFlow id="flow12" sourceRef="archivoTransferencia" targetRef="exclusivegateway2"></sequenceFlow>
+    <exclusiveGateway id="exclusivegateway2" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow14" name="Apobado" sourceRef="exclusivegateway2" targetRef="endevent1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado==1}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow23" name="Rechazado" sourceRef="exclusivegateway2" targetRef="autorizacionPago">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado==0}]]></conditionExpression>
+    </sequenceFlow>
+    <endEvent id="endevent1" name="End"></endEvent>
+    <userTask id="autorizacionPago" name="Autorización de Pago" activiti:assignee="${usuarioPago}" activiti:formKey="/proceso/pagos/autorizacion/pago"></userTask>
+    <sequenceFlow id="flow24" sourceRef="autorizacionPago" targetRef="generacionCpago"></sequenceFlow>
+    <userTask id="autorizacionGasto" name="Autorización de Gasto" activiti:assignee="${usuarioGasto}" activiti:formKey="/proceso/pagos/autorizacion/gasto"></userTask>
+    <userTask id="generacionCpago" name="Generación de Comprobante de Pago" activiti:assignee="${usuarioComprobante}" activiti:formKey="/proceso/pagos/comprobantepago"></userTask>
+    <sequenceFlow id="flow11" sourceRef="generacionCpago" targetRef="archivoTransferencia"></sequenceFlow>
+    <userTask id="asignacion_previo" name="Asignación Control Previo" activiti:assignee="${usuarioAsignacion}" activiti:formKey="/proceso/pagos/asignacion/controlprevio"></userTask>
+    <sequenceFlow id="flow2" sourceRef="asignacion_previo" targetRef="control_previo"></sequenceFlow>
+    <userTask id="control_previo" name="Control Previo" activiti:assignee="${usuarioControl}" activiti:formKey="/proceso/pagos/control/previo"></userTask>
+    <exclusiveGateway id="exclusivegateway3" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow28" sourceRef="autorizacionGasto" targetRef="exclusivegateway3"></sequenceFlow>
+    <sequenceFlow id="flow29" name="Aprobado" sourceRef="exclusivegateway3" targetRef="autorizacionPago">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 1}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow30" name="Rechazado" sourceRef="exclusivegateway3" targetRef="asignacion_previo">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 0}]]></conditionExpression>
+    </sequenceFlow>
+    <userTask id="informeTecnico" name="Elaboración de Informe Técnico" activiti:assignee="${usuarioAnalista}" activiti:formKey="/proceso/anticipo/remuneracion"></userTask>
+    <exclusiveGateway id="exclusivegateway4" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow32" sourceRef="informeTecnico" targetRef="exclusivegateway4"></sequenceFlow>
+    <sequenceFlow id="flow35" name="Aprobado" sourceRef="exclusivegateway4" targetRef="asignacion_previo">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 1}]]></conditionExpression>
+    </sequenceFlow>
+    <endEvent id="endevent2" name="End"></endEvent>
+    <sequenceFlow id="flow37" name="Finalizar" sourceRef="exclusivegateway4" targetRef="endevent2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 2}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="exclusivegateway5" name="Exclusive Gateway"></exclusiveGateway>
+    <sequenceFlow id="flow38" sourceRef="control_previo" targetRef="exclusivegateway5"></sequenceFlow>
+    <sequenceFlow id="flow39" name="Rechazado" sourceRef="exclusivegateway5" targetRef="informeTecnico">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 0}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow40" name="Aprobado" sourceRef="exclusivegateway5" targetRef="autorizacionGasto">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 1}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow41" sourceRef="startevent1" targetRef="solicitudAnticipo"></sequenceFlow>
+    <sequenceFlow id="flow42" sourceRef="solicitudAnticipo" targetRef="informeTecnico"></sequenceFlow>
+    <sequenceFlow id="flow43" name="Rechazado" sourceRef="exclusivegateway4" targetRef="solicitudAnticipo">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${aprobado == 0}]]></conditionExpression>
+    </sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Collaboration">
+    <bpmndi:BPMNPlane bpmnElement="Collaboration" id="BPMNPlane_Collaboration">
+      <bpmndi:BPMNShape bpmnElement="pool1" id="BPMNShape_pool1">
+        <omgdc:Bounds height="1119.0" width="851.0" x="40.0" y="50.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="area_responsable" id="BPMNShape_area_responsable">
+        <omgdc:Bounds height="161.0" width="831.0" x="60.0" y="50.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="area_financiero" id="BPMNShape_area_financiero">
+        <omgdc:Bounds height="167.0" width="831.0" x="60.0" y="211.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="asignacionControlPrevio" id="BPMNShape_asignacionControlPrevio">
+        <omgdc:Bounds height="179.0" width="831.0" x="60.0" y="378.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="contabilidad" id="BPMNShape_contabilidad">
+        <omgdc:Bounds height="162.0" width="831.0" x="60.0" y="557.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="autorizadorGasto" id="BPMNShape_autorizadorGasto">
+        <omgdc:Bounds height="150.0" width="831.0" x="60.0" y="719.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="autorizadorPago" id="BPMNShape_autorizadorPago">
+        <omgdc:Bounds height="150.0" width="831.0" x="60.0" y="869.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="tesoreria" id="BPMNShape_tesoreria">
+        <omgdc:Bounds height="150.0" width="831.0" x="60.0" y="1019.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="100.0" y="105.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="solicitudAnticipo" id="BPMNShape_solicitudAnticipo">
+        <omgdc:Bounds height="85.0" width="181.0" x="170.0" y="80.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="archivoTransferencia" id="BPMNShape_archivoTransferencia">
+        <omgdc:Bounds height="81.0" width="141.0" x="730.0" y="1058.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway2" id="BPMNShape_exclusivegateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="450.0" y="1078.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent1" id="BPMNShape_endevent1">
+        <omgdc:Bounds height="35.0" width="35.0" x="230.0" y="1081.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="autorizacionPago" id="BPMNShape_autorizacionPago">
+        <omgdc:Bounds height="74.0" width="181.0" x="380.0" y="900.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="autorizacionGasto" id="BPMNShape_autorizacionGasto">
+        <omgdc:Bounds height="76.0" width="191.0" x="380.0" y="762.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="generacionCpago" id="BPMNShape_generacionCpago">
+        <omgdc:Bounds height="71.0" width="141.0" x="730.0" y="592.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="asignacion_previo" id="BPMNShape_asignacion_previo">
+        <omgdc:Bounds height="71.0" width="161.0" x="180.0" y="428.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="control_previo" id="BPMNShape_control_previo">
+        <omgdc:Bounds height="71.0" width="145.0" x="430.0" y="428.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway3" id="BPMNShape_exclusivegateway3">
+        <omgdc:Bounds height="40.0" width="40.0" x="240.0" y="779.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="informeTecnico" id="BPMNShape_informeTecnico">
+        <omgdc:Bounds height="85.0" width="161.0" x="350.0" y="245.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway4" id="BPMNShape_exclusivegateway4">
+        <omgdc:Bounds height="40.0" width="40.0" x="240.0" y="267.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="endevent2" id="BPMNShape_endevent2">
+        <omgdc:Bounds height="35.0" width="35.0" x="120.0" y="270.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="exclusivegateway5" id="BPMNShape_exclusivegateway5">
+        <omgdc:Bounds height="40.0" width="40.0" x="620.0" y="443.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="flow12" id="BPMNEdge_flow12">
+        <omgdi:waypoint x="730.0" y="1098.0"></omgdi:waypoint>
+        <omgdi:waypoint x="490.0" y="1098.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+        <omgdi:waypoint x="450.0" y="1098.0"></omgdi:waypoint>
+        <omgdi:waypoint x="265.0" y="1098.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="44.0" x="304.0" y="1098.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+        <omgdi:waypoint x="470.0" y="1078.0"></omgdi:waypoint>
+        <omgdi:waypoint x="470.0" y="974.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="55.0" x="489.0" y="989.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow24" id="BPMNEdge_flow24">
+        <omgdi:waypoint x="561.0" y="937.0"></omgdi:waypoint>
+        <omgdi:waypoint x="640.0" y="937.0"></omgdi:waypoint>
+        <omgdi:waypoint x="640.0" y="627.0"></omgdi:waypoint>
+        <omgdi:waypoint x="730.0" y="627.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="800.0" y="663.0"></omgdi:waypoint>
+        <omgdi:waypoint x="800.0" y="1058.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow2" id="BPMNEdge_flow2">
+        <omgdi:waypoint x="341.0" y="463.0"></omgdi:waypoint>
+        <omgdi:waypoint x="430.0" y="463.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow28" id="BPMNEdge_flow28">
+        <omgdi:waypoint x="380.0" y="800.0"></omgdi:waypoint>
+        <omgdi:waypoint x="280.0" y="799.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow29" id="BPMNEdge_flow29">
+        <omgdi:waypoint x="260.0" y="819.0"></omgdi:waypoint>
+        <omgdi:waypoint x="259.0" y="937.0"></omgdi:waypoint>
+        <omgdi:waypoint x="380.0" y="937.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="48.0" x="260.0" y="819.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow30" id="BPMNEdge_flow30">
+        <omgdi:waypoint x="260.0" y="779.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="499.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="55.0" x="277.0" y="600.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow32" id="BPMNEdge_flow32">
+        <omgdi:waypoint x="350.0" y="287.0"></omgdi:waypoint>
+        <omgdi:waypoint x="280.0" y="287.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow35" id="BPMNEdge_flow35">
+        <omgdi:waypoint x="260.0" y="307.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="428.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="48.0" x="267.0" y="245.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow37" id="BPMNEdge_flow37">
+        <omgdi:waypoint x="240.0" y="287.0"></omgdi:waypoint>
+        <omgdi:waypoint x="155.0" y="287.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="40.0" x="141.0" y="225.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow38" id="BPMNEdge_flow38">
+        <omgdi:waypoint x="575.0" y="463.0"></omgdi:waypoint>
+        <omgdi:waypoint x="620.0" y="463.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow39" id="BPMNEdge_flow39">
+        <omgdi:waypoint x="640.0" y="443.0"></omgdi:waypoint>
+        <omgdi:waypoint x="639.0" y="287.0"></omgdi:waypoint>
+        <omgdi:waypoint x="511.0" y="287.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="55.0" x="654.0" y="289.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow40" id="BPMNEdge_flow40">
+        <omgdi:waypoint x="640.0" y="483.0"></omgdi:waypoint>
+        <omgdi:waypoint x="639.0" y="525.0"></omgdi:waypoint>
+        <omgdi:waypoint x="475.0" y="525.0"></omgdi:waypoint>
+        <omgdi:waypoint x="475.0" y="762.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="48.0" x="658.0" y="500.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow41" id="BPMNEdge_flow41">
+        <omgdi:waypoint x="135.0" y="122.0"></omgdi:waypoint>
+        <omgdi:waypoint x="170.0" y="122.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow42" id="BPMNEdge_flow42">
+        <omgdi:waypoint x="351.0" y="122.0"></omgdi:waypoint>
+        <omgdi:waypoint x="430.0" y="123.0"></omgdi:waypoint>
+        <omgdi:waypoint x="430.0" y="245.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow43" id="BPMNEdge_flow43">
+        <omgdi:waypoint x="260.0" y="267.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="165.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="14.0" width="55.0" x="260.0" y="145.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

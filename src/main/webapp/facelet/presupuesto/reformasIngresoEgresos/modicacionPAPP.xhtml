@@ -1,0 +1,936 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Suplemento PAPP</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{reformaSuplementoEView.tarea}" tramite="#{reformaSuplementoEView.tramite}" />
+                </div>
+            </div>
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formPanels">
+                    <p:fieldset legend="Opciones" >
+                        <p:commandButton disabled="#{reformaSuplementoEView.enabledReformas}" value="Reformas"  actionListener="#{reformaSuplementoEView.showReformas()}"
+                                         icon="fa fa-check" style="width: 10%;" update="formPanels,fmReformas,formulariobuscar,formMain,actividadesOperativa,productos,formTablaData"/> 
+                        <p:spacer width="10"/>
+                    </p:fieldset>                      
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformas">
+                    <p:panel  rendered="#{reformaSuplementoEView.consultaRe}">
+                        <p:dataTable id="datareformas" widgetVar="datareformas" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="15,20,30,40,50,100" value="#{reformaSuplementoEView.lazy2}"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado" rowIndexVar="index"  >
+
+                            <f:facet name="header">                           
+                                <h2 style="font-weight: bold; font-size: 12px">REFORMAS</h2>
+                            </f:facet>
+                            <p:column headerText="No.REFORMA" style="text-align: center;padding: 10px 10px 10px 10px">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO" style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="CUPO" style="text-align: center;">
+                                <p:outputLabel value="#{reformaSuplementoEView.retornarCupo(item)}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>   
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto.toUpperCase()}" />   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 10%;text-align: center;">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}" title="Modificar PAPP"  
+                                               process="@this" actionListener="#{reformaSuplementoEView.showPapp(item)}" 
+                                               update="formPanels,fmReformas,formulariobuscar,formMain,actividadesOperativa,productos,formTablaData">
+                                    <i class="fa fa-check-square-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  disabled="#{item.estado.codigo=='APRO'?true:false}" title="Enviar" process="@this"  
+                                                actionListener="#{reformaSuplementoEView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formulariobuscar">
+
+                    <p:panelGrid columns="4" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.registranuevo}" >
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;font-weight: bold;" value="Unidad:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; " value="#{reformaSuplementoEView.unidadGlobal.nombre}"/>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;font-weight: bold;" value="Cupo:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; " value="#{reformaSuplementoEView.totalCupo}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;font-weight: bold;" value="Cupo Asignado:"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; " 
+                                           value="#{reformaSuplementoEView.totalSaldoSuplemento==null?'$0,00':reformaSuplementoEView.totalSaldoSuplemento}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel value="Estado:" style="font-size: 12px;font-weight:bold;"/><br/>
+                            <p:outputLabel style="font-size: 12px" value="#{reformaSuplementoEView.estadoMostrar.texto}"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+
+                    <p:fieldset  rendered="false" legend="Busqueda Plan" toggleable="true" >
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="Año:" />
+                                <p:selectOneMenu value="#{reformaSuplementoEView.busqueda.anio}" style="width: 100%; margin-top: 10px;">
+                                    <p:ajax listener="#{reformaSuplementoEView.cargandofecha()}" update="formTablaData,actividadesOperativa,productos" />
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{reformaSuplementoEView.listaAnio}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <p:accordionPanel id="formMain" prependId="false" style="width: 100%; border: 1px solid #FCFBFB" activeIndex="#{reformaSuplementoEView.indiceDeAcordian}">                   
+                    <p:tab title="ACTIVIDAD OPERATIVA" rendered="#{reformaSuplementoEView.registranuevo}">
+                        <h:form id="actividadesOperativa" prependId="false" rendered="#{reformaSuplementoEView.registranuevo}">
+
+                            <p:commandButton  oncomplete="PF('DlgActividad').show()" update="formActividad"
+                                              actionListener="#{reformaSuplementoEView.editarActividadOperativa(null)}"  value="Nuevo" icon="fa fa-plus" style="width: auto;"/>
+
+                            <p:dataTable rendered="#{reformaSuplementoEView.registranuevo}"   expandableRowGroups="true" id="listaactividad" widgetVar="listaactividad"
+                                         paginatorPosition="bottom" var="item"
+                                         value="#{reformaSuplementoEView.lazyActividadOperativas}" rows="20" paginator="true"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         style="margin: 20px"
+                                         rowsPerPageTemplate="20,25,35,50" lazy="true"
+                                         emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE ACTIVIDADES - #{reformaSuplementoEView.busqueda.anio == 0 ? '20XX':reformaSuplementoEView.busqueda.anio}
+                                </f:facet>
+
+                                <p:column  headerText="PLAN" style="width: 10%;" filterBy="#{item.planProgramaProyecto.programa.panificacion.codigo}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null and item.planProgramaProyecto.programa ne null
+                                                           and item.planProgramaProyecto.programa.panificacion ne null?
+                                                           item.planProgramaProyecto.programa.panificacion.codigo.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+                                <p:column  headerText="PROGRAMA" style="width: 10%;" filterBy="#{item.planProgramaProyecto.programa.codigo}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null and item.planProgramaProyecto.programa ne null?
+                                                           item.planProgramaProyecto.programa.codigo.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+
+                                <p:column  headerText="PROYECTO" style="width: 10%;" filterBy="#{item.planProgramaProyecto}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.planProgramaProyecto ne null?item.planProgramaProyecto.nombreProgramaProyecto.toUpperCase():'NO APLICA'}"/>
+                                </p:column>
+
+
+
+                                <p:column  headerText="Actividad Operacional" style="width: 20%" filterBy="#{item.nombreActividad}">
+                                    <h:outputText value="#{item.nombreActividad}"/>
+                                </p:column>
+                                <p:column  headerText="Monto Reformado" style="width: 8%" filterBy="#{item.monto}">
+                                    <h:outputText value="#{item.monotReformado}" style="float: right;" class="FontBold">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column  headerText="Unidad Responsable" style="width: 16%" filterBy="#{item.unidadResponsable.id}" >
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaactividad').filter()" styleClass="custom-filter"   style="width: 100%;">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{reformaSuplementoEView.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{item.unidadResponsable.nombre}"/>
+                                </p:column>
+                                <p:column  headerText="Período" style="width: 5%; text-align: center;" >
+                                    <h:outputText value="#{item.periodo} "/>
+                                </p:column>
+                                <p:column  rendered="#{reformaSuplementoEView.estadoMostrar.codigo=='AR'?false:true}"  headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink disabled="#{reformaSuplementoEView.bloqueo}" title="Añadir Producto" process="@this" actionListener="#{reformaSuplementoEView.añadirActividadOperativa(item)}">
+                                        <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink disabled="#{reformaSuplementoEView.bloqueo}" title="Editar Actividad"   process="@this"   oncomplete="PF('DlgActividad').show()" update="formActividad"
+                                                   actionListener="#{reformaSuplementoEView.editarActividadOperativa(item)}" >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15" 
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink disabled="true" title="Eliminar"   process="@this"  actionListener="#{reformaSuplementoEView.eliminarActividadOperativa(item)}"
+                                                   update="listaactividad">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar la esta plan proyecto"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+                    <p:tab title="PRODUCTOS" rendered="#{reformaSuplementoEView.registranuevo}">
+                        <h:form id="productos" prependId="false" rendered="#{reformaSuplementoEView.registranuevo}">
+                            <p:dataTable rendered="#{reformaSuplementoEView.registranuevo}"   expandableRowGroups="true" value="#{reformaSuplementoEView.productoLazy}" id="listaProductos" widgetVar="listaProductos"
+                                         paginatorPosition="bottom" var="item" rows="20" paginator="true"  style="margin: 20px"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="20,25,35,50,100" lazy="true"   editable="true" editMode="cell"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE PRODUCTOS - #{reformaSuplementoEView.busqueda.anio == 0 ? '20XX':reformaSuplementoEView.busqueda.anio}
+                                </f:facet>
+                                <p:column  headerText="Plan-Programa-Proyecto" filterBy="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" groupRow="true">
+                                    <p:outputLabel value="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                </p:column>
+
+                                <p:column  headerText="Actividade Operacional/Monto" filterBy="#{item.actividadOperativa.nombreActividad}" groupRow="true" style="width: 25%;" filterMatchMode="contains">
+                                    <div style="width: 100%;">
+                                        <div style="width: 70%;float: left;">
+                                            <p:outputLabel value="#{item.actividadOperativa.nombreActividad}"/>
+                                        </div>
+                                        <div style="width: 30%;float: right;text-align: right;">
+
+                                            <p:outputLabel value="#{item.actividadOperativa.monotReformado}" class="FontBold">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:outputLabel>
+
+                                        </div>
+                                    </div>
+
+                                </p:column>
+                                <p:column headerText="Producto" filterBy="#{item.descripcion}">
+                                    <p:outputLabel value="#{item.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Monto Codificado" filterBy="#{item.monto}" style="width: 7%">
+                                    <p:outputLabel value="#{item.monto}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>                                
+
+                                <p:column headerText="Suplemento" filterBy="#{item.suplementoEgreso}" style="width: 7%">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.suplementoEgreso}" style="float: right;"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item.suplementoEgreso}"  >
+
+                                                <p:ajax event="change"  listener="#{reformaSuplementoEView.editarSuplelemtoEgresos(item)}" update="listaProductos,formulariobuscar,actividadesOperativa"/>
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Monto Reformado" filterBy="#{item.montoReformada}" style="width: 7%">
+                                    <p:outputLabel value="#{item.montoReformada}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column  rendered="#{reformaSuplementoEView.estadoMostrar.codigo=='AR'?false:true}"  headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink rendered="false"   title="Suplemento Egreso" actionListener="#{reformaSuplementoEView.abrirDloSuplementoEgreso(item)}"  process="@this"  >
+                                        <p:graphicImage value="/resources/icons/dinero.png" 
+                                                        width="16" height="15"  
+                                                        style="margin-right: 8px; color: #FFC107"/>  
+                                    </p:commandLink>
+                                    <p:commandLink  title="Editar Producto" actionListener="#{reformaSuplementoEView.editarProducto(item)}"   process="@this"  >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15"  
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink disabled="false" title="Eliminar" actionListener="#{reformaSuplementoEView.eliminarProducto(item)}" update="listaProductos"   process="@this" >
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar este producto"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+                </p:accordionPanel>
+            </div>
+
+            <div class="ui-g-12">  
+                <h:form id="formTablaData" prependId="false"  >
+                    <center>
+                        <p:outputLabel rendered="#{reformaSuplementoEView.consultarPapp}" style=" width: 100% ;text-align: center; font-size: 2vw;
+                                       font-family: Vegur, 'PT Sans', Verdana, sans-serif; border: 8px double #00cccc; margin-bottom: 4%;" 
+                                       value="TABLA GENERAL DE LOS PLANES ANUALES - #{reformaSuplementoEView.busqueda.anio == 0 ? '20XX':reformaSuplementoEView.busqueda.anio}"/>
+                    </center>
+                    <p:panelGrid rendered="#{reformaSuplementoEView.consultarPapp}"   columns="4" styleClass="form-group ui-panelgrid-blank" style="margin-bottom: 15px;margin-top: 20px;">
+                        <p:commandButton value="Limpiar filtros"  process="@this"
+                                         icon="ui-icon-refresh" onclick="PF('dataTablePlanes').clearFilters()" update="dataTablePlanes"
+                                         styleClass="Fs16" style="width: auto;"/>
+                        <p:commandButton value="Comprobar valores"  process="@this" action="#{reformaSuplementoEView.verificadorDeValores()}"
+                                         icon="ui-icon-check-box" update="dataTablePlanes"
+                                         styleClass="Fs16" style="width: auto;"/>
+                        <p:selectBooleanButton value="#{reformaSuplementoEView.filtroDatosNullTablaGeneralPlanes}" onLabel="Filtrado por NO APLICA" offLabel="Quitar Filtro" 
+                                               onIcon="fa fa-check" offIcon="fa fa-times" style="width:auto;">
+                            <p:ajax update="dataTablePlanes" listener="#{reformaSuplementoEView.filtroDeDatosNullVistaGeneralPlanAnual()}" />
+                        </p:selectBooleanButton>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas Visibles" style="width: auto; " icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="dataTablePlanes" trigger="mostrarColumnas" />
+                    </p:panelGrid>
+                    <p:dataTable rendered="#{reformaSuplementoEView.consultarPapp}"   id="dataTablePlanes" widgetVar="dataTablePlanes" var="item" value="#{reformaSuplementoEView.vistaGeneralPlanAnualLazy}" paginator="true" rows="10" 
+                                 style="text-align:center" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true"
+                                 editable="true" editMode="cell" 
+                                 scrollable="true" scrollWidth="100%"
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" >
+                        <f:facet name="header">
+                            TABLA GENERAL DE LOS PLANES ANUALES - #{reformaSuplementoEView.busqueda.anio == 0 ? '20XX':reformaSuplementoEView.busqueda.anio}
+                        </f:facet>
+                        <p:column headerText="Eje" filterBy="#{item.ejePlanNacional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.ejePlanNacional == null ? 'NO APLICA':item.ejePlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Nacional" filterBy="#{item.objetivoPlanNacional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.objetivoPlanNacional == null ? 'NO APLICA':item.objetivoPlanNacional}"/>
+                        </p:column>                      
+                        <p:column headerText="Política Nacional" filterBy="#{item.ejePlanNapoliticaPlanNacionalcional}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.politicaPlanNacional == null ? 'NO APLICA':item.politicaPlanNacional}"/>
+                        </p:column>
+                        <p:column headerText="Sistema" filterBy="#{item.sistemaPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.sistemaPlanLocal ==  null ? 'NO APLICA':item.sistemaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Local" filterBy="#{item.objetivoPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.objetivoPlanLocal == null ? 'NO APLICA':item.objetivoPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Política Local" filterBy="#{item.politicaPlanLocal}" style="width: 150px;">
+                            <p:outputLabel value="#{item.politicaPlanLocal == null ? 'NO APLICA':item.politicaPlanLocal}"/>
+                        </p:column>
+                        <p:column headerText="Nombre del plan, programa, proyecto" filterBy="#{item.nombrePlanLocalProgramaProyecto}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombrePlanLocalProgramaProyecto == null ? 'NO APLICA':item.nombrePlanLocalProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Nº de identificación" sortBy="#{item.numeroIdentificacionProgramaProyecto}" style="width: 150px;" groupRow="true">
+                            <p:outputLabel value="#{item.numeroIdentificacionProgramaProyecto ==null ? 'SIN DEFINIR':item.numeroIdentificacionProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Plan, programa y/o proyecto" filterBy="#{item.nombreProgramaProyecto}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreProgramaProyecto ==null ? 'SIN DEFINIR':item.nombreProgramaProyecto}"/>
+                        </p:column>
+                        <p:column headerText="Actividad Operativa" filterBy="#{item.nombreActividad}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.nombreActividad ==null ? 'SIN DEFINIR':item.nombreActividad}"/>
+                        </p:column>
+                        <p:column headerText="Objetivo Operativa" filterBy="#{item.objetivoOperativo}" style="width: 250px;" groupRow="true">
+                            <p:outputLabel value="#{item.objetivoOperativo ==null ? 'SIN DEFINIR':item.objetivoOperativo}"/>
+                        </p:column>
+                        <p:column headerText="Medición Meta" filterBy="#{item.medicionMeta}" style="width: 150px;">
+                            <p:outputLabel value="#{item.medicionMeta ==null ? 'SIN DEFINIR':item.medicionMeta}"/>
+                        </p:column>
+                        <p:column headerText="Cuatrimestre 1" filterBy="#{item.cuatrimestre1Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre1Meta ==null ? 'SIN DEFINIR':item.cuatrimestre1Meta}"/>
+                        </p:column>
+                        <p:column headerText="Cuatrimestre 2" filterBy="#{item.cuatrimestre2Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre2Meta ==null ? 'SIN DEFINIR':item.cuatrimestre2Meta}"/>
+                        </p:column>       
+                        <p:column headerText="Cuatrimestre 3" filterBy="#{item.cuatrimestre3Meta}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.cuatrimestre3Meta ==null ? 'SIN DEFINIR':item.cuatrimestre3Meta}"/>
+                        </p:column>
+                        <p:column headerText="Indicador Meta" filterBy="#{item.indicadorMeta}" style="width: 250px;">
+                            <p:outputLabel value="#{item.indicadorMeta ==null ? 'SIN DEFINIR':item.indicadorMeta}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Responsable" filterBy="#{item.unidadResponsable}" style="width: 250px;" >
+                            <p:outputLabel value="#{item.unidadResponsable ==null ? 'SIN DEFINIR':item.unidadResponsable}"/>
+                        </p:column>
+                        <p:column headerText="Monto de Actividad" filterBy="#{item.sistemaPlanLocal}" style="width: 150px;" >
+                            <p:outputLabel value="#{item.montoActividad ==null ? 'SIN DEFINIR':item.montoActividad}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>                        
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 1" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre1Actividad}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 2" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre2Actividad}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Presupuesto Cuatrimestre 3" style="width: 100px;">
+                            <h:outputText value="#{item.cuatrimestre3Actividad}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Producto" filterBy="#{item.nombreProducto}" style="width: 250px;">
+                            <p:outputLabel value="#{item.nombreProducto ==null ? 'SIN DEFINIR':item.nombreProducto}"/>
+                        </p:column>
+                        <p:column headerText="Monto de Producto" filterBy="#{item.montoProducto}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoProducto ==null ? 'SIN DEFINIR':item.montoProducto}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Reserva" filterBy="#{item.reserva}" style="width: 150px;">
+                            <p:outputLabel value="#{item.reserva ==null ? 'SIN DEFINIR':item.reserva}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Saldo Disponible" filterBy="#{item.saldoDisponible}" style="width: 150px;">
+                            <p:outputLabel value="#{item.saldoDisponible ==null ? 'SIN DEFINIR':item.saldoDisponible}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Monto Reformada" filterBy="#{item.montoReformada}" style="width: 150px;">
+                            <p:outputLabel value="#{item.montoReformada ==null ? 'SIN DEFINIR':item.montoReformada}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>         
+        </div>
+        <!-- <ui:include id="ActividadesProductos"  src="/common/Dialog/dlgReporte.xhtml" />-->
+        <p:dialog width="400" id="DdlgProducto"  header="Nombre del Producto" widgetVar="DdlgProducto" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProducto" prependId="false">
+                <p:inputText  value="#{reformaSuplementoEView.producto.descripcion}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                <center>
+                    <p:commandButton value="Añadir"
+                                     icon="ui-icon-plus"  actionListener="#{reformaSuplementoEView.saveProducto()}" process="formProducto"
+                                     styleClass="Fs16" style="width: auto;margin-top: 3%;margin-bottom: 15px;" update="productos,formulariobuscar"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:dialog width="300" id="DdlgProductoSuplemento"  header="Suplemento Producto" widgetVar="DdlgProductoSuplemento" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProductoSuplemento" prependId="false">
+                <p:inputNumber rendered="true" value="#{reformaSuplementoEView.producto.suplementoEgreso}" style="width: 100%"/>
+                <center>
+                    <p:commandButton value="Nuevo"
+                                     icon="ui-icon-plus" 
+                                     styleClass="Fs16" style="width: auto;margin-top: 3%; margin-bottom: 15px;" update="actividadesOperativa,productos,formulariobuscar"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:dialog width="80%" height="500" id="DlgActividad"  header="Actividad Operativa" widgetVar="DlgActividad" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formActividad" prependId="false">
+                <p:fieldset title="DESCRIPCIÓN"  legend="DESCRIPCIÓN" toggleable="true">
+                    <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PLAN" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaSuplementoEView.programaProyecto.programa.panificacion.descripcion eq null? 'NO APLICA': 
+                                                  reformaSuplementoEView.programaProyecto.programa.panificacion.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PROGRAMA" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaSuplementoEView.programaProyecto.programa.descripcion eq null?'NO APLICA':
+                                                  reformaSuplementoEView.programaProyecto.programa.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>                  
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                        <h:panelGroup>
+                            <h:outputText value="PROYECTO" style="font-size: 20px; font-weight: bold;"/>
+                            <p:commandLink title="Buscar Proyecto" oncomplete="PF('dlogoProyecto').show()"  update="fomrProyecto" process="@this" 
+                                           actionListener="#{reformaSuplementoEView.loadingProigramas()}">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+
+                        <p:inputTextarea value="#{reformaSuplementoEView.programaProyecto.nombreProgramaProyecto.toUpperCase()}" readonly="true" style="width: 100%" rows="5" cols="12"/>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset title="DATOS ADICIONALES"  legend="DATOS ADICIONALES" toggleable="true">
+                    <p:panelGrid columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PAI:"/>
+                            <p:selectOneRadio value="#{reformaSuplementoEView.actividad.pai}" unselectable="true">
+                                <f:selectItem itemLabel="SI" itemValue="true"/>
+                                <f:selectItem itemLabel="NO" itemValue="false"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PRESUPUESTO PARTICIPATIVO:" class="FontBold"/>
+                            <p:selectOneRadio value="#{reformaSuplementoEView.actividad.presupuestoParticipacion}" unselectable="true">
+                                <f:selectItem itemLabel="SI" itemValue="true"/>
+                                <f:selectItem itemLabel="NO" itemValue="false"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="GRUPO ATENCION:" class="FontBold"/>
+                            <p:selectOneRadio value="#{reformaSuplementoEView.actividad.grupoAtencion}" unselectable="true">
+                                <f:selectItem itemLabel="SI" itemValue="true"/>
+                                <f:selectItem itemLabel="NO" itemValue="false"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="COMPONENTE:" class="FontBold"/>
+                            <p:selectOneMenu value="#{reformaSuplementoEView.actividad.tipoComponete}" converter="#{utilConverter}" style="width: 100%;">
+                                <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaSuplementoEView.listacomponentes}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </p:panelGrid>
+
+
+
+                    <p:fieldset class="ui-g-1">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                            <h:outputText value="NUEVO/ARRASTRE:" class="FontBold"/> 
+                            <p:selectBooleanButton value="#{reformaSuplementoEView.actividad.arrastre}" onLabel="NUEVO" offLabel="ARRASTRE" style="width:auto;"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset class="ui-g-10">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="NOMBRE DE LA ACTIVIDAD:" class="FontBold"/>
+                            <p:inputTextarea value="#{reformaSuplementoEView.actividad.nombreActividad}"  style="width: 95%" rows="2" cols="7" scrollHeight="5"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+
+
+                </p:fieldset>
+
+                <p:fieldset title="PROGRAMACIÓN META"  legend="PROGRAMACIÓN META" toggleable="true" tabindex="-1">
+
+                    <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="OBJETIVO OPERATIVO:" class="FontBold"/>
+                                <p:inputText value="#{reformaSuplementoEView.actividad.objetivoOperativo}" style="width: 100%"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="DESCRIPCION META:" class="FontBold"/>
+                                <p:inputText value="#{reformaSuplementoEView.actividad.descripcionMeta}" style="width: 100%"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="MEDICION PORCENTAJE:" class="FontBold"/>
+                                <p:selectBooleanButton value="#{reformaSuplementoEView.actividad.medicionPorcentaje}" onIcon="fa fa-check" offIcon="fa fa-close"
+                                                       onLabel="SI" offLabel="NO" style="width:6rem">
+                                    <p:ajax update="medMeta" listener="#{reformaSuplementoEView.cambiarMedicionPorcentual()}"/>
+                                </p:selectBooleanButton>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="MEDICIÓN META:" class="FontBold"/>
+                                <p:inputNumber id="medMeta" readonly="#{reformaSuplementoEView.actividad.medicionPorcentaje}"
+                                               value="#{reformaSuplementoEView.actividad.medicionMeta}" style="width: 300px" decimalPlaces="2"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:outputLabel value="DISTRIBUCCIÓN META:" class="FontBold"/>
+                            <p:selectOneMenu value="#{reformaSuplementoEView.actividad.distribucionMeta}" converter="#{utilConverter}" style="width: 100%;">
+                                <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaSuplementoEView.distribuccionMetaList}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                <p:ajax listener="#{reformaSuplementoEView.renderizarDistribuccionMeta()}" update="groupDistrubtionMeta"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </div>
+
+                    <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <h:panelGroup id="groupDistrubtionMeta">
+                            <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.semesteMetal}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE UNO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.semestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.semestrDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.trimestreMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreTresMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE CUATRO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreCuatroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.cuatrimestreMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreTresMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid  columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.mensualMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ENERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.eneroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="FEBRERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.febreroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MARZO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.marzoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ABRIL" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.abrilMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MAYO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.mayoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JUNIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.junioMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JULIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.julioMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="AGOSTO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.agostoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEPTIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.septiembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="OCTUBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.octubreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="NOVIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.noviembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DICIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.diciembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+
+                        </h:panelGroup>
+
+                    </div>
+                </p:fieldset>
+
+                <p:fieldset title="PROGRAMACIÓN FINANCIERA" legend="PROGRAMACIÓN FINANCIERA" toggleable="true">
+
+                    <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+
+                        <div class="ui-g-6">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%;">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="PRESUPUESTO PROPIO:" class="FontBold"/>
+                                    <p:inputNumber id="presu_inicial" value="#{reformaSuplementoEView.actividad.presupuestoPropio}" style="background: orange; " decimalPlaces="2">
+                                        <p:ajax event="keyup" listener="#{reformaSuplementoEView.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                    </p:inputNumber>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="PRESUPUESTO FINANCIAMIENTO:" class="FontBold"/>
+                                    <p:inputNumber id="presu_fina" value="#{reformaSuplementoEView.actividad.presupuestoFinanciamiento}" style="background: orange;" decimalPlaces="2" >
+                                        <p:ajax event="keyup"  listener="#{reformaSuplementoEView.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                    </p:inputNumber>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MONTO:" class="FontBold"/>
+                                    <p:inputNumber id="montoActividad" value="#{reformaSuplementoEView.actividad.monotReformado}" readonly="true" style="background: yellow; " decimalPlaces="2" />
+                                </p:panelGrid>                          
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-6">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="DISTRIBUCCION:" class="FontBold"/>
+                                <p:selectOneMenu value="#{reformaSuplementoEView.actividad.tipoDistribuccion}" converter="#{utilConverter}" style="width: 100%;">
+                                    <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{reformaSuplementoEView.distribuccion}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                    <p:ajax listener="#{reformaSuplementoEView.renderizarDistribuccion()}" update="groupDistrubtion"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="AÑO:" class="FontBold"/>
+                                <p:inputText value="#{reformaSuplementoEView.actividad.anioPresPar}">
+                                    <p:keyFilter mask="num"/>
+                                </p:inputText>
+
+                            </p:panelGrid>
+                        </div>
+
+                    </div>
+
+                    <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+
+                        <h:panelGroup id="groupDistrubtion">
+                            <p:panelGrid id="semestral" columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.semeste}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE UNO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.semestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.semestrDos}" decimalPlaces="2"/>
+
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid id="trimestral" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.trimestre}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreDos}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreTres}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE CUATRO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.trimestreCuatro}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="cuatrimestre" columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.cuatrimestre}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreDos}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.cuatrimestreTres}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                            <p:panelGrid id="mensual" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaSuplementoEView.mensual}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ENERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.enero}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="FEBRERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.febrero}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MARZO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.marzo}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ABRIL" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.abril}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MAYO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.mayo}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JUNIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.junio}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JULIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.julio}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="AGOSTO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.agosto}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEPTIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.septiembre}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="OCTUBRE" class="FontBold"/>
+                                    <p:inputNumber  value="#{reformaSuplementoEView.actividad.octubre}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="NOVIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.noviembre}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DICIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaSuplementoEView.actividad.diciembre}" decimalPlaces="2"/>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+
+                        </h:panelGroup>
+                    </div>
+                </p:fieldset>
+
+                <p:fieldset legend="RESPONSABILIDAD" toggleable="true">
+                    <div class="ui-g-8">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="INDICADOR META" class="FontBold"/>
+                            <p:inputText value="#{reformaSuplementoEView.actividad.indicadorMeta}" placeholder="EJECUTADO/PLANIFICADO" style="width: 100%;"/>
+                        </p:panelGrid>
+                    </div>
+                    <div class="ui-g-4">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="UNIDAD RESPONSABLE:" class="FontBold"/>
+                            <p:selectOneMenu  disabled="true"  value="#{reformaSuplementoEView.actividad.unidadResponsable}" converter="#{utilConverter}" required="true">
+                                <f:selectItem  itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaSuplementoEView.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </div>
+
+
+                </p:fieldset>
+
+
+                <br/>
+                <center>
+                    <p:commandButton value="GUARDAR"  actionListener="#{reformaSuplementoEView.saveActividadOperativa()}" process="formActividad"
+                                     icon="fa fa-save"  update="actividadesOperativa,listaProductos" style="margin: auto; width: auto;" />
+                </center>
+
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog width="80%" height="500" id="dlogoProyecto"  header="Proyectos" widgetVar="dlogoProyecto"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="fomrProyecto" prependId="false">
+
+
+
+                <p:dataTable   expandableRowGroups="true" id="datatable2" widgetVar="datatable2" 
+                               var="a" value="#{reformaSuplementoEView.planAnualProgramaLazy}" rows="20"  style="width: auto;"
+                               paginator="true" paginatorPosition="bottom"  
+                               paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                               rowsPerPageTemplate="20,25,35,50" lazy="true" 
+                               currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                               emptyMessage="No existen datos con el criterio de busqueda especificado">  
+
+                    <p:column  headerText="PLAN" style="width: 10%;" groupRow="true" filterBy="#{a.planAnual.planLocal.descripcion}" >
+                        <h:outputText style="font-style: bold" value="#{a.programa ne null and a.programa.panificacion ne null? a.programa.panificacion.codigo:'NO APLICA'}" />
+                    </p:column>
+                    <p:column  headerText="PROGRAMA" style="width: 10%;" groupRow="true" filterBy="#{a.planAnual.planLocal.descripcion}" >
+                        <h:outputText style="font-style: bold" value="#{a.programa ne null?a.programa.codigo:'NO APLICA'}" />
+                    </p:column>
+                    <p:column headerText=" PROYECTO" style="width: 10%;" filterBy="#{a.nombreProgramaProyecto}">
+                        <h:outputText value="#{a.nombreProgramaProyecto  eq null ?'NO APLICA':a.nombreProgramaProyecto.toUpperCase()}" />
+                    </p:column>
+
+                    <p:column headerText="******" style="text-align: center; width: 3%">
+
+                        <p:commandLink  title="Seleccionar"  
+                                        process="@this" actionListener="#{reformaSuplementoEView.seleccionProyecto(a)}"
+                                        oncomplete="PF('dlogoProyecto').hide()" 
+                                        update="formActividad,fomrProyecto" >
+                            <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px; "></i>                          
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>                   
+        </p:dialog>
+
+
+        <p:dialog width="1200" id="DloCupos"  header="Asignación De Cupos" widgetVar="DloCupos" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formCupos" prependId="false">
+                <p:dataTable id="dataCupos" widgetVar="dataCupos" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="20,30,40,50,100" value="#{reformaSuplementoEView.lazyCupos}" editable="true" editMode="cell"
+                             emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                    <p:column headerText="Nombre" sortBy="#{item.unidadAdministrativa.nombre}" filterBy="#{item.unidadAdministrativa.nombre}" style="width: 20%;">
+                        <h:outputText value="#{item.unidadAdministrativa.nombre.toUpperCase()}" />
+                    </p:column>
+                    <p:column filterBy="#{item.unidadAdministrativa.padre.nombre}" headerText="Supervisa"  style="width: 20%;">
+                        <h:outputText value="#{item.unidadAdministrativa.padre.nombre==null?'ENTIDAD':item.unidadAdministrativa.padre.nombre}" />
+                    </p:column>
+                    <p:column filterBy="#{item.unidadAdministrativa.tipoUnidad.texto}" headerText="Tipo de Unidad"  style="width: 10%;">
+                        <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.texto}" />
+                    </p:column>
+                    <p:column headerText="Fecha de vigencia" style="width:7%;text-align: center;">
+                        <h:outputText value="#{item.unidadAdministrativa.fechaVigencia}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Fecha de Caducidad" style="width: 7%;text-align: center;"  >
+                        <h:outputText value="#{item.unidadAdministrativa.fechaCaducidad}">
+                            <f:convertDateTime type="date" pattern="dd-MM-yyyy"  />
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Cupo" style="width: 8%; text-align: right">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{item.montoCupo}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber value="#{item.montoCupo}" style="width:96%" >
+                                    <p:ajax event="change" listener="#{reformaSuplementoEView.editarCell(item)}" />
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column> 
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{reformaSuplementoEView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{reformaSuplementoEView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

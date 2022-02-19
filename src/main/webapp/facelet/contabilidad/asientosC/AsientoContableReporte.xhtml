@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Asiento Contable</ui:define>
+    <ui:param name="tittle" value="Reporte Asiento Contable" />
+
+    <ui:define name="content">
+        <style>
+            #btnImprimir{
+                width: 150px;
+                height: 30px;
+                border: 2px solid #665BA6;
+                border-radius: 10px 0px 10px 0px;
+                background: #378fe7;
+            }
+            #btnImprimir:hover{
+                background: #17A7BE;
+                border-color: #B39DDB;
+            }
+            #btnexportarExcel{
+                width: 150px;
+                height: 30px;
+                border: 2px solid #ADAA02;
+                border-radius: 10px 0px 10px 0px;
+                background: #00796B;
+            }
+            #btnexportarExcel:hover{
+                background: rgba(0,121,107,0.8);
+                border-color: #B39DDB;
+            }
+            #parametros{
+                margin: auto;
+            }
+            #formato1,#formato2,#formato3,#formato4,#formato5{
+                border: 1px solid;
+                border-color: #00796b;
+                border-radius: 20px 20px 20px 20px;
+                margin-right: 20px;
+            }
+            #formato3,#formato4,#formato5{
+                text-align: center;
+            } </style>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-6" id="parametros">
+                <h:form prependId="false" id="formImpresionGlobal">
+                    <p:fieldset legend="Parametros" id="fieldsetFecha" style="margin-bottom:20px; ; margin-top: 10%">
+                        <p:fieldset legend="Eliga el Tipo de Reporte" class="ui-g-12" >
+                            <p:panelGrid columns="1"  layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="Tipo de Reporte:"/>
+                                <p:selectOneMenu value="#{reporteAcView.parametrosFecha}" style="width: 25%;">
+                                    <f:selectItem itemLabel="No.Transaccion" itemValue="#{1}"/>
+                                    <f:selectItem itemLabel="Fechas" itemValue="#{2}"/>
+                                    <f:selectItem itemLabel="Saldos Auxiliares" itemValue="#{3}"/>
+                                    <p:ajax  update="@form" event="change" listener = "#{reporteAcView.loadInit()}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="No.Transaccion" class="ui-g-12" rendered="#{reporteAcView.parametrosFecha eq 1}">
+                            <h:panelGrid id="formato1" columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-3">
+                                <p:outputLabel value="Tipo:"/>
+                                <p:selectOneMenu value="#{reporteAcView.cp}">
+                                    <f:selectItem itemLabel="Comprobante de Pago" itemValue="#{false}"/>
+                                    <f:selectItem itemLabel="Diario" itemValue="#{true}"/>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <h:panelGrid id="formato2" columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-3">
+                                <p:outputLabel value="No.Transacción:" />
+                                <p:inputText class="panelInput" style="text-align: center;" 
+                                             value="#{reporteAcView.num_transaccion}">
+                                    <p:keyFilter regEx="/[\d]/"/>
+                                </p:inputText>
+                            </h:panelGrid>
+                            <h:panelGrid id="formato3" columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-3">
+                                <p:outputLabel for="@next" value="Período:"/>
+                                <p:inputText class="panelInput" style="text-align: center;"
+                                             value="#{reporteAcView.periodo}" >
+                                    <p:keyFilter regEx="/[\d]/"/>
+                                </p:inputText>
+                            </h:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Fechas" class="ui-g-12" rendered="#{reporteAcView.parametrosFecha eq 2 }">
+                            <h:panelGrid id="formato4" columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <h:outputText value="Desde:"/>
+                                <p:calendar id="fechaDesde" value="#{reporteAcView.desde}" 
+                                            locale="es" readonlyInput="true" pattern="dd/MM/yyyy"                                             
+                                            maxdate="#{reporteAcView.hasta}" navigator="true">
+                                    <p:ajax event="dateSelect" update="fechaHasta"/>
+                                </p:calendar>
+                            </h:panelGrid>
+                            <h:panelGrid id="formato5" columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <h:outputText value="Hasta:"/>
+                                <p:calendar id="fechaHasta" value="#{reporteAcView.hasta}"
+                                            locale="es" readonlyInput="true" pattern="dd/MM/yyyy" navigator="true"                                            
+                                            disabled="#{empty reporteAcView.desde? true: reporteAcView.parametrosFecha ne 2}"                                            
+                                            mindate="#{reporteAcView.desde}">
+                                </p:calendar>
+                            </h:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset id="fieldSaldosInciales" legend="Saldos Auxiliares" class="ui-g-12" rendered="#{reporteAcView.parametrosFecha eq 3}">
+                            <h:panelGrid columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <p:outputLabel value="Periodo:" for="periodo"/>
+                                <p:selectOneMenu id="periodo"  value="#{reporteAcView.periodo}" >
+                                    <f:selectItem itemLabel="Seleccionar"  value="#{null}" />
+                                    <f:selectItems value="#{reporteAcView.listaPeriodo}" var="p"  itemLabel="#{p}" itemValue="#{p}" />
+                                    <p:ajax listener="#{reporteAcView.elegirPeriodo()}" event="change"  update="fieldSaldosInciales" />
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <h:panelGrid columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <p:outputLabel value="Cuenta Contable:" for="cuentaContable"/>
+                                <p:selectOneMenu id="cuentaContable" filterMatchMode="contains" filter="true" converter="#{utilConverter}" var="ct"
+                                                 value="#{reporteAcView.cuenta}" panelStyle="width:45%"  style="width: 100%;">
+                                    <f:selectItem itemLabel="Todos"  value="#{null}" />
+                                    <f:selectItems value="#{reporteAcView.listCuentasContables}" var="c"  
+                                                   itemLabel="#{c.codigo} - #{c.descripcion}" itemValue="#{c}" />
+                                    
+                                    <p:column style="width:15%">
+                                        <f:facet name="header">
+                                            <h:outputText value="Código"/>
+                                        </f:facet>
+                                        <h:outputText value="#{ct.codigo}" />
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{ct.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            
+                            <h:panelGrid  columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <h:outputText value="Desde:"/>
+                                <p:calendar id="fechaDesdeSaldoInicial" value="#{reporteAcView.desde}" 
+                                            locale="es" readonlyInput="true" pattern="dd/MM/yyyy"                                             
+                                            maxdate="#{reporteAcView.hasta}" navigator="true">
+                                    <p:ajax event="dateSelect" update="fechaHastaSaldoInicial"/>
+                                </p:calendar>
+                            </h:panelGrid>
+                            <h:panelGrid columns="1" style="margin-bottom:10px" cellpadding="5" class="ui-g-5">
+                                <h:outputText value="Hasta:"/>
+                                <p:calendar id="fechaHastaSaldoInicial" value="#{reporteAcView.hasta}" mindate="#{reporteAcView.desde}"
+                                            locale="es" readonlyInput="true" pattern="dd/MM/yyyy" navigator="true">
+                                </p:calendar>
+                            </h:panelGrid>
+                        </p:fieldset>
+                    </p:fieldset>
+
+                    <center style="margin-top: 2%; ">
+                        <p:commandButton styleClass="Fs16" icon="fa fa-print" value="Imprimir"  style="width: auto"
+                                         actionListener="#{reporteAcView.imprimirDiarioGlobal(false)}"/>
+                        <p:spacer width="10"/>
+                        <p:commandButton rendered="TRUE" styleClass="Fs16" icon="fa fa-file-excel-o" style="width: auto"
+                                         value="Exportar a Excel" actionListener="#{reporteAcView.imprimirDiarioGlobal(true)}" />
+                    </center>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

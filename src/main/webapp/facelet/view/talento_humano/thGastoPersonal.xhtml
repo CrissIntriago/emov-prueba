@@ -1,0 +1,344 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Declaración de Gastos Personales
+    </ui:define>
+    <ui:param name="tittle" value="Declaración de Gastos Personales"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:outputPanel id="createEditPanel" >
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:fieldset id="fieldset" legend="REGISTRAR DECLARACIÓN" toggleable="true" toggleSpeed="500" collapsed="#{thGastoPersonalView.collapsed}">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:fieldset legend="Ciudad y fecha de entrega/recepción">
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                                    <p:selectOneMenu id="thPeriodo" value="#{thGastoPersonalView.thGastoPersonal.ejercicioFiscal}"
+                                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                        <f:selectItems value="#{thGastoPersonalView.periodos}" var="item" itemValue="#{item}"/>
+                                                        <p:ajax process="thPeriodo"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Provincia:" style="font-weight: bold"/>
+                                                    <p:selectOneMenu id="provincia" value="#{thGastoPersonalView.thGastoPersonal.provincia}" converter="#{utilConverter}" 
+                                                                     filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{thGastoPersonalView.view}">
+                                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                        <f:selectItems value="#{thGastoPersonalView.provincias}" var="item" itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                                                        <p:ajax process="provincia" listener="#{thGastoPersonalView.updateCantones()}" update="panelGroupCantones"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupCantones">
+                                                    <p:outputLabel for="@next" value="Cantón:" style="font-weight: bold"/>
+                                                    <p:selectOneMenu id="clasificacion" value="#{thGastoPersonalView.thGastoPersonal.canton}" converter="#{utilConverter}"
+                                                                     filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{thGastoPersonalView.view}">
+                                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                                        <f:selectItems value="#{thGastoPersonalView.cantones}" var="item" itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                                                    </p:selectOneMenu>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Fecha de entrega:" style="font-weight: bold"/>
+                                                    <p:calendar id="fechaEntrega"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" 
+                                                                readonlyInput="true" disabled="#{thGastoPersonalView.view}"
+                                                                onkeypress="focusNextOnEnter(event, 'fechaEntrega')"
+                                                                value="#{thGastoPersonalView.thGastoPersonal.fechaEntrega}" style="width: 100%">
+                                                        <p:ajax event="dateSelect" listener="#{thGastoPersonalView.actualizarIngresoGravado()}" update="ingresosPanel"/>
+                                                    </p:calendar> 
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:fieldset legend="Servidor público">
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thGastoPersonalView.thGastoPersonal.id == null ? true:false}">
+                                                    <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                                                    <div class="ui-inputgroup">
+                                                        <p:inputText id="identificacion" class="panelInput" value="#{thGastoPersonalView.identificacion}"
+                                                                     onkeypress="focusNextOnEnter(event, 'identificacion')" maxlength="10">
+                                                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                                        </p:inputText>
+                                                        <p:commandButton title="Buscar" icon="fa fa-search" id="btnIdentificacion"
+                                                                         actionListener="#{thGastoPersonalView.findServidor()}"
+                                                                         update="gridServidor,ingresosPanel" process="identificacion" styleClass="button-group">
+                                                        </p:commandButton>
+                                                    </div>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thGastoPersonalView.thGastoPersonal.id == null ? false:true}">
+                                                    <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                                                    <p:inputText id="identificacionView" class="panelInput" style="width: 100%" 
+                                                                 value="#{thGastoPersonalView.thGastoPersonal.servidor.persona.identificacion}" 
+                                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionView')">
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridServidor">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                                                    <p:inputText id="nombres" class="panelInput" style="width: 100%" 
+                                                                 value="#{thGastoPersonalView.thGastoPersonal.servidor.persona.nombre}" 
+                                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'nombres')">
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                                                    <p:inputText id="apellidos" class="panelInput" style="width: 100%" 
+                                                                 value="#{thGastoPersonalView.thGastoPersonal.servidor.persona.apellido}" 
+                                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'apellidos')">
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="ingresosPanel">
+                                        <p:fieldset legend="Ingresos gravados proyectados(sin decimotercero y decimocuarta remuneración)">
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Total ingresos gravados con este empleador:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="ingresoGravado" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.ingresoGravado}" symbol="$"
+                                                                   readonly="true" onkeypress="focusNextOnEnter(event, 'ingresoGravado')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calcularIngreso()}" update="panelGroupTotalIngresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Total ingresos con otros empleadores(en caso de haberlos):" style="font-weight: bold"/>
+                                                    <p:inputNumber id="otrosIngresos" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.otrosIngresos}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}"  onkeypress="focusNextOnEnter(event, 'otrosIngresos')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calcularIngreso()}" update="panelGroupTotalIngresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="Valor del impuesto retenido y asumido por otros empleadores durante el periodo declarado:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="valorImpuestoRetenido" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.valorImpuestoRetenido}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'valorImpuestoRetenido')">
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupTotalIngresos">
+                                                    <p:outputLabel for="@next" value="(=) Total de ingresos:" style="font-weight: bold"/><br/><br/>
+                                                    <p:inputNumber id="totalIngreso" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.totalIngreso}" symbol="$"
+                                                                   readonly="true" onkeypress="focusNextOnEnter(event, 'totalIngreso')">
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                        <p:fieldset legend="Exoneraciones">
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="Por discapacidad:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="exoneracionDiscapacidad" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.exoneracionDiscapacidad}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'exoneracionDiscapacidad')">
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="Por tercera edad:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="exoneracionTerceraEdad" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.exoneracionTerceraEdad}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'exoneracionTerceraEdad')">
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:fieldset legend="Gastos proyectados">
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de vivienda:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoVivienda" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoVivienda}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}"  onkeypress="focusNextOnEnter(event, 'gastoVivienda')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de educación, arte y cultura::" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoEducacion" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoEducacion}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}"  onkeypress="focusNextOnEnter(event, 'gastoEducacion')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de salud:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoSalud" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoSalud}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}"  onkeypress="focusNextOnEnter(event, 'gastoSalud')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de vestimenta:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoVestimenta" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoVestimenta}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'gastoVestimenta')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de alimentación:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoAlimentacion" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoAlimentacion}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'gastoAlimentacion')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                    <p:outputLabel for="@next" value="(+) Gastos de turismo:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="gastoTurismo" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.gastoTurismo}" symbol="$"
+                                                                   readonly="#{thGastoPersonalView.view}" onkeypress="focusNextOnEnter(event, 'gastoTurismo')">
+                                                        <p:ajax listener="#{thGastoPersonalView.calculaEgreso()}" update="panelGroupTotalEgresos" />
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput"/>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelGroupTotalEgresos">
+                                                    <p:outputLabel for="@next" value="(=) Total gastos proyectados:" style="font-weight: bold"/>
+                                                    <p:inputNumber id="totalGasto" class="panelInput" style="width: 100%" inputStyle="text-align:right"
+                                                                   value="#{thGastoPersonalView.thGastoPersonal.totalGasto}" symbol="$" readonly="true"
+                                                                   onkeypress="focusNextOnEnter(event, 'totalGasto')">
+                                                    </p:inputNumber>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <center>
+                                    <p:commandButton value="Guardar" update="thGastoPersonalTable,createEditPanel" rendered ="#{!thGastoPersonalView.view}"
+                                                     icon="fa fa-save" actionListener="#{thGastoPersonalView.save()}"
+                                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                                    <p:commandButton value="Limpiar" update="createEditPanel"
+                                                     icon="fa fa-trash" actionListener="#{thGastoPersonalView.clean()}"
+                                                     styleClass="Fs16" style="width: auto;margin: 10px;background: red"/>
+                                </center>
+                            </p:fieldset>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                    <p:outputPanel id="busquedaPanel">
+                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:fieldset legend="Parámetros de busqueda">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodoFind" value="#{thGastoPersonalView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thGastoPersonalView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="thGastoPersonalTable" listener="#{thGastoPersonalView.updateLazy()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:fieldset>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                    <p:outputPanel id="tablePanel">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:dataTable id="thGastoPersonalTable" widgetVar="thGastoPersonalTable" var="thGastoPersonal" value="#{thGastoPersonalView.thGastoPersonalLazy}"
+                                         paginator="true" rows="50" style="width: 100%;" paginatorPosition="bottom" selectionMode="single" rowKey="#id}"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         rowIndexVar="num" paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="50,100,150,200" editable="true" editMode="cell" lazy="true"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado" >
+                                <p:column headerText="No" style="width: 5%;text-align: center">
+                                    <h:outputText value="#{num+1}"/>
+                                </p:column> 
+                                <p:column headerText="Cédula" style="text-align: center;width: 8%" filterBy="#{thGastoPersonal.servidor.persona.identificacion}" filterMatchMode="contains">
+                                    <h:outputText value="#{thGastoPersonal.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre completo" style="width: 15%" filterBy="#{thGastoPersonal.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                    <h:outputText value="#{thGastoPersonal.servidor.persona.nombreCompleltoSql}" style="float: left"/>
+                                </p:column>                               
+                                <p:column headerText="Período" style="text-align: center;width: 8%">
+                                    <h:outputText value="#{thGastoPersonal.periodo}" />
+                                </p:column>
+                                <p:column headerText="PRY/ACTU" style="text-align: center;width: 8%">
+                                    <h:outputText value="#{thGastoPersonal.actualizacion ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column headerText="Fecha presentación" style="text-align: center;width: 10%">
+                                    <h:outputText value="#{thGastoPersonal.fechaEntrega}">
+                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                    </h:outputText>
+                                </p:column>                                
+                                <p:column headerText="RMU" style="width: 8%">
+                                    <h:outputText value="#{thGastoPersonal.totalIngreso}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Otros empleados" style="width: 8%">
+                                    <h:outputText value="#{thGastoPersonal.otrosIngresos}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+
+                                <p:column headerText="Total ingresos" style="text-align: center;width: 10%">
+                                    <h:outputText value="#{thGastoPersonal.totalIngreso}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Gastos" style="width: 10%">
+                                    <h:outputText value="Vivienda: $#{thGastoPersonal.gastoVivienda}"/>
+                                    <br/>
+                                    <h:outputText value="Educación: $#{thGastoPersonal.gastoEducacion}"/>
+                                    <br/>
+                                    <h:outputText value="Salud: $#{thGastoPersonal.gastoSalud}"/>
+                                    <br/>
+                                    <h:outputText value="Vestimienta: $#{thGastoPersonal.gastoVestimenta}"/>
+                                    <br/>
+                                    <h:outputText value="Alimentación: $#{thGastoPersonal.gastoAlimentacion}"/>
+                                    <br/>
+                                    <h:outputText value="Turismo: $#{thGastoPersonal.gastoTurismo}"/>
+                                </p:column>
+                                <p:column headerText="Total gastos" style="width: 10%">
+                                    <h:outputText value="#{thGastoPersonal.totalGasto}" style="float:  right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                                    <p:commandLink title="Visualizar" process="@this" actionListener="#{thGastoPersonalView.form(thGastoPersonal,true,false)}"  
+                                                   update="formMain">
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink title="Editar" process="@this" actionListener="#{thGastoPersonalView.form(thGastoPersonal,false,false)}"  
+                                                   update="formMain">
+                                        <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink title="Actualizar" process="@this" actionListener="#{thGastoPersonalView.form(thGastoPersonal,false,true)}"  
+                                                   update="formMain">
+                                        <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                        <p:confirm header="Confirmación de actualización" message="¿Desea actualizar este registro?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                    <p:commandLink title="Eliminar" process="@this" actionListener="#{thGastoPersonalView.delete(thGastoPersonal)}"  
+                                                   update="formMain">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminacion" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column> 
+                            </p:dataTable>
+                        </p:panelGrid>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

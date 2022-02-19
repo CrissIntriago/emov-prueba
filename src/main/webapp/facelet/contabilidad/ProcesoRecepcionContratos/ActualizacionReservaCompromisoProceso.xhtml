@@ -1,0 +1,691 @@
+
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title"> Actualización Reserva de Compromiso</ui:define> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <comp:titleTask task="#{ReservaProceso.tarea}" tramite="#{ReservaProceso.tramite}" />
+                <h:form  id="formMain" prependId="false">
+                    <p:commandButton value="Limpiar Filtros" style="width: auto;margin-bottom: 1%;" icon="fa fa-eraser"
+                                     onclick="PF('dataaprobacion').clearFilters()" 
+                                     actionListener="#{ReservaProceso.clearAllFilters}"
+                                     update="dataaprobacion">
+                        <p:resetInput target="dataaprobacion" />
+                    </p:commandButton>
+
+                    <h:panelGrid columns="2" style="float: right;" cellpadding="2">
+                        <p:outputLabel value="Período: " style="font-weight: bold; font-size: 12px;"/>
+                        <p:selectOneMenu value="#{ReservaProceso.busqueda.anio}" style=" font-size: 12px; width: 100px;"> 
+                            <f:selectItems value="#{ReservaProceso.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}" />
+                            <p:ajax listener="#{ReservaProceso.actualizarLista()}" update="formMain" process="@this"/>
+                        </p:selectOneMenu>
+                    </h:panelGrid>
+
+                    <p:dataTable id="dataaprobacion" widgetVar="dataaprobacion" var="item" value="#{ReservaProceso.lista}" paginator="true" rows="25" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="25,30,40,50,100"
+                                 emptyMessage="No existen reservas para el proceso con el período de busqueda">
+
+                        <p:column headerText="Código" style="width:8%;">
+                            <p:outputLabel value="#{ReservaProceso.formatoCodigo(item.secuencial)}-#{item.periodo}" />
+                        </p:column>
+
+                        <p:column headerText="Descripción" style="width: 20%;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{item.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="Unidad Requiriente" style="width: 15%;text-align: center" filterBy="#{item.unidadRequiriente.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataaprobacion').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{ReservaProceso.unidadFiltros}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="Beneficiario" style="width: 20%;">
+                            <p:outputLabel value="#{item.beneficiario == null ? 'PROCESO INICIAL':item.beneficiario.nombreCompleto.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="Fecha Solicitud" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{item.fechaSolicitud}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+
+                        <p:column headerText="Estado" style="width: 10%;text-align: center" filterBy="#{item.estado.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataaprobacion').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{ReservaProceso.estadoFiltros}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.estado.texto.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="Acciones" style="width: 7%; text-align: center;">
+                            <p:commandLink  title="Actualizar" process="@this" actionListener="#{ReservaProceso.actualizarSolicitudDeReservaAprobada(item)}" 
+                                            rendered="#{item.estado.codigo == 'REVIS' ? false:true}"  update="dataaprobacion,formActualizacionReserva" >
+                                <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+
+                            <p:commandLink  title="Ver" process="@this" actionListener="#{ReservaProceso.vizualizarSolicitudActualizada(item)}" 
+                                            rendered="#{item.estado.codigo == 'REVIS' ? false:true}">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </p:column>
+
+                    </p:dataTable>
+                    <p:outputPanel id="continuarTask" style="width: 100%; height: 10px; margin-top: 10px">
+                        <p:commandButton value="Terminar Tarea"
+                                         process="@this"
+                                         actionListener="#{ReservaProceso.updialogObservacion()}"
+                                         icon="fa fa-send" 
+                                         styleClass="Fs16" style="width: auto;float: right;">
+                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de Terminar la Tarea?" 
+                                       icon="fa fa-exclamation-triangle"/>
+                        </p:commandButton>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="DlgoActualizacionReserva" widgetVar="DlgoActualizacionReserva" modal="true" showEffect="fade" position="center" height="450"
+                  width="80%" resizable="false" hideEffect="fade" header="ACTUALIZACIÒN - SOLICITUD DE RESERVA DE COMPROMISO">
+            <h:form id="formActualizacionReserva"  prependId="false">
+                <div class="ui-g-12">
+                    <div class="ui-g-8">
+                        <p:fieldset legend="INFORMACIÓN">
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Descripción:" style="font-weight: bold;" /><br/>
+                                    <p:inputTextarea readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.descripcion}" style="width: 100%" rows="4"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel id="factualizacion" value="Fecha Actualización:" style="font-weight: bold;" />
+                                    <p:calendar pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100"
+                                                value="#{ReservaProceso.solicitudReservaCompromiso.fechaActualizacion}" style="width: 100%">
+                                        <p:ajax update="factualizacion" process="@this"/>
+                                    </p:calendar> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="No. Solicitud:" style="font-weight: bold;" /><br/>
+                                    <p:inputText readonly="true" value= "#{ReservaProceso.solicitudReservaCompromiso.secuancialForFilter}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Estado:" style="font-weight: bold;"/><br/>
+                                    <p:inputText readonly="true"  value= "#{ReservaProceso.solicitudReservaCompromiso.estado.texto}" style="text-transform: uppercase"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel style="font-weight: bold;" value="Fecha Solicitud:"/><br/>
+                                    <p:inputText readonly="true"  value="#{ReservaProceso.solicitudReservaCompromiso.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-4">
+                        <p:fieldset legend="BENEFICIARIO">
+                            <h:panelGroup id="beneficiarioPanel" layout="block">
+                                <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Tipo:" style="font-weight: bold;" />
+                                        <p:inputText readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':(ReservaProceso.solicitudReservaCompromiso.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR')}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Identificación" style="font-weight: bold;" />
+                                        <p:inputText readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':ReservaProceso.solicitudReservaCompromiso.beneficiario.identificacionCompleta}"/>                                   
+                                    </h:panelGroup>
+
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:commandButton icon="fa fa-search-plus" value="Añadir Beneficiario" onclick="PF('dlgBeneficiario').show();"
+                                                         rendered="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? true:false}"
+                                                         styleClass="Fs16" style="width: 100%;" />  
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel value="Beneficiario:" style="font-weight: bold;" /><br/>
+                                        <p:inputText readonly="true" style="width: 100%"
+                                                     value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':ReservaProceso.solicitudReservaCompromiso.beneficiario.nombreCompleto}"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </h:panelGroup>
+                        </p:fieldset>
+                    </div>
+
+                    <div class="ui-g-12">
+                        <p:fieldset legend="Opciones-Contratos">
+                            <p:selectOneButton  value="#{ReservaProceso.tipoContrato}" disabled="#{ReservaProceso.disabledContrato}">
+                                <p:ajax update="formActualizacionReserva" listener="#{ReservaProceso.ocultarTablacontratos()}"/>
+                                <f:selectItem itemLabel="NO APLICA" itemValue="true"/>
+                                <p:spacer width="10"/>
+                                <f:selectItem itemLabel="CONTRATO" itemValue="false"/>                               
+                            </p:selectOneButton>   
+                            <p:dataTable rendered="#{ReservaProceso.tablaContrato}" style="margin-top: 2%;"  paginator="true"  paginatorPosition="bottom" 
+                                         rows="3" widgetVar="dataContratos"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado"  rowsPerPageTemplate="3,5" 
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         id="dataContratos" value="#{ReservaProceso.listaAqusicionesGuardar}" var="adquisicion">
+                                <f:facet name="header">
+                                    LISTADO DE ADQUISICIONES/CONTRATOS
+                                </f:facet>
+                                <p:column headerText="ID. Proceso" style="width: 12%;" filterBy="#{adquisicion.contrato.idProceso}" filterMatchMode="contains" >
+                                    <h:outputText value="#{adquisicion.contrato.idProceso}" />
+                                </p:column>  
+                                <p:column headerText="Adquisicion" style="width: 12%;" filterBy="#{adquisicion.contrato.tipoAdquisicion.texto}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataContratos').filter()" style="width: 100%">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{ReservaProceso.tiposAdquisicion}" var="tipoAdquisicion" itemLabel="#{tipoadquisicion.contrato.texto}" itemValue="#{tipoadquisicion.contrato.texto}" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{adquisicion.contrato.tipoAdquisicion.texto}" />
+                                </p:column>  
+                                <p:column headerText="Tipo de Proceso" style="width: 18%;" filterBy="#{adquisicion.contrato.tipoProceso.texto}" filterMatchMode="contains">
+                                    <h:outputText value="#{adquisicion.contrato.tipoProceso.texto}" />
+                                </p:column>  
+                                <p:column headerText="Proveedor" style="width: 18%;" filterBy="#{adquisicion.contrato.proveedor.cliente.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{adquisicion.contrato.proveedor.cliente.nombre}" />
+                                </p:column>
+                                <p:column headerText="No. Contrato" style="width: 12%;" filterBy="#{adquisicion.contrato.numeroContrato}" filterMatchMode="contains">
+                                    <h:outputText value="#{adquisicion.contrato.numeroContrato}" />
+                                </p:column> 
+                                <p:column headerText="Fecha Contrato" style="width: 10%;text-align: center">
+                                    <h:outputText value="#{adquisicion.contrato.fechaContrato}" >
+                                        <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                    </h:outputText>
+                                </p:column> 
+                                <p:column headerText="Valor de Contrato" style="width: 7vw;" >
+                                    <h:outputText value="#{adquisicion.contrato.valorContratado}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>  
+
+                                <p:column  headerText="Acción" style="width:10%;text-align: center">
+                                    <p:commandLink title="Eliminar Contrato" actionListener="#{ReservaProceso.eliminarContrato(adquisicion)}" update="dataContratos,tabladimnamica,formActualizacionReserva" >
+                                        <i class="fa fa-remove" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el Contrato #{adquisicion.contrato.numeroContrato} ?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog> 
+
+                        </p:fieldset>
+                    </div>
+                </div>
+
+
+                <div class="ui-g-12">
+                    <p:tabView id="tabladimnamica" prependId="false" >
+                        <p:tab title="Productos Registrados" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="5" widgetVar="actualizarReservaProductos"
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          emptyMessage="No existen cuentas con el criterio de busqueda especificado" editable="true" editMode="cell"
+                                          id="actualizarReservaProductos" value="#{ReservaProceso.listaSolicitudes}" var="item">
+                                <p:ajax event="cellEdit" listener="#{ReservaProceso.insertarComprometido(item)}" oncomplete="actualizarReservaProductos"  /> 
+                                <p:column headerText="Concepto" style="width: 20%">
+                                    <p:outputLabel value="#{item.actividadProducto.descripcion} #{item.presupuesto.item.descripcion}"/>
+                                </p:column>
+
+
+                                <p:column headerText="Descripción" style="width: 20%">
+                                    <p:outputLabel value="#{item.actividadProducto.descripcion} #{item.presupuesto.item.descripcion}"/>
+                                </p:column>
+
+                                <p:column headerText="Partidas" style="width: 20%;text-align: center">
+                                    <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.presupuesto.partida}"/>
+                                </p:column>
+
+                                <p:column headerText="Monto Presupuestado" style="width: 20%">
+                                    <p:outputLabel value="#{item.actividadProducto.monto} #{item.presupuesto.valorEgreso}" style="float: right">
+                                        <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+
+                                <p:column headerText="Monto Solicitado" style="width: 20%">
+                                    <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                        <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>     
+
+                                <p:column headerText="Monto Comprometido" style="width: 20%">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.montoComprometido}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item.montoComprometido}" style="width:96%" >
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="3" style="text-align:right;font-weight: bold; font-size: 13px;" footerText="Suma:" />
+                                        <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{ReservaProceso.totalPresupuestado}">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+
+                                        <p:column  style="text-align: right;font-weight: bold; font-size: 13px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{ReservaProceso.totalSolicitado}">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+
+                                        <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{ReservaProceso.totalComprometido}">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>    
+                        </p:tab>
+                        <p:tab title="Requisitos Registrados" titleStyle="border-right: 2px solid #eaeaea" >
+                            <u:documents entiti="#{ReservaProceso.solicitudReservaCompromiso}"/> 
+                            <p:dataTable rendered="false" paginator="true"  paginatorPosition="bottom" rows="5"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         id="actualizarReservaRequisitos" widgetVar="actualizarReservaRequisitos" var="requisito" 
+                                         value="#{ReservaProceso.procedimientoRequisitoList}"
+                                         lazy="true"  
+                                         emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+                                <p:column headerText="NOMBRE" style="width:30%;">
+                                    <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                    <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                    <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column headerText="ACCIONES" style="width:10%;text-align: center">
+                                    <p:commandLink title="Ver Requisito" actionListener="#{ReservaProceso.vizualizarPDF(requisito)}" update="viewPDF" >
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable> 
+                        </p:tab>
+
+                    </p:tabView>
+                    <div class="ui-g-12">
+                        <center>
+                            <p:commandButton icon="fa fa-codepen" value="Actualizar Solicitud de Reserva"  action="#{ReservaProceso.setTipoContrato(true)}"                                            
+                                             actionListener="#{ReservaProceso.saveActualizacionSolicitud()}" 
+                                             style="width: 20%;margin-right: 20px" process="@this" update="formMain"/>
+                        </center>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlgoVisualizarActualizacion" widgetVar="DlgoVisualizarActualizacion" modal="true" showEffect="fade" position="center"
+                  width="80%" resizable="false" hideEffect="fade" header="VISUALIZACIÓN DE LA SOLICITUD DE RESERVA DE COMPROMISO ACTUALIZADA">
+            <h:form id="formVisualizacionActualizacion"  prependId="false">
+                                <div class="ui-g-12">
+                    <div class="ui-g-8">
+                        <p:fieldset legend="INFORMACIÓN">
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Descripción:" style="font-weight: bold;" /><br/>
+                                    <p:inputTextarea readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.descripcion}" style="width: 100%" rows="4"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fecha Actualización:" style="font-weight: bold;" />
+                                    <p:inputText readonly="true"  value="#{ReservaProceso.solicitudReservaCompromiso.fechaActualizacion}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="No. Solicitud:" style="font-weight: bold;" /><br/>
+                                    <p:inputText readonly="true" value= "#{ReservaProceso.solicitudReservaCompromiso.secuancialForFilter}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Estado:" style="font-weight: bold;"/><br/>
+                                    <p:inputText readonly="true"  value= "#{ReservaProceso.solicitudReservaCompromiso.estado.texto}" style="text-transform: uppercase"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel style="font-weight: bold;" value="Fecha Solicitud:"/><br/>
+                                    <p:inputText readonly="true"  value="#{ReservaProceso.solicitudReservaCompromiso.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+
+                    <div class="ui-g-4">
+                        <p:fieldset legend="BENEFICIARIO">
+                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Tipo:" style="font-weight: bold;" />
+                                    <p:inputText readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':(ReservaProceso.solicitudReservaCompromiso.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR')}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Identificación" style="font-weight: bold;" />
+                                    <p:inputText readonly="true" value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':ReservaProceso.solicitudReservaCompromiso.beneficiario.identificacionCompleta}"/>                                   
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton icon="fa fa-search-plus" value="Añadir Beneficiario" onclick="PF('dlgBeneficiario').show();"
+                                                     rendered="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? true:false}"
+                                                     styleClass="Fs16" style="width: 100%;" />  
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Beneficiario:" style="font-weight: bold;" /><br/>
+                                    <p:inputText readonly="true" style="width: 100%"
+                                                 value="#{ReservaProceso.solicitudReservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':ReservaProceso.solicitudReservaCompromiso.beneficiario.nombreCompleto}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                </div>
+                <div class="ui-g-12">
+                    <p:fieldset legend="OPCIONES-CONTRATOS">
+                        <p:dataTable rendered="#{ReservaProceso.tablaContrato}" style="margin-top: 2%;"  paginator="true"  paginatorPosition="bottom" rows="3" widgetVar="dataContratosVista"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  rowsPerPageTemplate="3,5"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     id="dataContratosVista" value="#{ReservaProceso.listaAqusicionesGuardar}" var="adquisicionDt">
+                            <f:facet name="header">
+                                LISTADO DE ADQUISICIONES/CONTRATOS
+                            </f:facet>
+                            <p:column headerText="ID. Proceso" style="width: 12%;" >
+                                <h:outputText value="#{adquisicionDt.contrato.idProceso}" />
+                            </p:column>  
+                            <p:column headerText="Adquisicion" style="width: 12%;" filterBy="#{adquisicionDt.contrato.tipoAdquisicion.texto}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('dataContratos').filter()" style="width: 100%">
+                                        <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{ReservaProceso.tiposAdquisicion}" var="tipoAdquisicion" itemLabel="#{tipoadquisicionDt.contrato.texto}" itemValue="#{tipoadquisicionDt.contrato.texto}" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{adquisicionDt.contrato.tipoAdquisicion.texto}" />
+                            </p:column>  
+                            <p:column headerText="Tipo de Proceso" style="width: 18%;" filterBy="#{adquisicionDt.contrato.tipoProceso.texto}">
+                                <h:outputText value="#{adquisicionDt.contrato.tipoProceso.texto}" />
+                            </p:column>  
+                            <p:column headerText="Proveedor" style="width: 18%;" filterBy="#{adquisicionDt.contrato.proveedor.cliente.nombre}">
+                                <h:outputText value="#{adquisicionDt.contrato.proveedor.cliente.nombre}" />
+                            </p:column>
+                            <p:column headerText="No. Contrato" style="width: 12%;" filterBy="#{adquisicionDt.contrato.numeroContrato}">
+                                <h:outputText value="#{adquisicionDt.contrato.numeroContrato}" />
+                            </p:column> 
+                            <p:column headerText="Fecha Contrato" style="width: 10%;text-align: center">
+                                <h:outputText value="#{adquisicionDt.contrato.fechaContrato}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                </h:outputText>
+                            </p:column> 
+                            <p:column headerText="Valor de Contrato" style="width: 7vw;" >
+                                <h:outputText value="#{adquisicionDt.contrato.valorContratado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>  
+                        </p:dataTable>
+
+                    </p:fieldset>  
+                </div>
+                <div class="ui-g-12">
+                    <p:tabView id="tabladimnamicaVizualizar" prependId="false" >
+                        <p:tab title="Productos Registrados" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="4" widgetVar="productosActualizados"
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                          id="productosActualizados" value="#{ReservaProceso.listaSolicitudes}" var="item">
+                                <p:column headerText="CONCEPTO" style="width: 20%">
+                                    <p:outputLabel value="#{item.actividadProducto.descripcion} #{item.presupuesto.item.descripcion}"/>
+                                </p:column>
+
+
+                                <p:column headerText="DESCRIPCIÓN" style="width: 20%">
+                                    <p:outputLabel value="#{item.actividadProducto.descripcion} #{item.presupuesto.item.descripcion}"/>
+                                </p:column>
+
+                                <p:column headerText="PARTIDAS" style="width: 20%;text-align: center">
+                                    <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.presupuesto.partida}"/>
+                                </p:column>
+                                <p:column headerText="MONTO SOLICITADO" style="width: 20%">
+                                    <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                        <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>  
+                                <p:column headerText="MONTO COMPROMETIDO" style="width: 20%">
+                                    <p:outputLabel value="#{item.montoComprometido}" style="float: right">
+                                        <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>   
+
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="3" style="text-align:right;font-weight: bold; font-size: 13px;" footerText="Suma:" />
+                                        <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{ReservaProceso.totalSolicitado}">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+
+                                        <p:column  style="text-align: right;font-weight: bold; font-size: 13px;">
+                                            <f:facet name="footer">
+                                                <h:outputText value="#{ReservaProceso.totalComprometido}">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </f:facet>
+                                        </p:column>
+                                    </p:row>
+                                </p:columnGroup>
+
+
+                            </p:dataTable>   
+                        </p:tab>
+                        <p:tab title="Requisitos" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="4"
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          id="requisitosTablaView" widgetVar="requisitosTablaView" var="requisito" 
+                                          value="#{ReservaProceso.procedimientoRequisitoList}"
+                                          style="margin: 20px 0px" lazy="true"  
+                                          emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE REQUISITOS
+                                </f:facet>
+                                <p:column headerText="NOMBRE" style="width:30%;">
+                                    <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                    <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                    <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column rendered="false" headerText="ACCIONES" style="width:10%;text-align: center">
+                                    <p:commandLink title="VER REQUISITO"  update="viewPDF" >
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>  
+                        </p:tab>
+                        <p:tab title="Documentos" titleStyle="border-right: 2px solid #eaeaea">
+                            <u:documents entiti="#{ReservaProceso.solicitudReservaCompromiso}"/> 
+                        </p:tab>
+
+                    </p:tabView>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgBeneficiario" widgetVar="dlgBeneficiario" width="50%" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="formDlgBeneficiario" prependId="false">  
+                <center>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" >
+                        <p:outputLabel value="ELEGIR TIPO BENEFICIARIO" style="width: 100%;font-weight: bold" />
+                        <p:selectOneMenu value="#{ReservaProceso.solicitudReservaCompromiso.tipoBeneficiario}"
+                                         panelStyle="width:15%" style="width: 300px;">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItem itemLabel="Proveedor" itemValue="#{true}" />
+                            <f:selectItem itemLabel="Servidor" itemValue="#{false}" />
+                            <p:ajax listener="#{ReservaProceso.CargarDatosBeneficiario()}" update="proveedorBeneficiario,servidorBeneficiario,formDlgBeneficiario"/>
+                        </p:selectOneMenu>             
+                    </p:panelGrid>
+                </center>
+                <h:panelGroup id="proveedorBeneficiario" layout="block" rendered="#{ReservaProceso.panelProveedor}">
+                    <p:dataTable id="beneficiarioTable" widgetVar="beneficiarioTable" value="#{ReservaProceso.proveedorLazy}"
+                                 var="beneficiario" style="margin: 20px" rows="10" lazy="true" filterEvent="enter" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" paginator="true"
+                                 paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <p:column headerText="Nº de Identificación " filterBy="#{beneficiario.cliente.identificacion}" filterMatchMode="contains" style="width: 10%;text-align: center">
+                            <h:outputText value="#{beneficiario.cliente.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre" filterBy="#{beneficiario.cliente.nombre}" style="width: 20%">
+                            <h:outputText value="#{beneficiario.cliente.nombre}" />
+                        </p:column>
+                        <p:column headerText="Añadir"  style="width: 5%;text-align: center">
+                            <p:commandButton icon="fa fa-plus" 
+                                             actionListener="#{ReservaProceso.AñadirBeneficiarioProveedor(beneficiario)}" update="beneficiarioPanel,tabladimnamica"
+                                             styleClass="green-button"/>    
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+                <h:panelGroup id="servidorBeneficiario" layout="block" rendered="#{ReservaProceso.panelServidor}">
+                    <p:dataTable id="servidorTable" widgetVar="servidorTable" value="#{ReservaProceso.servidorLazy}"
+                                 var="servidor" style="margin: 20px" rows="12" lazy="true" filterEvent="enter"
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" paginator="true"
+                                 paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <p:column headerText="Nº de Identificación " filterBy="#{servidor.persona.identificacion}" style="width: 10%;text-align: center">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre" filterBy="#{servidor.persona.nombreCompleltoSql}" style="width: 20%">
+                            <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Añadir"  style="width: 5%;text-align: center">
+                            <p:commandButton icon="fa fa-plus" 
+                                             actionListener="#{ReservaProceso.AñadirBeneficiarioServidor(servidor)}" update="beneficiarioPanel,tabladimnamica"
+                                             styleClass="green-button"/>    
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+         <p:dialog id="DlogoContratos" widgetVar="DlogoContratos" modal="true" showEffect="fade" position="center"
+                  width="70%" resizable="false" hideEffect="fade" header="Contratos">
+            <h:form id="formContratosAquisiciones"  prependId="false">
+                <p:dataTable  id="dataAquisiconeContratos" widgetVar="dataAquisiconeContratos" var="datos" value="#{ReservaProceso.listaAqusionesSeleccionadas}" 
+                              scrollable="true" scrollHeight="450" lazy="false" rows="20000" style="width: 100%" 
+                              rowKey="#{adq.id}" emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        LISTADO DE ADQUISICIONES/CONTRATOS
+                    </f:facet>
+                    <p:column headerText="ID. Proceso" style="width: 12%;" >
+                        <h:outputText value="#{datos.idProceso}" />
+                    </p:column>  
+                    <p:column headerText="Adquisicion" style="width: 12%;" filterBy="#{datos.tipoAdquisicion.texto}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('dataAquisiconeContratos').filter()" style="width: 100%">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{ReservaProceso.tiposAdquisicion}" var="tipoAdquisicion" itemLabel="#{tipoAdquisicion.texto}" itemValue="#{tipoAdquisicion.texto}" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{datos.tipoAdquisicion.texto}" />
+                    </p:column>  
+                    <p:column headerText="Tipo de Proceso" style="width: 18%;" filterBy="#{datos.tipoProceso.texto}" filterMatchMode="contains">
+                        <h:outputText value="#{datos.tipoProceso.texto}" />
+                    </p:column>  
+                    <p:column headerText="Proveedor" style="width: 18%;" filterBy="#{datos.proveedor.cliente.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{datos.proveedor.cliente.nombre}" />
+                    </p:column>
+                    <p:column headerText="No. Contrato" style="width: 12%;" filterBy="#{datos.numeroContrato}" filterMatchMode="contains">
+                        <h:outputText value="#{datos.numeroContrato}" />
+                    </p:column> 
+                    <p:column headerText="Fecha Contrato" style="width: 10%;text-align: center">
+                        <h:outputText value="#{datos.fechaContrato}" >
+                            <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                        </h:outputText>
+                    </p:column> 
+                    <p:column headerText="Valor de Contrato" style="width: 7vw;" >
+                        <h:outputText value="#{datos.valorContratado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>  
+                    <p:column  style="text-align: center;width: 8%;" headerText="Acción">
+                        <p:commandLink title="Seleccionar" actionListener="#{ReservaProceso.seleccionAdquisicion(datos)}" update="dataAquisiconeContratos,dataContratos,formActualizacionReserva" >
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>     
+
+        <p:dialog id="DlgoObservacion"  header="Notificacion" widgetVar="DlgoObservacion" modal="true" width="800" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formObservacion"  prependId="false">
+                <p:outputLabel value="OBSERVACIÓN"/>
+                <p:inputTextarea style="border: 1px solid #D8D8D8; width: 100%;text-transform: uppercase"
+                                 value="#{ReservaProceso.solicitudReservaCompromiso.comentario}" 
+                                 rows="5" onkeypress="focusNextOnEnter(event, 'plan-description')" 
+                                 onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+
+                <div style="text-align: center;">
+                    <p:commandButton value="NOTIFICAR" actionListener="#{ReservaProceso.observacionSolicitud()}" update="dataaprobacion"/>
+                </div>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{ReservaProceso.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{ReservaProceso.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        
+    </ui:define>
+</ui:composition>

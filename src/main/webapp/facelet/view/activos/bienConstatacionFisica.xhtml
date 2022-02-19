@@ -1,0 +1,351 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Constatación Fisica de Bienes
+    </ui:define>
+    <ui:param name="tittle" value="CONSTATACIÓN FÍSICA DE BIENES"/>
+    <ui:define name="content">
+        <h:form id="frmMain">
+            <p:commandButton value="NUEVO" actionListener="#{bienConstatacionFisicaView.newConstatacion(null, true)}"
+                             icon="fa fa-plus" process="@this" update="frmDlgConstatacion"
+                             style="float: left; width: auto;">
+            </p:commandButton>   
+            <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+            <br/><br/><br/>
+            <p:dataTable id="dtConstatacionBienes" widgetVar="dtConstatacionBienes"
+                         var="consbien" value="#{bienConstatacionFisicaView.lazyConstatacionFisicaBienes}"
+                         paginator="true" 
+                         lazy="true" rows="10" 
+                         rowsPerPageTemplate="10,20,50,100" 
+                         paginatorPosition="bottom"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         filterEvent="keyup" style="width: 100%" scrollWidth="100%"
+                         emptyMessage="No se encontró ningun registro.">
+                <f:facet name="header">
+                    CONSTATACIONES FÍSICAS
+                </f:facet>
+
+                <p:column headerText="Código" style="font-weight: bold;" filterBy="#{consbien.codigo}" filterMatchMode="contains">
+                    <center><h:outputText value="#{consbien.codigo}"/> </center>  
+                </p:column>
+                <p:column headerText="Fecha de Constatación">
+                    <center>
+                        <h:outputText value="#{consbien.fechaConstatacion}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText> 
+                    </center>  
+                </p:column>
+                <p:column headerText="Usuario Originador" filterBy="#{consbien.usuarioCreacion}" filterMatchMode="contains">
+                    <center><h:outputText value="#{consbien.usuarioCreacion}"/> </center>  
+                </p:column>
+                <p:column headerText="Realizada Por" filterBy="#{consbien.custodioBoolean}">
+                    <f:facet name="filter">
+                        <p:selectOneMenu style="width: 90%" onchange="PF('dtConstatacionBienes').filter()" styleClass="custom-filter">
+                            <f:converter converterId="javax.faces.Boolean" />
+                            <f:selectItem itemLabel="-Todos-" itemValue="" />
+                            <f:selectItem itemLabel="CUSTODIO" itemValue="true" />
+                            <f:selectItem itemLabel="UNIDAD ADMINISTRATIVA" itemValue="false" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <center><h:outputText value="#{consbien.custodioBoolean eq true ? 'CUSTODIO':'UNIDAD ADMINISTRATIVA'}"/> </center>  
+                </p:column>
+                <p:column headerText="Estado" filterBy="#{consbien.estadoConstatacion.id}">
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('dtConstatacionBienes').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{bienConstatacionFisicaView.listEstadosConstatac}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <center><h:outputText value="#{consbien.estadoConstatacion.texto}"/> </center>  
+                </p:column>
+                <p:column headerText="Observación">
+                    <center><h:outputText value="#{consbien.observacion}"/> </center>  
+                </p:column>
+                <p:column headerText="Acciones" style="font-weight: bold;">
+                    <center>   
+                        <p:commandLink title="Registrar" process="@this" actionListener="#{bienConstatacionFisicaView.newConstatacion(consbien, false)}"
+                                       update="frmMain,frmDlgConstatacion" rendered="#{consbien.estadoConstatacion.codigo eq 'REG-CF-BIEN' ? false: true}">
+                            <i class="fa fa-paper-plane-o" style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                        </p:commandLink>       
+                        <p:commandLink title="Visualizar Registro" process="@this" actionListener="#{bienConstatacionFisicaView.newConstatacion(consbien, false)}"
+                                       update="frmMain,frmDlgConstatacion" rendered="#{consbien.estadoConstatacion.codigo eq 'REG-CF-BIEN' ? true: false}">
+                            <i class="fa fa-search" style="font-size: 2em; margin-right: 5px; color: #0D47A1;"></i>
+                        </p:commandLink>       
+                        <!--                                    <p:commandLink title="Editar" process="@this" actionListener="# {bienConstatacionFisicaView.newConstatacion(consbien, true)}"
+                                                                           update="frmMain,frmDlgConstatacion" rendered="# {consbien.estadoConstatacion.codigo eq 'EMI-CF-BIEN' ? true: false}">
+                                                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 5px; color: #00b0ff;"></i>
+                                                            </p:commandLink>       -->
+                        <p:commandLink title="Eliminar" process="@this" actionListener="#{bienConstatacionFisicaView.eliminar(consbien)}"
+                                       update="dtConstatacionBienes">
+                            <i class="fa fa-trash" style="font-size: 2em; margin-right: 5px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la constatación?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>       
+                        <p:commandLink title="ReImprimir" process="@this" actionListener="#{bienConstatacionFisicaView.reImprimirConstatacion(consbien)}"
+                                       update="dtConstatacionBienes">
+                            <i class="fa fa-print" style="font-size: 2em; margin-right: 5px; color: #0D47A1;"></i>
+                        </p:commandLink>       
+                    </center> 
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog id="dlgConstatacion" header="Formulario de Nueva Constatación" 
+                  widgetVar="dlgConstatacion" width="70%" height="400" closeOnEscape="true"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false"  >
+            <h:form id="frmDlgConstatacion" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-5">
+                        <p:panelGrid columns="2" layout="grid"  styleClass="ui-panelgrid-blank form-group" id="outPanelUno">
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Número Const.Física" for="numConst" style="width: 100%; font-weight:bold"/>
+                                <p:inputText 
+                                    id="numConst" style="text-transform: uppercase;" disabled="true"
+                                    class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.constatacionBienes.codigo}">
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Fecha Const. Física" for="fecConst" style="width: 100%; font-weight:bold"/>
+                                <p:calendar id="fecConst" value="#{bienConstatacionFisicaView.constatacionBienes.fechaConstatacion}" 
+                                            locale="es" required="true" 
+                                            pattern="yyyy-MM-dd"
+                                            navigator="true">
+                                </p:calendar>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Estado Const.Física" for="estConst" style="width: 100%; font-weight:bold"/>
+                                <p:inputText  
+                                    id="estConst" style="text-transform: uppercase;" 
+                                    class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.constatacionBienes.estadoConstatacion}">
+                                </p:inputText>
+                            </p:panelGrid>                                                
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Usuario Originador" for="usuConst" style="width: 100%; font-weight:bold"/>
+                                <p:inputText  
+                                    id="usuConst" style="text-transform: uppercase;" 
+                                    class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.constatacionBienes.usuarioCreacion}">
+                                </p:inputText>
+                            </p:panelGrid>  
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Observación" for="obsConst" style="width: 100%; font-weight:bold"/>
+                                <p:inputTextarea  readonly="#{bienConstatacionFisicaView.disEdit}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                                  id="obsConst" style="width: 310px; border: 1px solid #cccccc"  rows="4" cols="33" autoResize="true"  
+                                                  class="panelInput" value="#{bienConstatacionFisicaView.constatacionBienes.observacion}">
+                                </p:inputTextarea>
+                            </p:panelGrid> 
+                        </p:panelGrid> 
+                    </div>
+                    <div class="ui-g-7">
+                        <div class="ui-g-7">
+                            <p:outputLabel value="Realizar por:" escape="false" style="font-weight:bold"/>
+                            <p:selectOneMenu id="realizarPor" value="#{bienConstatacionFisicaView.constatacionBienes.custodioBoolean}" style="width: 100%" disabled="#{bienConstatacionFisicaView.disEdit}"
+                                             styleClass="custom-filter" >
+                                <p:ajax  listener="#{bienConstatacionFisicaView.limpiar()}" update="frmDlgConstatacion"/>
+                                <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItem itemLabel="Funcionario" itemValue="true"/>
+                                <f:selectItem itemLabel="Unidad Administrativa" itemValue="false"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="ui-g-5">
+                            <p:graphicImage value="/resources/icons/constatacion.jpg"
+                                            width="80" height="75" style="margin:auto;  width: auto; float: right;"></p:graphicImage> 
+                        </div>
+                        <p:fieldset legend="FUNCIONARIO - CUSTODIO" id="fsetFuncionario" rendered="#{bienConstatacionFisicaView.constatacionBienes.custodioBoolean}">
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel value="Cédula ( C.I ):" for="identCustodio" style="width: 100%; font-weight:bold" />
+                                    <p:panelGrid columns="2" >
+                                        <p:inputText  readonly="#{bienConstatacionFisicaView.disEdit}"
+                                                      id="identCustodio" style="text-transform: uppercase; width: 100%; float: left"  maxlength="10"
+                                                      class="panelInput" value="#{bienConstatacionFisicaView.servidor.persona.identificacion}">
+                                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                        </p:inputText>
+                                        <p:panelGrid columns="2">
+                                            <p:commandButton 
+                                                title="Buscar C.I" id="btnFuncionario" actionListener="#{bienConstatacionFisicaView.buscarServidor()}" disabled="#{bienConstatacionFisicaView.disEdit}"
+                                                icon="fa fa-search" styleClass="button-group" style="width: 2vw; float: next; " process="identCustodio" update="frmDlgConstatacion:fsetFuncionario,dtBienes">
+                                                <p:ajax event="dialogReturn" listener="#{bienConstatacionFisicaView.selectDataServidor}" 
+                                                        update="frmDlgConstatacion"/>
+                                            </p:commandButton>
+                                            <p:commandButton 
+                                                title="Limpiar" id="btnLimpiar" actionListener="#{bienConstatacionFisicaView.limpiarFuncionario()}" disabled="#{bienConstatacionFisicaView.disEdit}"
+                                                icon="fa fa-trash" styleClass="red-button" style="width: 2vw; background: red" update="frmDlgConstatacion">
+                                            </p:commandButton>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:panelGrid> 
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Nombres:" for="nombreCustodio" style="width: 100%; font-weight:bold"/>
+                                    <p:inputText  
+                                        id="nombreCustodio" style="text-transform: uppercase; width: 100%; " 
+                                        class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.servidor.persona.nombre} #{bienConstatacionFisicaView.servidor.persona.apellido}">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Unidad Administrativa:" for="unidadCustodio" style="width: 100%; font-weight:bold"/>
+                                    <p:inputText  
+                                        id="unidadCustodio" style="text-transform: uppercase; width: 100%" 
+                                        class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.cargoSelectData.idCargo.idUnidad.nombre}">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Cargo:" for="cargoCustodio" style="width: 100%; font-weight:bold"/>
+                                    <p:inputText  
+                                        id="cargoCustodio" style="text-transform: uppercase; width: 100%" 
+                                        class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.cargoSelectData.idCargo.nombreCargo}">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="UNIDAD ADMINISTRATIVA" id="fsetUnidadAdmin" rendered="#{bienConstatacionFisicaView.constatacionBienes.custodioBoolean eq false ? true:false}">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:commandButton
+                                    title="Buscar Unidad Administrativa" value="Buscar Unidad" actionListener="#{bienConstatacionFisicaView.buscarUnidad()}"
+                                    icon="fa fa-search" styleClass="button-group" style="width: auto; float: next" process="@this">
+                                    <p:ajax event="dialogReturn" listener="#{bienConstatacionFisicaView.selectDataUnidad}"
+                                            update="frmDlgConstatacion"/>
+                                </p:commandButton>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Unidad Administrativa:"  style="width: 100%; font-weight:bold"/>
+                                    <p:inputText  
+                                        style="text-transform: uppercase; width: 100%" 
+                                        class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.constatacionBienes.unidad.nombre}">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid">
+                                    <p:outputLabel value="Tipo:"  style="width: 100%;font-weight:bold"/>
+                                    <p:inputText  
+                                        style="text-transform: uppercase; width: 100%" 
+                                        class="panelInput" readonly="true" value="#{bienConstatacionFisicaView.constatacionBienes.unidad.tipoUnidad.texto}">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                </div>
+                <p:remoteCommand name="onCellEdit" update="dtBienes"/>
+                <p:dataTable  
+                    emptyMessage="Ningún Item para mostrar." rowsPerPageTemplate="5,10,20,50" paginatorPosition="bottom"
+                    currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                    paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                    reflow="true" paginator="true" rows="5" editable="true" editMode="cell"
+                    id="dtBienes" rowIndexVar="can" value="#{bienConstatacionFisicaView.listDetalleConstatacionBienes}"
+                    var="bien" widgetVar="dtBienes">
+                    <p:ajax event="cellEdit" listener="#{bienConstatacionFisicaView.onCellEdit}" update="dtBienes" oncomplete="onCellEdit"/>
+                    <p:column headerText="#" style=" width: 1%; font-weight: bold;" >
+                        <h:outputText value="#{can +1 }"/>   
+                    </p:column>
+                    <p:column headerText="Cuenta Contable" style="width:5%; text-align: center">
+                        <h:outputText value="#{bien.bienesItem.cuentaContable.codigo}"/> 
+                    </p:column>
+                    <p:column headerText="Código Bien" style="width:6%;text-align: center">   
+                        <h:outputText value="#{bien.bienesItem.grupoPadre.codigoBien}-#{bien.bienesItem.codigoBien}"/>  
+                    </p:column>
+                    <p:column headerText="Descripción" style="width:16%">
+                        <h:outputText value="#{bien.bienesItem.descripcion}"/>  
+                    </p:column>
+                    <p:column headerText="Marca" style="width:9%">
+                        <h:outputText value="#{bien.bienesItem.marca}"/>  
+                    </p:column>
+                    <p:column headerText="Color" style="width:5%">
+                        <h:outputText value="#{bien.bienesItem.color1}"/>  
+                    </p:column>
+                    <p:column headerText="Custodio" style="width:16%" rendered="#{!bienConstatacionFisicaView.constatacionBienes.custodioBoolean}">
+                        <h:outputText  value="#{bien.custodioBien.persona.nombreCompleltoSql}" />  
+                    </p:column>
+                    <p:column headerText="Estado del Bien" style="width:9%" rendered="#{bienConstatacionFisicaView.estadoObservacion}">
+                        <p:cellEditor>
+                            <f:facet name="output"><h:outputText value="#{bien.bienesItem.estadoBienConst.descripcion}" /></f:facet>
+                            <f:facet name="input">
+                                <h:selectOneMenu value="#{bien.bienesItem.estadoBienConst}" style="width:100%" converter="#{utilConverter}" disabled="#{bienConstatacionFisicaView.editEstadoObservacion}">
+                                    <f:selectItem itemLabel="Seleccione"/>
+                                    <f:selectItems value="#{bienConstatacionFisicaView.listEstadoBien}" var="estado" itemLabel="#{estado.texto}" itemValue="#{estado}"/>
+                                </h:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Observación" rendered="#{bienConstatacionFisicaView.estadoObservacion}" style="width: 20%" >
+                        <p:cellEditor>
+                            <f:facet name="output"><h:outputText value="#{bien.bienesItem.observAdicional}" /></f:facet>
+                            <f:facet name="input"><p:inputText value="#{bien.bienesItem.observAdicional}" style="width:100%" disabled="#{bienConstatacionFisicaView.editEstadoObservacion}" onkeyup="javascript:this.value = this.value.toUpperCase();"/></f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Imagen" style="text-align: center; width: 3%">
+                        <p:commandLink actionListener="#{bienConstatacionFisicaView.mostrarImgDialog(bien)}" title="Img" process="@this">
+                            <p:graphicImage value="/resources/icons/foto.png"
+                                            width="auto" height="15" 
+                                            />   
+                        </p:commandLink>                
+                    </p:column>
+                </p:dataTable>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+                <br/>
+                <center>
+                    <p:commandButton value="Guardar"
+                                     icon="fa fa-save" actionListener="#{bienConstatacionFisicaView.saveConstatacion()}"
+                                     id="btnGen" disabled="#{bienConstatacionFisicaView.botonSave}"
+                                     process="outPanelUno" update="frmMain,outPanelUno,fsetFuncionario,fsetUnidadAdmin,btnGen,impr"
+                                     style=" width: 170px">
+                        <p:confirm header="Guardar Información" message="Los datos serán guardados, por favor revise si toda la información esta correcta. ¿Desea continuar?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                    <p:spacer width="10" />
+                    <p:commandButton value="Cancelar" actionListener="#{bienConstatacionFisicaView.cancelar()}"
+                                     icon="ui-icon-clear" styleClass="red-btn"
+                                     process="@this" update="frmDlgConstatacion" 
+                                     style="width: 170px">
+                    </p:commandButton>
+                    <p:spacer width="10" />
+                    <p:commandButton value="IMPRIMIR" disabled="#{bienConstatacionFisicaView.imprimirBol}"
+                                     icon="fa fa-print" process="@this" id="impr" actionListener="#{bienConstatacionFisicaView.reImprimirConstatacion(null)}"
+                                     style="width: 170px">
+                    </p:commandButton>
+
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+
+                <!--</div>-->
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="imagenDialog" closeOnEscape="true" header="Constatación" widgetVar="imagenDialog" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <!--            <p:ajax event="close" listener="# {planNacionalEjeView.handleCloseForm}" />-->
+            <h:form prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formImg" style="width: 100%;" >
+                                <p:panelGrid  columns="4" columnClasses="ui-grid-col-3" styleClass="form-group ui-panelgrid-blank" > 
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <f:facet name="header">
+                                            <p:outputLabel value="No existe una imagen 😞"
+                                                           rendered="#{empty bienConstatacionFisicaView.detalleConstatacionBienes.urlImagen}"/>
+                                            <p:graphicImage rendered="#{not empty bienConstatacionFisicaView.detalleConstatacionBienes.urlImagen}" 
+                                                            value="#{bienConstatacionFisicaView.detalleConstatacionBienes.urlImagen}"
+                                                            width="250" height="250" 
+                                                            style="margin-right: 8px;"/>  
+                                        </f:facet>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

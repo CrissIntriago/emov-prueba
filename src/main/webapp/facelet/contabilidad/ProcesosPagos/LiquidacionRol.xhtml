@@ -1,0 +1,317 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Liquidación de Rol</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{liquidacionRolView.tarea}" tramite="#{liquidacionRolView.tramite}" />
+            <div class="ui-g-12" >
+                <h:form id="formMain">
+                    <p:outputPanel>
+                        <p:fieldset legend="Selecionar Rol/Acciones:">
+                            <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Período:" for="periodo" />
+                                    <p:selectOneMenu id="periodo" style="width: 100%;" disabled="#{liquidacionRolView.disable}"
+                                                     value="#{liquidacionRolView.busqueda.anio}">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                      noSelectionOption="true" />
+                                        <f:selectItems value="#{liquidacionRolView.periodos}"
+                                                       var="periodo"
+                                                       itemLabel="#{periodo.anio}"
+                                                       itemValue="#{periodo.anio}"/>
+                                        <p:ajax  listener="#{liquidacionRolView.actualizarRoles()}" update="rolSeleccionado"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Rol: " for="@next"/>
+                                    <p:selectOneMenu id="rolSeleccionado" value="#{liquidacionRolView.rolSeleccionado}"
+                                                     converter="#{utilConverter}" disabled="#{liquidacionRolView.disable}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{liquidacionRolView.listaRol}"
+                                                       var="m"
+                                                       itemLabel="#{m.descripcion}"
+                                                       itemValue="#{m}"/>
+                                        <p:ajax update="tipoRol,estadoRol,mesRol,formMain" listener="#{liquidacionRolView.liquidarRol()}"
+                                                process="@this"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Tipo Rol:" for="tipoRol"/>
+                                    <p:inputText id="tipoRol" value="#{liquidacionRolView.rolSeleccionado.descripcion}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'mesRol')">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Mes Rol:" for="mesRol"/>
+                                    <p:inputText id="mesRol" value="#{liquidacionRolView.rolSeleccionado.mes.descripcion}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'estadoRol')">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Estado Rol:" for="estadoRol"/>
+                                    <p:inputText id="estadoRol" value="#{liquidacionRolView.rolSeleccionado.estadoAprobacion.texto}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'cedula')">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{liquidacionRolView.fondosReserva}">
+                                    <p:commandButton value="Generar PDF" id="generarReportePDF" update="formMain"
+                                                     icon="fa fa-file-pdf-o" actionListener="#{liquidacionRolView.imprimirReporte('pdf')}"
+                                                     styleClass="Fs16" style="width: 100%;"/> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{liquidacionRolView.roles}" >
+                                    <p:commandButton value="Rol Resumido"
+                                                     icon="ui-icon-print"
+                                                     actionListener="#{liquidacionRolView.impresionResumenRol()}"
+                                                     process="@this"
+                                                     styleClass="Fs16" style="width: 100%;"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{liquidacionRolView.roles}">
+                                    <p:commandButton value="Reporte Rol"
+                                                     icon="ui-icon-print"
+                                                     process="@this"
+                                                     actionListener="#{liquidacionRolView.impresionDetalleRol()}"
+                                                     styleClass="Fs16" style="width: 100%;"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{liquidacionRolView.roles}">
+                                    <p:commandButton value="Rol General"
+                                                     icon="ui-icon-print"
+                                                     process="@this"
+                                                     actionListener="#{liquidacionRolView.impresionRoGenerall()}"
+                                                     styleClass="Fs16" style="width: 100%;"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <p:outputPanel>
+                        <p:fieldset legend="Documentos:">
+                            <p:commandButton actionListener="#{liquidacionRolView.adjuntarDocumento()}"
+                                             value="Subir Archivo"
+                                             icon="fa fa-fw fa-cloud-upload" 
+                                             process="@this"
+                                             style="width: 150px;margin: 10px 0px"/>
+                            <u:documents entiti="#{liquidacionRolView.tramite}" showDelete="true" id="doc"/> 
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <p:outputPanel rendered="#{liquidacionRolView.roles}">
+                        <p:fieldset legend="Rol Adminitrativo/Operativo:">
+                            <p:commandButton value="Enviar Trámite" 
+                                             actionListener="#{liquidacionRolView.abriDlogo()}"
+                                             icon="fa fa-external-link" style="width: auto;margin: 10px 0px;background: #0081cb;"
+                                             update="formMain" rendered="#{liquidacionRolView.enviarTramite}"
+                                             process="@this">
+                                <p:confirm header="Confirmar envio de tramite" message="¿Esta seguro que desea enviar tramite?" 
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandButton>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                            <p:dataTable id="dtLiquidacion" widgetVar="dtLiquidacion" var="liq"
+                                         value="#{liquidacionRolView.liquidacionRolLazy}"
+                                         editable="true" lazy="true"
+                                         selection="#{liquidacionRolView.liquidacionRol}" selectionMode="single" rowKey="#{liq.id}"
+                                         paginator="true"
+                                         rowsPerPageTemplate="60,100"
+                                         paginatorPosition="bottom"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                         rows="60" emptyMessage="No existen criterio de busqueda especificado">
+                                <f:facet  name="header"> 
+                                    Roles de Pago
+                                </f:facet>
+                                <p:column headerText="C.I Servidor" style="width: 10%; text-align: center" filterBy="#{liq.rolPago.servidor.persona.identificacion}">
+                                    <h:outputText value="#{liq.rolPago.servidor.persona.identificacion}" style="text-align: center"/>
+                                </p:column>
+                                <p:column headerText="Nombre Servidsor" style="width: 35%;" filterBy="#{liq.rolPago.servidor.persona.nombreCompleto}">
+                                    <h:outputText value="#{liq.rolPago.servidor.persona.nombreCompleto}"/>
+                                </p:column>
+                                <p:column headerText="Toltal Ingreso" style="width: 10%;">
+                                    <p:inputNumber value="#{liq.totalIngreso}" readonly="true" inputStyle="text-align: right"
+                                                   decimalSeparator="." thousandSeparator=",">
+                                    </p:inputNumber>
+                                </p:column>
+                                <p:column headerText="Toltal Egreso" style="width: 10%;">
+                                    <p:inputNumber value="-#{liq.totalEgreso}" readonly="true" inputStyle="text-align: right"
+                                                   decimalSeparator="." thousandSeparator=","/>
+                                </p:column>
+                                <p:column headerText="Neto a Recibir" style="width: 10%;font-weight: bold">
+                                    <p:inputNumber value="#{liq.netoRecibir}" readonly="true" inputStyle="text-align: right;font-weight: bold"
+                                                   decimalSeparator="." thousandSeparator=","/>
+                                </p:column>
+                                <p:column headerText="Acciones" style="width: 8%;text-align: center">
+                                    <p:commandLink update="formMain" rendered="false"
+                                                   actionListener="#{liquidacionRolView.editar(liq)}"
+                                                   title="Visualizar Rol" process="@this">
+                                        <i class="fa fa-search newi" style="font-size: 1.5em"></i>
+                                    </p:commandLink>
+                                    <p:commandLink title="Eliminar"
+                                                   actionListener="#{liquidacionRolView.eliminar(liq)}"
+                                                   rendered="#{liquidacionRolView.rolSeleccionado.estadoAprobacion.codigo=='registrado-rol'}"
+                                                   update="formMain"
+                                                   process="@this">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                    <p:commandLink title="Impresion de Rol"
+                                                   actionListener="#{liquidacionRolView.impresionRoles(liq)}"
+                                                   process="@form">
+                                        <i class="fa fa-fw fa-file-pdf-o" style="font-size: 1.5em;color: red;"></i>
+                                    </p:commandLink>
+                                </p:column> 
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="2" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total:" />
+                                        <p:column footerText="$#{liquidacionRolView.totalIngreso}" style="text-align: right; font-weight: bold;font-size: 12px"/>
+                                        <p:column footerText="$-#{liquidacionRolView.totalEgreso}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column footerText="$#{liquidacionRolView.totalNeto}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column footerText="" style="text-align: right"/>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <p:outputPanel rendered="#{liquidacionRolView.fondosReserva}">
+                        <p:fieldset legend="Rol Fondos de Reserva:" >
+                            <p:commandButton value="Enviar Trámite" 
+                                             actionListener="#{liquidacionRolView.abriDlogo()}"
+                                             icon="fa fa-external-link" style="width: auto;margin: 10px 0px;background: #0081cb;"
+                                             update="formMain" rendered="#{liquidacionRolView.enviarTramite}"
+                                             process="@this">
+                                <p:confirm header="Confirmar envio de tramite" message="¿Esta seguro que desea enviar tramite?" 
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandButton>
+                            <p:dataTable id="dataTableFondos" widgetVar="dataTableFondos" var="fondos" 
+                                         value="#{liquidacionRolView.liquidacionFondosLazy}" 
+                                         paginator="true" rows="15" style="text-align: left"
+                                         paginatorPosition="bottom"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         selectionMode="single" rowKey="#{fondos.id}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="15,20,30,40,50,100" 
+                                         editable="true" editMode="cell" lazy="true"
+                                         rowIndexVar="num"
+                                         emptyMessage="No existen criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    #{liquidacionRolView.rolSeleccionado.descripcion}
+                                </f:facet>
+                                <p:column headerText="No" style="width: 7%;text-align: center">
+                                    <h:outputText value="#{num+1}"/>
+                                </p:column> 
+                                <p:column headerText="Cédula" style="width: 10%;text-align: center" filterBy="#{fondos.acumulacionFondos.servidor.persona.identificacion}" filterMatchMode="contains">
+                                    <h:outputText value="#{fondos.acumulacionFondos.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre Servidor" style="width: 25%;text-align: center" filterBy="#{fondos.acumulacionFondos.servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                                    <h:outputText value="#{fondos.acumulacionFondos.servidor.persona.nombreCompleltoSql}"/>
+                                </p:column>                                
+                                <p:column headerText="Derecho" style="width: 10%;text-align: center;" filterBy="#{fondos.acumulacionFondos.derecho}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataTableFondos').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{fondos.acumulacionFondos.derecho ? 'SI':'NO'}"/>
+                                </p:column>
+                                <p:column headerText="Acumula" style="width: 10%;text-align: center;" filterBy="#{fondos.acumulacionFondos.acumula}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataTableFondos').filter()" styleClass="custom-filter">
+                                            <f:converter converterId="javax.faces.Boolean" />
+                                            <f:selectItem itemLabel="Todos" itemValue=""/>
+                                            <f:selectItem itemLabel="SI" itemValue="true" />
+                                            <f:selectItem itemLabel="NO" itemValue="false" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{fondos.acumulacionFondos.acumula ? 'SI':'NO'}"/>
+                                </p:column>
+                                <p:column headerText="Días Laborados" style="width: 10% ;text-align: center;">
+                                    <h:outputText value="#{fondos.diasLaborado.dias}"/>
+                                </p:column>
+                                <p:column headerText="R.M.U." style="width: 10%;text-align: center;">
+                                    <h:outputText value="#{fondos.distributivoEscala.remuneracionDolares}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Fondos de Reserva" style="width: 10%;text-align: center;">
+                                    <h:outputText value="#{fondos.valorFondos}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 8%">  
+                                    <p:commandLink title="Eliminar"  
+                                                   action="#{liquidacionRolView.eliminar(fondos)}"
+                                                   process="@this" update="dataTableFondos">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                        <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?" 
+                                                   icon="fa fa-exclamation-triangle"/>
+                                        <p:confirm header="Confirmación de Eliminación" message="¿Esta Seguro que Desea Eliminar?"
+                                                   icon="fa fa-exclamation-triangle"/>
+                                    </p:commandLink>
+                                </p:column>
+                                <p:columnGroup type="footer">
+                                    <p:row>
+                                        <p:column colspan="7" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total Acumulan:" />
+                                        <p:column footerText="$#{liquidacionRolView.totalAcumula}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column footerText="" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    </p:row>
+                                    <p:row>
+                                        <p:column colspan="7" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total No Acumulan:" />
+                                        <p:column footerText="$#{liquidacionRolView.totalNoAcumula}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                        <p:column footerText="" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    </p:row>
+                                </p:columnGroup>
+                            </p:dataTable>
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <p:outputPanel rendered="#{liquidacionRolView.horasExtras}">
+                        <p:fieldset legend="Rol Horas Extras:">
+
+                        </p:fieldset>
+                    </p:outputPanel>                    
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{liquidacionRolView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                                 actionListener="#{liquidacionRolView.completarTarea()}" style="width: 100%;"  />
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        <p:dialog id="requisitoDialog" header="Adjuntar archivos de requitos" widgetVar="requisitoDialog" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="50%">
+            <div class="ui-g-12" >
+                <h:form id="requisitoDialogForm" prependId="false">
+                    <p:fileUpload fileUploadListener="#{liquidacionRolView.handleFileUploadInformeTec}" 
+                                  uploadLabel="Subir" cancelLabel="Eliminar" fileLimitMessage="Solo puede subir 1" label="Seleccionar" 
+                                  mode="advanced" dragDropSupport="false"
+                                  update="messages,formMain:doc:dtArchivosTramites"/>
+                </h:form>   
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
+

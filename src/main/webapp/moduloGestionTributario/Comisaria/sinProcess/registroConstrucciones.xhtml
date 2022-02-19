@@ -1,0 +1,120 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Registro de Construcciones</ui:define> 
+    <ui:param name="tittle" value="REGISTRO DE CONSTRUCCIONES"/>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">          
+                <h:form id="mainForm" prependId="false">
+                    <p:tabView prependId="false">
+<!--                        <p:ajax event="tabChange" listener="# {comisariaConstuccionesSP.onTabChange}" />                     -->
+                        <p:tab title="Registro" id="id_registro">
+                            <div style="width: 41%; margin: auto;">
+                                <dialog:consultaPredioGeneral predio="#{comisariaConstuccionesSP.predio}" id="prediosConsulta"
+                                                              consultar="#{comisariaConstuccionesSP.consultar()}"
+                                                              tipoCons="#{comisariaConstuccionesSP.tipoCons}"
+                                                              consultarModel="#{comisariaConstuccionesSP.validarClaveOtroCanton()}"
+                                                              predioModel="#{comisariaConstuccionesSP.predioModel}"                                                      
+                                                              tipo="#{comisariaConstuccionesSP.esUrbano}"
+                                                              update="prediosConsulta,mainForm"/>
+                            </div>
+                            <div style="width: 40%; margin: auto;">
+                                <p:fieldset legend="Informacion Adicional">
+                                    <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1"  style="width: 100%">
+                                            <p:outputLabel value="Tipo: " class="FontBold" />
+                                            <p:selectOneMenu value="#{comisariaConstuccionesSP.comisaria.tipo}" converter="#{utilConverter}">                                        
+                                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                <f:selectItems value="#{comisariaConstuccionesSP.tipos}" var="i" itemLabel="#{i.texto}" itemValue="#{i}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  style="width: 100%">
+                                            <p:outputLabel value="Avaluo Municipal: " class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{comisariaConstuccionesSP.predio.avaluoMunicipal}" readonly="true">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  style="width: 100%">
+                                            <p:outputLabel value="Cedula: " class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{comisariaConstuccionesSP.propietario.identificacion}" readonly="true"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="2" layout="grid"  columnClasses="ui-g-6,ui-g-6" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1"  style="width: 100%">
+                                            <p:outputLabel value="Apellidos: " class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{comisariaConstuccionesSP.propietario.apellido}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  style="width: 100%">
+                                            <p:outputLabel value="Nombre: " class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{comisariaConstuccionesSP.propietario.nombre}" readonly="true"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" style="width: auto;">
+                                        <p:outputLabel value="Observación: " for="@next" class="FontBold" />                                                                               
+                                        <p:inputTextarea  id="observacion" value="#{comisariaConstuccionesSP.comisaria.observacion}" 
+                                                          rows="5" cols="12" style="width: 100%; font-weight: bold; font-size: 12px;" />                                      
+                                    </p:panelGrid>
+                                    <br/>
+                                    <center>
+                                        <p:commandButton value="Registrar" actionListener="#{comisariaConstuccionesSP.save()}"  process="mainForm"
+                                                         update="mainForm" icon="fa fa-save" style="width: auto;"/>
+                                    </center>                            
+                                </p:fieldset>
+                            </div>
+                        </p:tab>
+                        <p:tab title="Consulta" id="consulta">
+                            <p:dataTable  expandableRowGroups="true" id="dataList" widgetVar="dataList" paginatorPosition="bottom" var="item"
+                                          value="#{comisariaConstuccionesSP.lazy}" rows="20" paginator="true" 
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                                          rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                                          emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    Construcciones  
+                                    <p:commandLink  actionListener="#{comisariaConstuccionesSP.consultaComisaria()}" update="dataList">
+                                        <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: white;"></i>
+                                    </p:commandLink>
+                                </f:facet>
+                                <p:column  headerText="Predio"  style="width: 5%;text-align: center;"  filterMatchMode="contains" filterBy="#{item.clavePreial}">
+                                    <h:outputText value="#{item.clavePreial}" id="predio"/>
+                                    <p:tooltip position="left"
+                                               for="predio">
+                                        <p:row>
+                                            <p:outputLabel value="No. predio:  "   style="font-size: 14px; font-weight: bold;"/>
+                                            <h:outputText value="#{item.numPredio}"  style="font-size: 14px;" />
+                                            <br/>
+                                            <p:outputLabel value="Tipo Predio:  "   style="font-size: 14px; font-weight: bold;"/>
+                                            <h:outputText value="#{item.tipoPredio eq 'U'?'URABNO':'RURAL'}"  style="font-size: 14px;" />
+                                        </p:row>           
+                                    </p:tooltip>
+                                </p:column>
+                                <p:column  headerText="Avaluo Municipal" style="width: 2%; text-align: center;"  filterMatchMode="exact" filterBy="#{item.avaluoMunicipal}" >
+                                    <h:outputText value="#{item.avaluoMunicipal}" style="float: right;">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column  headerText="Contribuyente" style="width: 10%;" filterBy="#{item.ente.nombreCompleto}"  filterMatchMode="contains">
+                                    <p:outputLabel value="#{item.ente.nombreCompleto}"/>
+                                </p:column>
+                                <p:column  headerText="Observacion" style="width: 10%;" filterBy="#{item.observacion}"  filterMatchMode="contains">
+                                    <h:outputText value="#{item.observacion}"/>
+                                </p:column>    
+                            </p:dataTable>
+                        </p:tab>                        
+                    </p:tabView>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

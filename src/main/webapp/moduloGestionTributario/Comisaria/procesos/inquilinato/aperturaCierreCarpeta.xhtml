@@ -1,0 +1,340 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="LIQUIDACIONES GENERALES"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:ventaComisaria solicitudVentanilla="#{aperturaCierreCarpeta.solicitud}" task="#{aperturaCierreCarpeta.tarea}" tramite="#{aperturaCierreCarpeta.tramite}"/>
+                </div>
+                <h:form id="mainForm" prependId="false">
+                    <div style="width: 80%;margin: auto;">
+                        <p:tabView prependId="false">
+                            <p:ajax event="tabChange" listener="#{aperturaCierreCarpeta.onTabChange}" update="mainForm"/>
+                            <p:tab title="Apertura/Cierre" id="aperturaCierre">
+                                <p:panelGrid columns="1" layout="grid"> 
+                                    <p:commandButton actionListener="#{aperturaCierreCarpeta.carpetaEdit(null)}" icon="fa fa-plus"  style="width: auto;float: left"
+                                                     oncomplete="PF('dlogoCarpetas').show()" update="frmCarpetas" value="Nuevo" />
+
+
+                                    <p:fileUpload fileUploadListener="#{aperturaCierreCarpeta.handleFileUpload}"  style="width: 50%; float: right;" 
+                                                  accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                                  label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60"  
+                                                  update="mainForm"/>
+
+                                </p:panelGrid>
+
+
+                                <p:dataTable  expandableRowGroups="true" id="dataList" widgetVar="dataList" paginatorPosition="bottom" var="item"
+                                              value="#{aperturaCierreCarpeta.lazy}" rows="10" paginator="true" 
+                                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                                              rowsPerPageTemplate="10,20,25,35,50,100" lazy="true"
+
+                                              emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                    <f:facet name="header">
+                                        Inquilinato
+                                        <p:commandLink  actionListener="#{aperturaCierreCarpeta.consultarComisaria()}" update="dataList">
+                                            <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: white;"></i>
+                                        </p:commandLink>
+                                    </f:facet>
+
+                                    <p:ajax event="rowToggle" update="dtDetalleInquilinato" listener="#{aperturaCierreCarpeta.historialLiquidaciones(item)}"/>
+                                    <p:column style="width:2rem">
+                                        <p:rowToggler/>
+                                    </p:column>
+
+                                    <p:column headerText="Fecha Creaciòn">
+                                        <p:outputLabel value="#{item.fechaCrea}">
+                                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                        </p:outputLabel>
+                                    </p:column>
+                                    <p:column headerText="Clave Catastral" filterBy="#{item.predio.claveCat}" style="text-align: center;">
+                                        <p:outputLabel value="#{item.predio.claveCat}"/> 
+                                    </p:column>
+
+                                    <p:column headerText="Tipo Predio" filterBy="#{item.predio.tipoPredio}" width="50" style="text-align: center;">
+                                        <p:outputLabel value="#{item.predio.tipoPredio}"/> 
+                                    </p:column>
+
+                                    <p:column headerText="Identificación" filterBy="#{item.propietario.identificacionCompleta}" style="text-align: center;">
+                                        <p:outputLabel value="#{item.propietario.identificacionCompleta}"/> 
+                                    </p:column>
+
+                                    <p:column headerText="Inquilino" filterBy="#{item.propietario.nombreCompleto}" style="text-align: center;">
+                                        <p:outputLabel value="#{item.propietario.nombreCompleto}"/> 
+                                    </p:column>
+
+                                    <p:column headerText="Estado" filterBy="#{item.estado}" style="text-align: center;">
+                                        <f:facet name="filter">
+                                            <p:selectOneMenu onchange="PF('dataList').filter()" styleClass="custom-filter">
+                                                <f:converter converterId="javax.faces.Boolean" />
+                                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                                <f:selectItem itemLabel="APERTURADO" itemValue="true" />
+                                                <f:selectItem itemLabel="CERRADO" itemValue="false" />
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                        <p:outputLabel value="#{item.estado?'APERTURADO':'CERRADO'}"/> 
+                                    </p:column>
+
+                                    <p:column headerText="*****" style="width: 6%;">
+                                        <p:commandButton icon="fa fa-edit" actionListener="#{aperturaCierreCarpeta.carpetaEdit(item)}" oncomplete="PF('dlogoCarpetas').show()" update="frmCarpetas"/>
+                                    </p:column>
+
+                                    <p:rowExpansion >
+                                        <p:dataTable id="dtDetalleInquilinato"  
+                                                     value="#{aperturaCierreCarpeta.lazyLiquidaciones}" 
+                                                     style="width: 100%;"
+                                                     var="hi" rows="5"  lazy="true"
+                                                     paginator="true" paginatorPosition="top"
+                                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                     widgetVar="dtDetalleInquilinato">
+                                            <f:facet name="header">
+                                                Historico
+                                            </f:facet>
+
+
+                                            <p:column headerText="Año" filterBy="#{hi.anio}" width="50" style="text-align: center;">
+                                                <p:outputLabel value="#{hi.anio}"/>
+                                            </p:column>
+
+                                            <p:column headerText="Detalle" filterBy="#{hi.observacion}" filterMatchMode="contains" style="text-align: center;">
+                                                <p:outputLabel value="#{hi.observacion}"/>
+                                            </p:column>
+
+                                            <p:column headerText="Estado" filterBy="#{hi.estadoLiquidacion.descripcion}" filterMatchMode="contains" style="text-align: center;">
+                                                <p:outputLabel value="#{hi.estadoLiquidacion.descripcion}"/>
+                                            </p:column>
+
+                                            <p:column headerText="*****" width="150" style="text-align: center;">
+                                                <!--<p:commandButton  disabled="#{hi.liquidacion ne null}" icon="fa fa-check" actionListener="#{aperturaCierreCarpeta.liquidar(hi)}"/>-->
+                                                <p:spacer width="10"/>
+                                                <p:commandButton  icon="fa fa-search" actionListener="#{aperturaCierreCarpeta.visualizar(hi)}"/>
+                                                <p:spacer width="10"/>
+                                                <p:commandButton disabled="#{hi eq null}"  icon="fa fa-print" actionListener="#{aperturaCierreCarpeta.imprimir(hi)}"/>
+                                            </p:column>
+
+                                        </p:dataTable>
+                                    </p:rowExpansion>
+                                </p:dataTable>
+                            </p:tab>
+                            <p:tab id="consultaAvanzada" title="Consultas Avazadas">
+                                <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                             paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             value="#{aperturaCierreCarpeta.lazyLiquidacionInquilinatoView}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                             selectionMode="single" rowKey="#{titulo.id}" selection="#{aperturaCierreCarpeta.liquidacionTemp}" filterEvent="enter">
+                                    <p:ajax event="rowSelect" update="dtLiquidaciones"/>
+                                    <p:column  headerText="ID Liquidación" width="100" filterBy="#{titulo.idLiquidacion}" filterStyle="width: 60%;">
+                                        <h:outputText value="#{titulo.idLiquidacion}" />
+                                    </p:column>
+                                    <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                                        <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                                    </p:column>
+
+                                    <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 60%;">
+                                        <h:outputText value="#{titulo.anio}"/>
+                                    </p:column>
+                                    <p:column headerText="Predio" width="200" filterBy="#{titulo.predio.claveCat}" filterMatchMode="contains">
+                                        <h:outputText value="#{titulo.predio.claveCat}" />
+                                    </p:column>                              
+                                    <p:column headerText="Validador" width="100" >
+                                        <h:outputText value="#{titulo.usuarioValida eq null or titulo.usuarioValida eq ''?titulo.liquidadorResponsable:titulo.usuarioValida}" />
+                                    </p:column>
+                                    <p:column headerText="Fecha emision" width="100" >
+                                        <h:outputText value="#{titulo.fechaIngreso}" >
+                                            <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacionCompleta}" filterStyle="width: 80%;">
+
+                                        <h:outputText  value="#{titulo.comprador.identificacionCompleta}" />
+                                    </p:column>
+                                    <p:column headerText="Solicitante" width="250" filterBy="#{titulo.comprador.nombreCompleto}" filterMatchMode="contains">
+
+                                        <h:outputText  value="#{titulo.comprador.nombreCompleto}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+
+                                    <p:column headerText="Estado" width="65"><h:outputText value="#{ !titulo.validada ? 'Sin validar' : titulo.estadoLiquidacion.descripcion}" 
+                                                                                           style="font-weight: bold;"/></p:column>
+                                    <p:column headerText="*******" width="50" >
+                                        <p:commandLink actionListener="#{aperturaCierreCarpeta.imprimirTemp(titulo.id)}" 
+                                                       title="#{titulo.idLiquidacion}" process="@this">                                   
+                                            <i class="fa fa-fw fa-print" style="font-size: 1.5em;" />
+                                        </p:commandLink>
+
+
+
+                                    </p:column>
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                    <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                                </p:confirmDialog>
+                                <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones">
+                                    <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" 
+                                                process="@this" actionListener="#{aperturaCierreCarpeta.calculosAdicionales()}"/>
+                                </p:contextMenu>
+                            </p:tab>
+                        </p:tabView>
+                    </div>
+
+                    <br/>
+                    <center>
+                        <p:commandButton value="Completar Tarea" actionListener="#{asignacionDelegadoMB.opendlg()}"
+                                         icon="fa fa-send" style="width: auto;margin-top: 20px;" process="@this" />
+                    </center>
+
+
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="dlogoCarpetas" widgetVar="dlogoCarpetas"  position="center" draggable="false" header="Formulario de Carpetas " width="50%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false"  >
+
+            <h:form id="formBusqueds">
+                <dialog:consultaPredioGeneral predio="#{aperturaCierreCarpeta.predio}" id="prediosConsulta"
+                                              consultar="#{aperturaCierreCarpeta.consultar()}"
+                                              tipoCons="#{aperturaCierreCarpeta.tipoCons}"                                                      
+                                              tipo="#{aperturaCierreCarpeta.esUrbano}"
+                                              update="frmCarpetas,formBusqueds"/>
+            </h:form>
+
+            <h:form id="frmCarpetas" prependId="false">
+
+
+
+                <p:panelGrid layout="grid" columns="3" columnClasses="ui-g-4, ui-g-4,ui-g-4" style="width: 100%" styleClass="ui-panlegrid-blank">
+
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel value="Clave Predial:" class="FontBold"/>
+                        <p:inputText value="#{aperturaCierreCarpeta.carpeta.predio.claveCat}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="FontBold" value="Tipo Predio:"/>
+                        <p:inputText value="#{aperturaCierreCarpeta.carpeta.predio.tipoPredio eq 'U'?'URBANO':(aperturaCierreCarpeta.carpeta.predio.tipoPredio eq null ?'':'RURAL')}" 
+                                     readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <h:panelGroup>
+                            <p:outputLabel class="FontBold" value="Identificación Contribuyente:"/>
+                            <p:inputText value="#{aperturaCierreCarpeta.identificacion}" readonly="#{aperturaCierreCarpeta.editar}" style="width: 80%;"/>
+                            <p:commandButton icon="fa fa-search" process="@this" actionListener="#{aperturaCierreCarpeta.buscarInquilino()}"/>
+                        </h:panelGroup>
+
+
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="FontBold" value="Nombres Contribuyente"/>                        
+                        <p:inputText value="#{aperturaCierreCarpeta.carpeta.propietario.nombreCompleto}" readonly="#{aperturaCierreCarpeta.editar}" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel value="Fecha de Creación:" class="FontBold"/>
+                        <p:inputText value="#{aperturaCierreCarpeta.carpeta.fechaCrea}" readonly="true" style="width: 100%;">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </p:inputText>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="Estado" value="Estado:"/>
+                        <p:selectOneMenu style="width: 100%;" value="#{aperturaCierreCarpeta.carpeta.estado}">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItem itemLabel="ABRIR" itemValue="true"/>
+                            <f:selectItem itemLabel="CEERAR" itemValue="false"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </p:panelGrid>
+
+                <center style="margin-top: 2%;">
+                    <p:commandButton icon="fa fa-save" actionListener="#{aperturaCierreCarpeta.editarCarpeta()}" value="Guardar" style="width: auto;"  oncomplete="PF('dlogoCarpetas').hide()" update="frmCarpetas,mainForm"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" style="width: auto; background: red;" icon="fa fa-close"  oncomplete="PF('dlogoCarpetas').hide()" update="frmCarpetas,mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgSolicitante" header="LISTADO DE CONTRIBUYENTES" appendTo="@(body)" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="frmSolicitante">
+
+                <div align="right">
+                    <p:commandButton title="Nuevo" actionListener="#{aperturaCierreCarpeta.nuevoCliente()}"  value="Nuevo" icon="fa fa-plus"/>
+
+                </div>
+
+                <div align="center">
+                    <p:dataTable var="s" value="#{aperturaCierreCarpeta.lazyCliente}" style="width: 98%;text-align: center;" lazy="true" 
+                                 paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                                 selection="#{aperturaCierreCarpeta.clienteSeleccion}" rowKey="#{s.id}">
+                        <p:ajax event="rowSelect" update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowUnselect"  update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowSelectRadio"  update="frmSolicitante:btnSeleccionar" />
+                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                        <p:column headerText="CI/RUC" width="150" filterBy="#{s.identificacionCompleta}" filterStyle="width: 90%;">
+                            <h:outputText value="#{s.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Nombres" filterBy="#{s.nombreCompleto}"  filterStyle="width: 95%;">
+                            <h:outputText value="#{s.nombreCompleto}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+                <br></br>
+                <center>
+                    <p:commandButton id="btnSeleccionar" update="frmCarpetas" value="Seleccionar" icon="ui-icon-plus" actionListener="#{aperturaCierreCarpeta.seleccionar()}"
+                                     style="height: 30px"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación" height="150"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{aperturaCierreCarpeta.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{aperturaCierreCarpeta.completarTarea(true)}" style="width: 100px;margin: 10px"  />
+                        <p:spacer width="10"/>
+                        <p:commandButton icon="fa fa-remove" value="Rechazar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{aperturaCierreCarpeta.completarTarea(false)}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:spacer width="10"/>
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{aperturaCierreCarpeta.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

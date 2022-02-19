@@ -1,0 +1,371 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Asignación Ítem a Cuenta Contable
+    </ui:define>
+    <ui:param name="tittle" value="ASIGNACIÓN ÍTEM A CUENTA CONTABLE"/>
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <p:commandButton  value="Agregar Cuenta C." process="@this"
+                              actionListener="#{asignarItemCtaContableView.openDialogItems()}" 
+                              icon="fa fa-plus" style="width: auto"/>
+            <p:commandButton  value="Agregar Cuenta C. Grupos" process="@this"
+                              actionListener="#{asignarItemCtaContableView.openDialogListItems()}" 
+                              icon="fa fa-plus" style="width: auto"/>
+            <p:commandButton  value="Generar Items Sin Cuenta" process="@this"
+                              actionListener="#{asignarItemCtaContableView.generarPdf(true)}" 
+                              icon="fa fa-file-pdf-o" style="width: auto;  "/>
+            <!--            <p:commandButton  value="Generar Items Con Cuenta"
+                                          actionListener="# {asignarItemCtaContableView.generarPdf(false)}" 
+                                          icon="fa fa-file-pdf-o" style="width: auto" />-->
+            <br/><br/>
+            <p:dataTable id="dtItemCuenta" widgetVar="dtItemCuenta" var="item" value="#{asignarItemCtaContableView.lazyDetalleItem}" paginator="true" rows="15" 
+                         style="width: 100%;" paginatorPosition="bottom"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="keyup"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true" 
+                         selectionMode="single" rowKey=""
+                         emptyMessage="No existen items asignados a Cuentas Contables..." >
+                <f:facet name="header">
+                    Ítem Cuenta Contable
+                </f:facet>
+                <p:column headerText="Ítem" style="width: 18%;" filterBy="#{item.codigoAgrupado}" filterMatchMode="contains">
+                    <h:outputText value="#{item.codigoAgrupado}" /><p:spacer width="5"/>
+                    <h:outputText value="#{item.descripcion}" />
+                </p:column>
+                <p:column headerText="Área"  filterBy="#{item.asignarGrupo.padre.padre.nombre}" filterMatchMode="contains">
+                    <h:outputText value="#{item.asignarGrupo.padre.padre.nombre}" />
+                </p:column>
+                <p:column headerText="Tipo Gasto"  filterBy="#{item.tipoGasto.descripcion}" filterMatchMode="contains">
+                    <h:outputText value="#{item.tipoGasto.descripcion}" />
+                </p:column>
+                <p:column headerText="Grupo" style="width: 10%;" filterBy="#{item.asignarGrupo.padre.nombre}" filterMatchMode="contains">
+                    <h:outputText value="#{item.asignarGrupo.padre.nombre}" />
+                </p:column>
+                <p:column headerText="SubGrupo" filterBy="#{item.asignarGrupo.nombre}" style="width: 8%;" filterMatchMode="contains">
+                    <h:outputText value="#{item.asignarGrupo.nombre}" />
+                </p:column>
+                <p:column headerText="Cuenta Contable" filterBy="#{item.cuentaContable.codigo}" style="width: 15%;" filterMatchMode="contains"> 
+                    <h:outputText value="#{item.cuentaContable.codigo} #{item.cuentaContable.descripcion}" />
+                </p:column>
+                <p:column headerText="Contra Cuenta" filterBy="#{item.contraCuenta.codigo}" style="width: 15%;"> 
+                    <h:outputText value="#{item.contraCuenta.codigo} #{item.contraCuenta.descripcion}" />
+                </p:column>
+                <p:column headerText="Acciones" style="width: 7%; text-align: center">
+                    <p:commandLink  update="frmMain" title="Visualizar Detalle" process="@this" 
+                                    actionListener="#{asignarItemCtaContableView.visualizarDetalleAsignacion(item)}">
+                        <i class="fa fa-folder-open" style="font-size: 1.5em; margin-right: 4px; color: #0D47A1;"></i>
+                    </p:commandLink>
+                    <p:commandLink  update="frmMain" title="Editar Detalle" process="@this" 
+                                    actionListener="#{asignarItemCtaContableView.editarItemCuentaContable(item)}">
+                        <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 4px; color: #0D47A1;"></i>
+                    </p:commandLink>
+                    <p:commandLink title="Eliminar"  process="@this" update="frmMain"
+                                   actionListener="#{asignarItemCtaContableView.eliminar(item)}">
+                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 4px; color: red;"></i>
+                        <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta asignada al ítem?" icon="fa fa-exclamation-triangle" />
+                    </p:commandLink> 
+                </p:column>
+            </p:dataTable>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog> 
+        </h:form>
+
+        <p:dialog id="dlgItemsContable" widgetVar="dlgItemsContable" width="25%" position="center" 
+                  draggable="false" header="Item Contable" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false" id="form">
+                <div class="ui-g ui-fluid">
+                    <h:panelGroup layout="block"  id="pgItemCodigo" class="panelInput">
+                        <p:outputLabel value="Ítem:" style="font-weight: bold" for="itcod"/>
+                        <div class="ui-inputgroup">
+                            <p:inputText value="#{asignarItemCtaContableView.detalleItem.codigoAgrupado}" maxlength="13"  required="true"
+                                         placeholder="000-000-00000" style=" width: #{asignarItemCtaContableView.tipoRegistro ? '75%' : '100%'}; margin-bottom: 5%" readonly="false" id="itcod" class="panelInput">
+                                <p:ajax update="itcod" event="change"/>
+                            </p:inputText>
+                            <p:commandButton 
+                                title="Buscar Ítem" 
+                                icon="fa fa-search" rendered="#{asignarItemCtaContableView.tipoRegistro}"
+                                styleClass=" button-group"  style="width: 12%"
+                                actionListener="#{asignarItemCtaContableView.buscarItem()}"
+                                process="@this" update="@(.ui-panelgrid),form">
+                                <p:ajax event="dialogReturn" listener="#{asignarItemCtaContableView.selectItem}" update="form"/>
+                            </p:commandButton>
+                        </div>
+                        <p:outputLabel value="Descripción" style="font-weight: bold;" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.descripcion}" style=" margin-bottom:2%" readonly="true"/> 
+                        <p:outputLabel value="Área" style="margin-top: 2%;" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.asignarGrupo.padre.padre.nombre}" 
+                                     style=" margin-bottom: 2%" readonly="true"/>
+                        <p:outputLabel value="Grupo" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.asignarGrupo.padre.nombre}"  readonly="true"/>
+                        <p:outputLabel value="SubGrupo" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.asignarGrupo.nombre}"  readonly="true"/>
+                    </h:panelGroup>
+                    <h:panelGroup   id="panelTipoInventario" layout="block" class="panelInput"  style="margin-top: 2%">
+                        <p:outputLabel value="Tipo de Inventario" for="tipoGastos" style="width: 100%;  font-weight: bold;" />
+                        <p:selectOneMenu style="width:100%; margin-bottom: 5%" id="tipoGastos"  
+                                         filter="true" filterMatchMode="startsWith" panelStyle="width:22%" var="gastos" 
+                                         value="#{asignarItemCtaContableView.detalleItem.tipoGasto}"  
+                                         converter="#{utilConverter}">
+                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{asignarItemCtaContableView.listTiposGastos}" var="tipGastos"
+                                           itemLabel="#{tipGastos.descripcion}" itemValue="#{tipGastos}"/>
+                            <p:column style="width:18%">
+                                <f:facet name="header">
+                                    <h:outputText value="Código"/>
+                                </f:facet>
+                                <h:outputText value="#{gastos.codigo}" style="font-weight: bold;" />
+                            </p:column>
+                            <p:column style="width: 32%;" >
+                                <f:facet name="header">
+                                    <h:outputText value="Tipo Gastos"/>
+                                </f:facet>
+                                <h:outputText value="#{gastos.descripcion}" />
+                            </p:column>
+                            <p:column style="width: 50%;">
+                                <f:facet name="header">
+                                    <h:outputText value="Cuenta Padre"/>
+                                </f:facet>
+                                <h:outputText value="DE: #{gastos.padre.descripcion}" />
+                            </p:column>
+                            <p:ajax event="change" listener="#{asignarItemCtaContableView.ajaxTipoInventario()}"  update="form" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup />
+                    <h:panelGroup id="pgCuentaContable" style="width: 85%; margin-bottom: 2%" >
+                        <div class="ui-inputgroup" >
+                            <p:outputLabel value="Cuenta Contable:"  for="ctaContable" style="font-weight: bold;"/>
+                            <p:inputText value="#{asignarItemCtaContableView.cuentaContable.codigo}" id="ctaContable"
+                                         placeholder="11111.." readonly="false" >
+                                <p:keyFilter regEx="/[\d]/" preventPaste="false" />
+                                <p:ajax update="ctaContable" />
+                            </p:inputText>
+                            <p:commandButton
+                                title="Buscar cuenta contable" 
+                                icon="fa fa-search" style="width: 15%"
+                                styleClass="button-group"
+                                actionListener="#{asignarItemCtaContableView.buscarCuenta(false,true)}"
+                                process="@this,panelTipoInventario " update="@(.ui-panelgrid),form">
+                                <p:ajax event="dialogReturn" listener="#{asignarItemCtaContableView.selectCuenta}" update="form"/>
+                            </p:commandButton>
+                        </div>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style=" margin-bottom: 2%">
+                        <p:outputLabel value="Descripción Cuenta Contable:" style="font-weight: bold;" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.cuentaContable.descripcion}"  readonly="true"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 85%; margin-bottom: 2%">
+                        <div class="ui-inputgroup" >
+                            <p:outputLabel value="Contra Cuenta Contable:" for="ctaContableContracuenta" style="font-weight: bold;  "/>
+                            <p:inputText value="#{asignarItemCtaContableView.contraCuenta.codigo}" id="ctaContableContracuenta"
+                                         placeholder="11111.."  readonly="false">
+                                <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                <p:ajax update="ctaContableContracuenta" />
+                            </p:inputText>
+                            <p:commandButton
+                                title="Buscar Contra cuenta contable" 
+                                icon="fa fa-search" style="width: 15%"
+                                styleClass="button-group"
+                                actionListener="#{asignarItemCtaContableView.buscarCuenta(true,true)}"
+                                process="@this" update="@(.ui-panelgrid),form">
+                                <p:ajax event="dialogReturn" listener="#{asignarItemCtaContableView.selectContraCuenta}" update="form"/>
+                            </p:commandButton>
+                        </div>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" >
+                        <p:outputLabel value="Descripción Contra Cuenta Contable:" style="font-weight: bold;" />
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.contraCuenta.descripcion}" readonly="true"/>
+                    </h:panelGroup>
+                </div>
+                <center style="margin-top: 10px">
+                    <p:commandButton value="Guardar" rendered="#{asignarItemCtaContableView.visualizar}"
+                                     icon="ui-icon-save" actionListener="#{asignarItemCtaContableView.guardar()}" style="width: auto; "
+                                     styleClass="Fs16" update="frmMain, form"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" icon="ui-icon-clear" process="@this"
+                                     actionListener="#{asignarItemCtaContableView.resetValues()}" style="width: auto; "
+                                     styleClass="red-btn" update="frmMain, form"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgListItemsContable" widgetVar="dlgListItemsContable" width="75%" position="center" 
+                  draggable="false" header="Items Contables" modal="true" showEffect="fade" height="500px"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false" id="formItems">
+                <p:selectOneRadio  id="basic" value="#{asignarItemCtaContableView.tipoBusqueda}">
+                    <f:selectItem itemLabel="Todos" itemValue="1"/>
+                    <f:selectItem itemLabel="Sin Cuentas C." itemValue="2"/>
+                    <f:selectItem itemLabel="Con Cuentas C." itemValue="3"/>
+                    <p:ajax update="formItems" event="change" listener="#{asignarItemCtaContableView.loadTipoBusquedaItems}"/>
+                </p:selectOneRadio >
+                <p:dataTable id="dtItemCuentas" widgetVar="dtItemCuentas" var="items" value="#{asignarItemCtaContableView.listItems}" 
+                             paginator="true" rows="15" style="width: 100%;" paginatorPosition="top"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="15,30,45" lazy="false"   rowKey="#{items.id}"
+                             emptyMessage="No existen items asignados a Cuentas Contables..."
+                             selection="#{asignarItemCtaContableView.listItemsSeleccionados}">
+                    <f:facet name="header" >
+                        <p:commandButton process="@form"  icon="fa fa-plus-circle" value="Añadir" actionListener="#{asignarItemCtaContableView.openDialogListItemsSelect()}" />
+                    </f:facet>
+                    <p:column selectionMode="multiple" style="width: 3%;text-align:center"/>
+                    <p:column headerText="Código"  filterBy="#{items.codigoAgrupado}" filterMatchMode="contains" style="width: 8% ; text-align: center">
+                        <h:outputText value="#{items.codigoAgrupado}" />
+                    </p:column>
+                    <p:column headerText="Descripción" filterBy="#{items.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{items.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Área" filterBy="#{items.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{items.asignarGrupo.padre.padre.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Grupo" filterBy="#{items.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{items.asignarGrupo.padre.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Subgrupo" filterBy="#{items.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{items.asignarGrupo.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Unidad de Medida" filterBy="#{items.tipoMedida.descripcion}" style="width: 8% ; text-align: center">
+                        <h:outputText value="#{items.tipoMedida.descripcion}" />
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgListItemsSelect" widgetVar="dlgListItemsSelect" width="75%" height="400px" position="center" 
+                  draggable="false" header="Items Contables Seleccionados" modal="true" showEffect="fade"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false" id="formItemsSelect">
+                <p:panelGrid columns="3"  layout="grid" styleClass="ui-panelgrid-blank" >
+                    <h:panelGroup id="panelTipoInventarios"  layout="block" class="panelInput">
+                        <p:outputLabel value="Tipo de Inventario"  style="width: 100%;  font-weight: bold;" />
+                        <p:selectOneMenu filter="true" filterMatchMode="startsWith" panelStyle="width:22%" var="gastos" 
+                                         value="#{asignarItemCtaContableView.detalleItem.tipoGasto}"  style="width: 90%"
+                                         converter="#{utilConverter}">
+                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{asignarItemCtaContableView.listTiposGastos}" var="tipGastos"
+                                           itemLabel="#{tipGastos.descripcion}" itemValue="#{tipGastos}"/>
+                            <p:column style="width:18%">
+                                <f:facet name="header">
+                                    <h:outputText value="Código"/>
+                                </f:facet>
+                                <h:outputText value="#{gastos.codigo}" style="font-weight: bold;" />
+                            </p:column>
+                            <p:column style="width: 32%;" >
+                                <f:facet name="header">
+                                    <h:outputText value="Tipo Gastos"/>
+                                </f:facet>
+                                <h:outputText value="#{gastos.descripcion}" />
+                            </p:column>
+                            <p:column style="width: 50%;">
+                                <f:facet name="header">
+                                    <h:outputText value="Cuenta Padre"/>
+                                </f:facet>
+                                <h:outputText value="DE: #{gastos.padre.descripcion}" />
+                            </p:column>
+                            <p:ajax event="change" listener="#{asignarItemCtaContableView.ajaxTipoInventario()}"  update="formItemsSelect" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="panelInput">
+                        <p:outputLabel value="Cuenta Contable:"  style="font-weight: bold;"/>
+                        <div class="ui-inputgroup" >
+                            <p:inputText value="#{asignarItemCtaContableView.cuentaContable.codigo}" id="ctaContables"
+                                         placeholder="11111.." readonly="false" style="width: 80%" >
+                                <p:keyFilter regEx="/[\d]/" preventPaste="false" />
+                                <p:ajax update="ctaContables" />
+                            </p:inputText>
+                            <p:commandButton
+                                title="Buscar cuenta contable" 
+                                icon="fa fa-search" 
+                                styleClass="button-group"
+                                actionListener="#{asignarItemCtaContableView.buscarCuenta(false,false)}"
+                                process="@this,panelTipoInventarios " update="@(.ui-panelgrid),formItemsSelect">
+                                <p:ajax event="dialogReturn" listener="#{asignarItemCtaContableView.selectCuenta}" update="formItemsSelect"/>
+                            </p:commandButton>
+                        </div>
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.cuentaContable.descripcion}" style="width: 85%"  readonly="true"/>                        
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="panelInput">
+                        <p:outputLabel value="Contra Cuenta Contable:"  style="font-weight: bold; width: 100%; "/>
+                        <div class="ui-inputgroup" >
+                            <p:inputText value="#{asignarItemCtaContableView.contraCuenta.codigo}" id="ctaContableContracuentas"
+                                         placeholder="11111.."  readonly="false" style="width: 80%">
+                                <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                <p:ajax update="ctaContableContracuentas" />
+                            </p:inputText>
+                            <p:commandButton
+                                title="Buscar Contra cuenta contable" 
+                                icon="fa fa-search" 
+                                styleClass="button-group"
+                                actionListener="#{asignarItemCtaContableView.buscarCuenta(true,false)}"
+                                process="@this" update="@(.ui-panelgrid),formItemsSelect">
+                                <p:ajax event="dialogReturn" listener="#{asignarItemCtaContableView.selectContraCuenta}" update="formItemsSelect"/>
+                            </p:commandButton>
+                        </div>
+                        <p:inputText value="#{asignarItemCtaContableView.detalleItem.contraCuenta.descripcion}" style="width: 85%" readonly="true"/>                       
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center style="margin-top: 10px; margin-bottom: 10px">
+                    <p:commandButton value="Guardar" 
+                                     icon="ui-icon-save" actionListener="#{asignarItemCtaContableView.guardarGrupo()}" style="width: auto; "
+                                     styleClass="Fs16" update="formItemsSelect"  process="@form"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" icon="ui-icon-clear" process="@this"
+                                     onclick="PF('dlgListItemsSelect').hide()" style="width: auto; "
+                                     styleClass="red-btn" update="formItemsSelect"/>
+                </center>
+                <p:dataTable id="dtItemCuentasSelect" widgetVar="dtItemCuentasSelect" var="itemSelect" value="#{asignarItemCtaContableView.listItemsSeleccionados}" 
+                             paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="false"  
+                             emptyMessage="No existen items asignados a Cuentas Contables...">
+
+                    <p:column headerText="Código"  filterBy="#{itemSelect.codigoAgrupado}" style="width: 10% ; text-align: center">
+                        <h:outputText value="#{itemSelect.codigoAgrupado}" />
+                    </p:column>
+                    <p:column headerText="Descripción" filterBy="#{itemSelect.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Área" filterBy="#{itemSelect.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.asignarGrupo.padre.padre.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Grupo" filterBy="#{itemSelect.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.asignarGrupo.padre.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Subgrupo" filterBy="#{itemSelect.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.asignarGrupo.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Tipo Gasto" filterBy="#{itemSelect.tipoGasto.codigo}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.tipoGasto.codigo}" />
+                    </p:column>
+                    <p:column headerText="Cuenta C" filterBy="#{itemSelect.cuentaContable.codigo}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.cuentaContable.codigo}" />
+                    </p:column>
+                    <p:column headerText="Contra Cuenta C" filterBy="#{itemSelect.contraCuenta.codigo}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.contraCuenta.codigo}" />
+                    </p:column>
+                    <p:column headerText="Unidad de Medida" filterBy="#{itemSelect.tipoMedida.descripcion}" style="width: 15% ; text-align: center">
+                        <h:outputText value="#{itemSelect.tipoMedida.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Acción"  style="width: 5% ; text-align: center">
+                        <p:commandLink title="Eliminar"  process="@this" update="@form"
+                                       actionListener="#{asignarItemCtaContableView.eliminarItemSeleccionado(itemSelect)}"       >
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 4px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta asignada al ítem?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink> 
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

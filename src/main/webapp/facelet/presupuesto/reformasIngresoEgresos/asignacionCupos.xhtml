@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">  Asignación de Cupos</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <u:titleTask task="#{cupoView.tarea}" tramite="#{cupoView.tramite}" />
+            </div>
+
+            <div class="ui-g-12">
+
+                <h:form prependId="false" id="fmReformas">
+
+                    <p:panel  rendered="#{cupoView.consultaRe}">
+                        <center>
+                            <h1>Datos Reformas</h1>
+                        </center>
+
+                        <p:dataTable id="datareformas" widgetVar="datareformas" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,100" value="#{cupoView.lazyAsignacion}" 
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  rowIndexVar="index" >
+
+                            <p:column headerText="No.REFORMA" style="text-align: center;padding: 10px 10px 10px 10px;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO"  style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="TOTAL SUPLEMENTO" style="text-align: center;">
+                                <p:outputLabel value="#{cupoView.getRetornaTotal(item)}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>   
+                            </p:column>
+                            <p:column headerText="TOTAL REDUCCIÓN" style="text-align: center;">
+                                <p:outputLabel value="#{cupoView.getRetornaTotalReduccion(item)}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>   
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto}"/>   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 10%; text-align: center;">
+                                <p:commandLink disabled="#{item.tipo==true and item.estado.codigo!='APRO' ?false:true}"  title="Asignar Cupo" 
+                                               process="@this"  actionListener="#{cupoView.asignacionCupo(item)}"  >
+                                    <i class="fa fa-money" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+
+                                <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this"  actionListener="#{cupoView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog width="1200" id="DloCupos"  header="Asignación De Cupos" widgetVar="DloCupos" modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="600">
+            <h:form id="formCupos" prependId="false">
+                <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-6" styleClass="ui-panelgrid-blank form-group" style="text-align: center;">
+                    <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px; padding-bottom: 15px;" >
+                        <p:outputLabel style="font-size: 12px; margin-top: 2%; " class="FontBold" value="Suplemento Ingreso: "/>
+                        <p:outputLabel style="font-size: 12px;margin-top: 2%;" value="#{cupoView.valorTotal}">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGroup class="Wid100 TaskProperty" layout="block" id="componenteAsignadoCupo"  style="padding-top: 15px; padding-bottom: 15px;">
+                        <p:outputLabel style="font-size: 12px; margin-top: 2%;" class="FontBold" value="Cupo Asignado: "/>
+                        <p:outputLabel style="font-size: 12px;margin-top: 2%; " value="#{cupoView.valorAsignado}">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                </p:panelGrid>
+
+                <p:tabView prependId="false" >
+                    <p:tab title="PLAN ANUAL PROGRAMA PROYECTOS" titleStyle="border-right: 2px solid #eaeaea" >
+                        <p:dataTable id="dataCupos" widgetVar="dataCupos" var="item" paginator="true" rows="20"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,100" value="#{cupoView.lazyCupos}" editable="true" editMode="cell" rowIndexVar="index"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                            <p:column headerText="No." style="width:2%;">
+                                #{index+1} 
+                            </p:column>
+                            <p:column headerText="Nombre" sortBy="#{item.unidadAdministrativa.nombre}" filterBy="#{item.unidadAdministrativa.nombre}" style="width: 20%;">
+                                <h:outputText value="#{item.unidadAdministrativa.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column filterBy="#{item.unidadAdministrativa.padre.nombre}" headerText="Supervisa"  style="width: 20%;">
+                                <h:outputText value="#{item.unidadAdministrativa.padre.nombre==null?'ENTIDAD':item.unidadAdministrativa.padre.nombre}" />
+                            </p:column>
+                            <p:column filterBy="#{item.unidadAdministrativa.tipoUnidad.texto}" headerText="Tipo de Unidad"  style="width: 10%;">
+                                <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.texto}" />
+                            </p:column>
+                            <p:column headerText="Cupo" style="width: 8%; text-align: right">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{item.montoCupo}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{item.montoCupo}" style="width:96%" >
+                                            <p:ajax  event="change" listener="#{cupoView.editarCell(item)}" update="dataCupos,componenteAsignadoCupo"/>
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column> 
+                            <p:column headerText="Reponsable" style="width: 10%; text-align: center;">
+                                <p:cellEditor disabled="#{item.montoCupo.doubleValue()==0?true:false}">
+                                    <f:facet name="output">
+                                        <h:outputText value="#{item.responsable}" > 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:selectOneMenu value="#{item.responsable}" 
+                                                         style="width:160px"  >
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"  />
+                                            <f:selectItems  value="#{cupoView.filtrarLista(item)}" var="n" itemLabel="#{n}" itemValue="#{n}" />
+
+                                            <p:ajax event="change" listener="#{cupoView.editarResponsable(item)}" update="dataCupos" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="DISTRIBUTIVO - DISTRIBUTIVO ANEEXO - PARTIDAS DIRECTAS" titleStyle="border-right: 2px solid #eaeaea">
+                        <p:dataTable id="dataCuposOtros" widgetVar="dataCuposOtros" var="data" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="20,30,40,50,100" value="#{cupoView.lazyOtrosReforma}" editable="true" editMode="cell" rowIndexVar="index"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado"  >
+                            <p:column headerText="No." style="width: 20px;">
+                                #{index+1}
+                            </p:column>
+                            <p:column>
+                                <p:outputLabel value="#{data.otros=='PD'?'PARTIDAS DIRECTAS':''}"/>
+                                <p:outputLabel value="#{data.otros=='D'?'DISTRIBUTIVO':''}"/>
+                                <p:outputLabel value="#{data.otros=='DA'?'DISTRIBUTIVO ANEXO':''}"/>
+                            </p:column>
+                            <p:column headerText="Cupo" style="width: 8%; text-align: right">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{data.montoCupo}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{data.montoCupo}" style="width:96%" >
+                                            <p:ajax  event="change" listener="#{cupoView.editarCell(data)}" update="dataCuposOtros,componenteAsignadoCupo" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column> 
+                        </p:dataTable>
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="dlgresponsables" widgetVar="dlgresponsables" modal="true" width="1000"  header="Usuarios asignados de una vez">
+            <h:form id="frmDlgresponsables">
+                <p:dataGrid value="#{cupoView.verificacionUser}" columns="4" layout="grid" paginatorPosition="bottom"
+                            rows="12" paginator="true" id="datos" var="item"
+                            paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                            rowsPerPageTemplate="6,12,16">                  
+                    <p:panel header="#{item.usuario}"  style="text-align:center" >
+                        <h:panelGrid columns="1" style="width:100%; text-align: justify;" class="FontBold">
+                            <h:outputText value="CATEGORIA: #{item.responsable.toUpperCase()}" class="FontBold"/>
+                            <p:outputLabel value="UNIDAD:  #{item.unidadAdministrativa.nombre.toUpperCase()}" class="FontBold"/>
+                        </h:panelGrid>
+                    </p:panel>
+                </p:dataGrid>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{cupoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{cupoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

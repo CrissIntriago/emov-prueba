@@ -1,0 +1,675 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:b="http://bootsfaces.net/ui">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Concilación Bancaria</ui:define>
+    <ui:define name="head">
+        <h:outputStylesheet name="css/resetBSToPF.css"  library="barcelona-layout" />
+        <style>
+            .ui-paginator-rpp-options{
+                color: black;
+                appearance: menulist;
+            }
+        </style>
+    </ui:define>
+    <ui:param name="tittle" value="Conciliación Bancaria" />
+    <ui:define name="content">
+        <h:form id="formMaster" prependId="false" style="background-color: white" >
+
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title" id="cardTitle">
+                            <b:panelGrid columns="2">
+                                <b:panelGrid columns="1">
+                                    <b:panelGrid columns="2" size="xs">
+                                        <b:selectOneMenu id="anio" label="Año" 
+                                                         value="#{conciliacionBancariaView.anio}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{conciliacionBancariaView.anios}"
+                                                           var="anio"
+                                                           itemLabel="#{anio}"
+                                                           itemValue="#{anio}"/>
+                                            <f:ajax listener="#{conciliacionBancariaView.loadCuentaBancariaAnio()}" execute="anio"/>
+                                        </b:selectOneMenu>
+                                        <b:selectOneMenu id="mes" label="Mes" 
+                                                         value="#{conciliacionBancariaView.mes}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{conciliacionBancariaView.meses}"
+                                                           var="mes"
+                                                           itemLabel="#{mes}"
+                                                           itemValue="#{conciliacionBancariaView.mes(mes)}"/>
+                                            <f:ajax event="change" listener="#{conciliacionBancariaView.loadConciliacionBancaria()}" execute="anio,mes,cuenta-contable"/>
+                                        </b:selectOneMenu>
+                                    </b:panelGrid>
+                                </b:panelGrid>
+                                <b:panelGrid columns="1" id="panel-estado">
+                                    <p:outputLabel styleClass="fa fa-tasks" value="Estado: #{conciliacionBancariaView.conciliacionBancaria.estadoConciliacion}" 
+                                                   class="FontBold Fs18" style="float: right;"/>
+                                </b:panelGrid>
+                            </b:panelGrid>
+                            <b:panelGrid columns="2" id="datos-cuentas">
+                                <b:panelGrid columns="1">
+                                    <b:panelGrid columns="2" size="xs">
+                                        <b:selectOneMenu id="cuenta-contable" required="true" 
+                                                         value="#{conciliacionBancariaView.cuentaBancaria}"
+                                                         converter="#{utilConverter}" label="Cuenta Contable:">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{conciliacionBancariaView.listContCuentaEntidad}"
+                                                           var="cuentasBancos"
+                                                           itemLabel="#{cuentasBancos.idCuentaMovimiento.codigo} - 
+                                                           #{cuentasBancos.idCuentaMovimiento.descripcion}"
+                                                           itemValue="#{cuentasBancos}"/>
+                                            <f:ajax event="change" listener="#{conciliacionBancariaView.loadConciliacionBancaria()}" execute="anio,mes,cuenta-contable"/>
+                                        </b:selectOneMenu>
+                                        <b:inputText label="Saldo Libro Banco:" id="valor-banco" 
+                                                     value="#{conciliacionBancariaView.conciliacionBancaria.saldoLibroBanco}"
+                                                     fieldSize="sm" mask="currency" readonly="true" render-label="true"/>
+                                        <b:inputText  id="numero-cuenta" fieldSize="sm" label="N° Cuenta Banco:"
+                                                      value="#{conciliacionBancariaView.cuentaBancaria.numeroCuenta} - #{conciliacionBancariaView.cuentaBancaria.nombre}"
+                                                      readonly="true"/>
+                                        <b:inputText  id="valor-monetario" label="Saldo Estado Cuenta:" readonly="true"
+                                                      value="#{conciliacionBancariaView.conciliacionBancaria.saldoCuentaMonetaria}"
+                                                      fieldSize="sm" mask="currency" render-label="true" required="true" />
+                                    </b:panelGrid>
+                                </b:panelGrid> 
+                                <b:panelGrid columns="1">
+                                    <b:panelGrid columns="3" size="xs">
+                                        <b:inputText  id="lb-saldo-inicial" label="Saldo Inicial:"
+                                                      value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoSaldoInicial}"
+                                                      fieldSize="sm" mask="currency" render-label="true" readonly="true"/>
+                                        <b:inputText  id="lb-debito" label="Crédito(+):"
+                                                      value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoCredito}"
+                                                      fieldSize="sm" mask="currency" render-label="true" readonly="true"/>
+                                        <b:inputText  id="lb-credito" label="Débito(-):"
+                                                      value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoDebito}"
+                                                      fieldSize="sm" mask="currency" render-label="true" readonly="true"/>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="estSaldoInicial"  value="Saldo Inicial:" />
+                                            <p:inputNumber id="estSaldoInicial" symbol="$ "
+                                                           disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                           decimalPlaces="2" inputStyle="text-align: right"
+                                                           onkeypress="focusNextOnEnter(event, 'est-credito')"
+                                                           value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaSaldoInicial}">
+                                                <p:ajax listener="#{conciliacionBancariaView.getResultValorLibroBco()}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="est-credito"  value="Débito(+):" />
+                                            <p:inputNumber id="est-credito" symbol="$ "
+                                                           disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                           decimalPlaces="2" inputStyle="text-align: right"
+                                                           onkeypress="focusNextOnEnter(event, 'est-debito')"
+                                                           value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaDebito}">
+                                                <p:ajax listener="#{conciliacionBancariaView.getResultValorLibroBco()}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="est-debito"  value="Crédito(-):" />
+                                            <p:inputNumber id="est-debito" symbol="$ "
+                                                           disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                           decimalPlaces="2" inputStyle="text-align: right"
+                                                           onkeypress="focusNextOnEnter(event, 'btn-guardar')"
+                                                           value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaCredito}">
+                                                <p:ajax listener="#{conciliacionBancariaView.getResultValorLibroBco()}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                    </b:panelGrid>
+                                </b:panelGrid>
+                            </b:panelGrid>
+                            <b:panelGrid columns="1">
+                                <h:panelGroup>
+                                    <b:commandButton value=" Imprimir Reporte (.xlsx)" process="formMaster"
+                                                     id="btn-reporte-xlsx"
+                                                     actionListener="#{conciliacionBancariaView.generarExcel()}"
+                                                     iconAwesome="download" 
+                                                     look="primary"
+                                                     size="sm"
+                                                     style="width: auto; margin-top: 25px; float: right"
+                                                     update="formMaster"/>
+                                    <b:commandButton value=" Imprimir Reporte  (.pdf)" process="formMaster"
+                                                     id="btn-reporte"
+                                                     actionListener="#{conciliacionBancariaView.imprimirReporte('pdf')}"
+                                                     iconAwesome="download" 
+                                                     look="primary"
+                                                     size="sm"
+                                                     style="width: auto; margin-top: 25px; float: right;margin-right: 15px"
+                                                     update="formMaster"/>    
+                                    <b:commandButton value=" Cancelar" process="@this"
+                                                     id="btn-cancelar"
+                                                     actionListener="#{conciliacionBancariaView.loadModel()}"
+                                                     iconAwesome="fa-close" 
+                                                     look="danger"
+                                                     size="sm"
+                                                     style="width: auto; margin-top: 25px; float: right;margin-right: 15px"
+                                                     update="formMaster"/>    
+                                    <b:commandButton value=" Guardar" process="formMaster"
+                                                     id="btn-guardar"
+                                                     disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                     actionListener="#{conciliacionBancariaView.guardar()}"
+                                                     iconAwesome="fa-save" 
+                                                     look="success"
+                                                     size="sm"
+                                                     style="width: auto; margin-top: 25px; float: right; margin-right: 15px"
+                                                     update="formMaster"/>    
+                                </h:panelGroup>
+                            </b:panelGrid>
+                            <br/>
+                            <b:tabView id="tabView-cuentas">
+                                <b:tab title="Débitos Libro Bancos">
+                                    <br/><br/>
+                                    <p:dataTable value="#{conciliacionBancariaView.lazyDebidosLibroBanco}" var="debito" 
+                                                 id="dataTable-debito"
+                                                 emptyMessage="No existen datos de libro bancos" 
+                                                 reflow="true" 
+                                                 paginator="true" 
+                                                 lazy="true" rows="20"
+                                                 rowsPerPageTemplate="20,50,100" 
+                                                 paginatorPosition="bottom"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 editable="#{conciliacionBancariaView.editableCellEdit}"
+                                                 editMode="cell"
+                                                 tableStyle="table-layout:auto">
+                                        <p:column headerText="Fecha" style="text-align: center;width: 5%"  sortBy="#{debito.fecha}">
+                                            <p:outputLabel value="#{debito.fecha}" style="margin-top: 5px">
+                                                <f:convertDateTime pattern="yyyy/MM/dd" />
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Transacción" style="text-align: center;width: 5%" filterBy="#{debito.numDiarioGeneral}">
+                                            <p:outputLabel value="#{debito.numDiarioGeneral}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="CP" style="text-align: center;width: 3%" filterBy="#{debito.numComprobantePago}">
+                                            <p:outputLabel value="#{debito.numComprobantePago}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Beneficiario" style="width: 22%" filterBy="#{debito.beneficiario}">
+                                            <p:outputLabel value="#{debito.beneficiario}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Detalle" style="width: 22%" filterBy="#{debito.detalle}">
+                                            <p:outputLabel value="#{debito.detalle}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="text-align: center;width: 8%">
+                                            <p:outputLabel value="#{debito.valor}" style="margin-top: 5px;float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ "/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="SPI" style="text-align: center;width: 5%" filterBy="#{debito.spi}">
+                                            <p:outputLabel value="#{debito.spi}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Estado" style="text-align: center;width: 8%" filterBy="#{debito.estado}">
+                                            <p:outputLabel value="#{debito.estado}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Conciliación" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{debito.conciliacion}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input">
+                                                    <h:selectOneMenu value="#{debito.conciliacion}">
+                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                        <f:selectItem itemLabel="PAGO EFEC" itemValue="PAGO EFEC"/>
+                                                        <f:selectItem itemLabel="PAGO NO EFEC" itemValue="PAGO NO EFEC"/><!--  //RESTA ESTADO CUENTA-->
+                                                        <f:selectItem itemLabel="DEBITO EFEC" itemValue="DEBITO EFEC" 
+                                                                      itemDisabled="#{not empty debito.spi}"/>
+                                                        <f:selectItem itemLabel="DEBITO NO EFEC" itemValue="DEBITO NO EFEC"
+                                                                      itemDisabled="#{not empty debito.spi}"/><!--  //RESTA ESTADO CUENTA-->
+                                                        <f:selectItem itemLabel="ANULADO" itemValue="ANULADO"/>
+                                                        <p:ajax update="" listener="#{conciliacionBancariaView.getCalcularConciliacion(debito)}"/>
+                                                    </h:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Referencia" style="text-align: center;width: 5%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{debito.referencia}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input"><p:inputText  value="#{debito.referencia}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Fecha Referencia" style="text-align: center;width: 8%">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{debito.fechaReferencia}" style="margin-top: 5px">
+                                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input"><p:inputMask mask="9999/99/99" value="#{debito.fechaReferenciaString}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable>   
+                                </b:tab>
+                                <b:tab title="Créditos Libro Bancos">
+                                    <br/><br/>
+                                    <p:dataTable value="#{conciliacionBancariaView.lazyCreditosLibroBanco}" var="credito" 
+                                                 emptyMessage="No existen datos de créditos libro bancos" 
+                                                 reflow="true" 
+                                                 paginator="true" 
+                                                 lazy="true" rows="20"
+                                                 rowsPerPageTemplate="20,50,100" 
+                                                 paginatorPosition="bottom"
+                                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                 editable="#{conciliacionBancariaView.editableCellEdit}"
+                                                 editMode="cell"
+                                                 tableStyle="table-layout:auto">
+                                        <p:column headerText="Fecha" style="text-align: center;width: 10%" sortBy="#{credito.fecha}">
+                                            <p:outputLabel value="#{credito.fecha}" style="margin-top: 5px">
+                                                <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Transacción" style="text-align: center;width: 10%" filterBy="#{credito.numDiarioGeneral}">
+                                            <p:outputLabel value="#{credito.numDiarioGeneral}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Detalle" style="width: 40%" filterBy="#{credito.detalle}" >
+                                            <p:outputLabel value="#{credito.detalle}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="text-align: center;width: 10%">
+                                            <p:outputLabel value="#{credito.valor}" style="margin-top: 5px;float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ "/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Conciliación" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{credito.conciliacion}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input">
+                                                    <h:selectOneMenu value="#{credito.conciliacion}">
+                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                        <f:selectItem itemLabel="DEPOSITO EFEC" itemValue="DEPOSITO EFEC"/>
+                                                        <f:selectItem itemLabel="CREDITO EFEC" itemValue="CREDITO EFEC"/>
+                                                        <f:selectItem itemLabel="CREDITO NO EFEC" itemValue="CREDITO NO EFEC"/><!--  //SUMA ESTADO CUENTA-->
+                                                        <f:selectItem itemLabel="DEPOSITO NO EFEC" itemValue="DEPOSITO NO EFEC"/><!--  //SUMA ESTADO CUENTA-->
+                                                        <p:ajax listener="#{conciliacionBancariaView.getCalcularConciliacion(credito)}"/>
+                                                    </h:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Referencia" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{credito.referencia}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input"><p:inputText  value="#{credito.referencia}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                        <p:column headerText="Fecha Referencia" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{credito.fechaReferencia}" style="margin-top: 5px">
+                                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input"><p:inputMask mask="9999/99/99" value="#{credito.fechaReferenciaString}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable> 
+                                </b:tab>
+                                <b:tab title="Registro del Estado de Cuenta" id="tabRegistroESTC">
+                                    <br/><br/>
+                                    <b:panelGrid id="panel-estado-cuenta" columns="2">
+                                        <b:panelGrid columns="1">
+                                            <b:panelGrid columns="2">
+                                                <b:dateTimePicker format="YYYY/MM/DD" locale="es" 
+                                                                  value="#{conciliacionBancariaView.detalleConciliacionBancariaEstC.fecha}" 
+                                                                  label="Fecha:" />
+                                                <b:inputText  id="num-ref" fieldSize="sm" label="Referencia:"
+                                                              value="#{conciliacionBancariaView.detalleConciliacionBancariaEstC.referencia}"/>
+                                            </b:panelGrid>
+                                        </b:panelGrid>
+                                        <b:panelGrid columns="1">
+                                            <b:panelGrid columns="3" size="xs">
+                                                <b:selectOneMenu id="selectConcep" label="Concepto:" 
+                                                                 value="#{conciliacionBancariaView.detalleConciliacionBancariaEstC.conciliacion}">
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                                  noSelectionOption="true" />
+                                                    <f:selectItem itemLabel="NC No Contabilizadas" itemValue="NC NO CONTABILIZADAS"/> <!-- SUMA LIBRO BANCO -->
+                                                    <f:selectItem itemLabel="ND No Contabilizadas" itemValue="ND NO CONTABILIZADAS"/> <!-- RESTA LIBRO BANCO -->
+
+                                                </b:selectOneMenu>
+                                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel for="val-estado-Cuenta" value="Valor:" />
+                                                    <p:inputNumber id="val-estado-Cuenta" symbol="$ " decimalPlaces="2" inputStyle="text-align: right"
+                                                                   value="#{conciliacionBancariaView.detalleConciliacionBancariaEstC.valor}">
+                                                    </p:inputNumber>
+                                                </p:panelGrid>
+                                                <b:commandButton value=" Guardar" process="panel-estado-cuenta"
+                                                                 disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                                 actionListener="#{conciliacionBancariaView.addDetalleConciliacionEstadoCuenta()}"
+                                                                 iconAwesome="fa-save" 
+                                                                 look="success"
+                                                                 size="sm"
+                                                                 style="width: auto; margin-top: 25px; float: right; margin-right: 15px"
+                                                                 update="dataTableEstadoCuenta,panel-estado-cuenta"/>    
+                                            </b:panelGrid>
+                                        </b:panelGrid>
+                                    </b:panelGrid>
+                                    <br/>
+                                    <p:dataTable id="dataTableEstadoCuenta" value="#{conciliacionBancariaView.estadoCuenta}"
+                                                 widgetVar="dataTableEstadoCuenta"
+                                                 var="estCuenta"
+                                                 emptyMessage="No existen datos de Registro de estado cuenta"
+                                                 tableStyle="table-layout:auto">
+                                        <p:column headerText="Fecha" style="text-align: center;" sortBy="#{estCuenta.fecha}">
+                                            <p:outputLabel value="#{estCuenta.fecha}" style="margin-top: 5px">
+                                                <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="N° Referencia" style="text-align: center;" filterBy="#{estCuenta.referencia}">
+                                            <p:outputLabel value="#{estCuenta.referencia}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Concepto" style="text-align: center;" filterBy="#{estCuenta.conciliacion}">
+                                            <p:outputLabel value="#{estCuenta.conciliacion}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Tipo" style="text-align: center;" filterBy="#{estCuenta.tipo}">
+                                            <p:outputLabel value="#{estCuenta.tipo}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="text-align: center;">
+                                            <p:outputLabel value="#{estCuenta.valor}" style="margin-top: 5px;float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ "/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Acciones">
+                                            <center> 
+                                                <p:commandLink title="Editar" 
+                                                               disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                               actionListener="#{conciliacionBancariaView.editConciliacionEstadoCuenta(estCuenta)}"
+                                                               update="dataTableEstadoCuenta">
+                                                    <i class="fa fa-edit"  style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                                                </p:commandLink>                                                
+                                                <p:commandLink title="Eliminar" 
+                                                               disabled="#{conciliacionBancariaView.disabledByEstado}"
+                                                               actionListener="#{conciliacionBancariaView.eliminarEstadosCuentas(estCuenta)}"
+                                                               update="dataTableEstadoCuenta">
+                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                    <p:confirm header="Confirmación de Eliminación" 
+                                                               message="¿Está seguro de eliminar el registro?"
+                                                               icon="fa fa-exclamation-triangle"/>
+                                                </p:commandLink>                                                
+                                            </center>
+                                        </p:column> 
+                                    </p:dataTable> 
+                                </b:tab>
+                                <b:tab title="Registros No Efectivizados Debitos">
+                                    <br/>
+                                    <h2>Débitos No Efectivizados Anteriores</h2>
+                                    <br/>
+                                    <p:dataTable id="dataTableNoEfectivizadosDebitos" value="#{conciliacionBancariaView.creditoDebitosNoEfecDebitos}"
+                                                 widgetVar="dataTableNoEfectivizadosDebitos"
+                                                 var="noEfectDebito"
+                                                 emptyMessage="No existen datos"
+                                                 editMode="cell"
+                                                 editable="#{conciliacionBancariaView.editableCellEdit}"
+                                                 tableStyle="table-layout:auto">
+                                        <p:column headerText="Fecha" style="text-align: center;width: 5%" sortBy="#{noEfectDebito.fecha}" >
+                                            <p:outputLabel value="#{noEfectDebito.fecha}" style="margin-top: 5px">
+                                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Transacción" style="text-align: center;width: 5%" filterBy="#{noEfectDebito.numDiarioGeneral}">
+                                            <p:outputLabel value="#{noEfectDebito.numDiarioGeneral}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="CP" style="text-align: center;width: 3%" filterBy="#{noEfectDebito.numComprobantePago}">
+                                            <p:outputLabel value="#{noEfectDebito.numComprobantePago}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Beneficiario" style="width: 22%" filterBy="#{noEfectDebito.beneficiario}">
+                                            <p:outputLabel value="#{noEfectDebito.beneficiario}" style="margin-top: 5px"/>
+                                        </p:column>  
+                                        <p:column headerText="Detalle" style="width: 22%" filterBy="#{noEfectDebito.detalle}">
+                                            <p:outputLabel value="#{noEfectDebito.detalle}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="text-align: center;width:8%">
+                                            <p:outputLabel value="#{noEfectDebito.valor}" style="margin-top: 5px;float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ "/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="SPI" style="text-align: center;width:5%" filterBy="#{noEfectDebito.spi}">
+                                            <p:outputLabel value="#{noEfectDebito.spi}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Estado" style="text-align: center;width:8%" filterBy="#{noEfectDebito.estado}">
+                                            <p:outputLabel value="#{noEfectDebito.estado}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Conciliación" style="text-align: center;width:10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{noEfectDebito.conciliacion}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input">
+                                                    <h:selectOneMenu value="#{noEfectDebito.conciliacion}">
+                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                        <f:selectItem itemLabel="PAGO EFEC" itemValue="PAGO EFEC"/>
+                                                        <f:selectItem itemLabel="PAGO NO EFEC" itemValue="PAGO NO EFEC"/><!--  //RESTA ESTADO CUENTA-->
+                                                        <f:selectItem itemLabel="DEBITO EFEC" itemValue="DEBITO EFEC" 
+                                                                      itemDisabled="#{not empty debito.spi}"/>
+                                                        <f:selectItem itemLabel="DEBITO NO EFEC" itemValue="DEBITO NO EFEC"
+                                                                      itemDisabled="#{not empty debito.spi}"/><!--  //RESTA ESTADO CUENTA-->
+                                                        <p:ajax listener="#{conciliacionBancariaView.getCalcularConciliacion(noEfectDebito)}"/>
+                                                    </h:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Referencia" style="text-align: center;width:5%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{noEfectDebito.referencia}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input"><p:inputText  value="#{noEfectDebito.referencia}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Fecha Referencia" style="text-align: center;width:8%">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{noEfectDebito.fechaReferencia}" style="margin-top: 5px">
+                                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input"><p:inputMask mask="9999/99/99" value="#{noEfectDebito.fechaReferenciaString}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable> 
+                                </b:tab>
+                                <b:tab title="Registros No Efectivizados Créditos">
+                                    <br/>
+                                    <h2>Créditos No Efectivizados Anteriores</h2>
+                                    <br/>
+                                    <p:dataTable id="dataTableNoEfectivizadosCreditos" value="#{conciliacionBancariaView.creditoDebitosNoEfecCreditos}"
+                                                 widgetVar="dataTableNoEfectivizadosCreditos"
+                                                 var="noEfectCredito"
+                                                 emptyMessage="No existen datos" 
+                                                 editMode="cell"
+                                                 editable="#{conciliacionBancariaView.editableCellEdit}"
+                                                 tableStyle="table-layout:auto">
+                                        <p:column headerText="Fecha" style="text-align: center;" sortBy="#{noEfectCredito.fecha}">
+                                            <p:outputLabel value="#{noEfectCredito.fecha}" style="margin-top: 5px">
+                                                <f:convertDateTime pattern="dd/MM/yyyy" />
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Transacción" style="text-align: center;width: 10%" filterBy="#{noEfectCredito.numDiarioGeneral}">
+                                            <p:outputLabel value="#{noEfectCredito.numDiarioGeneral}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Detalle" style="width: 40%" filterBy="#{noEfectCredito.detalle}">
+                                            <p:outputLabel value="#{noEfectCredito.detalle}" style="margin-top: 5px"/>
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="text-align: center;width: 10%">
+                                            <p:outputLabel value="#{noEfectCredito.valor}" style="margin-top: 5px;float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ "/>
+                                            </p:outputLabel>
+                                        </p:column> 
+                                        <p:column headerText="Conciliación" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{noEfectCredito.conciliacion}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input">
+                                                    <h:selectOneMenu value="#{noEfectCredito.conciliacion}">
+                                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                                                        <f:selectItem itemLabel="DEPOSITO EFEC" itemValue="DEPOSITO EFEC"/>
+                                                        <f:selectItem itemLabel="CREDITO EFEC" itemValue="CREDITO EFEC"/>
+                                                        <f:selectItem itemLabel="CREDITO NO EFEC" itemValue="CREDITO NO EFEC"/><!--  //SUMA ESTADO CUENTA-->
+                                                        <f:selectItem itemLabel="DEPOSITO NO EFEC" itemValue="DEPOSITO NO EFEC"/><!--  //SUMA ESTADO CUENTA-->
+                                                        <p:ajax listener="#{conciliacionBancariaView.getCalcularConciliacion(noEfectCredito)}"/>
+                                                    </h:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Referencia" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{noEfectCredito.referencia}" style="margin-top: 5px"/></f:facet>
+                                                <f:facet name="input"><p:inputText  value="#{noEfectCredito.referencia}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column> 
+                                        <p:column headerText="Fecha Referencia" style="text-align: center;width: 10%">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <h:outputText value="#{noEfectCredito.fechaReferencia}" style="margin-top: 5px">
+                                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                    </h:outputText>
+                                                </f:facet>
+                                                <f:facet name="input"><p:inputMask mask="9999/99/99" value="#{noEfectCredito.fechaReferenciaString}"/></f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable> 
+                                </b:tab>
+                                <b:tab title="Resumen Conciliación Bancaria" id="tabResumenConciliacion">
+                                    <f:facet name="anchor"><b:iconAwesome name="cog" spin="true" size="lg"/></f:facet>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h2 style="text-align: center;font-weight: bold">MAYOR CONTABLE</h2>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h2 style="text-align: center;font-weight: bold">BANCO</h2>
+                                        </p:panelGrid>
+                                        <p:panelGrid  columns="5" styleClass="form-group ui-panelgrid-blank" id="containerValoresLB">
+                                            <b:inputText style="width: 150px;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Saldo Inicial" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Débitos" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Créditos" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Saldo Final" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-concepto" style="width: 150px;background:#009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Concepto" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-saldo-inicial" style="width: 100%;font-size: 11px"
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoSaldoInicial}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-debitos" style="width: 100%;font-size: 11px"
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoDebito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-credito" style="width: 100%;font-size: 11px"
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoCredito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-saldo-final" style="width: 100%;font-size: 11px"
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.saldoLibroBanco}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-dnc" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Débito No Contabilizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.debitosNoRegistLB}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-cnc" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Crédito No Contabilizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.creditoNoEfectLB}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo" style="width: 150px;background: #337AB7;color:white;text-align: center;font-size: 11px;text-align: center;"
+                                                         value="Saldo Iguales" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px" value="#{conciliacionBancariaView.conciliacionBancaria.libroBancoSaldoInicial}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;" value="#{conciliacionBancariaView.conciliacionBancaria.saldoIgualesLibroBancoDebito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;" value="#{conciliacionBancariaView.conciliacionBancaria.saldoIgualesLibroBanoCredito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px" value="#{conciliacionBancariaView.conciliacionBancaria.saldoConciliadoLB}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid  columns="5" styleClass="form-group ui-panelgrid-blank" id="containerValoresESTC">
+                                            <b:inputText style="width: 150px;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Saldo Inicial" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Débitos" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Créditos" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;background: #787878;color:white;text-align: center;font-size: 11px"
+                                                         value="Saldo Final" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-concepto_2" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Concepto" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-saldo-inicial-estc" style="width: 100%;font-size: 11px" 
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaSaldoInicial}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-credito-estc" style="width: 100%;font-size: 11px" 
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaDebito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-debitos-estc" style="width: 100%;font-size: 11px" 
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaCredito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText id="resm-saldo-final-estc" style="width: 100%;font-size: 11px" 
+                                                         value="#{conciliacionBancariaView.conciliacionBancaria.saldoCuentaMonetaria}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-cnc-2" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Débito No Efectivizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.debitoNoEfectEstC}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-cnc-5" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Pago No Efectivizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.pagoNoEfectEstC}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-cnc-3" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Depósito No Efectivizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.depositosNoEfectEstC}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-cnc-4" style="width: 150px;background: #009688;color:white;font-size: 11px;text-align: center;"
+                                                         value="Crédito No Efectivizado" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.notasCredNoEfectEstC}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="-" readonly="true" render-label="true"/>
+                                            <!--<br/>-->
+                                            <b:inputText id="resm-saldo-2" style="width: 150px;background: #337AB7;color:white;text-align: center;font-size: 11px"
+                                                         value="Saldo Iguales" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.estadoCuentaSaldoInicial}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.saldoIgualesEstadoCuentaDebito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.saldoIgualesEstadoCuentaCredito}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                            <b:inputText style="width: 100%;font-size: 11px;text-align: right" value="#{conciliacionBancariaView.conciliacionBancaria.saldoConciliadoEstC}"
+                                                         mask="currency" readonly="true" render-label="true"/>
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                </b:tab>
+                            </b:tabView>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>

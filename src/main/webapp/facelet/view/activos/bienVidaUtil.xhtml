@@ -1,0 +1,174 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Mantenimiento Vida Útil de Bienes
+    </ui:define>
+    <ui:param name="tittle" value="VIDA ÚTIL - BIENES"/>
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <p:commandButton value="Nuevo" icon="fa fa-plus"
+                             process="@this" update="frmMain"
+                             actionListener="#{bienVidaUtilView.formNew(null)}"
+                             style="float: right; width: 170px">
+            </p:commandButton>
+            <br/> <br/> <br/>
+            <p:dataTable id="dtVidaUtil" widgetVar="dtVidaUtil" var="bien" rowIndexVar="num"
+                         reflow="true" paginator="true" lazy="true" rows="20" 
+                         value="#{bienVidaUtilView.lazyVidaUtil}" paginatorPosition="bottom"
+                         rowsPerPageTemplate="10,15,20,30,50,100" filterEvent="keyup"                                             
+                         emptyMessage="No se encontró ningun registro para mostrar.">
+                <f:facet name="header">
+                    LISTA DE VIDA ÚTIL DE BIENES
+                </f:facet>
+                <p:column headerText="#" style="width: 5%; text-align: center">
+                    <h:outputText value="#{num + 1}" />   
+                </p:column>
+                <p:column headerText="Tipo" style="width: 25%;" >
+                    <!--<h:outputText value="# {bienVidaUtilView.getPadreOfCuentaDescripcion(bien.cuentaContable)}" />--> 
+                    <h:outputText value="#{bienVidaUtilView.getPadreOfCuenta(bien.cuentaContable.padre).descripcion}" /> 
+                </p:column>
+                <p:column headerText="Cuenta Contable" style="width: 12%;" filterBy="#{bien.cuentaContable.codigo}" filterMatchMode="contains">
+                    <center><h:outputText value="#{bien.cuentaContable.codigo}" /> </center> 
+                </p:column>
+                <p:column headerText="Cuenta Depreciación" style="width: 16%;" filterBy="#{bien.ctaDepreciacion.codigo}" filterMatchMode="contains">
+                    <center><h:outputText value="#{bien.ctaDepreciacion.codigo} - #{bien.ctaDepreciacion.descripcion}" /> </center> 
+                </p:column>
+                <p:column headerText="Descripción" style="width: 32%" filterBy="#{bien.descripcion}" filterMatchMode="contains">
+                    <h:outputText value="#{bien.descripcion}"/>  
+                </p:column>
+                <p:column headerText="Vida Útil" style="width: 12%" filterBy="#{bien.vidaUtil}" filterMatchMode="contains">
+                    <center><h:outputText value="#{bien.vidaUtil eq null ? 'UTPE':bien.vidaUtil}"/></center>
+                </p:column>
+                <p:column headerText="Acciones" style="width: 10%">
+                    <center>   
+                        <p:commandLink title="Editar" process="@this" actionListener="#{bienVidaUtilView.formNew(bien)}"
+                                       update="frmMain,frmVidaUtil">
+                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 5px; color: #00b0ff;"></i>
+                        </p:commandLink>       
+                        <p:commandLink title="Eliminar" process="@this" actionListener="#{bienVidaUtilView.borrarBien(bien)}"
+                                       update="dtVidaUtil">
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el Registro?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>       
+                    </center>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+        <p:dialog header="BIENES" closeOnEscape="true"
+                  widgetVar="dlgVidaUtil"
+                  modal="true" width="45%" height="85%"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgVidaUtil">
+            <h:form prependId="false" id="frmVidaUtil" style=" width: 100%;">
+                <p:graphicImage value="/resources/icons/vidautil.png"
+                                width="35" height="35" 
+                                style="margin:auto;  width: auto; float: left"></p:graphicImage>
+                <h1 style="font-weight: bold; text-align: center">DATOS DE INGRESO DE LA VIDA ÚTIL</h1>
+                <p:panel header="Formulario Registro" id="panelformReg">
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="pgRegistroVidaUtil">
+                        <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%">
+                                <p:outputLabel for="descrVidaUtil" value="Descripción" style="font-weight: bold"/>
+                                <p:inputTextarea id="descrVidaUtil" value="#{bienVidaUtilView.vidaUtil.descripcion}" style="width: 100%" rows="3" required="true" onkeyup="javascript:this.value = this.value.toUpperCase();" >
+                                </p:inputTextarea>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 90%; float: right">
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 40%;">
+                                    <p:outputLabel value="UTPE" style="font-weight: bold" />
+                                    <p:selectBooleanCheckbox value="#{bienVidaUtilView.utpe}">
+                                        <p:ajax update="vidaUtil" listener="#{bienVidaUtilView.vidaUtilEstimada()}" />
+                                    </p:selectBooleanCheckbox>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%; float: next; font-weight: bold">
+                                    <p:outputLabel for="vidaUtil" value="Vida Útil Estimada (AÑOS)" />
+                                    <p:inputText id="vidaUtil" value="#{bienVidaUtilView.vidaUtil.vidaUtil}" placeholder="#{bienVidaUtilView.utpe eq true ? 'UTPE':null}" disabled="#{bienVidaUtilView.utpe}" style="width: 100%" required="false" onkeyup="javascript:this.value = this.value.toUpperCase();" >
+                                        <p:keyFilter regEx="/[0-9 _]/i"/>
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group" layout="grid" style="width: 100%;margin-left: 2px">
+                            <center>
+                                <h:panelGroup layout="grid" style="width: 100%;" class="panelInput">
+                                    <p:outputLabel value="Clasificación" escape="false" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="clasificacionCuentaD" value="#{bienVidaUtilView.cuentaClasif}" style="width: 100%"
+                                                     styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains">
+                                        <p:ajax listener="#{bienVidaUtilView.limpiarCuentaBien()}" update="ccGrupo,ccDescripcion"/>
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienVidaUtilView.listCuentaContableClasif}" var="cta" 
+                                                       itemLabel="#{cta.codigo} #{cta.descripcion}" itemValue="#{cta}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </center>
+                        </p:panelGrid>
+                        <p:panelGrid columns="2" styleClass="form-group" layout="grid" style="width: 100%; margin-left: 10px; ">
+                            <h:panelGroup layout="grid" style="width: 100%;" class="panelInput">
+                                <p:outputLabel for="ccGrupo" value="Cuenta Contable: " style="font-weight: bold; width: 100%;"/>
+                                <p:panelGrid columns="4"  styleClass="ui-panelgrid-blank">
+                                    <p:inputText value="#{bienVidaUtilView.vidaUtil.cuentaContable.codigo}" 
+                                                 id="ccGrupo" >
+                                        <p:ajax update="ccGrupo"/>
+                                        <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                    </p:inputText>
+                                    <p:commandButton title="Listado de Cuenta Contable" icon="fa fa-search" id="btn-ccGrupo" 
+                                                     actionListener="#{bienVidaUtilView.buscarCuenta()}" process="@this">
+                                        <p:ajax event="dialogReturn" listener="#{bienVidaUtilView.selectCuenta}" update="ccGrupo,ccDescripcion,ccDepreciacion"/>
+                                    </p:commandButton>
+                                </p:panelGrid>
+                                <p:outputLabel value="#{bienVidaUtilView.vidaUtil.cuentaContable.descripcion}" style="width: 95%; margin-left: 14px"
+                                               id="ccDescripcion">
+                                </p:outputLabel>
+                            </h:panelGroup>
+                            <h:panelGroup layout="grid" style="width: 100%;" class="panelInput">
+                                <p:outputLabel value="Cuenta de Depreciación" escape="false" class="FontBold" for="ccDepreciacion"/>
+                                <p:selectOneMenu id="ccDepreciacion" style="width: 100%" var="ctd" value="#{bienVidaUtilView.vidaUtil.ctaDepreciacion}"
+                                                 styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains" >
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{bienVidaUtilView.listCuentasDepreciacion}" var="ctad" 
+                                                   itemLabel="#{ctad.codigo} - #{ctad.descripcion}" itemValue="#{ctad}"/>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Código"/>
+                                        </f:facet>
+                                        <p:outputLabel value="#{ctd.codigo}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <f:facet name="header">
+                                            <h:outputText value="Descripción"/>
+                                        </f:facet>
+                                        <p:outputLabel value="#{ctd.descripcion}"/>
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:commandLink title="Guardar" id="guardar-btn"  style="width: auto; float: right" update="frmVidaUtil,frmMain,dtVidaUtil"
+                                           actionListener="#{bienVidaUtilView.saveVidaUTilBien()}" process="@form"
+                                           styleClass="Fs16">
+                                <p:graphicImage value="/resources/icons/disquet.png"
+                                                width="40" height="50" 
+                                                style="margin:auto;  width: auto; "/>
+                            </p:commandLink>
+                            <p:commandLink title="Cancelar" id="cancelar-btn"  style="width: auto;"  process="@this" update="frmMain,frmVidaUtil"
+                                           actionListener="#{bienVidaUtilView.cancelarBien()}"
+                                           styleClass="Fs16">
+                                <p:graphicImage value="/resources/icons/cancelar.png"
+                                                width="40" height="50" 
+                                                style="margin:auto;  width: auto; "/>
+                            </p:commandLink>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:panel>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

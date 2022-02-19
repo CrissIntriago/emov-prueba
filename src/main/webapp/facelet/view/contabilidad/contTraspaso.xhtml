@@ -1,0 +1,96 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Traspasar cuentas
+    </ui:define>
+    <ui:param name="tittle" value="Traspasar cuentas"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset legend="Parametros de busqueda">
+                        <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" id="gridbusqueda">
+                                <p:outputLabel for="@next" value="Periodo inicial:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="busqueda" value="#{contReclasificarTraspasoView.busqueda.anio}"
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contReclasificarTraspasoView.listaPeriodo}" var="item" itemValue="#{item}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" id="gridbusqueda2">
+                                <p:outputLabel for="@next" value="Periodo final:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="busqueda2" value="#{contReclasificarTraspasoView.busqueda2.anio}"
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contReclasificarTraspasoView.listaPeriodo}" var="item" itemValue="#{item}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;">
+                                <p:commandButton value="Consultar" id="btnConsultar"  style="background: #0CAAE8" update="gridTraspasar"
+                                                 icon="fa fa-refresh" actionListener="#{contReclasificarTraspasoView.consultar()}" styleClass="Fs16" >
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" id="gridTraspasar">
+                                <p:commandButton value="Traspasar valores" id="btnTraspasar"  style="background: #0CAAE8" rendered="#{contReclasificarTraspasoView.traspasar}"
+                                                 icon="fa fa-refresh" actionListener="#{contReclasificarTraspasoView.traspasar()}" styleClass="Fs16" >
+                                    <p:confirm header="Confirmación de traspaso" message="¿Está seguro de traspasar los saldos?" icon="fa fa-exclamation-triangle" />
+                                </p:commandButton>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog> 
+                    </p:fieldset>
+                    <p:dataTable  id="traspasarTable" widgetVar="traspasarTable" var="reclasificar" value="#{contReclasificarTraspasoView.reclasificacionLazy}" 
+                                  paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{reclasificar.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single"
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Cód. Cta. Anterior" style="width: 10%;" filterBy="#{reclasificar.idCuentaAnterior.codigo}">
+                            <h:outputText value="#{reclasificar.idCuentaAnterior.codigo}" />
+                        </p:column>
+                        <p:column headerText="Nom. Cta. Anterior" style="width: 20%;" filterBy="#{reclasificar.idCuentaAnterior.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{reclasificar.idCuentaAnterior.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Saldo debe" style="width: 9%;text-align: center">
+                            <h:outputText value="#{reclasificar.saldoDebe}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Saldo haber" style="width: 9%;text-align: center">
+                            <h:outputText value="#{reclasificar.saldoHaber}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Traspaso" style="width: 10%;text-align: center" filterBy="#{reclasificar.traspaso}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('traspasarTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="Traspasado" itemValue="true" />
+                                    <f:selectItem itemLabel="No traspasado" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{reclasificar.traspaso?'TRASPASADO':'NO TRASPASADO'}" />
+                        </p:column>
+                        <p:column headerText="Cód. Cta. Nueva" style="width: 10%;" filterBy="#{reclasificar.idCuentaNueva.codigo}">
+                            <h:outputText value="#{reclasificar.idCuentaNueva.codigo}" />                           
+                        </p:column>
+                        <p:column headerText="Nom. Cta. Nueva" style="width: 20%;" filterBy="#{reclasificar.idCuentaNueva.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{reclasificar.idCuentaNueva.descripcion}" />
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

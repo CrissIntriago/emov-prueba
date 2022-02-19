@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Partidas Distributivo</ui:define> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">  
+            <div class="ui-g-12">
+                <comp:titleTask task="#{asigParDistReduView.tarea}" tramite="#{asigParDistReduView.tramite}" /> 
+            </div>
+
+            <div class="ui-g-12"> 
+                <h:form prependId="false" id="formPanelesFistributivo">
+                    <p:fieldset legend="Opciones" >
+                        <p:commandButton disabled="#{asigParDistReduView.enabledReforma}" value="Reformas"  actionListener="#{asigParDistReduView.showPanel1()}"
+                                         icon="fa fa-check" style="width: 10%;" update="formPanelesFistributivo,fmReformasSE,formAsignacionDitributivo"/> 
+                    </p:fieldset>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmReformasSE">
+                    <p:panel rendered="#{asigParDistReduView.pane21}">
+                        <p:dataTable id="dataIngresoEgresoReorma" widgetVar="dataIngresoEgresoReorma" var="item" value="#{asigParDistReduView.lazyReformas}" 
+                                     paginator="true" rows="30" style="width: 100%; text-align: center;" paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="30,40,50,100" lazy="true"  rowIndexVar="index"
+                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <p:column headerText="No.REFORMA" style="padding: 10px 10px 10px 10px;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />  
+                            </p:column>
+                            <p:column headerText="SALDO DISPONIBLE" style="text-align: center;">
+                                <p:outputLabel style="float: right;" value="#{asigParDistReduView.mostarValoresPrincipal(item)}">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="ESTADO" style="text-align: center;">
+                                <p:outputLabel value="#{item.estado.texto}"/>   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 15%">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}"  title="Asignar #{item.tipo==true?'Suplemento':'Reducción'}"
+                                               process="@this" actionListener="#{asigParDistReduView.registrarDistributivo(item)}"  
+                                               update="formPanelesFistributivo,fmReformasSE,formAsignacionDitributivo" >
+                                    <i class="fa fa-money" style="margin: 10px 10px 10px 10px;font-size: 1.5em"></i>
+                                </p:commandLink>
+                                <p:commandLink  title="ENVIAR" process="@this"  
+                                                actionListener="#{asigParDistReduView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div> 
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formAsignacionDitributivo">
+                    <p:panel rendered="#{asigParDistReduView.panel4}" style="text-align: left; font-size: 12px;">
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-6" styleClass="ui-panelgrid-blank form-group" >
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">
+                                <p:outputLabel value="Monto Disponible: " class="FontBold"/>
+                                <p:outputLabel value="#{asigParDistReduView.totalCupoD}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                            <h:panelGroup class="Wid100 TaskProperty" layout="block" style="padding-top: 15px;padding-bottom: 15px;">
+                                <p:outputLabel value="Monto que se ha Asignado: " class="FontBold"/>
+                                <p:outputLabel value="#{asigParDistReduView.cupoAsignado}">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panel>
+
+                    <p:panel rendered="#{asigParDistReduView.panel4}">
+                        <p:commandButton value="Ver Partidas Globales " actionListener="#{asigParDistReduView.abrirDlogoPartidasGlobales()}" style="width: auto; margin-bottom: 2%;background: #0091EA;" icon="fa fa-check"/>
+                        <p:dataTable    value="#{asigParDistReduView.distributivosListModificaacion}"  id="listaDistributivoModicacion" widgetVar="listaDistributivoModicacion"  
+                                        paginatorPosition="bottom" var="item" rows="20" paginator="true"  
+                                        paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                        rowsPerPageTemplate="20,25,35,50"  rowIndexVar="index"
+                                        currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                        emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                Distributivo #{asigParDistReduView.periodo==0?'2xxx':asigParDistReduView.periodo}
+                            </f:facet>
+                            <p:column headerText="No." style="width: 20px;">
+                                #{index+1}
+                            </p:column>
+                            <p:column headerText="CEDULA SERVIDOR" style="width: 80px;text-align: center;" filterBy="#{item.servidorPublico.persona.identificacion}" filterMatchMode="contains">
+                                <h:outputText value="#{item.servidorPublico.persona.identificacion}"/>
+                            </p:column>
+                            <p:column headerText="NOMBRE SERVIDOR" style="width: 80px; font-weight: bold; " filterBy="#{item.servidorPublico.persona.nombreCompleto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.servidorPublico.persona.nombreCompleto == null?'VACANTE':item.servidorPublico.persona.nombreCompleto.toUpperCase()}"/>
+                            </p:column>
+                            <p:column headerText="CARGO" style="width: 90px; "  filterBy="#{item.cargo.nombreCargo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.cargo.nombreCargo}"/>
+                            </p:column>
+                            <p:column headerText="VIGENCIA DESDE" style="width: 70px;">
+                                <h:outputText value="#{item.vigenciaDesde}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="VIGENCIA HASTA" style="width: 70px;">
+                                <h:outputText value="#{item.vigenciaHasta == null?'NO HAY FECHA CADUCIDAD':item.vigenciaHasta}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="UNIDAD" style="width: 90px;" filterBy="#{item.unidadAdministrativa.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{item.unidadAdministrativa.nombre}"/>
+                            </p:column>
+                            <p:column headerText="SUPERVISA" style="width: 90px;" filterBy="#{item.unidadAdministrativa.padre.nombre}" filterMatchMode="contains">
+                                <h:outputText value="#{item.unidadAdministrativa.padre.nombre}"/>
+                            </p:column>
+                            <p:column headerText="TIPO DE UNIDAD" style="width: 90px;"  filterBy="#{item.unidadAdministrativa.tipoUnidad.descripcion}" filterMatchMode="contains">
+                                <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="RÉGIMEN" style="width: 90px; text-align: center;" filterBy="#{item.regimen.nombre}" filterMatchMode="contains" >
+                                <h:outputText value="#{item.regimen.nombre}"/>
+                            </p:column>
+                            <p:column headerText="TIPO DE CONTRATO" style="width: 90px;" filterBy="#{item.tipoContrato.nombre}" filterMatchMode="contains" >
+                                <h:outputText value="#{item.tipoContrato.nombre}"/>
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 60px">
+                                <p:commandLink  title="Reducción" process="@this" actionListener="#{asigParDistReduView.abriDlgoPartidasPresupuestariaDistributivoModificacion(item)}">
+                                    <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink  title="ver" process="@this" actionListener="#{asigParDistReduView.listaVisualizacion(item)}">
+                                    <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form> 
+            </div>
+        </div>
+
+        <p:dialog id="DlogopartidasDistributivosvista" width="1200"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivosvista" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">  
+            <h:form id="formDlogopartidasDistributivosvista"  prependId="false">
+
+
+                <div style="width: 100%;font-size: 10px;">
+                    <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="UNIDAD: " class="FontBold"/> 
+                            <p:outputLabel value="#{asigParDistReduView.mostrarDataView.unidadAdministrativa.nombre.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="CARGO: " class="FontBold"/>
+                            <p:outputLabel value="#{asigParDistReduView.mostrarDataView.cargo.nombreCargo.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">                   
+                            <p:outputLabel value="RMU: " class="FontBold"/>
+                            <p:outputLabel value="#{asigParDistReduView.rmu}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </div>
+                <p:dataTable  paginator="true" id="listavistaDistributivo" widgetVar="listavistaDistributivo" paginatorPosition="bottom" style=" margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"    editable="true" editMode="cell"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                              emptyMessage="No existen datos con el criterio de busqueda especificado" value="#{asigParDistReduView.listaVista}" var="item4" >
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+                    <p:column headerText="Tipo" style="width: 20%;">
+                        <h:outputText value="#{item4.distributivo.valoresParametrizados.tipo.texto}" />
+                    </p:column> 
+                    <p:column headerText="Monto" style="width: 8%;" >
+                        <h:outputText value="#{item4.reformaCodificado}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Item" style="width: 10%;  text-align: center;">
+                        <h:outputText value="#{item4.itemAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Estructura" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item4.estructuraAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Fuente" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item4.fuenteAp.tipoFuente.orden}" />
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item4.partidaAp}" />
+                    </p:column>
+                    <p:column headerText="Suplemento" style="width: 10%;" >
+                        <h:outputText value="#{item4.reformaSuplemento}" style="float: right;" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Reducción"  style="width: 10%;" >
+                        <h:outputText value="#{item4.reformaReduccion}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Monto Codificado" style="width: 10%;" >
+                        <h:outputText value="#{item4.reformaCodificado}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlogopartidasDistributivos" width="1200"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivos" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDlogopartidasDistributivos"  prependId="false">
+
+                <p:panel  style="text-align: left; font-size: 12px;">                   
+                    <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">         
+                            <p:outputLabel value="Monto Disponible: " class="FontBold"/>
+                            <p:outputLabel value="#{asigParDistReduView.totalCupoD}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">                   
+                            <p:outputLabel value="Monto que se ha Asignado: " class="FontBold"/>
+                            <p:outputLabel value="#{asigParDistReduView.cupoAsignado}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block"  style="padding-top: 15px;padding-bottom: 15px;">                   
+                            <p:outputLabel value="RMU: " class="FontBold"/>
+                            <p:outputLabel value="#{asigParDistReduView.rmu}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                    </p:panelGrid>
+
+                    <div style="width: 100%;font-size: 10px;">
+                        <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                                <p:outputLabel value="UNIDAD: " class="FontBold"/> 
+                                <p:outputLabel value="#{asigParDistReduView.mostrarData.unidadAdministrativa.nombre.toUpperCase()}"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                                <p:outputLabel value="CARGO: " class="FontBold"/>
+                                <p:outputLabel value="#{asigParDistReduView.mostrarData.cargo.nombreCargo.toUpperCase()}"/>
+                            </h:panelGroup>
+
+                            <h:panelGroup layout="block">
+                                <center>
+                                    <p:commandButton value="Ver Partidas Globales " actionListener="#{asigParDistReduView.abrirDlogoPartidasGlobales()}" 
+                                                     style="width: auto; margin-bottom: 2%; background: #0091EA;" icon="fa fa-check"/>
+                                </center> 
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </div>
+                </p:panel>
+                <p:dataTable  paginator="true" id="lista"  paginatorPosition="bottom" style="margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"  widgetVar="lista"  editable="true" editMode="cell"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                              emptyMessage="No existen datos con el criterio de busqueda especificado" rowStyleClass="#{item3.partidaAp.isEmpty()||item3.partidaAp==null? 'condicion1':'condicion2'}"
+                              value="#{asigParDistReduView.partidasDistributivosListModificacion}" var="item3" >
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+                   
+                    <p:column headerText="Tipo" style="width: 20%;">
+                        <h:outputText value="#{item3.distributivo.valoresParametrizados.tipo.texto}" />
+                    </p:column> 
+                    <p:column headerText="monto" style="width: 10%; " >
+                        <h:outputText value="#{item3.monto}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Item" style="width: 10%;  text-align: center;">
+                        <h:outputText value="#{item3.itemAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Estructura" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item3.estructuraAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Fuente" style="width: 10%; text-align: center;">
+                        <h:outputText value="#{item3.fuenteAp.tipoFuente.orden}" />
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 10%;  text-align: center;">
+                        <h:outputText value="#{item3.partidaAp}" />
+                    </p:column>
+                    <p:column rendered="#{asigParDistReduView.columnaSuplemento}"  headerText="Suplemento">
+                        <h:outputText value="#{item3.reformaSuplemento}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column  rendered="#{asigParDistReduView.columnaReduccion}"  headerText="Reducción">
+                        <p:cellEditor >
+                            <f:facet name="input">
+                                <p:inputNumber id="valorReduccion"
+                                               value="#{item3.reformaReduccion}" style="width:100%;">
+                                    <p:ajax event="change" listener="#{asigParDistReduView.reduccion(item3)}" update="formAsignacionDitributivo,lista,formAsignacionDitributivo,formDlogopartidasDistributivos"   />
+                                </p:inputNumber>
+                            </f:facet>
+
+                            <f:facet name="output"> 
+                                <h:outputText value="#{item3.reformaReduccion}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column   headerText="Monto Codificado">
+                        <h:outputText value="#{item3.reformaCodificado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <!--rowStyleClass="# {item3.partidaAp.isEmpty()||item3.partidaAp==null? 'condicion1':'condicion2'}"-->
+        <!--# {asigParDistReduView.partidasDistributivosListModificacion}-->
+
+        <p:dialog header="Verificación de Partida distributivas Globales" widgetVar="dlogoPartidasGlobales" modal="true" width="800" height="450">
+            <h:form id="frmPartidasGlobales">
+                <p:dataTable  paginator="true" id="partidasGlobales"  paginatorPosition="bottom" style="margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25,30"   widgetVar="partidasGlobales" rows="20"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                              emptyMessage="No existen datos con el criterio de busqueda especificado" rowIndexVar="index"
+                              value="#{asigParDistReduView.listaPartidaGlobales}" var="data" >
+                    <f:facet name="header">
+                        Partigas Globales
+                    </f:facet>
+                    <p:column headerText="No." style="width:20px;">
+                        #{index+1}
+                    </p:column>
+                    <p:column headerText="Partida" style="text-align: center;" filterBy="#{data.partida}">
+                        <h:outputText value="#{data.partida}"/>
+                    </p:column>
+                    <p:column headerText="Monto" filterBy="#{data.montoReformado}" filterMatchMode="contains">
+                        <h:outputText value="#{data.montoReformado}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Reservado" filterMatchMode="contains" filterBy="#{data.reservado}">
+                        <h:outputText value="#{data.reservado}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Saldo Disponible" filterBy="#{data.saldoDisponiblel}" filterMatchMode="contains">
+                        <h:outputText value="#{data.saldoDisponiblel}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Reducción" filterBy="#{data.reduccion}" filterMatchMode="contains">
+                        <h:outputText value="#{data.reduccion}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Monto Reformado" filterBy="#{data.montoReducido}" filterMatchMode="contains">
+                        <h:outputText value="#{data.montoReducido}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{asigParDistReduView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{asigParDistReduView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

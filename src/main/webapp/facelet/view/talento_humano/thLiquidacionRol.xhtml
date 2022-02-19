@@ -1,0 +1,185 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Liquidación del rol
+    </ui:define>
+    <ui:param name="tittle" value="Liquidación del rol"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset style="margin: 15px">
+                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:fieldset legend="Parámetros de busqueda">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="thPeriodo" value="#{thLiquidacionRolView.opcionBusqueda.anio}"
+                                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{thLiquidacionRolView.periodos}" var="item" itemValue="#{item}"/>
+                                            <p:ajax update="tipoRoles" listener="#{thLiquidacionRolView.updateTipoRolList()}" process="thPeriodo"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="tipoRoles">
+                                        <p:outputLabel for="@next" value="Tipo de rol:" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="thTipoRol" value="#{thLiquidacionRolView.thTipoRol}" converter="#{utilConverter}"
+                                                         filter="true" filterMatchMode="contains" style="width: 100%">
+                                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{thLiquidacionRolView.tipoRolList}" var="item" itemValue="#{item}" itemLabel="#{item.descripcion}"/>
+                                            <p:ajax update="fieldsetDatos,btnCargarDatos,thLiquidacionRolTable" listener="#{thLiquidacionRolView.updateLazyModel()}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="Datos del rol" id="fieldsetDatos">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Mes:" style="font-weight: bold"/>
+                                        <p:inputText id="thTipoMes" value="#{thLiquidacionRolView.thTipoRol.idMes.texto}" readonly="true"
+                                                     style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoMes')"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                                        <p:inputText id="thTipoTipo" value="#{thLiquidacionRolView.thTipoRol.idTipo.texto}" readonly="true"
+                                                     style="width: 100%" onkeypress="focusNextOnEnter(event, 'thTipoTipo')"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="Acciones">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="btnCargarDatos">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                        <p:commandButton value="Generar liquidaciones" icon="fa fa-refresh" process="@this" styleClass="Fs16"
+                                                         style="width: 100%;background: teal" disabled="#{thLiquidacionRolView.thTipoRol ==null?true:false}"
+                                                         actionListener="#{thLiquidacionRolView.loadDatos()}" update="thLiquidacionRolTable" />
+                                    </h:panelGroup>
+                                </p:panelGrid>                           
+                            </p:fieldset>
+                        </p:panelGrid>
+                    </p:fieldset>     
+                    <p:dataTable id="thLiquidacionRolTable" widgetVar="thLiquidacionRolTable" var="thLiquidacionRol" style="margin: 15px" 
+                                 lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{thLiquidacionRol.id}" rowIndexVar="index"
+                                 paginator="true" paginatorPosition="bottom" value="#{thLiquidacionRolView.thliquidacionRolLazy}"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 rowsPerPageTemplate="50, 100, 150, 200"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 emptyMessage="No existen datos con los parámetros especificados">
+                        <p:column headerText="Identificación" style="width: 10%;text-align: center" filterMatchMode="contains" filterBy="#{thLiquidacionRol.idServidorCargo.idServidor.persona.identificacionCompleta}">
+                            <h:outputText value="#{thLiquidacionRol.idServidorCargo.idServidor.persona.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Servidor" style="width: 35%;" filterMatchMode="contains" filterBy="#{thLiquidacionRol.idServidorCargo.idServidor.persona.nombreCompleltoSql}">
+                            <h:outputText value="#{thLiquidacionRol.idServidorCargo.idServidor.persona.nombreCompleltoSql}"/>
+                        </p:column>  
+                        <p:column headerText="Total ingresos" style="width: 15%;text-align: center" filterMatchMode="contains">
+                            <h:outputText value="#{thLiquidacionRol.totalIngreso}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Total egresos" style="width: 15%;text-align: center" filterMatchMode="contains">
+                            <h:outputText value="#{thLiquidacionRol.totalEgreso}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Neto a recibir" style="width: 15%;text-align: center" filterMatchMode="contains">
+                            <h:outputText value="#{thLiquidacionRol.netoRecibir}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                            <p:commandLink title="Actualizar" process="@this" rendered="#{!thLiquidacionRol.idTipoRol.aprobado}"
+                                           actionListener="#{thLiquidacionRolView.updateRubros(thLiquidacionRol)}" class="actualizar">
+                                <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Ver" process="@this" 
+                                           actionListener="#{thLiquidacionRolView.form(thLiquidacionRol,false)}" class="nuevo">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: gray;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" rendered="#{!thLiquidacionRol.idTipoRol.aprobado}"
+                                           actionListener="#{thLiquidacionRolView.form(thLiquidacionRol,true)}" class="editar">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: blue"></i>
+                            </p:commandLink>
+                            <p:commandLink title="PDF" process="@this" 
+                                           actionListener="#{thLiquidacionRolView.reporte(thLiquidacionRol,'pdf')}">
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thLiquidacionDetalleDlg" widgetVar="thLiquidacionDetalleDlg" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Detalle de la liquidación">
+            <h:form prependId="false" id="thLiquidacionDetalleForm">
+                <p:fieldset legend="Servidor" style="margin-bottom: 10px">
+                    <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacion" class="panelInput" style="width: 100%" 
+                                         value="#{thLiquidacionRolView.thLiquidacionRol.idServidorCargo.idServidor.persona.identificacion}"
+                                         onkeypress="focusNextOnEnter(event, 'identificacion')" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre y apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="nombreCompleltoSql" class="panelInput" style="width: 100%" 
+                                         value="#{thLiquidacionRolView.thLiquidacionRol.idServidorCargo.idServidor.persona.nombreCompleltoSql}"
+                                         onkeypress="focusNextOnEnter(event, 'nombreCompleltoSql')" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Cargo:" style="font-weight: bold"/>
+                            <p:inputText id="nombreCargo" class="panelInput" style="width: 100%" 
+                                         value="#{thLiquidacionRolView.thLiquidacionRol.idServidorCargo.idCargo.nombreCargo}"
+                                         onkeypress="focusNextOnEnter(event, 'nombreCargo')" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thLiquidacionRolDetalleTable" widgetVar="thLiquidacionRolDetalleTable" 
+                              var="detalle" value="#{thLiquidacionRolView.thLiquidacionRolDetalleList}" 
+                              paginator="true" rows="12" style="width: 100%;" rowKey="#{detalle.id}"
+                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="12" lazy="false" selectionMode="single" 
+                              editable="#{!thLiquidacionRolView.thLiquidacionRol.idTipoRol.aprobado}" editMode="cell" 
+                              emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <p:column headerText="Rubro" style="width: 40%;" filterBy="#{detalle.idRubro.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{detalle.idRubro.nombre}" />
+                    </p:column>
+                    <p:column headerText="Cod. contable" style="width: 15%;text-align: center" filterBy="#{detalle.idCuenta.codigo}" filterMatchMode="contains">
+                        <h:outputText value="#{detalle.idCuenta.codigo}" />
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 15%;text-align: center" filterBy="#{detalle.partidaPresupuestaria}" filterMatchMode="contains">
+                        <h:outputText value="#{detalle.partidaPresupuestaria}" />
+                    </p:column>
+                    <p:column headerText="Ingreso" style="width: 15%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{detalle.valorIngreso}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber id="valorIngresoEdit" value="#{detalle.valorIngreso}" style="width:100%"
+                                               disabled="#{detalle.idRubro.ingreso? (detalle.idRubro.origen == null ? true:(detalle.idRubro.origen?true:false)):true}">
+                                    <p:ajax update="thLiquidacionRolDetalleTable" listener="#{thLiquidacionRolView.updateValores(detalle)}"/>
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Egreso" style="width: 15%;text-align: center">
+                        <h:outputText value="#{detalle.valorEgreso}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                </p:dataTable>
+            </h:form>        
+        </p:dialog>             
+    </ui:define>              
+</ui:composition>

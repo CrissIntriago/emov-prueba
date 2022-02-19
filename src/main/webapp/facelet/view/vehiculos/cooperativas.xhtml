@@ -1,0 +1,160 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:sc="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">
+        Listado de Cooperativas
+    </ui:define>
+
+    <ui:param name="tittle" value="COOPERATIVAS"/>
+
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div style="width: 100% !important; display: inline-block">
+                <p:commandButton id="cbNuevoUsuario" title="Crear Orden" icon="fa fa-plus" actionListener="#{cooperativasMb.nuevo(null)}" 
+                                 process="@this" class="btnColorWhite" value=" Nueva" style="width: 100px"/>
+                <div class="ui-g" style="float: right; width: 25% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 activo" >ACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 inactivo">INACTIVO</div>
+                </div>
+            </div>
+
+
+            <p:dataTable id="dtUsers" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                         value="#{cooperativasMb.cooperativaLazy}" var="usr1" emptyMessage="No se encontró ningún Item." style="text-align: center;"
+                         paginatorPosition="top" rowStyleClass="#{usr1.estado eq 'AC'? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable" >
+                <p:column headerText="Cooperativa" filterBy="#{usr1.empresa.nombre}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.empresa.nombre}" />
+                </p:column>
+                <p:column headerText="Tipo Cooperativa" width="15%" filterBy="#{usr1.tipo}" filterMatchMode="contains">
+                    <p:outputLabel value="#{usr1.tipo}"  />
+                </p:column>
+                <p:column headerText="Estado" width="15%" filterBy="#{usr1.estadoCoop}">
+                    <p:outputLabel value="#{usr1.estadoCoop}" />
+                </p:column>
+                <p:column headerText="Modalidad" width="15%" filterBy="#{usr1.modalidadTransporte.texto}">
+                    <p:outputLabel value="#{usr1.modalidadTransporte.texto}" />
+                </p:column>
+                <p:column headerText="Acciones" width="15%">
+                    <p:commandButton title="Editar Cooperativa" icon="fa fa-edit edit" class="btnTranparent editar" process="@this" 
+                                     actionListener="#{cooperativasMb.nuevo(usr1)}" update="frmOrden" action="#{cooperativasMb.setVer(false)}" />
+                    <p:spacer width="5" />
+                    <p:commandButton title="Visualizar" icon="fa fa-eye edit" class="btnTranparent ver" process="@this" 
+                                     actionListener="#{cooperativasMb.nuevo(usr1)}" update="frmOrden" action="#{cooperativasMb.setVer(true)}" />
+                    <p:spacer width="5" />
+                    <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" disabled="#{!usr1.estado}"
+                                     actionListener="#{cooperativasMb.eliminar(usr1)}" update="frmOrden" process="@this"  >
+                        <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el Usuario: #{usr1.empresa.nombre}" />
+                    </p:commandButton>
+                </p:column>
+            </p:dataTable>
+
+        </h:form>
+
+        <p:dialog header="Dato de la cooperativa" modal="true" widgetVar="dlgOrden" width="55%" closable="false" 
+                  id="dlgOrden" closeOnEscape="true" >
+            <h:form id="frmOrden" style="width: 100%;" prependId="false" >
+                <p:panelGrid columns="3" style="width: 100%;" layout="grid" id="pngDatosCoop" >
+                    <comp:items label="Tipo Identificación *" value="#{cooperativasMb.coop.empresa.tipoIdentificacion}" catalogo="tipo_identificacion_beneficiario" id="tipoIdent" />
+                    <h:panelGroup layout="block">
+                        <p:outputLabel value="Cooperativa" class="label-bold"/>
+                        <p:inputText value="#{cooperativasMb.coop.empresa.identificacion}" id="busquedaRuc" />
+                        <p:commandButton icon="fa fa-search" title="Buscar Cooperativa" actionListener="#{cooperativasMb.buscarCliente()}" process="@this, busquedaRuc, tipoIdent">
+                            <p:ajax event="dialogReturn" listener="#{cooperativasMb.returnDialoProcessCliente}" update="frmOrden,pngDatosCoop" />
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <comp:text label="Razón Social *" value="#{cooperativasMb.coop.empresa.nombre}"  />
+                    <comp:text label="Nombre Comercial *" value="#{cooperativasMb.coop.empresa.apellido}" />
+                    <comp:text label="Tipo Cooperativa *" value="#{cooperativasMb.coop.tipo}" required="false" />
+                    <h:panelGroup layout="block">
+                        <p:outputLabel value="Estado *" class="label-bold"/>
+                        <p:selectOneMenu value="#{cooperativasMb.coop.estadoCoop}"  >
+                            <f:selectItem itemLabel="Activo" itemValue="ACT" />
+                            <f:selectItem itemLabel="Inactivo" itemValue="INA" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <comp:text label="Fecha desde *" value="#{cooperativasMb.coop.desde}" typeInput="date"/>
+                    <comp:items label="Cantón de operación *" value="#{cooperativasMb.coop.cantonOpp}" catalogo="canton" required="false" />
+                    <!--<comp:items label="Ambito de transporte" value="# {cooperativasMb.coop.ambitoTransporte}" catalogo="ambitoTransporte" />-->
+                    <!--<comp:items label="Modalidad de transporte" value="# {cooperativasMb.coop.modalidadTransporte}" catalogo="modalidadTransporte" />-->
+                    <!--<comp:items label="Tipo operador" value="# {cooperativasMb.coop.tipoOperador}" catalogo="tipoOperador" />-->
+                </p:panelGrid>
+                <p:tabView id="viewCoop">
+                    <p:tab title="Vehiculos">
+                        <div align="right">
+                            <p:commandButton icon="fa fa-plus" title="Agregar Vehiculo" actionListener="#{cooperativasMb.openDlg()}" process="@this" >
+                                <p:ajax event="dialogReturn" listener="#{cooperativasMb.returnDialoProcess}" update="dtVehiculos" />
+                            </p:commandButton>
+                        </div>
+                        <p:dataTable id="dtVehiculos" reflow="true" paginator="true" lazy="false" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                                     value="#{cooperativasMb.coop.cooperativaVehiculoList}" var="veh1" emptyMessage="No se encontró ningún Item." style="text-align: center;"
+                                     paginatorPosition="top" rowStyleClass="#{veh1.estado == 'AC'? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable" >
+                            <p:column headerText="Placa" filterBy="#{veh1.vehiculo.placaActual}" filterMatchMode="contains">
+                                <p:outputLabel value="#{veh1.vehiculo.placaActual}" />
+                            </p:column>
+                            <p:column headerText="Clase" width="15%" filterBy="#{veh1.vehiculo.claseVehiculo.texto}" filterMatchMode="contains">
+                                <p:outputLabel value="#{veh1.vehiculo.claseVehiculo.texto}"  />
+                            </p:column>
+                            <p:column headerText="Clase transporte" width="15%" filterBy="#{veh1.vehiculo.claseTransporte.texto}">
+                                <p:outputLabel value="#{veh1.vehiculo.claseTransporte.texto}" />
+                            </p:column>
+                            <p:column headerText="Color" width="15%" filterBy="#{veh1.vehiculo.colorPrincipal}">
+                                <p:outputLabel value="#{veh1.vehiculo.colorPrincipal}" />
+                            </p:column>
+                            <p:column headerText="Acciones" width="10%">
+                                <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" disabled="#{veh1.estado != 'AC'}"
+                                                 actionListener="#{cooperativasMb.eliminarVehiculo(veh1)}" update="frmOrden" process="@this"  >
+                                    <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el vehiculo de placa: #{veh1.vehiculo.placaActual}" />
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Socios">
+                        <div align="right">
+                            <p:commandButton icon="fa fa-plus" title="Agregar socio" />
+                        </div>
+                        <p:dataTable id="dtSocios" reflow="true" paginator="true" lazy="false" rows="10" rowsPerPageTemplate="10,50,100" filterEvent="enter"
+                                     value="#{cooperativasMb.coop.cooperativaSocioList}" var="soc1" emptyMessage="No se encontró ningún Item." style="text-align: center;"
+                                     paginatorPosition="top" rowStyleClass="#{soc1.estado == 'AC'? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable" >
+                            <p:column headerText="Nombres" filterBy="#{soc1.socio.apellido}" filterMatchMode="contains">
+                                <p:outputLabel value="#{soc1.socio.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Cantón" width="15%" filterBy="#{soc1.canton.descripcion}" filterMatchMode="contains">
+                                <p:outputLabel value="#{soc1.canton.descripcion}"  />
+                            </p:column>
+                            <p:column headerText="Fecha caducidad licencia" width="15%" filterBy="#{soc1.fechaCaducidadLicencia}">
+                                <p:outputLabel value="#{soc1.fechaCaducidadLicencia}" >
+                                    <f:convertDateTime pattern="yyyy-MM-dd" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Num. Acciones" width="15%" filterBy="#{soc1.numeroAcciones}">
+                                <p:outputLabel value="#{soc1.numeroAcciones}" />
+                            </p:column>
+                            <p:column headerText="Acciones" width="15%">
+                                <p:commandButton title="Deshabilitar" icon="fa fa-trash delete" class="btnTranparent eliminar" disabled="#{soc1.estado != 'AC'}"
+                                                 actionListener="#{cooperativasMb.eliminarSocio(soc1)}" update="frmOrden" process="@this"  >
+                                    <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el socio #{soc1.socio.nombreCompleto}" />
+                                </p:commandButton>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:tabView>
+                <center>
+                    <p:commandButton title="Guardar Información" icon="fa fa-save" actionListener="#{cooperativasMb.guardar()}" 
+                                     rendered="#{!cooperativasMb.ver}" update="frmOrden,dtUsers"/>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" actionListener="#{cooperativasMb.cerrarDialogo()}" 
+                                     oncomplete="PF('dlgOrden').hide();" process="@this" /> 
+
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

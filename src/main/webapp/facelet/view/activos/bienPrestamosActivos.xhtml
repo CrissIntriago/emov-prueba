@@ -1,0 +1,431 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Prestamos de Activos
+    </ui:define>
+    <ui:param name="tittle" value="PRÉSTAMO DE ACTIVOS"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <p:commandButton value="Nuevo Préstamo" id="nuevoPrestamo"
+                             icon="fa fa-user-plus" actionListener="#{prestamoActivoView.form(null)}"
+                             styleClass="Fs16" style="width: auto; margin-right: 10px;"/>
+            <p:commandButton value="Comodato Devolución" title="Ver comodatos que no cumplen fecha devolución"
+                             icon="fa fa-folder-open" actionListener="#{prestamoActivoView.openDialogComodato()}"
+                             styleClass="Fs16" style="width: auto; margin-right: 10px;"/>
+            <p:dataTable id="prestamosTable" widgetVar="prestamosTable" var="prestamo" 
+                         paginator="true" rows="20" style="width: 100%;margin-top: 15px" paginatorPosition="bottom"
+                         value="#{prestamoActivoView.prestamosActivosLazyModel}" 
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         rowsPerPageTemplate="20,30,40,50,60,100" lazy="true" selectionMode="single" rowKey="#{prestamo.id}" 
+                         emptyMessage="No existe información con el criterio de búsqueda especificado">
+                <f:facet name="header">
+                    Prestamos registrados
+                </f:facet>
+                <p:column headerText="Nº de Acta" style="width: 4vw;text-align: center" filterBy="#{prestamo.id}">
+                    <h:outputText value="#{prestamo.id}" />
+                </p:column> 
+                <p:column headerText="Descripción" style="width: 10vw;" filterBy="#{prestamo.descripcion}" filterMatchMode="contains">
+                    <h:outputText value="#{prestamo.descripcion}" />
+                </p:column> 
+                <p:column headerText="Motivo" style="width: 5vw;text-align: center" filterBy="#{prestamo.motivo}" filterMatchMode="exact">
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('prestamosTable').filter()" styleClass="custom-filter">
+                            <f:selectItem itemLabel="-Seleccione-" itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItem itemLabel="COMODATO" itemValue="COMODATO" />
+                            <f:selectItem itemLabel="REPARACIÓN" itemValue="REPARACIÓN" />
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{prestamo.motivo}" />
+                </p:column> 
+                <p:column headerText="Proveedor" style="width: 10vw;" filterBy="#{prestamo.proveedor.cliente.nombre}" filterMatchMode="contains">
+                    <h:outputText value="#{prestamo.proveedor.cliente.nombre}" />
+                </p:column> 
+                <p:column headerText="Fecha de Préstamo" style="width: 5vw;text-align: center">
+                    <h:outputText value="#{prestamo.fechaCreacion}" >
+                        <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                    </h:outputText>
+                </p:column> 
+                <p:column headerText="Fecha devolución Comodato" style="width: 5vw;text-align: center">
+                    <h:outputText value="#{prestamo.fechaDevolucionComodato}" >
+                    </h:outputText>
+                </p:column> 
+                <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                    <h:outputText value="#{prestamo.estadoPrestamo?'DEVUELTO':'PRESTADO'}" />
+                </p:column>
+                <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                    <p:commandLink actionListener="#{prestamoActivoView.imprimirReporte(prestamo)}" title="Imprimir Reporte de prestamo" 
+                                   update="prestamosTable" process="@this">
+                        <i class="fa fa-print" style="font-size: 2em; margin-right: 8px; color: blue;"></i>
+                    </p:commandLink>
+                    <p:commandLink actionListener="#{prestamoActivoView.openDlgDevolucion(prestamo)}" title="Generar Devolución de Activo" 
+                                   update="prestamosTable" process="@this" rendered="#{!prestamo.estadoPrestamo}">
+                        <i class="fa fa-refresh" style="font-size: 2em; margin-right: 8px; color: green;"></i>
+                    </p:commandLink>
+                    <p:commandLink actionListener="#{prestamoActivoView.imprimirReporteDevolucion(prestamo)}" title="Reimprimir Reporte de Devolución" 
+                                   update="prestamosTable" process="@this" rendered="#{prestamo.estadoPrestamo}">
+                        <i class="fa fa-file-pdf-o" style="font-size: 2em; margin-right: 8px; color: red;"></i>
+                    </p:commandLink>
+                </p:column> 
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog id="devolucionPrestamoDialog" header="Detalle de la devolución" width="30%"
+                  widgetVar="devolucionPrestamoDialog" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="prestamosDevolucionPanel" style="width: 100%;">
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:inputTextarea  id="descripcionPrestamoDevolucion" rows="8" style="border: 1px solid #cccccc;width: 100%;text-transform: uppercase"
+                                          value="#{prestamoActivoView.prestamosActivos.descripcionDevolucion}">
+                        </p:inputTextarea>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandButton icon="fa fa-print" actionListener="#{prestamoActivoView.imprimirReporteDevolucion(null)}"
+                                         title="Generar Reporte de Devolución"  styleClass="green-button"/>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="custodioDialog" header="Listado de Actas de Asignación" width="50%"  closeOnEscape="true"
+                  widgetVar="custodioDialog" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="custodioPanel" style="width: 100%;" >
+                    <p:dataTable id="custodiosTable" widgetVar="custodiosTable" var="custodio" 
+                                 paginator="true" rows="10" style="width: 100%;margin-top: 15px" paginatorPosition="bottom"
+                                 value="#{prestamoActivoView.activoFijoCustodioLazyModel}" 
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,20" lazy="true" selectionMode="single" rowKey="#{custodio.id}" 
+                                 emptyMessage="No existe información con el criterio de búsqueda especificado">
+                        <p:column headerText="Nº de Acta" style="width: 10%;text-align: center" filterBy="#{custodio.numeroActa}">
+                            <h:outputText value="#{custodio.numeroActa}" />
+                        </p:column> 
+                        <p:column headerText="Servidor Público" style="width: 25%;" filterBy="#{custodio.servidor.persona.nombreCompleto}">
+                            <h:outputText value="#{custodio.servidor.persona.nombreCompleto}" />
+                        </p:column> 
+                        <p:column headerText="Unidad Adminitrativa de Custodio" style="width: 35%;" filterBy="#{custodio.servidor.distributivo.unidadAdministrativa.nombre}">
+                            <h:outputText value="#{prestamoActivoView.getThServidorCargoByServidor(custodio.servidor).idCargo.idUnidad.nombre}" />
+                        </p:column> 
+                        <p:column headerText="Cantidad Asignadas" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{custodio.cantidadBienes}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Asignación" style="width: 8%;text-align: center">
+                            <h:outputText value="#{custodio.fechaEntrega}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                            </h:outputText>
+                        </p:column> 
+                        <p:column headerText="Acciones" style="width: 6%;text-align: center" >
+                            <p:commandLink  actionListener="#{prestamoActivoView.addCustodio(custodio)}" update="custodioBienesTable" 
+                                            title="Añadir" disabled="#{custodio.cantidadBienes le 0}">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; "></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="custodioBienesDialog" header="Listado de Bienes Asignados" width="70%"
+                  widgetVar="custodioBienesDialog" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="custodioBienesPanel" style="width: 100%;" >
+                    <p:dataTable id="custodioBienesTable" widgetVar="custodioBienesTable" var="custodioBienes" 
+                                 paginator="true" rows="10" style="width: 100%" paginatorPosition="bottom"  lazy="true" rowKey="#{custodioBienes.id}"
+                                 value="#{prestamoActivoView.bienesItemsList}" selection="#{prestamoActivoView.bienesSeleccionados}" 
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,20" emptyMessage="No existe información con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:3vw;text-align:center"/>
+                        <p:column headerText="Código" style="width: 6vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.codigoBienAgrupado}"/>
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 10vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Marca" style="width: 6vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.marca}"/>
+                        </p:column>
+                        <p:column headerText="Modelo" style="width: 6vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.modelo}"/>
+                        </p:column>
+                        <p:column headerText="Serie" style="width: 6vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.serie1}"/>
+                        </p:column>
+                        <p:column headerText="Color" style="width: 6vw" >
+                            <h:outputText value="#{custodioBienes.bienesItem.color1}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 6vw;text-align: center">
+                            <h:outputText value="#{custodioBienes.bienesItem.estadoBien.texto}"/>
+                        </p:column>
+                        <f:facet name="footer" >
+                            <p:commandButton process="custodioBienesTable" update="custodioBienesSeleccionadosTable" icon="fa fa-arrow-circle-down" style="width: auto"
+                                             value="Añadir Bienes"  actionListener="#{prestamoActivoView.addBienes()}" />
+                        </f:facet>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="prestamoActivosDialog" header="Formulario de Prestamos de Activos" width="90%"
+                  widgetVar="prestamoActivosDialog" modal="true" showEffect="fade" position="top" style="margin-top: 50px"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="prestamosActivosPanel" style="width: 100%;" >
+                            <div class="ui-g-4">
+                                <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="proveedorGrid">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:commandButton value="Buscar Proveedor" id="buscarProveedor" process="@this" update="proveedorGrid"
+                                                         icon="fa fa-user-plus" onclick="PF('proveedorDlg').show();" 
+                                                         style="width: 100%" styleClass="Fs16"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="RUC:" style="font-weight: bold"/>
+                                        <p:inputText id="RUC" readonly="true" style="width: 100%" 
+                                                     value="#{prestamoActivoView.proveedorSeleccionado.cliente.identificacion} #{prestamoActivoView.proveedorSeleccionado.cliente.ruc}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Nombre del Proveedor" style="font-weight: bold"/>
+                                        <p:inputText id="proveedorNombre" readonly="true" style="width: 100%" value="#{prestamoActivoView.proveedorSeleccionado.cliente.nombre}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Motivo de Prestamo" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="motivoPrestamo" value="#{prestamoActivoView.prestamosActivos.motivo}"
+                                                         style="width: 100%;" panelStyle="width:120px">
+<!--                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />-->
+                                            <f:selectItem itemLabel="REPARACIÓN" itemValue="REPARACIÓN" />
+                                            <f:selectItem itemLabel="COMODATO" itemValue="COMODATO" />
+                                            <p:ajax event="change" update="proveedorGrid" />
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup id="idFechaDevolucion" rendered="#{prestamoActivoView.prestamosActivos.motivo eq 'COMODATO'}" layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel  for="@next" value="Fecha devolución Comodato:" style="font-weight: bold"/>
+                                        <p:calendar value="#{prestamoActivoView.prestamosActivos.fechaDevolucionComodato}" mindate="#{prestamoActivoView.dateNow}">
+
+                                        </p:calendar>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel for="@next" value="Descripción/Motivo:" style="width: 100%; font-weight: bold"/>
+                                    <p:inputTextarea  id="descripcionPrestamo" rows="3" style="border: 1px solid #cccccc;width: 100%;text-transform: uppercase"
+                                                      value="#{prestamoActivoView.prestamosActivos.descripcion}">
+                                    </p:inputTextarea>
+                                </p:panelGrid> 
+                            </div>
+                            <div class="ui-g-8">
+                                <p:dataTable id="custodioBienesSeleccionadosTable" widgetVar="custodioBienesSeleccionadosTable" var="custodioBienesSeleccionados" 
+                                             paginator="true" style="width: 100%;margin-top: 15px" paginatorPosition="bottom" lazy="true"
+                                             scrollable="true" scrollHeight="170"
+                                             value="#{prestamoActivoView.bienesPrestados}" rowKey="#{custodioBienesSeleccionados.id}" selectionMode="single"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No existe información con el criterio de búsqueda especificado">
+                                    <f:facet name="header">
+                                        LISTADO DE BIENES SELECCIONADOS
+                                    </f:facet>
+                                    <p:column headerText="Id Bien" style="width: 4vw;text-align: center" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.id}"/>
+                                    </p:column>
+                                    <p:column headerText="Código" style="width: 6vw;text-align: center" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.codigoBienAgrupado}"/>
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 10vw" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.descripcion}"/>
+                                    </p:column>
+                                    <p:column headerText="Marca" style="width: 6vw" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.marca}"/>
+                                    </p:column>
+                                    <p:column headerText="Modelo" style="width: 6vw" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.modelo}"/>
+                                    </p:column>
+                                    <p:column headerText="Serie" style="width: 6vw" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.serie1}"/>
+                                    </p:column>
+                                    <p:column headerText="Color" style="width: 5vw" >
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.color1}"/>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{custodioBienesSeleccionados.bienesItem.estadoBien.texto}"/>
+                                    </p:column>
+                                    <p:column headerText="Ver Componentes" style="width:4vw;text-align: center">
+                                        <p:commandButton icon="fa fa-eye" rendered="#{custodioBienesSeleccionados.bienesItem.tieneComponentes}" process="@this"
+                                                         actionListener="#{prestamoActivoView.openDlgComponentes(custodioBienesSeleccionados)}" update="componentesTable"/>                                                          
+                                    </p:column>
+                                </p:dataTable>
+                            </div>
+                            <div class="ui-g-12">
+                                <p:dataTable id="componentesSeleccionadosTable" widgetVar="componentesSeleccionadosTable" var="componentesSeleccionados" 
+                                             paginator="true" style="width: 100%;margin-top: 15px" paginatorPosition="bottom"
+                                             value="#{prestamoActivoView.componentesPrestados}" scrollable="true" scrollHeight="200"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             emptyMessage="No existe información con el criterio de búsqueda especificado">
+                                    <f:facet name="header">
+                                        LISTADO DE COMPONENTES SELECCIONADOS
+                                    </f:facet>
+                                    <p:column headerText="Pertenece" style="width: 6vw;text-align: center" >
+                                        <h:outputText value="#{componentesSeleccionados.grupoPadre.id}"/>
+                                    </p:column>
+                                    <p:column headerText="Código" style="width: 6vw;text-align: center" >
+                                        <h:outputText value="#{componentesSeleccionados.codigoBienAgrupado}"/>
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 10vw" >
+                                        <h:outputText value="#{componentesSeleccionados.descripcion}"/>
+                                    </p:column>
+                                    <p:column headerText="Marca" style="width: 6vw" >
+                                        <h:outputText value="#{componentesSeleccionados.marca}"/>
+                                    </p:column>
+                                    <p:column headerText="Modelo" style="width: 6vw" >
+                                        <h:outputText value="#{componentesSeleccionados.modelo}"/>
+                                    </p:column>
+                                    <p:column headerText="Serie" style="width: 6vw" >
+                                        <h:outputText value="#{componentesSeleccionados.serie1}"/>
+                                    </p:column>
+                                    <p:column headerText="Color" style="width: 6vw" >
+                                        <h:outputText value="#{componentesSeleccionados.color1}"/>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 6vw;text-align: center">
+                                        <h:outputText value="#{componentesSeleccionados.estadoBien.texto}"/>
+                                    </p:column>
+                                </p:dataTable>
+                                <center>
+                                    <p:commandButton value="Guardar" id="savePrestamo" update="prestamosTable, prestamosActivosPanel" style="margin-top: 30px"
+                                                     icon="ui-icon-save" actionListener="#{prestamoActivoView.save()}" 
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </div>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="proveedorDlg" widgetVar="proveedorDlg" width="40%" position="center" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false"  closeOnEscape="true">
+            <!--            <div class="ui-g-12" >-->
+            <h:form prependId="false">
+                <p:outputPanel id="formProveedores" style="width: 100%;" >
+                    <p:dataTable id="proveedorTable" widgetVar="proveedorTable" value="#{prestamoActivoView.proveedorLazyModel}"
+                                 var="proveedor" rows="10" lazy="true" filterEvent="enter" rowsPerPageTemplate="10,25"
+                                 emptyMessage="No existen proveedores con el criterio de búsqueda especificado" paginator="true"
+                                 paginatorPosition="bottom" selectionMode="single" rowKey="#{proveedor.id}" 
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <f:facet name="header">
+                            LISTADO DE PROVEEDORES
+                        </f:facet>
+                        <p:column headerText="Nº DE IDENTIFICACION " filterBy="#{proveedor.cliente.identificacion}"  style="width: 3vw;text-align: center">
+                            <h:outputText value="#{proveedor.cliente.identificacion} #{proveedor.cliente.ruc}" />
+                        </p:column> 
+                        <p:column headerText="NOMBRE" filterBy="#{proveedor.cliente.nombre}"  style="width: 6vw;">
+                            <h:outputText value="#{proveedor.cliente.nombre}" />
+                        </p:column>
+                        <p:column headerText="AÑADIR"  style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{prestamoActivoView.addProveedor(proveedor)}" update="proveedorGrid">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>                                                     
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>  
+            <!--</div>-->
+        </p:dialog>
+
+        <p:dialog id="componentesDialog" header="Listado de Componentes" width="70%"
+                  widgetVar="componentesDialog" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <p:outputPanel id="componentesPanel" style="width: 100%;" >
+                            <p:dataTable id="componentesTable" widgetVar="componentesTable" var="componentes" 
+                                         paginator="true" rows="10" style="width: 100%" paginatorPosition="bottom"  lazy="true" rowKey="#{componentes.id}"
+                                         value="#{prestamoActivoView.componentesList}" selection="#{prestamoActivoView.componentesSeleccionados}" 
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="10,20" emptyMessage="No existe información con el criterio de búsqueda especificado">
+                                <p:column selectionMode="multiple" style="width:3vw;text-align:center"/>
+                                <p:column headerText="Código" style="width: 6vw" >
+                                    <h:outputText value="#{componentes.codigoBien}"/>
+                                </p:column>
+                                <p:column headerText="Descripción" style="width: 10vw" >
+                                    <h:outputText value="#{componentes.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Marca" style="width: 6vw" >
+                                    <h:outputText value="#{componentes.marca}"/>
+                                </p:column>
+                                <p:column headerText="Modelo" style="width: 6vw" >
+                                    <h:outputText value="#{componentes.modelo}"/>
+                                </p:column>
+                                <p:column headerText="Serie" style="width: 6vw" >
+                                    <h:outputText value="#{componentes.serie1}"/>
+                                </p:column>
+                                <p:column headerText="Color" style="width: 6vw" >
+                                    <h:outputText value="#{componentes.color1}"/>
+                                </p:column>
+                                <p:column headerText="Estado" style="width: 6vw">
+                                    <h:outputText value="#{componentes.estadoBien.texto}"/>
+                                </p:column>
+                                <f:facet name="footer" >
+                                    <p:commandButton process="componentesTable" update="componentesSeleccionadosTable" icon="fa fa-arrow-circle-down" style="width: auto"
+                                                     value="Añadir Componenetes"  actionListener="#{prestamoActivoView.addComponentes()}" />
+                                </f:facet>
+                            </p:dataTable>
+                        </p:outputPanel>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dialogComodato" header="Listado de Comodato" width="70%" 
+                  widgetVar="dialogComodato" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false" closeOnEscape="true"
+                  >
+            <h:form id="formComodato" prependId="false">
+                <p:dataTable id="dataTableComodato" widgetVar="dataTableComodato" var="como" 
+                             paginator="true" rows="10" style="width: 100%" paginatorPosition="bottom"   rowKey="#{componentes.id}"
+                             value="#{prestamoActivoView.listPrestamosActivos}" 
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,20" emptyMessage="No existe información con el criterio de búsqueda especificado">
+                    <p:column headerText="N° Acta" style="width: 5%" >
+                        <h:outputText value="#{como.id}"/>
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 5%" >
+                        <h:outputText value="#{como.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Proveedor" style="width: 5%" >
+                        <h:outputText value="#{como.proveedor.cliente.nombre}"/>
+                    </p:column>
+                    <p:column headerText="Fecha de Préstamo" style="width: 5%;text-align: center">
+                        <h:outputText value="#{como.fechaCreacion}" >
+                            <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                        </h:outputText>
+                    </p:column> 
+                    <p:column headerText="Fecha devolución Comodato" style="width: 5%;text-align: center">
+                        <h:outputText value="#{como.fechaDevolucionComodato}" >
+                            <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                        </h:outputText>
+                    </p:column> 
+                    <p:column headerText="Acciones" style="width: 3%;text-align: center">
+                        <p:commandLink actionListener="#{prestamoActivoView.imprimirReporte(como)}" title="Imprimir Reporte de comodato" 
+                                       process="@this">
+                            <i class="fa fa-print" style="font-size: 2em; margin-right: 8px; color: blue;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

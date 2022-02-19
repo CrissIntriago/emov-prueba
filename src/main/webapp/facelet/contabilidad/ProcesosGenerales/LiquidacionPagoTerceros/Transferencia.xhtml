@@ -1,0 +1,556 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Transferencias
+    </ui:define>
+
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <u:titleTask task="#{liquidacionFondoTrnasfeView.tarea}" tramite="#{liquidacionFondoTrnasfeView.tramite}" />
+                    <p:panelGrid columns="3" layout="grid" style="font-size: 14px;"  styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="No.Comprobante: " class="FontBold"/>
+                            <p:outputLabel value="#{liquidacionFondoTrnasfeView.comprobanteTemporal.comprobantePago.numComprobante} "/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Beneficiario: " class="FontBold"/>
+                            <p:outputLabel value="#{liquidacionFondoTrnasfeView.comprobanteTemporal.beneficiario.nombreCompleto}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Valor: " class="FontBold"/>
+                            <h:outputText value="#{liquidacionFondoTrnasfeView.comprobanteTemporal.valor}" style="float: right"> 
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <h:panelGroup id="mantenimientoTransferencia" layout="block" rendered="#{liquidacionFondoTrnasfeView.ocultarTabla}">
+                        <p:commandButton disabled="#{liquidacionFondoTrnasfeView.enabledIniciar}" value="NUEVA TRANSFERENCIA" process="@this" icon="fa fa-plus"  update="formMain"
+                                         actionListener="#{liquidacionFondoTrnasfeView.form(null)}" styleClass="Fs16" style="width: auto;margin-bottom: 15px"/> 
+
+                        <p:dataTable  id="transferenciaTable" widgetVar="transferenciaTable" var="transferencia" value="#{liquidacionFondoTrnasfeView.transferenciasLazyModel}" 
+                                      paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" rowKey="#{transferencia.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado" tabindex="0">
+                            <f:facet name="header">
+                                DETALLE DE LASA TRANSFERENCIAS
+                            </f:facet>
+                            <p:column style="width:10px;text-align: center">
+                                <p:rowToggler />
+                            </p:column>
+                            <p:column headerText="Nº Referencia" style="width: 3vw;text-align: center" filterBy="#{transferencia.numReferencia}">
+                                <h:outputText value="#{transferencia.numReferencia}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 12vw;">
+                                <h:outputText value="#{transferencia.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Período" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{transferencia.periodo}" />
+                            </p:column>
+                            <p:column headerText="Fecha Afectacion" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{transferencia.fechaAcreditacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{transferencia.fechaAnulacion}" >
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Mes de Pago" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                    <f:convertDateTime pattern="MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Valor de Pago" style="width: 3vw;">
+                                <h:outputText value="#{transferencia.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                <h:outputText value="#{transferencia.estadoTransferencia}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                                <p:commandLink actionListener="#{liquidacionFondoTrnasfeView.anularTransferenciaTotal(transferencia)}" title="ANULACIÓN" process="@this" 
+                                               rendered="#{transferencia.fechaAcreditacion!=null?false:(transferencia.estadoTransferencia=='ANULADO'?false:true)}">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular la transferencia Nº #{transferencia.numReferencia} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+
+                            <p:rowExpansion>
+                                <br></br>
+                                <h:panelGroup id="dataRowTable" layout="block">
+                                    <p:dataTable id="rowTable" widgetVar="rowTable" var="row" value="#{liquidacionFondoTrnasfeView.viewDetalle(transferencia)}"
+                                                 rows="10" style="width: 100%;border: 1px solid black"                                                      
+                                                 emptyMessage="No existen requisitos registrados en este procedimiento">
+                                        <p:column headerText="No. Comprobante de Pago" style="width: 4vw;text-align: center" >
+                                            <h:outputText value="#{row.comprobantePago.numComprobante}" />
+                                        </p:column>  
+                                        <p:column headerText="No. Transferencia" style="width: 4vw;text-align: center" >
+                                            <h:outputText value="#{row.referencia}" />
+                                        </p:column>  
+                                        <p:column headerText="Identificacion Beneficiario" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.identificacion}" />
+                                        </p:column> 
+                                        <p:column headerText="Nombre Beneficiario" style="width: 10vw;">
+                                            <h:outputText value="#{row.nombreBeneficiario}" />
+                                        </p:column> 
+                                        <p:column headerText="Banco" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.institucionFinanciera.cuentaCorriente}" />
+                                        </p:column> 
+                                        <p:column headerText="Valor" style="width: 5vw;" >
+                                            <h:outputText value="#{row.valor}" style="float: right"> 
+                                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </p:column>  
+                                        <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{row.fechaAcreditacion}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center">
+                                            <h:outputText value="#{row.fechaAnulacion}" >
+                                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                            </h:outputText>
+                                        </p:column>
+                                        <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                            <h:outputText value="#{row.estado}" />
+                                        </p:column> 
+                                        <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                                            <p:commandLink title="VER COMPROBANTE SPI" process="@this"
+                                                           actionListener="#{liquidacionFondoTrnasfeView.verDocumentos(row)}"
+                                                           rendered="#{row.estado=='ACREDITADO'?true:false}">
+                                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #3399ff;"></i>
+                                            </p:commandLink>
+                                            <p:commandLink actionListener="#{liquidacionFondoTrnasfeView.subirArchivo(row)}" title="SUBIR COMPROBANTE SPI" process="@this"
+                                                           rendered="#{row.estado=='ACREDITADO'?false:row.estado=='ANULADO'?false:true}">
+                                                <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                            </p:commandLink>
+                                            <p:commandLink actionListener="#{liquidacionFondoTrnasfeView.anularDetalleTransferencia(row)}" title="ANULACIÓN" process="@this" 
+                                                           rendered="#{row.estado=='ANULADO'?false:row.estado=='ACREDITADO'?false:renderedAnulacion}">
+                                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular esta transferencia" icon="fa fa-exclamation-triangle" />
+                                            </p:commandLink>
+                                        </p:column> 
+                                    </p:dataTable>
+                                </h:panelGroup> 
+
+                                <br></br>
+                            </p:rowExpansion>
+
+                        </p:dataTable>
+                    </h:panelGroup>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+
+                    <h:panelGroup id="formularioTransferencia" layout="block" rendered="#{!liquidacionFondoTrnasfeView.ocultarTabla}">
+
+                        <p:fieldset legend="Datos Generales:" style="margin-bottom: 10px">
+                            <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                <h:panelGroup>
+                                    <p:outputLabel for="@next" value="Nº de Comprobante de Pago" style="font-weight: bold"/>
+                                    <div class="ui-inputgroup">
+                                        <p:inputText id="numComprobantePago" class="panelInput" readonly="false" value="#{liquidacionFondoTrnasfeView.comprobantePagoBusqueda.numComprobante}"
+                                                     onkeypress="focusNextOnEnter(event, 'botonBusquedaComprobantePago')">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                            <p:ajax update="numComprobantePago" />
+                                        </p:inputText>
+                                        <p:commandButton disabled="true" title="Comprobantes de Pagos" icon="fa fa-search" id="botonBusquedaComprobantePago"
+                                                         actionListener="#{liquidacionFondoTrnasfeView.buscarComprobantePago()}"
+                                                         process="numComprobantePago" update="formMain" styleClass="green-button button-group">
+                                        </p:commandButton>
+                                    </div>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Nº Referencia:" style="font-weight: bold"/>
+                                    <p:inputText id="numeroReferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'periodoTransferencia')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.numReferencia}" readonly="true" >
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                    <p:inputText id="periodoTransferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'fechaAfectacion')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.periodo}" readonly="true" /> 
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Fecha Afectación:" style="font-weight: bold"/>
+                                    <p:calendar id="fechaAfectacion"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100"
+                                                value="#{liquidacionFondoTrnasfeView.transferencias.fechaAfectacion}" style="width: 100%">
+                                    </p:calendar> 
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Mes de Pago:" style="font-weight: bold"/>
+                                    <p:inputText id="mesTransferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'localidad')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.fechaAfectacion}" readonly="true" >
+                                        <f:convertDateTime pattern="MM/yyyy" />
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Localidad:" style="font-weight: bold"/>
+                                    <p:inputText id="localidad" style="width: 100%;text-transform: uppercase" onkeypress="focusNextOnEnter(event, 'responsable1')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.localidad}">
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" id="responsablesGrid">
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="AÑADIR RESPONSABLES" process="@this" icon="fa fa-user-plus" 
+                                                     actionListener="#{liquidacionFondoTrnasfeView.openDlgServidores()}" styleClass="Fs16" style="width: auto;margin-bottom: 15px"/> 
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Responsable 1:" style="font-weight: bold"/>
+                                    <p:inputText id="responsable1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo1')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.responsable1.persona.nombreCompleto}" readonly="true" >
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Cargo 1:" style="font-weight: bold"/>
+                                    <p:inputText id="cargo1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'responsable2')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.responsable1.distributivo.cargo.nombreCargo}" readonly="true" >
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Responsable 2:" style="font-weight: bold"/>
+                                    <p:inputText id="responsable2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo2')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.responsable2.persona.nombreCompleto}" readonly="true" >
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Cargo 2:" style="font-weight: bold"/>
+                                    <p:inputText id="cargo2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'detalleTransferencia')"
+                                                 value="#{liquidacionFondoTrnasfeView.transferencias.responsable2.distributivo.cargo.nombreCargo}" readonly="true" >
+                                    </p:inputText>
+                                </h:panelGroup>
+
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+
+                                <p:fieldset legend="Listado de Transferencias:">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridDescripcion">
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                            <p:inputTextarea id="detalleTransferencia" rows="13" onkeypress="focusNextOnEnter(event, 'ctaCteBCE')"
+                                                             style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                             value="#{liquidacionFondoTrnasfeView.transferencias.descripcion}"/> 
+                                        </p:panelGrid> 
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                                <p:fieldset legend="Institución Pública Ordenante (IP):" style="margin-bottom:  10px">
+
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCuentaBancaria">
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Cte. en BCE:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaCteBCE" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'nombreInstitucion')"
+                                                         value="#{liquidacionFondoTrnasfeView.transferencias.ctaCteBceIp}" maxlength="8" >
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Nombre Institución:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreInstitucion" style="width: 100%;text-transform: uppercase"
+                                                         readonly="true" onkeypress="focusNextOnEnter(event, 'ctaRotativa')"
+                                                         value="#{liquidacionFondoTrnasfeView.transferencias.nombreInstitucion}">
+                                            </p:inputText>
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                            <p:outputLabel value="CORRESPONSAL:" style="font-weight: bold"/>
+                                            <p:selectBooleanCheckbox id="corresponsal" value="#{liquidacionFondoTrnasfeView.transferencias.corresponsal}">
+                                                <p:ajax update="corresponsalGrid" listener="#{liquidacionFondoTrnasfeView.activarCorresponsal()}" />
+                                            </p:selectBooleanCheckbox>
+                                        </h:panelGrid>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="corresponsalGrid" >
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Rotativa Pagos:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaRotativa" style="width: 100%;" maxlength="8" onkeypress="focusNextOnEnter(event, 'ctaCteBCE2')"
+                                                         readonly="#{liquidacionFondoTrnasfeView.camposCorresponsal}"
+                                                         value="#{liquidacionFondoTrnasfeView.transferencias.ctaRotativa}">
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Cta. Cte en BCE:" style="font-weight: bold"/>
+                                            <p:inputText id="ctaCteBCE2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'nombreCorresponsal')"
+                                                         maxlength="8" readonly="#{liquidacionFondoTrnasfeView.camposCorresponsal}"
+                                                         value="#{liquidacionFondoTrnasfeView.transferencias.ctaCteBceCorresponsal}">
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                            <p:outputLabel for="@next" value="Nombre Corresponsal:" style="font-weight: bold"/>
+                                            <p:inputText id="nombreCorresponsal" style="width: 100%;text-transform: uppercase" 
+                                                         readonly="#{liquidacionFondoTrnasfeView.camposCorresponsal}"
+                                                         onkeypress="focusNextOnEnter(event, 'detalleTransferenciaTable')"
+                                                         value="#{liquidacionFondoTrnasfeView.transferencias.nombreCorresponsal}">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                            </p:panelGrid>
+                        </p:fieldset>
+
+                        <p:dataTable  id="detalleTransferenciaTable" widgetVar="detalleTransferenciaTable" var="detalleTransferencia" value="#{liquidacionFondoTrnasfeView.detalleTrasferencias}"
+                                      paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" editable="true" editMode="cell"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                            <p:column headerText="Cédula, RUC, Pasaporte" style="width:7vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.identificacion}" />
+                            </p:column>
+                            <p:column headerText="Referencia" style="width: 4vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.referencia}" />
+                            </p:column>
+                            <p:column headerText="Nombre Beneficiario" style="width: 12vw;">
+                                <h:outputText value="#{detalleTransferencia.nombreBeneficiario}" />
+                            </p:column>
+                            <p:column headerText="Institución Financiera" style="width: 7vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.institucionFinanciera.cuentaCorriente}" />
+                            </p:column>
+                            <p:column headerText="Cuenta Beneficiario" style="width: 6vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.cuentaBcoBeneficiario}" />
+                            </p:column>
+                            <p:column headerText="Tipo Cuenta" style="width: 3vw;text-align: center">
+                                <h:outputText value="#{detalleTransferencia.tipoCuenta}" />
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 4vw;">
+                                <h:outputText value="#{detalleTransferencia.valor}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Concepto" style="width: 6vw;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalleTransferencia.concepto}" />
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText value="#{detalleTransferencia.concepto}" maxlength="6">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Detalle" style="width: 12vw;">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalleTransferencia.detalle}" />
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText value="#{detalleTransferencia.detalle}" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                        </p:dataTable>
+                        <center>
+                            <p:commandButton value="GUARDAR" icon="fa fa-save" actionListener="#{liquidacionFondoTrnasfeView.save()}" update="transferenciaTable,mantenimientoTransferencia"
+                                             styleClass="Fs16" style="width: auto; margin: 20px 0px;"/> 
+
+                            <p:commandButton value="CANCELAR" icon="fa fa-remove" actionListener="#{liquidacionFondoTrnasfeView.vaciarFormulario('CANCELAR')}" 
+                                             styleClass="Fs16" style="width: auto; margin: 20px 0px 20px 15px;">
+                                <p:confirm header="Confirmación" message="Los datos ingresados no se guardaran ¿Desea cancelar de todas maneras?" icon="fa fa-exclamation-triangle" />
+                            </p:commandButton> 
+                        </center>
+                    </h:panelGroup>
+
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                        <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+                    </p:confirmDialog>  
+
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="servidoresDLG" header="Servidores Públicos" widgetVar="servidoresDLG" width="60%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="servidoresForm" style="width: 100%;" >
+
+
+                    <p:dataTable  id="servidoresTable" widgetVar="servidoresTable" var="servidores" value="#{liquidacionFondoTrnasfeView.servidorLazyModel}"
+                                  paginator="true" rows="15" style="width: 100%;" rowsPerPageTemplate="15,20" lazy="true"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  selection="#{liquidacionFondoTrnasfeView.responsablesSeleccionados}" rowKey="#{servidores.id}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado"> 
+
+                        <p:column selectionMode="multiple" style="width:2vw;text-align:center"/>
+
+                        <p:column headerText="Identificación" style="width: 4vw;text-align: center" filterBy="#{servidores.persona.identificacion}">
+                            <h:outputText value="#{servidores.persona.identificacion}"/>
+                        </p:column>
+
+                        <p:column headerText="Nombre del Servidor" style="width: 10vw;" filterBy="#{servidores.persona.nombre}">
+                            <h:outputText value="#{servidores.persona.nombreCompleto}"/>
+                        </p:column>
+
+                        <p:column headerText="Cargo del Servidor" style="width: 10vw;" filterBy="#{servidores.distributivo.cargo.nombreCargo}">
+                            <h:outputText value="#{servidores.distributivo.cargo.nombreCargo}"/>
+                        </p:column>
+
+                        <f:facet name="footer" >
+                            <p:commandButton process="servidoresTable" update="responsablesGrid" icon="fa fa-chevron-circle-right"  style="margin: 3px;width: 20%"
+                                             styleClass="green-button" value="SELECCIONAR" iconPos="rigth" actionListener="#{liquidacionFondoTrnasfeView.añadirResponsables()}" />
+                        </f:facet>
+
+
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="comprobantePagoDLG" header="Comprobantes de Pago" widgetVar="comprobantePagoDLG" width="80%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobantePagoForm" style="width: 100%;" >
+
+                    <p:dataTable  id="comprobantePagoTable" widgetVar="comprobantePagoTable" var="comprobantePago" value="#{liquidacionFondoTrnasfeView.comprobantePagoLazyModel}"
+                                  paginator="true" rows="10" style="width: 100%;" rowsPerPageTemplate="10,15" lazy="true" rowKey="#{comprobantePago.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado"> 
+
+                        <p:column style="width:10px">
+                            <p:rowToggler />
+                        </p:column>
+                        <p:column headerText="Nº de Comprobante" style="width: 3vw;text-align: center" filterBy="#{comprobantePago.numComprobante}">
+                            <h:outputText value="#{comprobantePago.numComprobante}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 8vw;">
+                            <h:outputText value="#{comprobantePago.detalle}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Emisión" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.fechaComprobante}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Período" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.periodo}" />
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{comprobantePago.estado}" >
+                            <h:outputText value="#{comprobantePago.estado}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar" style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{liquidacionFondoTrnasfeView.seleccionarComprobantePago(comprobantePago)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+
+                        <p:rowExpansion>
+                            <br></br>
+                            <h:panelGroup id="dataRowTable" layout="block">
+                                <p:dataTable id="rowTable" widgetVar="rowTable" var="beneficiario"
+                                             value="#{liquidacionFondoTrnasfeView.viewDetalleBeneficiarios(comprobantePago)}"
+                                             rows="10" style="width: 100%;border: 1px solid black"                                                      
+                                             emptyMessage="No existe beneficiarios asociados a este comprobante de pago">
+                                    <p:column headerText="Cuenta Bancaria" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.cuentaBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre del Banco" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.detalleBanco.banco.nombreBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.tipoCuenta.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.beneficiario.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Nº de Transferencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.numeroTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 3vw;">
+                                        <h:outputText value="#{beneficiario.valor}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup> 
+
+                            <br></br>
+                        </p:rowExpansion>
+
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="comprobanteTransferenciaDLG" header="MENSAJE" widgetVar="comprobanteTransferenciaDLG" width="30%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteTransferenciaForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:outputLabel value="¿DESEA GENERAR EL REPORTE PARA ENVIO POR VENTANILLA?" style="font-weight: bold"/>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandButton value="SI" icon="fa fa-check" actionListener="#{liquidacionFondoTrnasfeView.generarReporteVentanilla(true)}"
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px;"/> 
+
+                        <p:commandButton value="NO" icon="fa fa-remove" actionListener="#{liquidacionFondoTrnasfeView.generarReporteVentanilla(false)}" 
+                                         styleClass="Fs16" style="width: auto; margin: 20px 0px 20px 15px;"/> 
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="comprobanteSPIDialog" header="Adjuntar Comprobante SPI" widgetVar="comprobanteSPIDialog" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form id="requisitoDialogForm" prependId="false">
+                <p:fileUpload fileUploadListener="#{liquidacionFondoTrnasfeView.handleFileUploadComprobanteSPI}" 
+                              uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                              mode="advanced" dragDropSupport="false"
+                              update="messages" />
+            </h:form> 
+        </p:dialog>
+
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{liquidacionFondoTrnasfeView.detalleTransferencia}"/>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

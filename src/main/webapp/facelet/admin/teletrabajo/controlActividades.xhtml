@@ -1,0 +1,216 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+
+
+    <ui:define name="title">Actividades</ui:define>
+
+    <ui:param name="tittle" value="Actividades de su personal a cargo" /> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+
+                    <p:dataTable id="dataList" widgetVar="dataList" var="item" value="#{actividadesTeletrabajoMB.lazyControl}" paginator="true" 
+                                 rows="20" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 filterEvent="enter" rowIndexVar="index"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="1,20,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen data con el criterio de búsqueda especificado" >
+
+                        <f:facet  name="header">
+                            Data
+                        </f:facet>
+
+                        <p:column headerText="NO." style="width: 5%;">
+                            #{index+1}
+                        </p:column>
+
+                        <p:column headerText="Funcionario" filterBy="#{item.personaSolicitada.nombreCompleto}" filterMatchMode="contains">
+                            <h:outputText value="#{item.personaSolicitada.nombreCompleto}"/>
+                        </p:column>
+
+                        <p:column headerText="Fecha" field="date">
+                            <h:outputText value="#{item.fechaTarea}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Hora Inicio">
+                            <h:outputText value="#{item.horaInicio}">
+                                <f:convertDateTime pattern="HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Hora Fin">
+                            <h:outputText value="#{item.horaFin}">
+                                <f:convertDateTime pattern="HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+
+                        <p:column headerText="Tiempo de Ejecución" filterBy="#{item.tiempoEjecucion}" filterMatchMode="contains">
+                            <h:outputText value="#{item.tiempoEjecucion}"/>
+                        </p:column>
+
+                        <p:column headerText="Descripción de la Tarea" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{item.descripcion}"/>
+                        </p:column>
+
+                        <p:column headerText="Unidad" filterBy="#{item.unidad.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{item.unidad.nombre.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="Periodo" >
+                            <h:outputText value="#{item.anioActual}"/>
+                        </p:column>
+
+                        <p:column headerText="*****" style="text-align: center;">
+
+                            <p:commandLink title="Imprimir" actionListener="#{actividadesTeletrabajoMB.imprimir(1,'pdf',item,0)}" process="@this">
+                                <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>  
+                            <p:commandLink rendered="false" disabled="#{!item.estado}" title="Editar" actionListener="#{actividadesTeletrabajoMB.dlgoRegistrarEditar(item)}" process="@this">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>  
+
+                            <p:commandLink rendered="true" title="Total de horas" actionListener="#{actividadesTeletrabajoMB.totalHoras(item)}" process="@this">
+                                <i class="fa fa-clock-o" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>  
+
+                            <p:commandLink title="Ver" actionListener="#{actividadesTeletrabajoMB.visualizar(item)}" process="@this">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>  
+                            <p:commandLink rendered="false" disabled="#{!item.estado}" title="Eliminar" process="@this" actionListener="#{actividadesTeletrabajoMB.eliminar(item)}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar esta actividad (Recuerde que no se podra recuperar) ?" 
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>  
+
+                        </p:column>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog> 
+                    </p:dataTable> 
+
+
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="viewDlogoActividades" header="View de Actividades" widgetVar="viewDlogoActividades" width="900"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" closable="true" >
+            <h:form id="formDlogoView">
+                <p:tabView>
+                    <p:tab title="REGISTRO">
+                        <div class="ui-g-8">
+                            <p:panelGrid columns="3" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fecha: " class="FontBold"/>  <br/>
+                                    <p:inputText value="#{actividadesTeletrabajoMB.teletrabajo.fechaTarea}" readonly="true">
+                                        <f:convertDateTime pattern="yyyy-MM-dd" />
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Hora Inicio: " class="FontBold"/>  <br/>
+                                    <p:inputText readonly="true"  value="#{actividadesTeletrabajoMB.teletrabajo.horaInicio}" >
+                                        <f:convertDateTime pattern="HH:mm"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Hora Fin: " class="FontBold"/> <br/>
+                                    <p:inputText readonly="true"  value="#{actividadesTeletrabajoMB.teletrabajo.horaFin}" >
+                                        <f:convertDateTime pattern="HH:mm"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Tarea/Actividad: " class="FontBold"/> <br/>
+                                    <p:inputTextarea style="width: 100%" value="#{actividadesTeletrabajoMB.teletrabajo.descripcion}" readonly="true"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel for="@next" value="Persona requirente/Usuario Final: " class="FontBold"/>
+                                    <p:inputText readonly="true" style="width: 100%;" value="#{actividadesTeletrabajoMB.teletrabajo.requiriente.nombreCompleto}"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel for="@next" value="Indicador: " class="FontBold"/>
+                                    <p:inputText style="width: 100%"  value="#{actividadesTeletrabajoMB.teletrabajo.indicador}" readonly="true"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel for="@next" value="Grado de consecución:" class="FontBold"/>
+                                    <p:inputText  style="width: 100%" value="#{actividadesTeletrabajoMB.teletrabajo.gradoEjecucion}%" readonly="true"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel value="Avance:" for="@next" class="FontBold"/> 
+                                    <p:inputText  readonly="true" value="#{actividadesTeletrabajoMB.teletrabajo.avance}"  style="width: 100%" />
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Observación:" for="@next" class="FontBold"/> 
+                                    <p:inputTextarea readonly="true" value="#{actividadesTeletrabajoMB.teletrabajo.observacion}"  style="width: 100%"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-4">
+                            <center>
+                                <h5>Herramientas Utilizadas</h5>
+                            </center>
+                            <p:dataList value="#{actividadesTeletrabajoMB.listaHerramientasSeleccionadas}" var="io" type="ordered" 
+                                        style="border-radius: 10px;border-color: #0081cb">
+                                <div style="border-radius: 10px;">
+                                    <h:outputText value="#{io.texto.toUpperCase()}"/>
+                                </div>
+                            </p:dataList>
+                        </div>
+                    </p:tab>
+                    <p:tab title="DOCUMENTOS ALMACENADOS" rendered="#{actividadesTeletrabajoMB.teletrabajo eq null?false:true}">              
+                        <u:documents entiti="#{actividadesTeletrabajoMB.teletrabajo}"/>
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="totalHorasDilog" widgetVar="totalHorasDilog" width="500" header="Resultado" height="200"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" closable="true" >
+            <h:form id="fmTotalHoras">
+                <center>
+                    <h1>Tiempo Total</h1>    
+                </center>
+                <hr/> 
+                <center>
+                    <p:outputLabel value="#{actividadesTeletrabajoMB.teletrabajo.personaSolicitada.nombreCompleto}"/>
+                </center> 
+                <hr/> 
+
+                <p:panelGrid columns="3" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                    <h:panelGroup>
+                        <p:outputLabel value="Desde"/><br/>
+                        <p:calendar value="#{actividadesTeletrabajoMB.fechaDesde}" locale="es" pattern="yyyy-MM-dd"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Hasta"/><br/>
+                        <p:calendar value="#{actividadesTeletrabajoMB.fechaHasta}" locale="es" pattern="yyyy-MM-dd"/>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:commandButton value="Consultar" icon="fa fa-search" process="fmTotalHoras" update="fmTotalHoras"
+                                         actionListener="#{actividadesTeletrabajoMB.totalHorasFilter()}"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <br/>
+                <br/>
+                <center>
+                    <span style="font-size: 15px;">#{actividadesTeletrabajoMB.totalesHoras}</span>
+                </center>       
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

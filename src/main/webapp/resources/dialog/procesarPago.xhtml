@@ -1,0 +1,387 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:h="http://xmlns.jcp.org/jsf/html" >
+    <!-- INTERFACE -->
+    <cc:interface>
+
+        <cc:attribute name="modelPago" type="com.gestionTributaria.models.PagoTituloReporteModel"/>
+        <cc:attribute name="liquidacion"  type="com.asgard.Entity.FinaRenLiquidacion"/>
+        <cc:attribute name="procesarPago" method-signature="void listener()"/>
+        <cc:attribute name="variosPagos" required="false" default="false"/>
+        <cc:attribute name="updateComponent" required="true" />
+        <cc:attribute name="oncompleteClose" required="true" />
+        <cc:attribute name="liquidaciones" type="java.util.List"/>
+        <cc:attribute name="liquidacionesConvenio" type="java.util.List"/>
+        <cc:attribute name="isList" default="false" required="true"/>
+        <cc:attribute name="isCuotaConvenio" default="false" required="true"/>
+        <cc:attribute name="isAgua" default="false" required="true"/>
+    </cc:interface>
+    <!-- IMPLEMENTATION -->
+    <cc:implementation>
+        <p:fieldset legend="PAGO: #{cc.attrs.liquidacion.tipoLiquidacion.prefijo} - #{cc.attrs.liquidacion.tipoLiquidacion.nombreTitulo}">
+            <p:panelGrid columns="2">
+                <p:column>
+                    <p:outputLabel value="Datos del Solicitante: " style="font-weight: bolder; font-size: 15px;;"/>
+                </p:column>
+                <p:panelGrid columns="2">
+                    <p:column>
+                        <p:outputLabel value="Identificación: " style="font-weight: bold;"/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.identificacion}" style="font-weight: bold; font-size: 14px;"/>
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="Solicitante: " style="font-weight: bold;"/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.nombreComprador}"
+                                       style="font-weight: bold; font-size: 14px;"/>
+                    </p:column>
+                </p:panelGrid>
+            </p:panelGrid>
+            <p:panelGrid id="datoEmision"  columns="2" layout="grid" columnClasses="ui-grid-col-7, ui-grid-col-5"
+                         rendered="#{!cc.attrs.isList}">
+                <p:panelGrid columns="2">
+                    <p:column>
+                        <p:outputLabel value="N. de Emisión"/>
+                        <p:inputText value="#{cc.attrs.liquidacion.numLiquidacion}" readonly="true"/>
+                        <br/>
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="Saldo: " style="font-weight: bolder;"/>
+                        <p:inputText value="#{cc.attrs.modelPago.valorSaldoPagoFinal}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px; color: blue;"/>
+                        <br/>
+                    </p:column>
+                    <p:column>
+                        <p:outputLabel value="Valor a Cobrar: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.pagoFinal}" style="font-size: 20px; font-weight: bold;"/>
+                        <br/>
+                    </p:column>
+                    <p:column rendered="#{cc.attrs.liquidacion.interes gt 0 or cc.attrs.liquidacion.recargo gt 0}">
+                        <p:outputLabel value="Valor del Titulo: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.totalPago}" style="font-size: 20px; font-weight: bold;"/>
+                        <br/>
+                    </p:column>
+                    <p:column rendered="#{cc.attrs.liquidacion.interes gt 0}">
+                        <p:outputLabel value="Interes: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.interes}" style="font-size: 20px; font-weight: bold;"/>
+                        <br/>
+                    </p:column>
+                    <p:column rendered="#{cc.attrs.liquidacion.recargo gt 0}">
+                        <p:outputLabel value="Multa: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.recargo}" style="font-size: 20px; font-weight: bold;"/>
+                        <br/>
+                    </p:column>
+                    <!--<p:column>
+                        <p:outputLabel value="Observaciones"/><br/>
+                        <p:inputTextarea value="# {recaudaciones.liquidacion.observacion}" rows="3" cols="50" autoResize="false"/>
+                    </p:column>-->
+                    <p:column rendered="#{cc.attrs.liquidacion.tipoLiquidacion.id eq 13}">
+                        <p:outputLabel value="Descuento: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.descuento}" styleClass="lbStyle"/>
+                        <br/>
+                    </p:column>
+                    <p:column rendered="#{cc.attrs.liquidacion.valorExoneracion !=null}">
+                        <p:outputLabel value="Valor Exonerado "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.valorExoneracion}" styleClass="lbStyle"/>
+                        <br/>
+                    </p:column>
+                    <p:column rendered="#{cc.attrs.liquidacion.tipoLiquidacion.id eq 13}">
+                        <p:outputLabel value="Recargo: "/>
+                        <p:outputLabel value="#{cc.attrs.liquidacion.recargo}" styleClass="lbStyle"/>
+                        <br/>
+                    </p:column>
+                </p:panelGrid>
+                <p:column>
+                    <p:dataTable scrollable="true" scrollHeight="100"
+                                 value="#{cc.attrs.liquidacion.renDetLiquidacionCollection}" var="rubro">
+                        <p:column headerText="Rubro">
+                            <p:outputLabel value="#{rubro.rubro.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Año" width="20%" style="text-align: center;" rendered="#{cc.attrs.isAgua}">
+                            <p:outputLabel value="#{rubro.anio}"/>
+                        </p:column>
+                        <p:column headerText="Mes" width="20%" style="text-align: center;" rendered="#{cc.attrs.isAgua}" >
+                            <p:outputLabel value="#{rubro.cantidad}"/>
+                        </p:column>
+                        <p:column headerText="Valor" style="text-align: center;" width="35%">
+                            <p:outputLabel value="#{rubro.valor}"/>
+                        </p:column>
+                        <!--                            <p:column headerText="SubTotal" style="text-align: center;" width="30%">
+                                                        <p:outputLabel value="#{rubro.cantidad*rubro.valor}"/>
+                                                    </p:column>-->
+                    </p:dataTable>
+                </p:column>
+            </p:panelGrid>
+            <p:dataTable value="#{cc.attrs.liquidacionesConvenio}" var="emision" scrollable="true"
+                         scrollHeight="60" rowKey="#{emision.id}"  rendered="#{cc.attrs.isCuotaConvenio}">
+                <p:column headerText="Nro. Cuota" style="text-align: center;"  width="90">
+                    <p:outputLabel value="#{emision.mes}"/>
+                </p:column>
+                <p:column headerText="Valor" style="text-align: center;" width="80">
+                    <p:outputLabel value="#{emision.deuda}"/>
+                </p:column>
+            </p:dataTable>
+            <p:row rendered="#{cc.attrs.isList}">
+                <p:dataTable value="#{cc.attrs.liquidaciones}" var="emision" scrollable="true" scrollHeight="60" rowKey="#{emision.id}">
+                    <p:column headerText="No." style="text-align: center;"  width="90">         <p:outputLabel value="#{emision.idLiquidacion}"/>  </p:column>
+                    <p:column headerText="Año" style="text-align: center;" width="80">          <p:outputLabel value="#{emision.anio}"/>            </p:column>
+                    <p:column headerText="N. Predio" style="text-align: center;" width="100">   <p:outputLabel value="#{emision.predio.numPredio}"/><p:outputLabel value="#{emision.predioRustico.numPredioRustico}"/></p:column>
+                    <p:column headerText="Contribuyente" style="text-align: center" width="200">
+                        <p:outputLabel value="#{emision.identificacion}-#{emision.comprador==null?emision.nombreComprador :emision.comprador.nombreCompleto}"/>
+                    </p:column>
+                    <p:column headerText="Valor" style="text-align: center;" width="80">
+                        <p:outputLabel value="#{emision.totalPago}"/>
+                    </p:column>
+                </p:dataTable>
+            </p:row>
+        </p:fieldset>
+        <p:fieldset legend="Detalle de Cobro">
+            <p:panelGrid id="detCobro" columns="2" style="width: 100%;" styleClass="noBorder">
+                <p:panelGrid columns="2">
+                    <p:column><p:outputLabel value="Contado: " style="font-weight: bolder;" /></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalEfectivo}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;" /></p:column>
+                    <p:column><p:outputLabel value="Notas Credito: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalNotasCredito}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                    <p:column><p:outputLabel value="Cheque: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalCheques}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                    <p:column><p:outputLabel value="Tarjeta: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalTarjetas}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>    
+                    <p:column><p:outputLabel value="Transferencia: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalTransferencias}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>
+                    <p:column><p:outputLabel value="Cruce de Cuentas: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotalCruceCuenta}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px;"/></p:column>    
+                    <p:column><p:outputLabel value="Total: " style="font-weight: bolder;"/><br/></p:column>
+                    <p:column><p:inputText value="#{cc.attrs.modelPago.valorTotal}" readonly="true" size="8" style="font-weight: bolder; font-size: 14px; color: red;"/></p:column>
+                </p:panelGrid>
+                <p:panelGrid columns="1">
+                    <p:column>
+                        <p:selectBooleanCheckbox value="#{cc.attrs.variosPagos}" style="font-weight: bold; font-size: 14px;">
+                            <p:ajax update="#{cc.attrs.updateComponent}:detCobro" />
+                        </p:selectBooleanCheckbox>
+                        <p:outputLabel value="** REALIZAR VARIOS PAGOS **" style="font-weight: bolder;"/>
+                    </p:column>
+                    <p:tabView>                        
+                        <p:tab title="1. EFECTIVO">
+                            <!--<p:fieldset legend="1. EFECTIVO">-->
+                            <p:panelGrid columns="2">
+                                <p:outputLabel value="Valor Recibido"/>
+                                <p:inputText value="#{cc.attrs.modelPago.valorRecibido}" style="font-weight: bolder; font-size: 12px;"
+                                             onkeypress="focusNextOnEnter(event, 'valorCobrar')">
+                                    <p:ajax event="change" listener="#{cc.attrs.modelPago.calcularEfectivo()}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision" process="@form"/>
+                                </p:inputText>
+                                <p:outputLabel value="Valor a Cobrar"/>
+                                <p:inputText id="valorCobrar" value="#{cc.attrs.modelPago.valorCobrar}"
+                                             style="font-weight: bolder; font-size: 12px;"
+                                             onkeypress="focusNextOnEnter(event, 'valorCambio')">
+                                    <p:ajax event="change" listener="#{cc.attrs.modelPago.calcularEfectivo()}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision" process="@form"/>
+                                </p:inputText>
+                                <p:outputLabel value="Cambio"/>
+                                <p:inputText id="valorCambio" value="#{cc.attrs.modelPago.valorCambio}" readonly="true"
+                                             style="font-weight: bolder; font-size: 12px;"/>
+                            </p:panelGrid>
+                            <!--</p:fieldset>-->
+                        </p:tab>
+                        <p:tab title="2. NOTA DE CREDITO" rendered="#{cc.attrs.variosPagos}">
+                            <!--<p:fieldset legend="2. NOTA DE CREDITO">-->
+                            <p:panelGrid columns="5">
+                                <!--AGREGADO-->
+                                <p:column width="60%;">
+                                    <h:outputLabel value="Nota de Credito" class="DispBlock Wid100 FontBold"/><br/>
+                                    <p:selectOneMenu id="not" value="#{cc.attrs.modelPago.nota}" effect="fade" converter="entityConverter" filter="true" filterMatchMode="contains" styleClass="selectWidth170">
+                                        <f:selectItem itemLabel="SELECCIONE" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{recaudaciones.listPagoNota}" var="n" itemLabel="#{n.id} - #{n.contribuyente.ciRuc} - #{n.contribuyente.nombreCompleto}" itemValue="#{n}"/>
+                                        <p:ajax update ="valornota , valorsaldo" />
+                                    </p:selectOneMenu>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Total"/><br/>
+                                    <p:inputText  id ="valornota" value="#{cc.attrs.modelPago.nota.valor}" readonly="true"/>
+                                </p:column>
+
+
+                                <p:column>
+                                    <p:outputLabel for="valorsaldo" value="# Saldo"/><br/>
+                                    <p:inputText id="valorsaldo"  value="#{cc.attrs.modelPago.nota.saldo}" readonly="true"/>
+                                </p:column>
+
+                                <p:column>
+                                    <p:outputLabel for="valordebitado" value="Valor"/><br/>
+                                    <p:inputText id ="valordebitado" type="number" value="#{cc.attrs.modelPago.valorDebitado}" onkeypress="validateFloatValueAndFocusNext(event, 'agregar_nota')" >
+                                        <p:ajax update="valorsaldo" />
+                                    </p:inputText>
+                                </p:column>
+
+
+                                <p:column>
+                                    <p:commandButton id="agregar_nota" value="Agregar" actionListener="#{cc.attrs.modelPago.agregarPago(3)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/>
+                                </p:column>
+                            </p:panelGrid>
+                            <p:dataTable id="dtNC" var="nc" value="#{cc.attrs.modelPago.listPagoNota}" style="margin-bottom:0; width: 700px;">
+                                <p:column headerText="# Total"><h:outputText value="#{nc.valor}" /></p:column>
+                                <p:column headerText="# Saldo"><h:outputText value="#{nc.saldo}" /></p:column>
+                                <p:column headerText="Valor"><h:outputText value="#{nc.valorDebitado}" /></p:column>
+                                <p:column headerText="Accion">
+                                    <p:commandButton value="Eliminar" actionListener="#{cc.attrs.modelPago.eliminarPagoNCOK(nc)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/>
+                                </p:column>
+                            </p:dataTable>
+                            <!--</p:fieldset>-->
+                        </p:tab>
+                        <p:tab title="3. CHEQUE" rendered="#{cc.attrs.variosPagos}" >
+                            <!--<p:fieldset legend="3. CHEQUE">-->
+                            <p:panelGrid columns="5">
+                                <p:column>
+                                    <p:outputLabel value="Banco"/><br/>
+                                    <p:selectOneMenu value="#{cc.attrs.modelPago.pagoCheque.banco}" 
+                                                     effect="fade" filter="true" filterMatchMode="startsWith"
+                                                     converter="entityConverter" panelStyle="width:300px" 
+                                                     style="width: 100%">
+                                        <f:attribute name="name" value="RenEntidadBancaria"/>
+                                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                        <f:selectItems value="#{recaudacionGeneralMB.bancos}" var="banco" itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                    </p:selectOneMenu>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Cheque"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoCheque.numCheque}"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Cuenta"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoCheque.numCuenta}"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Valor"/><br/>
+                                    <p:inputText type="number" value="#{cc.attrs.modelPago.pagoCheque.valor}"/>
+                                </p:column>
+                                <p:column><p:commandButton value="Agregar" actionListener="#{cc.attrs.modelPago.agregarPago(4)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/></p:column>
+                            </p:panelGrid>
+                            <p:dataTable id="dtCh" var="ch" value="#{cc.attrs.modelPago.listPagoCheque}" style="margin-bottom:0; width: 700px;">
+                                <p:column headerText="BANCO"><h:outputText value="#{ch.banco.nombreBanco}" /></p:column>
+                                <p:column headerText="# Cheque"><h:outputText value="#{ch.numCheque}" /></p:column>
+                                <p:column headerText="# Cuenta"><h:outputText value="#{ch.numCuenta}" /></p:column>
+                                <p:column headerText="# Valor"><h:outputText value="#{ch.valor}" /></p:column>
+                                <p:column headerText="Accion"><p:commandButton value="Eliminar" actionListener="#{cc.attrs.modelPago.eliminarPagoCh(ch)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/></p:column>
+                            </p:dataTable>
+                            <!--</p:fieldset>-->
+                        </p:tab>
+                        <p:tab title="4. TARJETA DE CREDITO" rendered="#{cc.attrs.variosPagos}" >
+                            <!--<p:fieldset legend="4. TARJETA DE CREDITO">-->
+                            <p:panelGrid columns="8">
+                                <p:column width="60%;">
+                                    <p:outputLabel value="Banco"/><br/>
+                                    <p:selectOneMenu value="#{cc.attrs.modelPago.pagoTarjetaCredito.banco}" 
+                                                     effect="fade" converter="entityConverter"
+                                                     panelStyle="width:300px" style="width: 100%" 
+                                                     filter="true" filterMatchMode="startsWith">
+                                        <f:attribute name="name" value="RenEntidadBancaria"/>
+                                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                        <f:selectItems value="#{recaudacionGeneralMB.tarjetas}" var="banco" itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                    </p:selectOneMenu>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Tarjeta"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoTarjetaCredito.numTarjeta}" size="14"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Fecha Caduca"/><br/>
+                                    <p:calendar value="#{cc.attrs.modelPago.pagoTarjetaCredito.fechaCaducidad}" pattern="dd/MM/yyyy" size="10"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Autorizacion"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoTarjetaCredito.autorizacion}" size="14"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Baucher"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoTarjetaCredito.baucher}" size="14"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Titular"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoTarjetaCredito.nombreTitular}" size="14"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Valor"/><br/>
+                                    <p:inputText type="number" value="#{cc.attrs.modelPago.pagoTarjetaCredito.valor}" style="width: 90px;"/>
+                                </p:column>
+                                <center>
+                                    <p:column><br/><p:commandButton value="Agregar" actionListener="#{cc.attrs.modelPago.agregarPago(2)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/></p:column>
+                                </center>
+                            </p:panelGrid>
+                            <center>
+                                <p:dataTable id="dtTC" var="tc" value="#{cc.attrs.modelPago.listPagoTarjetaCredito}" style="margin-bottom:0; width: 700px;">
+                                    <p:column headerText="BANCO"><h:outputText value="#{tc.banco.nombreBanco}" /></p:column>
+                                    <p:column headerText="# Tarjeta"><h:outputText value="#{tc.numTarjeta}" /></p:column>
+                                    <p:column headerText="Fecha Caducidad"><h:outputText value="#{tc.fechaCaducidad}"><f:convertDateTime pattern="dd/MM/YYYY"/></h:outputText></p:column>
+                                    <p:column headerText="# Autorizacion"><h:outputText value="#{tc.autorizacion}" /></p:column>
+                                    <p:column headerText="Baucher"><h:outputText value="#{tc.baucher}" /></p:column>
+                                    <p:column headerText="Titular"><h:outputText value="#{tc.nombreTitular}" /></p:column>
+                                    <p:column headerText="Valor"><h:outputText value="#{tc.valor}" /></p:column>
+                                    <p:column headerText="Accion">
+                                        <p:commandButton value="Eliminar" actionListener="#{cc.attrs.modelPago.eliminarPagoTC(tc)}" 
+                                                         update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </center>
+                            <!--</p:fieldset>-->
+                        </p:tab>
+                        <p:tab title="5. TRANSFERENCIA" rendered="#{cc.attrs.variosPagos}" >
+                            <!--<p:fieldset legend="5. TRANSFERENCIA">-->
+                            <p:panelGrid columns="5">
+                                <p:column>
+                                    <p:outputLabel value="Banco"/><br/>
+                                    <p:selectOneMenu value="#{cc.attrs.modelPago.pagoTransferencia.banco}" 
+                                                     effect="fade" converter="entityConverter"
+                                                     panelStyle="width:300px" style="width: 100%" 
+                                                     filter="true" filterMatchMode="startsWith">
+                                        <f:attribute name="name" value="RenEntidadBancaria"/>
+                                        <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                        <f:selectItems value="#{recaudacionGeneralMB.tarjetas}" var="banco"
+                                                       itemLabel="#{banco.nombreBanco}" itemValue="#{banco}"/>
+                                    </p:selectOneMenu>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="# Transferencia"/><br/>
+                                    <p:inputText value="#{cc.attrs.modelPago.pagoTransferencia.numTransferencia}"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Fecha"/><br/>
+                                    <p:calendar value="#{cc.attrs.modelPago.pagoTransferencia.fecha}" pattern="dd/MM/yyyy"/>
+                                </p:column>
+                                <p:column>
+                                    <p:outputLabel value="Valor"/><br/>
+                                    <p:inputText type="number" value="#{cc.attrs.modelPago.pagoTransferencia.valor}"/>
+                                </p:column>
+                                <p:column><p:commandButton value="Agregar" actionListener="#{cc.attrs.modelPago.agregarPago(5)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision" /></p:column>
+                            </p:panelGrid>
+                            <p:dataTable id="dtT" var="t" value="#{cc.attrs.modelPago.listPagoTransferencia}" style="margin-bottom:0; width: 700px;">
+                                <p:column headerText="Banco"><h:outputText value="#{t.banco.nombreBanco}" /></p:column>
+                                <p:column headerText="# Transferencia"><h:outputText value="#{t.numTransferencia}" /></p:column>
+                                <p:column headerText="Fecha"><h:outputText value="#{t.fecha}"><f:convertDateTime pattern="dd/MM/YYYY"/></h:outputText></p:column>
+                                <p:column headerText="Valor"><h:outputText value="#{t.valor}" /></p:column>
+                                <p:column headerText="Accion"><p:commandButton value="Eliminar" actionListener="#{cc.attrs.modelPago.eliminarPagoTransferencia(t)}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision"/></p:column>
+                            </p:dataTable>
+                            <!--</p:fieldset>-->
+                        </p:tab>
+                        <p:tab title="6. CRUCE DE CUENTAS" rendered="#{cc.attrs.variosPagos}" >
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Valor a Cobrar"/>
+                                <p:inputText type="number" value="#{cc.attrs.modelPago.valorTotalCruceCuenta}" style="font-weight: bolder; font-size: 12px;">
+                                    <p:ajax event="blur" listener="#{cc.attrs.modelPago.calcularCruceCuenta()}" update="#{cc.attrs.updateComponent}:detCobro,  #{cc.attrs.updateComponent}:datoEmision" process="@form"/>
+                                </p:inputText>
+                            </p:panelGrid>
+
+                        </p:tab>
+                    </p:tabView>
+                </p:panelGrid>
+            </p:panelGrid>
+        </p:fieldset>
+        <center>
+            <p:commandButton value="Procesar" styleClass="btnStyle" process="@this"
+                             actionListener="#{cc.attrs.procesarPago}" update="mainForm"
+                             icon="fa fa-fw fa-print" oncomplete="#{cc.attrs.oncompleteClose}"
+                             rendered="#{userSession.userId ne 110}">
+                <!--<p:confirm header="Confirmacion" message="Realizar Pago?" icon="ui-icon-alert" />-->
+            </p:commandButton><p:spacer width="25"/>
+            <p:commandButton value="Aceptar" icon="fa fa-fw fa-check" oncomplete="#{cc.attrs.oncompleteClose}"  styleClass="btnStyle"/>
+        </center>
+    </cc:implementation>
+</html>

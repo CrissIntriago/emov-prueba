@@ -1,0 +1,272 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Vacaciones
+    </ui:define>
+    <ui:param name="tittle" value="Vacaciones" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Parámetros de busqueda">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="thPeriodo" value="#{thVacacionesView.opcionBusqueda.anio}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{thVacacionesView.periodos}" var="item" itemValue="#{item}"/>
+                                        <p:ajax update="thVacacionesTable" listener="#{thVacacionesView.updateLazy()}" process="thPeriodo"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Nuevo registro" process="@this"
+                                                     icon="fa fa-plus" actionListener="#{thVacacionesView.form(null,false)}"
+                                                     styleClass="Fs16" style="width: 100%;background: green"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:commandButton value="Generar reporte" process="@this"
+                                                     icon="fa fa-print" actionListener="#{thVacacionesView.printReport()}"
+                                                     styleClass="Fs16" style="width: 100%;"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="thVacacionesTable" widgetVar="thVacacionesTable" var="thVacaciones" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{thVacaciones.id}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{thVacacionesView.thVacacionesLazy}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <p:column headerText="Identificación" style="width: 15%;text-align: center" filterMatchMode="contains" filterBy="#{thVacaciones.idServidor.persona.identificacion}">
+                                <h:outputText value="#{thVacaciones.idServidor.persona.identificacion}"/>
+                            </p:column>
+                            <p:column headerText="Servidor" style="width: 25%;" filterMatchMode="contains" filterBy="#{thVacaciones.idServidor.persona.nombreCompleltoSql}">
+                                <h:outputText value="#{thVacaciones.idServidor.persona.nombreCompleltoSql}"/>
+                            </p:column>
+                            <p:column headerText="Fecha de salida" style="width: 15%;text-align: center" sortBy="#{thVacaciones.fechaSalida}">
+                                <h:outputText value="#{thVacaciones.fechaSalida}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha de reingreso" style="width: 15%;text-align: center" sortBy="#{thVacaciones.fechaReingreso}">
+                                <h:outputText value="#{thVacaciones.fechaReingreso}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Tipo" style="width: 15%;text-align: center" filterBy="#{thVacaciones.aprobado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('thVacacionesTable').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="APROBADO" itemValue="true" />
+                                        <f:selectItem itemLabel="NO APROBADO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{thVacaciones.aprobado?'APROBADO':'NO APROBADO'}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 15%;text-align: center">
+                                <p:commandLink title="Visualizar" process="@this" actionListener="#{thVacacionesView.form(thVacaciones,true)}"  
+                                               update="formMain">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Editar" process="@this" actionListener="#{thVacacionesView.form(thVacaciones,false)}"  
+                                               update="formMain" rendered="#{!thVacaciones.aprobado}">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Aprobar" process="@this" actionListener="#{thVacacionesView.aprobado(thVacaciones)}"  
+                                               update="formMain" rendered="#{!thVacaciones.aprobado}">
+                                    <i class="fa fa-check-circle-o" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                                    <p:confirm header="Confirmación de aprobación" message="¿Desea aprobar este registro?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink title="Reporte" process="@this" actionListener="#{thVacacionesView.printReport()}"  
+                                               update="formMain">
+                                    <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar" process="@this" actionListener="#{thVacacionesView.detele(thVacaciones)}"  
+                                               update="formMain" rendered="#{!thVacaciones.aprobado}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminacion" message="¿Desea eliminar este registro?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                        </p:confirmDialog>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thVacacionesDlg" widgetVar="thVacacionesDlg" width="50%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Vacaciones">
+            <h:form prependId="false" id="thVacacionesForm">
+                <p:fieldset legend="Servidor" id="fielsetServidor">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thVacacionesView.thVacaciones.id == null ? true:false}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <div class="ui-inputgroup">
+                                <p:inputText id="identificacion" class="panelInput" value="#{thVacacionesView.identificacion}"
+                                             onkeypress="focusNextOnEnter(event, 'identificacion')" maxlength="10">
+                                    <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                </p:inputText>
+                                <p:commandButton title="Buscar" icon="fa fa-search" id="btnIdentificacion"
+                                                 actionListener="#{thVacacionesView.findServidor()}"
+                                                 update="fielsetServidor,thVacacionesDetalleTable" process="identificacion" styleClass="button-group">
+                                </p:commandButton>
+                            </div>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{thVacacionesView.thVacaciones.id == null ? false:true}">
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacionView" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.idServidor.persona.identificacion}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionView')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Dias acumulados:" style="font-weight: bold"/>
+                            <p:inputText id="diasAcumuladosVacaciones" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.idServidor.diasAcumuladosVacaciones}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'diasAcumuladosVacaciones')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Dias consumidos:" style="font-weight: bold"/>
+                            <p:inputText id="diasFaltantes" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.diasFaltantes}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'diasFaltantes')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Dias disponibles:" style="font-weight: bold"/>
+                            <p:inputText id="diasDisponibles" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.diasDisponibles}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'diasDisponibles')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">   
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                            <p:inputText id="nombres" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.idServidor.persona.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombres')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="apellidos" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.idServidor.persona.apellido}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'apellidos')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Vacaciones" id="fielsetVacaciones">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/><br/>
+                            <p:inputText id="periodo" class="panelInput" style="width: 100%" 
+                                         value="#{thVacacionesView.thVacaciones.periodo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'periodo')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha salida:" style="font-weight: bold"/>
+                            <p:calendar id="fechaSalida"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" 
+                                        readonlyInput="true" disabled="#{thVacacionesView.view}"
+                                        onkeypress="focusNextOnEnter(event, 'fechaSalida')"
+                                        value="#{thVacacionesView.thVacaciones.fechaSalida}" style="width: 100%">
+                                <p:ajax event="dateSelect" listener="#{thVacacionesView.calcularDias()}"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha reingreso:" style="font-weight: bold"/>
+                            <p:calendar id="fechaReingreso"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" 
+                                        readonlyInput="true" disabled="#{thVacacionesView.view}"
+                                        onkeypress="focusNextOnEnter(event, 'fechaReingreso')"
+                                        value="#{thVacacionesView.thVacaciones.fechaReingreso}" style="width: 100%">
+                                <p:ajax event="dateSelect" listener="#{thVacacionesView.calcularDias()}"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="panelDias">
+                            <p:outputLabel for="@next" value="Dias ingresados:" style="font-weight: bold"/><br/>
+                            <p:inputNumber id="dias" class="panelInput" style="width: 100%" 
+                                           value="#{thVacacionesView.thVacaciones.dias}" decimalPlaces="0"
+                                           readonly="true" onkeypress="focusNextOnEnter(event, 'dias')">
+                            </p:inputNumber>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thVacacionesDetalleTable" widgetVar="thVacacionesDetalleTable" var="thVacacionesDetalle" 
+                              value="#{thVacacionesView.thVacacionesAnteriores}" rowKey="#{thAnticipoDetalle.id}"
+                              scrollable="true" scrollHeight="300" lazy="false" rows="12" style="width: 100%;margin-top: 10px" 
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <p:column headerText="Dias" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thVacacionesDetalle.dias}" />
+                    </p:column>
+                    <p:column headerText="Periodo" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thVacacionesDetalle.periodo}" />
+                    </p:column>
+                    <p:column headerText="Fecha de salida" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thVacacionesDetalle.fechaSalida}">
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Fecha de reingreso" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thVacacionesDetalle.fechaReingreso}">
+                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Aprobado" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thVacacionesDetalle.aprobado?'SI':'NO'}" />
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Guardar" update="thVacacionesTable" rendered ="#{!thVacacionesView.view}"
+                                     icon="fa fa-save" actionListener="#{thVacacionesView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+        <p:dialog id="thVacacionesDocumentoDlg" widgetVar="thVacacionesDocumentoDlg" width="50%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Vacaciones">
+            <h:form prependId="false" id="thVacacionesDocumentoForm">
+                <p:dataTable  id="thVacacionesDocumentoTable" widgetVar="thVacacionesDocumentoTable" var="servidor" value="#{thVacacionesView.thServidoresList}" 
+                              scrollable="true" scrollHeight="auto" lazy="false" rows="100" style="width: 100%" rowKey="#{servidor.id}"
+                              rowsPerPageTemplate="30"  paginator="true" 
+                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Servidores Activos
+                    </f:facet>
+                    <p:column headerText="Identificación" filterBy="#{servidor.persona.identificacion}"  style="width: 20%;text-align: center">
+                        <h:outputText value="#{servidor.persona.identificacion}" />
+                    </p:column> 
+                    <p:column headerText="Nombres" filterBy="#{servidor.persona.nombreCompleltoSql}"  style="width: 65%;">
+                        <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                    </p:column>
+                    <p:column headerText="Acciones"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{thVacacionesView.print('pdf',servidor)}" title="Seleccionar"  process="@this">
+                            <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                        </p:commandLink>
+                        <p:commandLink actionListener="#{thVacacionesView.print('xlsx',servidor)}" title="Seleccionar"  process="@this">
+                            <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>        
+        </p:dialog> 
+    </ui:define>
+</ui:composition>

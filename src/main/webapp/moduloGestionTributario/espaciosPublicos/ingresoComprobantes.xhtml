@@ -1,0 +1,384 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:param name="tittle" value="GENERA LIQUIDACIÓN" /> 
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form id="mainForm">
+                    <p:tabView id="tvRecaudaciones" style="width: 100%" class="ui-g-12">
+                        <p:ajax event="tabChange" listener="#{planificacionView.onChangeTab}"/>
+                        <p:tab id="cobroGenerales"  title="Certificados">
+                            <p:panelGrid columns="2" columnClasses="ui-g-5,ui-g-7" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1">
+                                    <p:tree value="#{planificacionView.root2}" var="node" dynamic="true" selectionMode="single"
+                                            selection="#{planificacionView.selectedNode}"  rendered="#{userSession.userId ne 110}">
+                                        <p:ajax event="select" listener="#{planificacionView.onNodeSelect}" update="mainForm:tvRecaudaciones:dtRubros"/>
+                                        <p:treeNode><h:outputText value="#{node.id} - #{node.nombreTransaccion}" /></p:treeNode>
+                                    </p:tree>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1">
+                                    <p:dataTable id="dtRubros" var="rubro" value="#{planificacionView.cobrosGenerales.tipoLiquidacion.renRubrosLiquidacionCollection}" selectionMode="single" rendered="#{userSession.userId ne 110}"
+                                                 selection="#{planificacionView.rubroSelect}" rowKey="#{rubro.id}" style="text-align: center;float: right; width: 100%;" emptyMessage="Item no posee rubros." scrollable="true" scrollHeight="140">
+                                        <f:facet name="header">RUBROS POR TITULOS</f:facet>
+                                        <p:ajax event="rowSelect" listener="#{planificacionView.onRowSelect()}"/>
+                                        <p:column headerText="Id" width="10%"> #{rubro.id} </p:column>
+                                        <p:column headerText="Descripcion" style="text-align: left; font-weight: bold;">#{rubro.descripcion} </p:column>
+                                        <p:column headerText="Valor" width="15%"> #{rubro.valor} </p:column>
+                                    </p:dataTable>
+                                    <p:panel id="panelDetalle" header="DETALLE DE TRANSACCION" style="float: right; width: 100%; height: 250px;" rendered="#{userSession.userId ne 110}">
+                                        <h:panelGroup layout="block">
+                                            <p:outputLabel value="Fecha de liquidación:" class="FontBold"/> <p:spacer width="10"/>
+                                            <p:inputText value="#{planificacionView.anio}" style="width: 100px; margin-bottom: 10px;">
+                                                <p:keyFilter mask="num"/>
+                                            </p:inputText>
+                                        </h:panelGroup> 
+
+                                        <p:dataTable id="dtDetalle" var="det" value="#{planificacionView.rubrosSeleccionado}" scrollable="true" scrollHeight="140" style="text-align: center;" rowIndexVar="index" emptyMessage="Sin elementos seleccionados...">
+                                            <p:column headerText="Descripcion" style="text-align: left;"> #{det.descripcion} </p:column>
+                                            <p:column headerText="Cantidad" width="75"><p:outputLabel value="#{det.cantidad}" /></p:column>
+                                            <p:column headerText="Avaluo / Area" width="75"><p:outputLabel value="#{det.valorCalculo}" /></p:column>
+                                            <!--<p:column headerText="Valor" width="100"><h:outputText value="#{det.valor}"><f:convertNumber pattern="#0.00" locale="pt_BR"/></h:outputText></p:column>-->
+                                            <p:column headerText="Total" width="100"><h:outputText value="#{det.valorTotal}"><f:convertNumber pattern="#0.00" locale="pt_BR"/></h:outputText></p:column>
+                                            <p:column headerText="Del." width="35">
+                                                <p:commandLink update="dtDetalle" actionListener="#{planificacionView.deleteRubrosDetalle(index)}">
+                                                    <i class="fa fa-close" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                                </p:commandLink>
+                                            </p:column>
+                                        </p:dataTable>
+                                        <h:panelGrid columns="2" styleClass="noBorder" style="margin: 0 auto;">
+                                            <p:outputLabel value="Valor Total: $" style="font-weight: bold; font-size: 14px;"/>
+                                            <p:inputText value="#{planificacionView.cobrosGenerales.totalPago}" readonly="true" style="font-weight: bold; font-size: 14px;"/>
+                                        </h:panelGrid>
+                                    </p:panel>
+                                    <p:panel id="panelInfoAdc" header="INFORMACION ADICIONAL" style="float: right; width: 100%; height: 380px;" rendered="#{userSession.userId ne 110}">
+                                        <p:autoUpdate/>
+                                        <h:panelGrid style="width: 100%;" styleClass="noBorder" columns="2">
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:outputLabel  value="CI/RUC:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <!--<p:inputText value="#{planificacionView.identificacionCobros}" size="20"/>-->
+                                                <p:inputText value="#{planificacionView.ciRucCobros}" style="width: 20%;" />
+                                                <p:spacer width="10" />
+                                                <p:commandLink title="Buscar" actionListener="#{planificacionView.showDlgEntes(1)}" update="panelInfoAdc" styleClass="btnStyle">
+                                                    <p:graphicImage value="/resources/images/buscar.png"  height="20" width="20"/>
+                                                </p:commandLink>
+
+                                                <p:commandLink title="Limpiar" actionListener="#{planificacionView.limpiarDatosContribuyente()}" update="panelInfoAdc" styleClass="btnStyle">
+                                                    <p:graphicImage value="/resources/images/refres.png"  height="20" width="20"/>
+                                                </p:commandLink>
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:outputLabel  value="Nombres/Razon Social: " class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:inputText value="#{planificacionView.cobrosGenerales.comprador.nombreCompleto}" rendered="#{planificacionView.cobrosGenerales.comprador != null}" size="65" readonly="true"/>
+                                                <p:inputText value="#{planificacionView.cobrosGenerales.nombreComprador}" rendered="#{planificacionView.cobrosGenerales.comprador == null}" size="65" readonly="true"/>
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:commandLink title="Buscar" actionListener="#{planificacionView.loadBovedasByPropietario()}" update="panelInfoAdc" styleClass="btnStyle">
+                                                    <p:graphicImage value="/resources/images/bovedas.jpg"  height="40" width="40"/>
+                                                </p:commandLink><br></br>
+                                                <p:outputLabel value="Boveda: " style="font-size: 13px; font-weight: bolder; padding: 0px; "/>    
+
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:outputLabel value="Descripción: #{planificacionView.boveda.descripcion}"/>
+                                                <p:inputText value="#{planificacionView.boveda.manzana} - #{planificacionView.boveda.loteAlfanumerico}" readonly="true" />
+                                            </h:panelGroup>
+
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+<!--                                                <p:inputTextarea placeholder="UBICACION" value="#{planificacionView.departamentoDetalleTitulos.ubicacion}" rows="3" style="width: 95%; font-size: 14px; font-weight: bold;"/>-->
+                                            </h:panelGroup>
+                                        </h:panelGrid>
+
+
+                                        <h:panelGrid style="width: 100%;" styleClass="noBorder" columns="2">
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:outputLabel  value="Observacion:" class="DispBlock Wid100" style="font-weight: bolder !important; margin-bottom: 0px;" />
+                                            </h:panelGroup>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:inputTextarea value="#{planificacionView.cobrosGenerales.observacion}" rows="3" style="width: 95%; font-size: 14px; font-weight: bold;"/>
+                                            </h:panelGroup>
+
+                                            <br></br><br></br><br></br>
+                                            <h:panelGroup layout="block" class="Responsive100 Responsive">
+                                                <p:commandButton value="Ingresar" styleClass="btnStyle" process="mainForm" icon="ui-icon-circle-arrow-e" style="font-size: 13px; width: auto;"
+                                                                 actionListener="#{planificacionView.seleccionarLiquidacionCementerio()}">
+                                                    <p:confirm header="Advertencia" message="Esta Seguro de Continuar?" icon="ui-icon-alert" />
+                                                </p:commandButton>
+                                            </h:panelGroup>
+                                        </h:panelGrid>
+                                    </p:panel>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+
+
+                            <div style="clear: both"/>
+                        </p:tab>
+
+                        <p:tab id="tituloCredito" title="Certificados Generados">
+                            <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         value="#{planificacionView.liquidacionesLazy}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                         rowKey="#{titulo.id}"  filterEvent="enter">
+
+                                <p:column  headerText="Fecha" width="70" >
+                                    <p:outputLabel value="#{titulo.fechaIngreso}"  style="font-weight: bold;">
+                                        <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column  headerText="Tipo Liquidación" width="250"  filterBy="#{titulo.tipoLiquidacion.nombreTransaccion}">
+
+                                    <p:outputLabel value="#{titulo.tipoLiquidacion.nombreTransaccion}" style="text-transform: uppercase; font-size: 12px"/>
+
+                                </p:column>
+                                <p:column headerText="Id Liquidación" width="70" filterBy="#{titulo.idLiquidacion}" sortBy="#{titulo.idLiquidacion}" filterStyle="width: 80%;">
+                                    <p:outputLabel value="#{titulo.idLiquidacion}" style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column headerText="Boveda" width="200" filterBy="#{titulo.departamentoDetalleTitulos.cementerioBoveda.descripcion}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.departamentoDetalleTitulos.cementerioBoveda.descripcion}" style="font-weight: bold;"/>
+                                </p:column>
+                                <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacion}" filterStyle="width: 80%;">
+                                    <p:outputLabel style="font-weight: bold; font-size: 13px;" value="#{titulo.comprador.identificacion}"/>
+                                </p:column>
+                                <p:column headerText="Solicitante" width="250" filterBy="#{titulo.comprador.nombreCompleto}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.comprador.nombreCompleto}"/>
+                                </p:column>
+
+                                <p:column headerText="Estado" width="250" filterBy="#{titulo.estadoLiquidacion.descripcion}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{titulo.estadoLiquidacion.descripcion}"/>
+                                </p:column>
+
+                                <p:column headerText="Valor" width="60"><p:outputLabel value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+
+                                <p:column headerText="Acciones" width="110" >
+                                    <p:commandLink actionListener="#{planificacionView.imprimir(titulo)}" title="#{titulo.idLiquidacion}" >
+
+                                        <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink id="ajax"  actionListener="#{planificacionView.anularLiquidacion(titulo)}" rendered="false"
+                                                   update="mainForm:tvRecaudaciones:dtLiquidaciones">
+                                        <i class="fa fa-close" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmacion" message="Esta seguro de anular la liquidacion" icon="ui-icon-alert" />
+                                    </p:commandLink>
+                                </p:column>
+                                <p:column headerText="PERMISO" width="110" rendered="false">
+                                    <p:commandLink actionListener="#{planificacionView.imprimirPermisoEspaciosPublicos(titulo)}"  rendered="#{titulo.tipoLiquidacion.id eq 215 }">
+                                        <i class="fa fa-print" style="font-size: 1.5em; margin-right: 8px;color: blue;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                    <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                                </p:confirmDialog>
+                            </p:dataTable>
+                        </p:tab>
+                    </p:tabView>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog widgetVar="dlgSolicitante" header="" appendTo="@(body)" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="frmSolicitante">
+                <h:panelGroup layout="block" id="wizarContainer1" class="Container Wid100 MarTop10" >
+                    <h:panelGroup layout="block" class="Container90" >
+                        <h1 class="BigTopic Fs16">Contribuyentes</h1>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="Container10" >
+                        <p:commandButton actionListener="#{planificacionView.nuevoCliente()}" icon="fa fa-plus" value="Nuevo" style="width: auto;"/>
+                        <br/>
+
+                    </h:panelGroup>
+                </h:panelGroup>
+
+                <br/>  <br/>  <br/>  <br/>  <br/>
+                <div align="center">
+                    <p:dataTable var="s" value="#{planificacionView.solicitantes}" style="width: 98%;text-align: center;" lazy="true" 
+                                 paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                                 selection="#{planificacionView.cobrosGenerales.comprador}" rowKey="#{s.id}">
+                        <p:ajax event="rowSelect" update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowUnselect"  update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowSelectRadio"  update="frmSolicitante:btnSeleccionar" />
+                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                        <p:column headerText="CI/RUC" sortBy="#{s.identificacion}" width="150" filterBy="#{s.identificacion}" filterStyle="width: 90%;">
+                            <h:outputText value="#{s.identificacion}"/>
+                        </p:column>
+                        <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+                <br></br>
+                <center>
+                    <p:commandButton id="btnSeleccionar" value="Seleccionar" 
+                                     icon="ui-icon-plus" 
+                                     actionListener="#{planificacionView.seleccionar()}"
+                                     style="height: 30px"
+                                     disabled="#{planificacionView.cobrosGenerales.comprador.id eq null}"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog widgetVar="dlgValorRubro" header="Detalle del rubro" resizable="false" modal="true">
+            <h:form id="formValores">
+                <!--CALCULO CON CANTIDADES EMPLEADOS
+                    INICIO
+                -->
+                <h:panelGrid rendered="#{planificacionView.renderPlanificacion}" styleClass="noBorder" columns="2">
+                    <p:outputLabel value="Num. Empleados" style="font-weight: bolder;" />
+                    <p:selectBooleanCheckbox value="#{planificacionView.calculoEmpleados}" >
+                        <p:ajax update="cant_rubro" />
+                    </p:selectBooleanCheckbox>
+                </h:panelGrid>
+                <!--FIN-->
+                <h:panelGrid styleClass="noBorder" columns="2"> 
+                    <p:outputLabel rendered="false" value="Año" style="font-weight: bolder;" />
+                    <p:inputNumber rendered="false" id="anio_liq" value="#{planificacionView.rubroSelect.anio}" decimalPlaces="0" 
+                                   onkeypress="validateFloatValueAndFocusNext(event, 'formValores:cant_rubro_input')" />
+                    <p:outputLabel value="Cantidad:" style="font-weight: bolder;" />
+                    <p:inputNumber id="cant_rubro" value="#{planificacionView.rubroSelect.cantidad}" decimalPlaces="0" 
+                                   onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" />
+
+
+                    <p:outputLabel rendered="false" value="Area Total" style="font-weight: bolder;"  />
+                    <p:inputNumber rendered="false" id="valor_calculo_rubro" value="#{planificacionView.rubroSelect.valorCalculo}" decimalPlaces="2" 
+                                   onkeypress="validateFloatValueAndFocusNext(event, 'formValores:valor_rubro_input')" ></p:inputNumber>
+                    <p:outputLabel value="Valor:" style="font-weight: bolder;" />
+                    <p:inputNumber id="valor_rubro" value="#{planificacionView.rubroSelect.valor}" decimalPlaces="2" onkeypress="focusNextOnEnter(event, 'formValores:btn_detalle_rubro')">
+                    </p:inputNumber>
+                </h:panelGrid>
+                <center style="margin-top: 10px; margin-bottom: 10px;">
+                    <p:commandButton id="btn_detalle_rubro" value="Aceptar" styleClass="btnStyle" icon="ui-icon-check" actionListener="#{planificacionView.guardaRubro()}"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog widgetVar="dlgNumeroLiquidacion" header="Codigo de liquidacion generado" resizable="false" modal="true">
+            <h:form id="formLiq">
+
+                <h:panelGrid styleClass="noBorder" columns="1" >
+                    <p:outputLabel value="#{planificacionView.liquidacion.idLiquidacion} " style="font-weight: bold; font-size: 25px; text-align: center;" />
+                </h:panelGrid>
+
+                <center>
+                    <p:commandButton value="Imprimir" styleClass="btnStyle" oncomplete="PF('dlgNumeroLiquidacion').hide();" actionListener="#{planificacionView.imprimir(planificacionView.liquidacion)}" update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog header="Seleccionar Boveda" widgetVar="selBoveda" modal="true" resizable="false" width="75%" height="25%">
+            <h:form id="formBoveda">
+                <p:tabView>
+                    <p:tab title="Bovedas del Contribuyente">
+                        <p:dataTable id="dtBovedasXPropietarios" value="#{planificacionView.bovedasPropietario}" var="pt" paginator="true" emptyMessage="No se encontró ninguna boveda registrada"
+                                     rows="4" lazy="true" selection="#{planificacionView.boveda}" rowKey="#{pt.id}" widgetVar="boveda" 
+                                     paginatorPosition="bottom" rowsPerPageTemplate="5,10,15,20,30,50"
+                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     filterEvent="enter">
+
+                            <p:ajax event="rowSelectRadio"  update="dtBovedasXPropietarios" />
+                            <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+
+                            <p:column headerText="Cedula"  style="width:195px; text-align: center;" filterBy="#{pt.propietario.identificacion}">
+                                <h:outputText value="#{pt.propietario.identificacion}"   style="text-transform: uppercase;" />
+                            </p:column>
+                            <p:column headerText="Propietarios" style="width:195px; text-align: center;" >
+                                <ui:repeat id="local" value="#{pt.espCementerioBovedaEnteList}" var="propietario">
+                                    <h:outputText value="#{propietario.ente.nombre} #{propietario.ente.apellido}"  style="text-transform: uppercase;" />
+                                    <h:outputText value="#{propietario.ente.razonSocial}"  style="text-transform: uppercase;" />
+                                    <!--rendered="#{!propietario.ente.esPersona  and propietario.tipo.id eq 763}"rendered="#{!propietario.ente.esPersona  and propietario.tipo.id eq 763}"
+                                    rendered="#{propietario.ente.esPersona and propietario.tipo.id eq 763}"
+                                    -->
+                                </ui:repeat>    
+                            </p:column>
+
+                            <p:column headerText="Manzana" style="width:10px; text-align: center;"    filterBy="#{pt.manzana}" width="12%;" filterStyle="width:70%;"  sortBy="#{pt.manzana}" >
+                                <h:outputText value="#{pt.manzana}"/>
+                            </p:column>
+                            <p:column headerText="Lote" style="width:10px; text-align: center;"   filterBy="#{pt.loteAlfanumerico}" width="12%;" filterStyle="width:70%;"  sortBy="#{pt.loteAlfanumerico}"  >
+                                <h:outputText value="#{pt.loteAlfanumerico}"/>
+                            </p:column>
+                            <p:column headerText="Àrea" style=" width:50px; text-align: center;"   >
+                                <h:outputText value="#{pt.area}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Bovedas del Registradas">
+                        <p:dataTable id="dtBovedas" value="#{planificacionView.bovedasLazy}" var="pt" paginator="true" emptyMessage="No se encontró ninguna boveda registrada"
+                                     rows="5" lazy="true" selection="#{planificacionView.boveda}" rowKey="#{pt.id}" widgetVar="boveda" 
+                                     paginatorPosition="bottom" rowsPerPageTemplate="5,10,15,20,30,50"
+                                     currentPageReportTemplate="{startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     filterEvent="enter">
+
+                            <p:ajax event="rowSelectRadio"  update="dtBovedas" />
+                            <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+
+                            <p:column headerText="Cedula" style="width:195px; text-align: center;" filterBy="#{pt.cedulasPropietarios}">
+                                <h:outputText value="#{pt.cedulasPropietarios}"   style="text-transform: uppercase;" />
+                            </p:column>
+                            <p:column headerText="Propietarios" style="width:195px; text-align: center;" >
+                                <ui:repeat id="local" value="#{pt.espCementerioBovedaEnteList}" var="propietario">
+                                    <h:outputText value="#{propietario.ente.nombre} #{propietario.ente.apellido}"  style="text-transform: uppercase;" />
+                                    <h:outputText value="#{propietario.ente.razonSocial}"  style="text-transform: uppercase;" />
+<!--                                    rendered="#{propietario.ente.esPersona and propietario.tipo.id eq 763}"
+                                    rendered="#{!propietario.ente.esPersona  and propietario.tipo.id eq 763}"-->
+                                </ui:repeat>    
+                            </p:column>
+
+                            <p:column headerText="Manzana" style="width:10px; text-align: center;"    filterBy="#{pt.manzana}" width="12%;" filterStyle="width:70%;"  sortBy="#{pt.manzana}" >
+                                <h:outputText value="#{pt.manzana}"/>
+                            </p:column>
+                            <p:column headerText="Lote" style="width:10px; text-align: center;"   filterBy="#{pt.lote}" width="12%;" filterStyle="width:70%;"  sortBy="#{pt.lote}"  >
+                                <h:outputText value="#{pt.loteAlfanumerico}"/>
+                            </p:column>
+                            <p:column headerText="Àrea" style=" width:50px; text-align: center;"   >
+                                <h:outputText value="#{pt.area}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:tabView>
+                <br></br>
+                <center>
+                    <p:commandButton value="SELECCIONAR" actionListener="#{planificacionView.seleccionaBoveda()}"/>
+                </center>
+                <br></br>
+            </h:form>
+        </p:dialog>
+
+        <script>
+            $(document).ready(function () {
+                //attach click event to button
+                $("#formValores [type='reset']").click(function () {
+                    $("#formValores [name='valorMain']").focus();
+                });
+            });
+        </script>
+
+    </ui:define>
+</ui:composition>

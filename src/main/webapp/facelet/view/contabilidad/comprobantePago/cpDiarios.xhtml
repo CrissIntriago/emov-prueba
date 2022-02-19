@@ -1,0 +1,404 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Comprobante de pago
+    </ui:define>
+    <ui:param name="tittle" value="Comprobante de pago"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Detalle:">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contComprobantePagoView.contComprobantePago.numRegistro==null?false:true}">
+                                    <p:outputLabel for="@next" value="No." style="font-weight: bold"/>
+                                    <p:inputText id="cpNumReferencia" value="#{contComprobantePagoView.contComprobantePago.numRegistro}" readonly="true"
+                                                 style="width: 100%" onkeypress="focusNextOnEnter(event, 'cpNumReferencia')"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>
+                                    <p:selectOneMenu id="cpPeriodo" value="#{contComprobantePagoView.contComprobantePago.periodo}"
+                                                     disabled="#{!contComprobantePagoView.view}"
+                                                     filter="true" filterMatchMode="contains" style="width: 100%">
+                                        <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{contComprobantePagoView.listaPeriodo}" var="item" itemValue="#{item}"/>
+                                        <p:ajax process="@this"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Fecha de registro:" style="font-weight: bold"/>
+                                    <p:calendar id="cpFecha"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                onkeypress="focusNextOnEnter(event, 'cpFecha')" readonlyInput="true"  disabled="#{!contComprobantePagoView.view}"
+                                                value="#{contComprobantePagoView.contComprobantePago.fechaRegistro}" style="width: 100%">
+                                        <p:ajax event="dateSelect"/>
+                                    </p:calendar> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Comprobante de pago por abono:" style="font-weight: bold"/><br/>
+                                    <p:selectBooleanCheckbox value="#{contComprobantePagoView.contComprobantePago.abono}"  disabled="#{!contComprobantePagoView.view}">
+                                        <p:ajax update="registroContableDetalleTable"/>
+                                    </p:selectBooleanCheckbox>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Descripción" style="font-weight: bold"/>
+                                    <p:inputTextarea id="cpDetalle" rows="5" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase" 
+                                                     readonly="#{!contComprobantePagoView.view}"
+                                                     onkeypress="focusNextOnEnter(event, 'cpDetalle')" value="#{contComprobantePagoView.contComprobantePago.descripcion}"/>    
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Registro contable:">
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Num. registro contable" style="font-weight: bold"/>
+                                    <div class="ui-inputgroup">
+                                        <p:inputText id="idRegistroContable"  style="width: 100%;" 
+                                                     onkeypress="focusNextOnEnter(event, 'idRegistroContable')" value="#{contComprobantePagoView.idDiario}">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                        <p:commandButton title="Diarios Generales" icon="fa fa-search" id="botonBusquedaDiarioGeneral"
+                                                         rendered="#{contComprobantePagoView.view}"
+                                                         actionListener="#{contComprobantePagoView.findDIario()}" update="formMain"
+                                                         process="idRegistroContable" styleClass=" button-group">
+                                        </p:commandButton>
+                                    </div>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Fecha de registro:" style="font-weight: bold"/>
+                                    <p:inputText id="fechaRegistroContable"  style="width: 100%;"  readonly="true"
+                                                 onkeypress="focusNextOnEnter(event, 'fechaRegistroContable')" 
+                                                 value="#{contComprobantePagoView.contComprobantePago.idContDiarioGeneral.fechaRegistro}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy" />
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="@next" value="Descripción:" style="font-weight: bold"/>
+                                    <p:inputTextarea id="dgDetalle" rows="5" style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase" readonly="true"
+                                                     value="#{contComprobantePagoView.contComprobantePago.idContDiarioGeneral.descripcion}"
+                                                     onkeypress="focusNextOnEnter(event, 'dgDetalle')" />    
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput"  rendered="#{contComprobantePagoView.view}">
+                            <p:commandButton value="Cta. Banco de pago" id="botonCtaBanco" update="registroContableDetalleTable"
+                                             disabled="#{empty contComprobantePagoView.contDiarioGeneralDetalleList}"
+                                             icon="fa fa-th-list" actionListener="#{contComprobantePagoView.openBancoDlg()}" styleClass="Fs16" >
+                            </p:commandButton>
+                        </h:panelGroup>                      
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contComprobantePagoView.view}" >
+                            <p:commandButton value="Guardar" id="botonGuardar" style="background: green" 
+                                             icon="fa fa-save" actionListener="#{contComprobantePagoView.saveComprobantePago()}" styleClass="Fs16" >
+                                <p:confirm header="Confirmación de guardado" message="¿Está seguro desea guardar el comprobante de pago?" icon="fa fa-exclamation-triangle" />
+                            </p:commandButton>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:commandButton value="Limpiar" id="botonlimpiarCuentasComprobante"
+                                             style="background: red" update="formMain"
+                                             icon="fa fa-paint-brush" actionListener="#{contComprobantePagoView.limpiar(true)}" styleClass="Fs16" >
+                                <p:confirm header="Confirmación de limpieza" message="¿Está seguro desea limpiar el comprobante de pago?" icon="fa fa-exclamation-triangle" />
+                            </p:commandButton>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="registroContableDetalleTable" widgetVar="registroContableDetalleTable" var="detalle" style="width: 100%;" 
+                                     lazy="true" rows="50" editable="true" editMode="cell" rowKey="#{detalle.numeracion}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{contComprobantePagoView.contDiarioGeneralDetalleList}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <f:facet name="header">
+                                DETALLE DEL COMPROBANTE DE PAGO
+                            </f:facet>
+                            <p:column headerText="No." style="width: 5%;text-align: center">
+                                <h:outputText value="#{detalle.numeracion}"/>
+                            </p:column>
+                            <p:column headerText="Cta. Contable" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.idContCuentas.codigo}"/>
+                            </p:column>
+                            <p:column headerText="Cta. Contable" style="width: 18%;">
+                                <h:outputText value="#{detalle.idContCuentas.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Debe" style="width: 9%;text-align: center">
+                                <p:cellEditor>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{detalle.debe}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{detalle.debe}" disabled="#{contComprobantePagoView.view == false? true:(!contComprobantePagoView.contComprobantePago.abono)}">
+                                            <p:ajax update="registroContableDetalleTable" listener="#{contComprobantePagoView.valorAbono(detalle)}" />
+                                        </p:inputNumber>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Haber" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.haber}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Partida" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.partidaPresupuestaria}"/>
+                            </p:column>
+                            <p:column headerText="Ejecutado" style="width: 9%;text-align: center">
+                                <h:outputText value="#{detalle.ejecutado}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Quitar" style="width: 5%;text-align: center" rendered="#{contComprobantePagoView.view}">
+                                <p:commandLink title="Eliminar" actionListener="#{contComprobantePagoView.deleteRegistro(detalle,index)}"  
+                                               rendered="#{detalle.partidaPresupuestaria == null ? true:false}"
+                                               update="registroContableDetalleTable" process="@this">
+                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                </p:commandLink> 
+                            </p:column>
+                            <p:columnGroup type="footer">
+                                <p:row >
+                                    <p:column colspan="3" footerText="TOTALES " style="text-align:right;font-weight: bold"/>
+                                    <p:column footerText="$#{contComprobantePagoView.totalDebe}" style="text-align:right;font-weight: bold" />
+                                    <p:column footerText="$#{contComprobantePagoView.totalHaber}" style="text-align:right;font-weight: bold"/>
+                                    <p:column colspan="1" footerText="" style="text-align:center;font-weight: bold"/>         
+                                    <p:column footerText="$#{contComprobantePagoView.totalEjecutado}" style="text-align:right;font-weight: bold"/>
+                                    <p:column footerText="" style="text-align:right;font-weight: bold" rendered="#{contComprobantePagoView.view}"/>
+                                </p:row>
+                            </p:columnGroup>
+                        </p:dataTable>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="beneficiariosTable" widgetVar="beneficiariosTable" var="beneficiario" style="width: 100%;" 
+                                     lazy="false" rows="50" editable="true" editMode="cell" rowKey="#{beneficiario.idCliente}" rowIndexVar="index"
+                                     paginator="true" paginatorPosition="bottom" value="#{contComprobantePagoView.beneficiarioComprobantePagos}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen datos con los parámetros especificados">
+                            <f:facet name="header">
+                                LISTADO DE BENEFICIARIOS
+                            </f:facet>
+                            <p:column headerText="Cta. bancaria" style="width: 10%;text-align: center"
+                                      filterBy="#{beneficiario.idDetalleBanco.cuentaBanco}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.cuentaBanco}"/>
+                            </p:column>
+                            <p:column headerText="Nom. banco" style="width: 30%;"
+                                      filterBy="#{beneficiario.idDetalleBanco.banco.nombreBanco}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.banco.nombreBanco}"/>
+                            </p:column>
+                            <p:column headerText="Tipo de cuenta" style="width: 15%;text-align: center">
+                                <h:outputText value="#{beneficiario.idDetalleBanco.tipoCuenta.texto}"/>
+                            </p:column>
+                            <p:column headerText="Nombre beneficiario" style="width: 30%;"
+                                      filterBy="#{beneficiario.idCliente.nombreCompleltoSql}" filterMatchMode="contains">
+                                <h:outputText value="#{beneficiario.idCliente.nombreCompleltoSql}"/>
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 15%;">
+                                <h:outputText value="#{beneficiario.monto}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Cambiar" style="width: 8%;text-align: center" rendered="#{contComprobantePagoView.view}">
+                                <p:commandLink title="Cambiar" actionListener="#{contComprobantePagoView.searchBeneficiario(beneficiario)}"
+                                               update="registroContableDetalleTable" process="@this">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; color: green;"></i>
+                                    <p:ajax event="dialogReturn" listener="#{contComprobantePagoView.selectBeneficiario}" update="beneficiariosTable"/>
+                                </p:commandLink> 
+                            </p:column>
+                            <p:columnGroup type="footer" rendered="#{contComprobantePagoView.view}">
+                                <p:row >
+                                    <p:column colspan="4" footerText="TOTALE " style="text-align:right;font-weight: bold"/>
+                                    <p:column footerText="$#{contComprobantePagoView.totalBeneficiario}" style="text-align:right;font-weight: bold" />
+                                    <p:column footerText="" style="text-align:right;font-weight: bold" rendered="#{contComprobantePagoView.view}"/>
+                                </p:row>
+                            </p:columnGroup>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="bancoDlg" widgetVar="bancoDlg" width="60%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de banco">
+            <h:form prependId="false" id="bancoForm">
+                <p:dataTable  id="contCuentaBancoTable" widgetVar="contCuentaBancoTable" var="contCuentaBanco" 
+                              value="#{contComprobantePagoView.contCuentaEntidadLazyModel}" 
+                              scrollable="true" scrollHeight="auto" lazy="true" rows="400000" style="width: 100%" rowKey="#{banco.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Cta. Contable
+                    </f:facet>
+                    <p:column headerText="Cta. Bancaria" filterBy="#{contCuentaBanco.numeroCuenta}"  style="width: 20%;text-align: center">
+                        <h:outputText value="#{contCuentaBanco.numeroCuenta}" />
+                    </p:column> 
+                    <p:column headerText="Nombre" filterBy="#{contCuentaBanco.nombre}"  style="width: 50%;">
+                        <h:outputText value="#{contCuentaBanco.nombre}" />
+                    </p:column>
+                    <p:column headerText="Cta. Contable" filterBy="#{contCuentaBanco.idCuentaMovimiento.codigo}"  style="width: 15%;">
+                        <h:outputText value="#{contCuentaBanco.idCuentaMovimiento.codigo}" />
+                    </p:column>
+                    <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{contComprobantePagoView.closeBancoDlg(contCuentaBanco)}" title="Seleccionar">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>                                
+                </p:dataTable>
+            </h:form>         
+        </p:dialog>
+        <p:dialog id="contDiarioGeneralDlg" header="Registros contables" widgetVar="contDiarioGeneralDlg" width="75%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top" draggable="true">
+            <h:form prependId="false">
+                <p:outputPanel id="contDiarioGeneralForm" style="width: 100%;" >
+                    <p:dataTable  id="diarioGeneralTable" widgetVar="diarioGeneralTable" var="diarioGeneral" value="#{contComprobantePagoView.contDiarioGeneralList}" 
+                                  scrollable="true" scrollHeight="500" rows="20000" style="width: 100%" 
+                                  rowKey="#{diarioGeneral.id}" emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            LISTADO DE TRANSACCIONES
+                        </f:facet>
+                        <p:column headerText="Nº de Transacción" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.numRegistro}">
+                            <h:outputText value="#{diarioGeneral.numRegistro}" />
+                        </p:column>                       
+                        <p:column headerText="Detalle" style="width: 15vw;text-align: center" filterBy="#{diarioGeneral.descripcion}">
+                            <h:outputText value="#{diarioGeneral.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Clase" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.clase.texto}">
+                            <h:outputText value="#{diarioGeneral.clase.texto}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 5vw;text-align: center" filterBy="#{diarioGeneral.tipo.texto}">
+                            <h:outputText value="#{diarioGeneral.tipo.texto}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Registro" style="width: 5vw;text-align: center">
+                            <h:outputText value="#{diarioGeneral.fechaRegistro}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Seleccion" style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{contComprobantePagoView.diarioSeleccionado(diarioGeneral)}" title="SELECCIONAR"
+                                           update="formMain" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="beneficiarioDlg" widgetVar="beneficiarioDlg" width="40%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de beneficiario">
+            <h:form prependId="false" id="beneficiarioForm">
+                <p:fieldset legend="Parametros:" style="margin-bottom: 10px">
+                    <p:selectOneRadio id="customRadio"  layout="custom" value="#{dlgBeneficiariosView.tipoListado}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="formMain" event="valueChange" listener="#{dlgBeneficiariosView.actualizarDlg()}"/>
+                    </p:selectOneRadio>
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt1" value="Servidores" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt2" value="Proveedores" />
+                        </h:panelGroup>             
+                    </p:panelGrid>
+                </p:fieldset>                
+                <p:outputPanel id="servidorPanel" style="width: 100%;" rendered="#{dlgBeneficiariosView.tipoListado}">
+                    <p:dataTable  id="servidorTable" widgetVar="servidorTable" var="servidor" value="#{dlgBeneficiariosView.servidorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="200000" style="width: 100%" rowKey="#{servidor.id}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Servidores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{servidor.persona.identificacion}"  style="width: 4vw;text-align: center">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{servidor.persona.nombreCompleltoSql}"  style="width: 10vw;">
+                            <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 4vw;text-align: center">
+                            <p:commandLink actionListener="#{dlgBeneficiariosView.closeDlg(servidor.persona)}" title="SELECCIONAR" 
+                                           rendered="#{dlgBeneficiariosView.code == '1'?true:false}" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{dlgBeneficiariosView.closeDlgServidor(servidor)}" title="SELECCIONAR" 
+                                           rendered="#{dlgBeneficiariosView.code == '2'?true:false}" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+                <p:outputPanel id="proveedorPanel" style="width: 100%;" rendered="#{!dlgBeneficiariosView.tipoListado}">
+                    <p:dataTable  id="proveedorTable" widgetVar="proveedorTable" var="proveedor" value="#{dlgBeneficiariosView.proveedorLazy}" 
+                                  scrollable="true" scrollHeight="auto" lazy="true" rows="200000" style="width: 100%" rowKey="#{proveedor.id}"
+                                  emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de Proveedores Activos
+                        </f:facet>
+                        <p:column headerText="Identificación" filterBy="#{proveedor.cliente.identificacionCompleta}"  style="width: 4vw;text-align: center">
+                            <h:outputText value="#{proveedor.cliente.identificacionCompleta}" />
+                        </p:column> 
+                        <p:column headerText="Nombre Beneficiario" filterBy="#{proveedor.cliente.nombreCompleltoSql}"  style="width: 10vw;">
+                            <h:outputText value="#{proveedor.cliente.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar"  style="width: 4vw;text-align: center">
+                            <p:commandLink actionListener="#{dlgBeneficiariosView.closeDlg(proveedor.cliente)}" title="SELECCIONAR" 
+                                           rendered="#{dlgBeneficiariosView.code == '1'?true:false}" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{dlgBeneficiariosView.closeDlgProveedor(proveedor)}" title="SELECCIONAR" 
+                                           rendered="#{dlgBeneficiariosView.code == '3'?true:false}" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgConfirmacion" widgetVar="dlgConfirmacion" width="40%" position="center" closable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Comprobante de pago">
+            <h:form prependId="false" id="dlgConfirmacionForm">
+                <center>
+                    <h1> REGISTRADO/EDITADO CON ÉXITO</h1>
+                    <p:graphicImage name="success_icon.png" library="icons" style="width: 30%"/>
+                    <h1> NO. DE COMPROBANTE DE PAGO</h1>
+                    <h1> #{contComprobantePagoView.contComprobantePago.numRegistro} </h1>
+                    <br/>                  
+                </center>
+                <p:panelGrid columns="4" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Ir al listado" id="btn_1" process="@this" style="background: #0091EA;width: 100%"
+                                         icon="fa fa-th-list" actionListener="#{contComprobantePagoView.openConfirmacion(1,'')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Reporte PDF" id="btn_2" process="@this" style="background: gray;width: 100%"
+                                         icon="fa fa-file-pdf-o" actionListener="#{contComprobantePagoView.openConfirmacion(2,'pdf')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Reporte EXCEL" id="btn_3" process="@this" style="background: gray;width: 100%"
+                                         icon="fa fa-file-excel-o" actionListener="#{contComprobantePagoView.openConfirmacion(2,'xlsx')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:commandButton value="Nuevo registro" id="btn_4" process="@this" style="background: green;width: 100%"
+                                         icon="fa fa-plus-circle" actionListener="#{contComprobantePagoView.openConfirmacion(3,'')}" styleClass="Fs16" >
+                        </p:commandButton>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+    </ui:define>              
+</ui:composition>

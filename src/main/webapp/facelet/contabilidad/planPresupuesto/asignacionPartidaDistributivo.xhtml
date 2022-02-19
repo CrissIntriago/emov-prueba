@@ -1,0 +1,501 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Asignación Partida Distribuivo</ui:define>
+
+    <ui:define name="content">
+
+        <style>
+            .condicion1{
+                background-color: #FFC107 !important;
+            }
+            .condicion2{
+
+                background-color: white !important;
+            }
+
+            #titulo{
+                color: #000000;
+                font-weight: 1000;
+                font-size: 30px;
+            }
+
+            #titulo:hover{
+                color: #FFC107;
+            }        
+
+
+            #cabecera{
+                text-align: center;
+            }
+            #butonimprimir,#completeTask{
+                width: 150px;
+                height: 30px;
+                border:2px solid;
+                border-radius: 10px 0px 10px 0px;
+            }
+            #completeTask{
+                background: #0081cb; 
+
+            }
+            #completeTask:hover{
+                background: rgba(0,129,203,0.5); 
+
+            }
+
+        </style>
+
+        <div class="ui-g ui-fluid">
+
+            <div class="ui-g-12">
+                <comp:titleTask task="#{asignacionDistributivoView.tarea}" tramite="#{asignacionDistributivoView.tramite}" />    
+            </div>
+
+            <div class="ui-g-12" id="cabecera">
+                <h:form prependId="false" id="cabeceraform">
+
+
+                    <div class="ui-g-12 ui-md-6">
+                        <div class="ui-inputgroup">
+                            <p:selectOneMenu value="#{asignacionDistributivoView.periodo}"  style="width: 30%;border:1px solid #00796B;">
+                                <f:selectItem itemValue="#{null}" itemLabel="Seleccione un periodo"/>
+                                <f:selectItems value="#{asignacionDistributivoView.listaPeriodo}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                            </p:selectOneMenu>
+                            <p:commandButton icon="fa fa-search"  actionListener="#{asignacionDistributivoView.registrarDistributivo()}" 
+                                             style="border-radius: 0px 5px 5px 0px"  update="cabeceraform,formAsignacionDitributivo" />  
+
+                        </div>
+
+                    </div>
+
+                    <div style="float: right">
+                        <p:commandButton id="completeTask" actionListener="#{asignacionDistributivoView.dlogoObservaciones()}" 
+                                         icon="fa fa-check-circle-o"  
+                                         value="Completar Tarea"/>
+                    </div>
+
+
+
+                    <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty" style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo: " /> 
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.totalCupo}"> 
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty" style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo Asignado: " /> 
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.cupoAsignado}"> 
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty" style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Estado: " /> 
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.estadoGeneral==null or asignacionDistributivoView.estadoGeneral==''?'-':asignacionDistributivoView.estadoGeneral}"> 
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                    </p:panelGrid>
+
+                </h:form>
+            </div>
+
+            <div class="ui-g-12" >
+                <h:form prependId="false" id="formAsignacionDitributivo">
+
+
+
+                    <p:dataTable    value="#{asignacionDistributivoView.listaDistributivo}"  id="listaDistributivo" widgetVar="listaDistributivo"  
+                                    paginatorPosition="bottom" var="item" rows="20" paginator="true"  
+                                    paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                    rowsPerPageTemplate="20,25,35,50" rowIndexVar="index"
+                                    currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                    emptyMessage="No existen datos con el criterio de busqueda especificado" style="font-size: 10px;">
+                        <f:facet name="header">
+                            Distributivo #{asignacionDistributivoView.periodo==0?'2xxx':asignacionDistributivoView.periodo}
+
+                            <p:commandButton title="Imprimir" id="btnimprimir" icon="ui-icon-print" styleClass="Fs16" process="@this" update="dlgPrint" style="margin-left: 20px;background: #0081cb;"
+                                             actionListener="#{asignacionDistributivoView.opendlgPrint()}" />
+
+                        </f:facet>
+
+                        <p:column headerText="No." style="width: 15px; text-align: center;" >
+                            <h:outputText value="#{index+1}"/>
+                        </p:column>
+
+                        <p:column headerText="CEDULA SERVIDOR" style="width: 80px; text-align: center;" filterBy="#{item.servidorPublico.persona.identificacion}" filterMatchMode="contains">
+                            <h:outputText value="#{item.servidorPublico.persona.identificacion}"/>
+                        </p:column>
+                        <p:column headerText="NOMBRE SERVIDOR" style="width: 80px; font-weight: bold; " filterBy="#{item.servidorPublico.persona.nombreCompleto}" filterMatchMode="contains">
+                            <h:outputText value="#{item.servidorPublico.persona.nombreCompleto == null?'VACANTE':item.servidorPublico.persona.nombreCompleto.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="CARGO" style="width: 90px; " filterBy="#{item.cargo.nombreCargo}" filterMatchMode="contains">
+                            <h:outputText value="#{item.cargo.nombreCargo}"/>
+                        </p:column>
+                        <p:column headerText="VIGENCIA DESDE" style="width: 70px;text-align: center;">
+                            <h:outputText value="#{item.vigenciaDesde}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="VIGENCIA HASTA" style="width: 70px; text-align: center;">
+                            <h:outputText value="#{item.vigenciaHasta == null?'NO HAY FECHA CADUCIDAD':item.vigenciaHasta}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy" />
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="UNIDAD" style="width: 90px;  " filterBy="#{item.unidadAdministrativa.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{item.unidadAdministrativa.nombre}"/>
+                        </p:column>
+                        <p:column headerText="SUPERVISA" style="width: 90px; " filterBy="#{item.unidadAdministrativa.padre.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{item.unidadAdministrativa.padre.nombre}"/>
+                        </p:column>
+                        <p:column headerText="TIPO DE UNIDAD" style="width: 90px; text-align: center;" filterBy="#{item.unidadAdministrativa.tipoUnidad.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{item.unidadAdministrativa.tipoUnidad.descripcion}"/>
+                        </p:column>
+
+                        <p:column headerText="RÉGIMEN" style="width: 90px; text-align: center;" filterBy="#{item.regimen.nombre}" filterMatchMode="contains" >
+                            <h:outputText value="#{item.regimen.nombre}"/>
+                        </p:column>
+                        <p:column headerText="TIPO DE CONTRATO" style="width: 90px;" filterBy="#{item.tipoContrato.nombre}" filterMatchMode="contains" >
+                            <h:outputText value="#{item.tipoContrato.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 60px; text-align: center;">
+                            <p:commandLink disabled="#{asignacionDistributivoView.bloqueo}" title="Asiganar Partidas" process="@this" actionListener="#{asignacionDistributivoView.abriDlgoPartidasPresupuestariaDistributiov(item)}">
+                                <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink  title="ver" process="@this" actionListener="#{asignacionDistributivoView.listaVisualizacion(item)}">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+
+                        </p:column>
+
+                    </p:dataTable>
+                </h:form> 
+
+
+            </div>
+        </div>
+
+        <p:dialog id="DlogopartidasDistributivos" width="1300"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivos" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="formDlogopartidasDistributivos"  prependId="false">
+
+                <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-4" styleClass="ui-panelgrid-blank form-group" >
+
+                    <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                        <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo:"/>
+                        <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.totalCupo}"> 
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                        <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo Asignado:"/>
+                        <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.cupoAsignado}"> 
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                        <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Estado:"/>
+                        <p:outputLabel style="font-size: 12px;margin-top: 2%; font-weight: bold;" value="#{asignacionDistributivoView.estadoGeneral}"> 
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </h:panelGroup>
+
+                </p:panelGrid>
+
+
+                <div style="width: 100%;font-size: 10px;">
+                    <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="UNIDAD: " class="FontBold"/> 
+                            <p:outputLabel value="#{asignacionDistributivoView.mostrarData.unidadAdministrativa.nombre.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="CARGO: " class="FontBold"/>
+                            <p:outputLabel value="#{asignacionDistributivoView.mostrarData.cargo.nombreCargo.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="RMU: " class="FontBold"/>
+                            <p:outputLabel value="#{asignacionDistributivoView.rmu}">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </div>
+
+
+
+                <!--<p:remoteCommand name="onCellEdit" update="cabeceraform,lista" />-->
+                <p:dataTable  paginator="true" id="lista"  paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"  widgetVar="lista"  editable="true" editMode="cell"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              emptyMessage="No existen datos con el criterio de busqueda especificado" rowStyleClass="#{item3.partidaAp.isEmpty()||item3.partidaAp==null? 'condicion1':'condicion2'}"
+                              value="#{asignacionDistributivoView.listaRubros}" var="item3" rowIndexVar="index" >
+
+
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+
+                    <p:column headerText="No." style="width: 15px; text-align: center;" >
+                        <h:outputText value="#{index+1}"/>
+                    </p:column>
+                <!--<p:ajax event="cellEdit" listener="#{asignacionDistributivoView.editarCeldas(item3)}" oncomplete="onCellEdit()" />-->
+
+
+                    <p:column headerText="Tipo" style="width: 20%; text-align: justify">
+                        <h:outputText value="#{item3.distributivo.valoresParametrizados.tipo.texto}" />
+                    </p:column> 
+
+                    <p:column headerText="Monto" style="width: 5%;" >
+                        <h:outputText value="#{item3.distributivo.valorResultante}" style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+
+
+
+                    <p:column headerText="Item" style="width: 10%;">
+
+                        <p:cellEditor >
+                            <f:facet name="output"><h:outputText value="#{item3.itemAp.codigo}" id="item" /></f:facet>
+                            <f:facet name="input" >
+                                <p:selectOneMenu  value="#{item3.itemAp}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                  effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                    <f:selectItem itemLabel="Seleccione Item Presupuestario" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{asignacionDistributivoView.listaItem}" var="th" itemLabel="#{th.codigo}" itemValue="#{th}" />
+
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+
+                                    <p:column style="width: 80%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+
+                                    </p:column>
+                                    <p:ajax listener="#{asignacionDistributivoView.editarCeldas(item3)}" event="change" update="cabeceraform,formDlogopartidasDistributivos,item,estructura,formAsignacionDitributivo"/>
+                                </p:selectOneMenu>
+
+                            </f:facet>
+                        </p:cellEditor>
+
+                    </p:column>
+
+
+                    <p:column headerText="Estructura" style="width: 10%;">
+
+                        <p:cellEditor >
+                            <f:facet name="output"><h:outputText value="#{item3.estructuraAp.codigo}" id="estructura" /></f:facet>
+                            <f:facet name="input" >
+                                <p:selectOneMenu  value="#{item3.estructuraAp}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                  effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                    <f:selectItem itemLabel="Seleccione Estructura" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{asignacionDistributivoView.listaEstructura}" var="the" itemLabel="#{the.codigo}" itemValue="#{the}" />
+
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+
+                                    <p:column style="width: 80%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+
+                                    </p:column>
+                                    <p:ajax listener="#{asignacionDistributivoView.editarCeldas(item3)}" event="change" update="cabeceraform,formDlogopartidasDistributivos,item,estructura,formAsignacionDitributivo"/>
+                                </p:selectOneMenu>
+
+                            </f:facet>
+                        </p:cellEditor>
+
+                    </p:column>
+
+
+                    <p:column headerText="Fuente" style="width: 10%;">
+
+                        <p:cellEditor >
+                            <f:facet name="output"><h:outputText value="#{item3.fuenteAp.tipoFuente.orden}" /></f:facet>
+                            <f:facet name="input" >
+                                <p:selectOneMenu filter="true" filterMatchMode="startsWith"  id="Fuente" value="#{item3.fuenteAp}" panelStyle="width:22%"
+                                                 style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                    <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{asignacionDistributivoView.listaFuente}" var="n" itemLabel="#{n.tipoFuente.orden}//#{n.tipoFuente.texto}//#{n.nombre}" itemValue="#{n}" />
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="Código"/>
+                                        </f:facet>
+                                        <h:outputText value="#{f.tipoFuente.orden}" style="font-weight: bold;" />
+                                    </p:column>
+
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Fuente"/>
+                                        </f:facet>
+                                        <h:outputText value="#{f.tipoFuente.texto}" />
+                                    </p:column>
+
+                                    <p:column style="width: 90%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Tipo Fuente"/>
+                                        </f:facet>
+                                        <h:outputText value="#{f.nombre}" />
+                                    </p:column>
+                                    <p:ajax listener="#{asignacionDistributivoView.editarCeldas(item3)}" event="change" update="cabeceraform,formDlogopartidasDistributivos,item,estructura,formAsignacionDitributivo"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item3.partidaAp}" />
+                    </p:column>
+
+                    <p:column  headerText="Acción" style="text-align: center; width: 8%">
+                        <p:commandLink disabled="#{asignacionDistributivoView.bloqueo}" title="Limpiar Partida Presupuestaria" actionListener="#{asignacionDistributivoView.deletePartida(item3)}" process="@this"
+                                       update="cabeceraform,formDlogopartidasDistributivos,lista,formAsignacionDitributivo">
+                            <p:graphicImage value="/resources/icons/clear.png"
+                                            width="16" height="15" 
+                                            style="margin-right: 8px;"/> 
+
+                            <p:confirm header="Confirmación de Limpieza" message="¿Esta seguro de limpiar? Se limpiara el item, estructura, fuente y partida ?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="DlogopartidasDistributivosvista" width="1300"  header="Partidas Presupuestarias" 
+                  widgetVar="DlogopartidasDistributivosvista" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">  
+            <h:form id="formDlogopartidasDistributivosvista"  prependId="false">
+                <div style="width: 100%;font-size: 10px;">
+                    <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="UNIDAD: " class="FontBold"/> 
+                            <p:outputLabel value="#{asignacionDistributivoView.mostrarDataview.unidadAdministrativa.nombre.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="CARGO: " class="FontBold"/>
+                            <p:outputLabel value="#{asignacionDistributivoView.mostrarDataview.cargo.nombreCargo.toUpperCase()}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" class="Wid100 TaskProperty"  style="padding-top: 15px; padding-bottom: 15px;">
+                            <p:outputLabel value="RMU: " class="FontBold"/>
+                            <p:outputLabel value="#{asignacionDistributivoView.rmu}">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </div>
+                <p:dataTable  paginator="true" id="listavistaDistributivo" widgetVar="listavistaDistributivo" paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true"    editable="true" editMode="cell"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" value="#{asignacionDistributivoView.listaVista}" var="item4" >
+                    <f:facet name="header">
+                        Rubros
+                    </f:facet>
+                    <p:column headerText="Tipo" style="width: 20%; text-align: justify">
+                        <h:outputText value="#{item4.distributivo.valoresParametrizados.tipo.texto}" />
+                    </p:column> 
+                    <p:column headerText="Monto" style="width: 5%;" >
+                        <h:outputText value="#{item4.distributivo.valorResultante}"  style="float: right;">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Item" style="width: 10%;">
+                        <h:outputText value="#{item4.itemAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Estructura" style="width: 10%;">
+                        <h:outputText value="#{item4.estructuraAp.codigo}" />
+                    </p:column>
+                    <p:column headerText="Fuente" style="width: 10%;">
+                        <h:outputText value="#{item4.fuenteAp.tipoFuente.orden}" />
+                    </p:column>
+                    <p:column headerText="Partida" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item4.partidaAp}" />
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgPrint" header="Formulario de Impresion de Distributivo General Presupuesto" widgetVar="dlgPrint" modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="320">
+            <h:form id="frmldlgprint" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+
+                            <p:outputPanel id="panelDisPartidas" style="width: 100%">
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel title="Año de Impresion Distributivo" for="anioPartida" value="Año de Distributivo:" style="width: 100%;"/>
+                                        <p:selectOneMenu  id="anioPartida" value="#{asignacionDistributivoView.anio}" style=" width: 100%">
+                                            <f:selectItem itemLabel="Seleccione un año"   itemValue="0"/>
+                                            <f:selectItems value="#{asignacionDistributivoView.listaPeriodo}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel title="Unidad Administrativa de Impresion Distributivo" for="unidadPartida" value="Unidad a Imprimir:" style="width: 100%;"/>
+                                        <p:selectOneMenu  id="unidadPartida" value="#{asignacionDistributivoView.id}" style=" width: 100%" filter="true" >
+                                            <!--<f:selectItem itemLabel="Seleccione una Unidad Administrativa"   itemValue="0"/>-->
+                                            <f:selectItem itemLabel="Todas las Unidades Administrativas"   itemValue="0"/>
+                                            <f:selectItems value="#{asignacionDistributivoView.listUnidades}" var="u" itemLabel="#{u.nombre}" itemValue="#{u.id}"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <br></br>
+                                <center>
+                                    <p:commandButton value="Imprimir" id="print"
+                                                     icon="ui-icon-print"  
+                                                     actionListener="#{asignacionDistributivoView.printReport()}"
+                                                     styleClass="Fs16"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{asignacionDistributivoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{asignacionDistributivoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,619 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Planes</ui:define>
+    <ui:param name="tittle" value="Registro - Plan"/>
+    <ui:define name="content">
+        <!--FORMULARIO PRINCIPAL-->
+        <h:form id="formGeneral" prependId="false">
+            <p:tabView prependId="false">
+                <p:ajax event="tabChange" listener="#{planificacionMbView.onTabChange}" update="formGeneral"/>
+                <!--TAB PLANES-->
+                <p:tab title="PLANES" id="planes">
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:commandButton value="NUEVO PLAN" icon="ui-icon-plus" actionListener="#{planificacionMbView.newEditPlan(null)}"
+                                             process="@this" oncomplete="PF('dialogPlan').show()" 
+                                             update="formPlanes" styleClass="Fs16" style="width: 150px;margin: 20px;"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <div style="width: 100% !important; display: inline-block;">
+                            <div class="ui-g" style="width: 25% !important; text-align: center; margin-left: 20px">
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #dbe4ff;" onclick="planesActivos();">ACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #ffe6f5;" onclick="planesInactivos();">INACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="planesTodos();">TODOS</div>
+                            </div>
+                        </div>
+                    </p:panelGrid>
+                    <p:remoteCommand name="planesActivos" actionListener="#{planificacionMbView.filtroPlanesActivosInactivos(1)}" update="tableplans"/>
+                    <p:remoteCommand name="planesInactivos" actionListener="#{planificacionMbView.filtroPlanesActivosInactivos(2)}" update="tableplans"/>
+                    <p:remoteCommand name="planesTodos" actionListener="#{planificacionMbView.filtroPlanesActivosInactivos(3)}" update="tableplans"/>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable id="tableplans" widgetVar="tableplans" var="plan" value="#{planificacionMbView.planesLazy}" expandableRowGroups="true" rows="10" paginator="true" 
+                                     lazy="true" paginatorPosition="bottom" style="margin: 20px" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100"
+                                     emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                PLANES
+                            </f:facet>
+                            <p:ajax event="rowToggle" listener="#{planificacionMbView.obtieneHijosPlan(plan)}" update="programas"/>
+                            <p:column style="width: 1%;text-align: center;">
+                                <p:rowToggler/>
+                            </p:column>
+                            <p:column headerText="CÓDIGO" style="width: 5%;text-align: center;" filterBy="#{plan.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{plan.codigo}"/>
+                            </p:column>
+                            <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{plan.descripcion}" filterMatchMode="contains">
+                                <h:outputText value="#{plan.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterBy="#{plan.fechaVigencia}" filterMatchMode="contains">
+                                <h:outputText value="#{plan.fechaVigencia}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="ESTATUS" style="width: 5%;text-align: center" filterBy="#{plan.estado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('tableplans').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                        <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{plan.estado?'ACTIVO':'INACTIVO'}" />
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="text-align: center; width: 5%">
+                                <p:commandLink disabled="false" title="Editar" process="@this" oncomplete="PF('dialogPlan').show()" update="formPlanes" actionListener="#{planificacionMbView.newEditPlan(plan)}">
+                                    <p:graphicImage value="/resources/icons/editar.png" width="16" height="15" style="margin-right: 8px;"/>  
+                                </p:commandLink>
+                                <p:commandLink disabled="false" title="Inactivar" process="@this" update="tableplans"
+                                               actionListener="#{planificacionMbView.inactivarPlan(plan)}" rendered="#{plan.estado}">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #FF5722;"></i>
+                                    <p:confirm header="Confirmación de inactivación" message="Está seguro de inactivar el plan #{plan.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink disabled="false" title="Eliminar" process="@this" update="tableplans" actionListener="#{planificacionMbView.eliminarPlan(plan)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminacón" message="Está seguro de eliminar de forma permanente el plan #{plan.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                            <p:rowExpansion>
+                                <p:dataTable id="programas" widgetVar="programas" var="item" value="#{planificacionMbView.listaProgramas}" expandableRowGroups="true" rows="10" paginator="true" 
+                                             paginatorPosition="bottom" style="margin: 20px" paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100"
+                                             emptyMessage="No existen datos con el criterio de busqueda especificado">
+                                    <f:facet name="header">
+                                        PROGRAMAS
+                                    </f:facet>
+                                    <p:column headerText="CÓDIGO" style="width: 5%;text-align: center;" filterBy="#{item.codigo}" filterMatchMode="contains">
+                                        <h:outputText value="#{item.codigo}"/>
+                                    </p:column>
+                                    <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                                        <h:outputText value="#{item.descripcion}"/>
+                                    </p:column>
+                                    <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterBy="#{item.fechaVigencia}" filterMatchMode="contains">
+                                        <h:outputText value="#{item.fechaVigencia}">
+                                            <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="USUARIO CREACIÓN" style="width: 5%;text-align: center;" filterBy="#{item.usuarioCreacion}" filterMatchMode="contains">
+                                        <h:outputText value="#{item.usuarioCreacion}"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:rowExpansion>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </p:tab>
+                <!--TAB PROGRAMAS-->
+                <p:tab title="PROGRAMAS" id="programas">
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:commandButton value="NUEVO PROGRAMA" icon="ui-icon-plus" actionListener="#{planificacionMbView.newEditPrograma(null)}" 
+                                             process="@this" oncomplete="PF('dialogPrograma').show()"
+                                             update="formProgramas" styleClass="Fs16" style="width: 150px;margin: 20px;"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <div style="width: 100% !important; display: inline-block;">
+                            <div class="ui-g" style="width: 25% !important; text-align: center; margin-left: 20px">
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #dbe4ff;" onclick="programasActivos();">ACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #ffe6f5;" onclick="programasInactivos();">INACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="programasTodos();">TODOS</div>
+                            </div>
+                        </div>
+                    </p:panelGrid>
+                    <p:remoteCommand name="programasActivos" actionListener="#{planificacionMbView.filtroProgramasActivosInactivos(1)}" update="tablaprogramaslist"/>
+                    <p:remoteCommand name="programasInactivos" actionListener="#{planificacionMbView.filtroProgramasActivosInactivos(2)}" update="tablaprogramaslist"/>
+                    <p:remoteCommand name="programasTodos" actionListener="#{planificacionMbView.filtroProgramasActivosInactivos(3)}" update="tablaprogramaslist"/>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable expandableRowGroups="true" id="tablaprogramaslist" widgetVar="tablaprogramaslist" var="programasPAPP" value="#{planificacionMbView.listaProgramasLazy}"
+                                     rowIndexVar="index" rows="10" paginator="true" lazy="true" paginatorPosition="bottom" style="margin: 20px" 
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100" emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                PROGRAMAS
+                            </f:facet>
+                            <p:column headerText="PLAN" style="width: 5%;text-align: center;" filterBy="#{programasPAPP.panificacion.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{programasPAPP.panificacion.codigo eq null ? 'NO APLICA': programasPAPP.panificacion.codigo}" />
+                            </p:column>
+                            <p:column headerText="CÓDIGO" style="width: 5%;text-align: center;" filterBy="#{programasPAPP.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{programasPAPP.codigo}" />
+                            </p:column>
+                            <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{programasPAPP.descripcion}" filterMatchMode="contains">
+                                <h:outputText value="#{programasPAPP.descripcion}" />
+                            </p:column>
+                            <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterMatchMode="contains">
+                                <h:outputText value="#{programasPAPP.fechaVigencia}">
+                                    <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="ESTATUS" style="width: 5%;text-align: center" filterBy="#{programasPAPP.estado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('tablaprogramaslist').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                        <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{programasPAPP.estado?'ACTIVO':'INACTIVO'}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                                <p:commandLink rendered="#{programasPAPP.id ne null}" disabled="false" title="Editar" process="@this" update="formProgramas, dialogPrograma" 
+                                               oncomplete="PF('dialogPrograma').show()" actionListener="#{planificacionMbView.newEditPrograma(programasPAPP)}">
+                                    <p:graphicImage value="/resources/icons/editar.png" width="16" height="15" style="margin-right: 8px;"/>  
+                                </p:commandLink>
+
+                                <p:commandLink disabled="false" title="Inactivar" actionListener="#{planificacionMbView.inactivarPrograma(programasPAPP)}" 
+                                               process="@this" update="tablaprogramaslist" rendered="#{programasPAPP.estado}">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #FF5722;"></i>
+                                    <p:confirm header="Confirmación de inactivación" message="Está seguro de inactivar el programa #{programasPAPP.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+
+                                <p:commandLink disabled="false" title="Eliminar" process="@this" update="tablaprogramaslist" actionListener="#{planificacionMbView.eliminarPrograma(programasPAPP)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar de forma permanente el programa #{programasPAPP.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </p:tab>
+                
+                <!--TAB PROYECTOS-->
+                <p:tab title="PROYECTOS" id="proyectos">
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:commandButton value="NUEVO PROYECTO" icon="ui-icon-plus" actionListener="#{planificacionMbView.newEditProyecto(null)}" 
+                                             process="@this" oncomplete="PF('dialogProyecto').show()"
+                                             update="formProyecto" styleClass="Fs16" style="width: 150px;margin: 20px;"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <div style="width: 100% !important; display: inline-block;">
+                            <div class="ui-g" style="width: 25% !important; text-align: center; margin-left: 20px">
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #dbe4ff;" onclick="proyectosActivos();">ACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #ffe6f5;" onclick="proyectosInactivos();">INACTIVO</div>
+                                <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="proyectosTodos();">TODOS</div>
+                            </div>
+                        </div>
+                    </p:panelGrid>
+                    <p:remoteCommand name="proyectosActivos" actionListener="#{planificacionMbView.filtroProyectosActivosInactivos(1)}" update="tablaproyectoslist"/>
+                    <p:remoteCommand name="proyectosInactivos" actionListener="#{planificacionMbView.filtroProyectosActivosInactivos(2)}" update="tablaproyectoslist"/>
+                    <p:remoteCommand name="proyectosTodos" actionListener="#{planificacionMbView.filtroProyectosActivosInactivos(3)}" update="tablaproyectoslist"/>
+                    <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:dataTable expandableRowGroups="true" id="tablaproyectoslist" widgetVar="tablaproyectoslist" var="proyectosPAPP" 
+                                     value="#{planificacionMbView.lazyProyectos}" rowIndexVar="index" rows="15" paginator="true" lazy="true" paginatorPosition="bottom" style="margin: 20px" 
+                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100"
+                                     emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                PROYECTOS
+                            </f:facet>
+                            <p:column headerText="PLAN" style="width: 5%;text-align: center;" filterBy="#{proyectosPAPP.programa.panificacion.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{proyectosPAPP.programa.panificacion.codigo eq null ? 'NO APLICA' : proyectosPAPP.programa.panificacion.codigo}" />
+                            </p:column>
+                            <p:column headerText="PROGRAMA" style="width: 5%;text-align: center;" filterBy="#{proyectosPAPP.programa.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{proyectosPAPP.programa.codigo eq null ? 'NO APLICA': proyectosPAPP.programa.codigo}" />
+                            </p:column>
+                            <p:column headerText="CÓDIGO" style="width: 5%;text-align: center;" filterBy="#{proyectosPAPP.codigo}" filterMatchMode="contains">
+                                <h:outputText value="#{proyectosPAPP.codigo}" />
+                            </p:column>
+                            <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{proyectosPAPP.nombreProgramaProyecto}" filterMatchMode="contains">
+                                <h:outputText value="#{proyectosPAPP.nombreProgramaProyecto}" />
+                            </p:column>
+                            <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterMatchMode="contains">
+                                <h:outputText value="#{proyectosPAPP.fechaVigencia}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="ESTATUS" style="width: 5%;text-align: center" filterBy="#{proyectosPAPP.estado}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('tablaproyectoslist').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                        <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{proyectosPAPP.estado?'ACTIVO':'INACTIVO'}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                                <p:commandLink disabled="false" title="Editar" process="@this" update="formProyecto, tablaproyectoslist" 
+                                               oncomplete="PF('dialogProyecto').show()" actionListener="#{planificacionMbView.newEditProyecto(proyectosPAPP)}">
+                                    <p:graphicImage value="/resources/icons/editar.png" width="16" height="15" style="margin-right: 8px;"/>  
+                                </p:commandLink>
+
+                                <p:commandLink disabled="false" title="Inactivar" actionListener="#{planificacionMbView.inactivarProyecto(proyectosPAPP)}" 
+                                               process="@this" update="tablaproyectoslist" rendered="#{proyectosPAPP.estado}">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #FF5722;"></i>
+                                    <p:confirm header="Confirmación de inactivación" message="Está seguro de eliminar el proyecto #{proyectosPAPP.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+
+                                <p:commandLink disabled="false" title="Eliminar" process="@this" update="tablaproyectoslist" actionListener="#{planificacionMbView.eliminarProyecto(proyectosPAPP)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar de forma permanente el proyecto #{proyectosPAPP.codigo} ?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panelGrid>
+                </p:tab>
+            </p:tabView>
+        </h:form>
+
+        <!--DIALOGO INGRESO DE PLANES-->
+        <p:dialog id="dialogPlan" header="PLANIFICACIÓN" widgetVar="dialogPlan" modal="true" showEffect="fade" hideEffect="fade"  width="80%" height="600">
+            <h:form id="formPlanes" prependId="false" style="width: 100%;max-width: 98%;margin: 0 auto;display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                <p:panelGrid columns="1" style="width: 90%;align-items: center; margin-top: 20px;">
+                    OBJETIVOS Y POLITICAS NACIONALES
+                    <p:fieldset legend="Plan Nacional" style="font-weight: bold;" toggleable="true">
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-12" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup>
+                                <p:outputLabel value="OBJETIVO: " for="@next" style="font-weight: bold;"/>
+                                <p:selectOneMenu  id="objetivosNacionales" required="true" requiredMessage="REQUERIDO" value="#{planificacionMbView.objetivoNacionalSeleccionado}"
+                                                  style="width: 300px;" panelStyle="width:25%" converter="#{utilConverter}" >
+                                    <p:ajax listener="#{planificacionMbView.actualizarCbPoliticas()}" update="politicasGroup"/>
+                                    <f:selectItem itemLabel=" Seleccione " itemValue="#{null}"/>
+                                    <f:selectItems value="#{planificacionMbView.planNacionalObjetivos}" var="p" itemLabel="#{p.eje.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}"/>
+                                </p:selectOneMenu>
+                                <p:message for="objetivosNacionales"/>
+                            </h:panelGroup>
+                            <h:panelGroup id="politicasGroup">
+                                <h:outputText value="EJE: #{planificacionMbView.objetivoNacionalSeleccionado.eje.descripcion}" 
+                                              rendered="#{planificacionMbView.objetivoNacionalSeleccionado.id ne null}"/>
+                                <br/>
+                                <p:outputLabel value="POLÍTICA: " for="@next" style="font-weight: bold;"/>
+                                <p:selectOneMenu id="politicasNacionales" required="true" requiredMessage="REQUERIDO" 
+                                                 value="#{planificacionMbView.politicaNacionalSeleccionada}" style="width: 300px;"
+                                                 panelStyle="width:250px" converter="#{utilConverter}">
+                                    <f:selectItem itemLabel=" Seleccione " itemValue="#{null}"/>
+                                    <f:selectItems value="#{planificacionMbView.politicasNacionales}" var="p" itemLabel="#{p.objetivo.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}"/>
+                                </p:selectOneMenu>
+                                <p:message for="politicasNacionales"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    OBJETIVOS Y POLITICAS LOCALES
+                    <p:fieldset legend="Plan Local" style="font-weight: bold;" toggleable="true">
+                        <p:panelGrid columns="2" layout="grid" columnClasses="ui-grid-col-12" styleClass="ui-panelgrid-blank form-group" >
+                            <h:panelGroup id="renderSistema">
+                                <h:outputText value="COMPONENTE: #{planificacionMbView.objetivoLocalSeleccionado.sistema.descripcion}" 
+                                              rendered="#{planificacionMbView.objetivoLocalSeleccionado.sistema ne null}"/>
+                                <br/>
+                                <br/>
+                                <p:outputLabel value="OBJETIVO: " for="@next" style="font-weight: bold;"/>
+                                <p:selectOneMenu  id="objetivosLocales" required="true" requiredMessage="REQUERIDO" value="#{planificacionMbView.objetivoLocalSeleccionado}"
+                                                  style="width: 300px;" panelStyle="width:25%" converter="#{utilConverter}">
+                                    <p:ajax listener="#{planificacionMbView.actualizarPoliticaLocal()}" update="politicaLocalGroup,renderSistema"/>
+                                    <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"  />
+                                    <f:selectItems value="#{planificacionMbView.planLocalObjetivos}" var="p" itemLabel="#{p.sistema.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}"/>
+                                    <f:validateLength minimum="1"  /> 
+                                </p:selectOneMenu>
+                                <p:message for="objetivosLocales"/>
+                            </h:panelGroup>
+
+                            <h:panelGroup id="politicaLocalGroup">
+                                <p:outputLabel value="META: " for="@next" style="font-weight: bold;"/>
+                                <p:selectOneMenu id="politicasLocales" value="#{planificacionMbView.politicaLocalSeleccionado}"
+                                                 style="width: 300px;" converter="#{utilConverter}" >
+                                    <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{planificacionMbView.politicasLocales}" var="p" itemLabel="#{p.objetivo.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}" />
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Descripción del Plan" style="font-weight: bold;" toggleable="true">
+                        <p:panelGrid columns="3" layout="grid" columnClasses="ui-grid-col-12" styleClass="ui-panelgrid-blank form-group" >
+                            <h:panelGroup>
+                                <p:outputLabel value="DESCRIPCION DEL PLAN: " for="@next" style="font-weight: bold;"/>
+                                <p:inputTextarea placeholder="Escriba una descripción.." required="true" requiredMessage="REQUERIDO" rows="2" cols="50" style="width: 100%" 
+                                                 value="#{planificacionMbView.dscPlan}" id="dscPlan"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                </p:inputTextarea>
+                                <p:message for="dscPlan"/>
+                            </h:panelGroup>
+                            <h:panelGroup style="width: 100%;">
+                                <h:outputText value="FECHA DE VIGENCIA:" />
+                                <br/>
+                                <p:calendar value="#{planificacionMbView.fechaVigenciaPlan}"
+                                            pattern="yyyy/MM/dd" locale="es" navigator="true" style="width: 100%;"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                <p:outputLabel for="@next" value="Activo:" style="font-weight: bold"/><br/>
+                                <p:selectBooleanCheckbox id="activo" value="#{planificacionMbView.estadoPlan}" disabled="#{planificacionMbView.disabledEstatusPlanCreate}"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:commandButton value="Registrar Plan" icon="ui-icon-save" rendered="#{planificacionMbView.renderBtnReg}"
+                                 actionListener="#{planificacionMbView.registrarPlanVista()}" process="@form"
+                                 update="formPlanes, tableplans" styleClass="Fs16" style="width: 150px;margin: 20px;"/>
+                <p:commandButton value="Editar Plan" icon="ui-icon-save" rendered="#{planificacionMbView.renderBtnEdit}"
+                                 actionListener="#{planificacionMbView.editarPlanVista()}" process="@form"
+                                 update="formPlanes, tableplans" styleClass="Fs16" style="width: 150px;margin: 20px;"/>
+            </h:form>
+        </p:dialog>
+        
+        <!--DIALOGO INGRESO PROGRAMAS-->
+        <p:dialog id="dialogPrograma" header="Programa" widgetVar="dialogPrograma" modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="325px" width="70%">
+            <h:form id="formProgramas" prependId="false" style="width: 100%;max-width: 98%;margin: 0 auto;display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                <p:panelGrid columns="2" style="width: 100%;align-items: center; margin-top: 20px;">
+                    <h:panelGroup>
+                        <h:outputText value="PLAN " style="font-size: 20px; font-weight: bold;"/>
+                        <p:commandLink title="Buscar Plan" oncomplete="PF('dlogoBusquedaPlan').show()" update="formdlogoBusquedaPlan" process="@this" 
+                                       actionListener="#{planificacionMbView.loadingPlan(true)}">
+                            <i class="fa fa-search" style="font-size: 1.8em; margin-right: 8px;"></i>
+                            <br/>
+                            <p:outputLabel value="#{planificacionMbView.planificacionPlan.codigo eq null?'NO APLICA':planificacionMbView.planificacionPlan.codigo}"/>
+                        </p:commandLink>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <h:outputText value="DESCRIPCIÓN PLAN: " style="font-size: 20px; font-weight: bold;"/>
+                        <p:inputText style="width: 100%"
+                                     value="#{planificacionMbView.planificacionPlan eq null?'NO APLICA':
+                                              planificacionMbView.planificacionPlan.descripcion.toUpperCase()}" readonly="true"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="1" style="width: 100%;align-items: center; margin-top: 20px;">
+                    <h:panelGroup>
+                        <h:outputText value="DESCRIPCIÓN DEL PROGRAMA " style="font-size: 12px; font-weight: bold;"/>
+                        <br/>
+                        <br/>
+                        <p:inputTextarea id="dscPrograma" placeholder="Escriba una descripción.." required="true" requiredMessage="REQUERIDO" rows="2" cols="50" style="width: 100%"
+                                         value="#{planificacionMbView.dscPrograma}" 
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();">
+                        </p:inputTextarea>
+                        <p:message for="dscPrograma"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="5" style="width: 100%;align-items: center; margin-top: 20px;">
+                    <h:panelGroup rendered="#{planificacionMbView.planificacionPlan.codigo eq null ? 'true':'false'}" id="labelSistemaProg">
+                        <h:outputText value="COMPONENTE: #{planificacionMbView.objetivoLocalSeleccionado.sistema.descripcion}" 
+                                      rendered="#{planificacionMbView.objetivoLocalSeleccionado.sistema ne null}" style="font-weight: bold;"/>
+                        <br/>
+                        <br/>
+                        <p:outputLabel value="OBJETIVO: " for="@next" style="font-weight: bold;"/>
+                        <br/>
+                        <br/>
+                        <p:selectOneMenu id="objLocalPrg" value="#{planificacionMbView.objetivoLocalSeleccionado}" required="true" requiredMessage="REQUERIDO"
+                                         style="width: 300px;" panelStyle="width:25%" converter="#{utilConverter}">
+                            <p:ajax listener="#{planificacionMbView.actualizarPoliticaLocal()}" update="politicaLocalGroup2,labelSistemaProg"/>
+                            <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"  />
+                            <f:selectItems value="#{planificacionMbView.planLocalObjetivos}" var="p" itemLabel="#{p.sistema.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}"/>
+                            <f:validateLength minimum="1"  /> 
+                        </p:selectOneMenu>
+                        <p:message for="objLocalPrg"/>
+                    </h:panelGroup>
+                    <h:panelGroup id="politicaLocalGroup2" rendered="#{planificacionMbView.planificacionPlan.codigo eq null ? 'true':'false'}">
+                        <p:outputLabel value="META: " for="@next" style="font-weight: bold;"/>
+                        <br/>
+                        <br/>
+                        <p:selectOneMenu id="politicasLocales2" value="#{planificacionMbView.politicaLocalSeleccionado}" style="width: 300px;" converter="#{utilConverter}" >
+                            <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItems value="#{planificacionMbView.politicasLocales}" var="p" itemLabel="#{p.objetivo.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="FECHA DE VIGENCIA: " for="@next" style="font-weight: bold;"/>
+                        <br/>
+                        <p:calendar value="#{planificacionMbView.fechaVigenciaPrograma}"
+                                    pattern="yyyy/MM/dd" locale="es" navigator="true" style="width: 100%;" required="true"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Activo: " style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox value="#{planificacionMbView.estadoPrograma}" disabled="#{planificacionMbView.disabledEstatusProgCreate}"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:commandButton value="REGISTRAR PROGRAMA" update="formProgramas, tablaprogramaslist" rendered="#{planificacionMbView.renderBtnRegProg}"
+                                 icon="ui-icon-plus" style="width: auto; margin-top: 20px; align-self: right"
+                                 actionListener="#{planificacionMbView.registrarProgramaVista()}" styleClass="Fs16" process="@form" />
+                <p:commandButton value="EDITAR PROGRAMA" update="formProgramas, tablaprogramaslist" rendered="#{planificacionMbView.renderBtnEditProg}"
+                                 icon="ui-icon-plus" style="width: auto; margin-top: 20px; align-self: right"
+                                 actionListener="#{planificacionMbView.editarProgramaVista()}" styleClass="Fs16" process="@form" />
+            </h:form>
+        </p:dialog>
+        
+        <!--DIALOGO INGRESO DE PROYECTOS-->
+        <p:dialog id="dialogProyecto" header="PROYECTO" widgetVar="dialogProyecto" modal="true" showEffect="fade" hideEffect="fade" resizable="false" style="margin: 200px; margin-top: 50px;" height="350px" width="70%">
+            <h:form id="formProyecto" prependId="false" style="width: 100%;max-width: 98%;margin: 0 auto;display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                <p:panelGrid columns="1" style="width: 90%;align-items: center; margin-top: 20px;">
+                    <h:panelGroup>
+                        <p:outputLabel value="PROGRAMA " style="font-size: 20px; font-weight: bold;"/>
+                        <p:commandLink title="Añadir Programa" actionListener="#{planificacionMbView.obtieneProgramasLazy(true)}" process="@this"
+                                       oncomplete="PF('dilogSeleccionPrograma').show()" update="formSeleccionPrograma">
+                            <i class="fa fa-search" style="font-size: 1.8em; margin-right: 8px;"></i>
+                        </p:commandLink>
+                        <br/>
+                        <p:inputTextarea rows="3" cols="12" value="#{planificacionMbView.planificacionProyecto.programa.codigo eq null?'NO APLICA':planificacionMbView.planificacionProyecto.programa.descripcion.toUpperCase()}"
+                                         style="width: 100%;" readonly="true"/>
+                    </h:panelGroup>
+                    <p:panelGrid columns="3" style="width: 100%;align-items: center; margin-top: 10px;">
+                        <h:panelGroup>
+                            <p:outputLabel value="DESCRIPCION DEL PROYECTO: " for="@next" style="font-weight: bold;"/>
+                            <br/>
+                            <br/>
+                            <p:inputTextarea id="descproga" placeholder="Escriba una descripción.." required="true" requiredMessage="REQUERIDO" rows="3" cols="50" style="width: 100%;" 
+                                             value="#{planificacionMbView.dscProyecto}" 
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();">
+                            </p:inputTextarea>
+                            <p:message for="descproga"/>
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <p:outputLabel value="LÍNEA DE ACCIÓN: " for="@next" style="font-weight: bold;"/>
+                            <br/>
+                            <br/>
+                            <p:selectOneMenu id="lineaaccion" required="true" requiredMessage="REQUERIDO" disabled="false" value="#{planificacionMbView.lineaAccionProyecto}"
+                                             style="width: 300px;" converter="#{utilConverter}" >
+                                <f:selectItem itemLabel="Seleccione " itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{planificacionMbView.listaLineaAccion}" var="p" itemLabel="#{p.descripcion}" itemValue="#{p}"/>
+                            </p:selectOneMenu>
+                            <p:message for="lineaaccion"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Activo: " style="font-weight: bold"/><br/>
+                            <p:selectBooleanCheckbox value="#{planificacionMbView.planificacionProyecto.estado}" disabled="#{planificacionMbView.disabledEstatusProgCreate}"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="4" style="width: 100%;align-items: center; margin-top: 20px;">
+                        <h:panelGroup rendered="#{planificacionMbView.planificacionPrograma.codigo eq null and planificacionMbView.renderObjetivoProyecto eq true ? 'true':'false'}" id="labelSistPry">
+                             <h:outputText value="COMPONENTE: #{planificacionMbView.objetivoLocalSeleccionado.sistema.descripcion}" 
+                                          rendered="#{planificacionMbView.objetivoLocalSeleccionado.sistema ne null}" style="font-weight: bold"/>
+                            <br/>
+                            <br/>
+                            <p:outputLabel value="OBJETIVO: " for="@next" style="font-weight: bold;"/>
+                            <p:selectOneMenu  id="objlocalpry" value="#{planificacionMbView.objetivoLocalSeleccionado}"
+                                              style="width: 300px;" panelStyle="width:25%" converter="#{utilConverter}">
+                                <p:ajax listener="#{planificacionMbView.actualizarPoliticaLocal()}" update="politicaLocalGroup3,labelSistPry"/>
+                                <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"  />
+                                <f:selectItems value="#{planificacionMbView.planLocalObjetivos}" var="p" itemLabel="#{p.sistema.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}"/>
+                                <f:validateLength minimum="1"  /> 
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup id="politicaLocalGroup3" rendered="#{planificacionMbView.planificacionPrograma.codigo eq null and planificacionMbView.renderObjetivoProyecto eq true ? 'true':'false'}">
+                            <p:outputLabel value="META: " for="@next" style="font-weight: bold;"/>
+                            <p:selectOneMenu id="politicasLocales3" value="#{planificacionMbView.politicaLocalSeleccionado}" style="width: 300px;" converter="#{utilConverter}">
+                                <f:selectItem itemLabel=" Seleccione " itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{planificacionMbView.politicasLocales}" var="p" itemLabel="#{p.objetivo.codigo}.#{p.codigo} - #{p.descripcion}" itemValue="#{p}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup style="width: 100%;">
+                            <h:outputText value="FECHA DE VIGENCIA:" />
+                            <br/>
+                            <p:calendar value="#{planificacionMbView.fechaVigenciaProyecto}"
+                                        pattern="yyyy/MM/dd" locale="es" navigator="true" style="width: 100%;" required="true"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Registrar Programa" update="formProyecto,tablaproyectoslist" icon="ui-icon-plus" style="width: auto; margin-top: 20px;" 
+                                     actionListener="#{planificacionMbView.registrarProyectoVista()}" rendered="#{planificacionMbView.renderBtnRegPry}" styleClass="Fs16" process="@form"/>
+                    <p:commandButton value="Editar Programa" update="formProyecto,tablaproyectoslist" rendered="#{planificacionMbView.renderBtnEditPry}" icon="ui-icon-plus" style="width: auto; margin-top: 20px;" 
+                                     actionListener="#{planificacionMbView.editarProyectoVista()}" styleClass="Fs16" process="@form"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        
+        <!--DIALOGO SELECCION DE PLAN-->
+        <p:dialog id="dlogoBusquedaPlan" header="PLANES" widgetVar="dlogoBusquedaPlan" modal="true" showEffect="fade" hideEffect="fade" resizable="false" style="margin: 200px; margin-top: 50px;" height="500">
+            <h:form id="formdlogoBusquedaPlan" prependId="false" >
+                <p:dataTable var="item" 
+                             value="#{planificacionMbView.planesLazy}" rowIndexVar="index"
+                             rows="10" paginator="true" lazy="true" paginatorPosition="bottom" style="margin: 20px" 
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100"
+                             emptyMessage="No existen datos con el criterio de busqueda especificado">
+                    <f:facet name="header">
+                        PLANES
+                    </f:facet>
+                    <p:column headerText="COMPONENTE" style="width: 5%;text-align: center; font-weight: bold;" filterBy="#{item.politicaPublica.planLocal.politica.objetivo.sistema.codigo}" filterMatchMode="contains">
+                        <h:outputText value="COMPONENTE #{item.politicaPublica.planLocal.politica.objetivo.sistema.codigo}" />
+                    </p:column>
+                    <p:column headerText="OBJETIVO" style="width: 5%;text-align: center; font-weight: bold;" filterBy="#{item.politicaPublica.planLocal.politica.objetivo.codigo}" filterMatchMode="contains">
+                        <h:outputText value="OBJETIVO #{item.politicaPublica.planLocal.politica.objetivo.codigo}" />
+                    </p:column>
+                    <p:column headerText="META DE RESULTADOS" style="width: 5%;text-align: center; font-weight: bold;" filterBy="#{item.politicaPublica.planLocal.politica.codigo}" filterMatchMode="contains">
+                        <h:outputText value="META #{item.politicaPublica.planLocal.politica.codigo}" />
+                    </p:column>
+                    <p:column headerText="CÓDIGO" style="width: 5%;text-align: center; font-weight: bold;" filterBy="#{item.codigo}" filterMatchMode="contains">
+                        <h:outputText value="#{item.codigo}" />
+                    </p:column>
+                    <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                        <h:outputText value="#{item.descripcion}" />
+                    </p:column>
+                    <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterMatchMode="contains">
+                        <h:outputText value="#{item.fechaVigencia}">
+                            <f:convertDateTime pattern="yyyy/MM/dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="ESTATUS" style="width: 5%;text-align: center" filterBy="#{item.estado}">
+                        <h:outputText value="#{item.estado?'ACTIVO':'INACTIVO'}" />
+                    </p:column>
+                    <p:column headerText="******" style="text-align: center; width: 3%">
+                        <p:commandLink  title="Seleccionar"   process="formdlogoBusquedaPlan"
+                                        actionListener="#{planificacionMbView.elegiendoPlan(item)}"           >
+                            <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px; "></i>                          
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        
+        <!--FORMULARIO TABLA DE PROGRAMAS LAZY-->
+        <p:dialog id="dilogSeleccionPrograma" header="PROGRAMAS" widgetVar="dilogSeleccionPrograma" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false" style="margin: 200px; margin-top: 50px;" height="500">
+            <h:form id="formSeleccionPrograma" prependId="false" style="width: 100%;max-width: 98%;margin: 0 auto;display: flex;flex-direction: column;justify-content: center;align-items: center;">
+                <p:panelGrid columns="1" style="width: 90%;align-items: center; margin-top: 20px;">
+                    <p:dataTable  id="tableProgramasLazy" widgetVar="tableProgramasLazy" var="item" 
+                                  value="#{planificacionMbView.listaProgramasLazy}" rowIndexVar="index"
+                                  rows="10" paginator="true" lazy="true" paginatorPosition="bottom" style="margin: 20px" 
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                  rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100"
+                                  emptyMessage="No existen datos con el criterio de busqueda especificado">
+
+                        <f:facet name="header">
+                            LISTADO DE PROGRAMAS
+                        </f:facet>
+                        <p:column headerText="COMPONENTE" style="width: 5%;text-align: center;" filterBy="#{item.panificacion.politicaPublica.planLocal.politica.objetivo.sistema.codigo}" filterMatchMode="contains">
+                            <h:outputText value="COMPONENTE #{item.panificacion.politicaPublica.planLocal.politica.objetivo.sistema.codigo}" />
+                        </p:column>
+                        <p:column headerText="OBJETIVO" style="width: 5%;text-align: center;" filterBy="#{item.panificacion.politicaPublica.planLocal.politica.objetivo.codigo}" filterMatchMode="contains">
+                            <h:outputText value="OBJETIVO #{item.panificacion.politicaPublica.planLocal.politica.objetivo.codigo}" />
+                        </p:column>
+                        <p:column headerText="META DE RESULTADOS" style="width: 5%;text-align: center;" filterBy="#{item.panificacion.politicaPublica.planLocal.politica.codigo}" filterMatchMode="contains">
+                            <h:outputText value="META #{item.panificacion.politicaPublica.planLocal.politica.codigo}" />
+                        </p:column>
+                        <p:column headerText="PLAN" style="width: 5%;text-align: center;" filterBy="#{item.panificacion.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{item.panificacion.codigo eq null ? 'NO APLICA': item.panificacion.codigo}" />
+                        </p:column>
+                        <p:column headerText="CÓDIGO" style="width: 5%;text-align: center;" filterBy="#{item.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{item.codigo}" />
+                        </p:column>
+                        <p:column headerText="DESCRIPCIÓN" style="width: 25%;text-align: center;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{item.descripcion}" />
+                        </p:column>
+                        <p:column headerText="FECHA VIGENCIA" style="width: 5%;text-align: center;" filterBy="#{item.fechaVigencia}" filterMatchMode="contains">
+                            <h:outputText value="#{item.fechaVigencia}" >
+                                <f:convertDateTime pattern="yyyy/MM/dd"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="SELECCIÓN" style="text-align: center; width: 5%">
+                            <p:commandLink rendered="#{item.id ne null}" disabled="false" title="Seleccionar" process="@this" 
+                                           update="formGeneral, formProyecto, formSeleccionPrograma" oncomplete="PF('dilogSeleccionPrograma').hide()" 
+                                           actionListener="#{planificacionMbView.seleccionPrograma(item)}">
+                                <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px;"></i> 
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

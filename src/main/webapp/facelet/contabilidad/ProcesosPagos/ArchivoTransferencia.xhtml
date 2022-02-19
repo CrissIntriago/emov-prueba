@@ -1,0 +1,594 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Generación de archivo de transferencia
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{archivoSPIView.tarea}" tramite="#{archivoSPIView.tramite}"/>
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:tabView style="width: 100%;" id="idtabView">
+                        <p:tab title="Registro de la Transferencia">
+                            <h:panelGroup id="mantenimientoTransferencia" layout="block" rendered="#{archivoSPIView.ocultarTabla}" style="margin-top: 10px">
+                                <p:commandButton disabled="#{archivoSPIView.enabledIniciar}"
+                                                 value="Nueva Transferencia" process="@this" icon="fa fa-plus" 
+                                                 actionListener="#{archivoSPIView.form(null)}" styleClass="Fs16" style="width: auto;margin-bottom: 15px"/> 
+                                <p:commandButton value="Anular Transferencia" process="@this" icon="fa fa-plus" disabled="#{archivoSPIView.enabledIniciar}"
+                                                 actionListener="#{archivoSPIView.dlogoObservaciones(null)}" style="width: auto;margin-bottom: 15px;background: red"/> 
+                                <p:dataTable  id="transferenciaTable" widgetVar="transferenciaTable" var="transferencia" value="#{archivoSPIView.transferenciasLazyModel}" 
+                                              paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" rowKey="#{transferencia.id}"
+                                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                                    <f:facet name="header">
+                                        LISTADO DE LAS TRANSFERENCIAS
+                                    </f:facet>
+                                    <p:column style="width:10px;text-align: center">
+                                        <p:rowToggler />
+                                    </p:column>
+                                    <p:column headerText="Nº Referencia" style="width: 3vw;text-align: center" filterBy="#{transferencia.numReferencia}">
+                                        <h:outputText value="#{transferencia.numReferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 12vw;">
+                                        <h:outputText value="#{transferencia.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Período" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{transferencia.periodo}" />
+                                    </p:column>
+                                    <p:column headerText="Fecha Afectacion" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{transferencia.fechaAcreditacion}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{transferencia.fechaAnulacion}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Mes de Pago" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                            <f:convertDateTime pattern="MM-yyyy"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Valor de Pago" style="width: 3vw;">
+                                        <h:outputText value="#{transferencia.valor}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{transferencia.estadoTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="width: 3vw;text-align: center" rendered="#{archivoSPIView.detalleTrasferencias.size()>1?false:true}">
+                                        <p:commandLink actionListener="#{archivoSPIView.verTransferencia(transferencia)}" title="Volver a generar archivo" process="@this" 
+                                                       rendered="#{transferencia.estadoTransferencia == 'EMITIDO'? true:false}">
+                                            <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #00695C;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{archivoSPIView.dlogoObservaciones(transferencia)}" title="ANULACIÓN" process="@this" 
+                                                       rendered="#{transferencia.fechaAcreditacion!=null?false:(transferencia.estadoTransferencia=='ANULADO'?false:true)}">
+                                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular la transferencia Nº #{transferencia.numReferencia} ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{archivoSPIView.uploadDocGeneral(transferencia)}" rendered="true"
+                                                       title="SUBIR COMPROBANTE SPI" process="@this">
+                                            <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                    <p:rowExpansion >
+                                        <br></br>
+                                        <h:panelGroup id="dataRowTable" layout="block">
+                                            <p:dataTable id="rowTable" widgetVar="rowTable" var="row" value="#{archivoSPIView.viewDetalle(transferencia)}"
+                                                         style="width: 100%;border: 1px solid black"                                                      
+                                                         emptyMessage="No existen requisitos registrados en este procedimiento">
+                                                <p:column headerText="No. Comprobante de Pago" style="width: 4vw;text-align: center" >
+                                                    <h:outputText value="#{row.comprobantePago.numComprobante}" />
+                                                </p:column>  
+                                                <p:column headerText="No. Transferencia" style="width: 4vw;text-align: center" >
+                                                    <h:outputText value="#{row.referencia}" />
+                                                </p:column>  
+                                                <p:column headerText="Identificacion Beneficiario" style="width: 5vw;text-align: center">
+                                                    <h:outputText value="#{row.identificacion}" />
+                                                </p:column> 
+                                                <p:column headerText="Nombre Beneficiario" style="width: 10vw;">
+                                                    <h:outputText value="#{row.nombreBeneficiario}" />
+                                                </p:column> 
+                                                <p:column headerText="Banco" style="width: 5vw;text-align: center">
+                                                    <h:outputText value="#{row.institucionFinanciera.cuentaCorriente}" />
+                                                </p:column> 
+                                                <p:column headerText="Valor" style="width: 5vw;" >
+                                                    <h:outputText value="#{row.valor}" style="float: right"> 
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>  
+                                                <p:column headerText="Fecha Acreditación" style="width: 3vw;text-align: center">
+                                                    <h:outputText value="#{row.fechaAcreditacion}" >
+                                                        <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Fecha Anulación" style="width: 3vw;text-align: center">
+                                                    <h:outputText value="#{row.fechaAnulacion}" >
+                                                        <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Estado" style="width: 5vw;text-align: center">
+                                                    <h:outputText value="#{row.estado}" />
+                                                </p:column> 
+                                                <p:column headerText="Acciones" style="width: 3vw;text-align: center">
+                                                    <p:commandLink title="VER COMPROBANTE SPI" process="@this"
+                                                                   actionListener="#{archivoSPIView.verDocumentos(row)}"
+                                                                   rendered="#{row.estado=='ACREDITADO'?true:false}">
+                                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #3399ff;"></i>
+                                                    </p:commandLink>
+                                                    <p:commandLink actionListener="#{archivoSPIView.subirArchivo(row)}" title="SUBIR COMPROBANTE SPI" process="@this">
+                                                        <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                                                    </p:commandLink>
+                                                    <p:commandLink actionListener="#{archivoSPIView.anularDetalleTransferencia(row)}" title="ANULACIÓN" process="@this"
+                                                                   rendered="#{row.estado=='ACREDITADO'?false:row.estado=='ANULADO'?false:archivoSPIView.verificarTamanio(row)}">
+                                                        <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #D84315;"></i>
+                                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de anular esta transferencia" icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>
+                                                </p:column> 
+                                            </p:dataTable>
+                                        </h:panelGroup> 
+                                        <br></br>
+                                    </p:rowExpansion>
+                                </p:dataTable>
+                                <center>
+                                    <p:commandButton value="Completar Tarea"  actionListener="#{archivoSPIView.completarTarea(true)}"
+                                                     icon="fa fa-external-link" process="@this" style="width: auto; background: #0081cb; margin-top: 2%;"
+                                                     rendered="#{archivoSPIView.btnCompletarTarea}" />
+                                </center>
+                            </h:panelGroup>
+
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+
+                            <h:panelGroup id="formularioTransferencia" layout="block" rendered="#{!archivoSPIView.ocultarTabla}" style="margin-top: 10px">
+
+                                <p:fieldset legend="Datos Generales:" style="margin-bottom: 10px">
+                                    <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Nº de Comprobante de Pago" style="font-weight: bold"/>
+                                            <p:inputText id="numComprobantePago"  readonly="true" onkeypress="focusNextOnEnter(event, 'numComprobantePago')"
+                                                         value="#{archivoSPIView.comprobantePago.numComprobante}"/>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup rendered="#{archivoSPIView.transferencias.id == null ? false:true}">
+                                            <p:outputLabel for="@next" value="Nº Referencia:" style="font-weight: bold"/>
+                                            <p:inputText id="numeroReferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'numeroReferencia')"
+                                                         value="#{archivoSPIView.transferencias.numReferencia}" readonly="true" >
+                                                <p:keyFilter regEx="/[\d]/"/>
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                            <p:inputText id="periodoTransferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'periodoTransferencia')"
+                                                         disabled="#{archivoSPIView.transferencias.id == null ? false:true}"
+                                                         value="#{archivoSPIView.transferencias.periodo}" readonly="true" /> 
+                                        </h:panelGroup>
+
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Fecha Afectación:" style="font-weight: bold"/>
+                                            <p:calendar id="fechaAfectacion"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                        value="#{archivoSPIView.transferencias.fechaAfectacion}" style="width: 100%">
+                                            </p:calendar> 
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Mes de Pago:" style="font-weight: bold"/>
+                                            <p:inputText id="mesTransferencia" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'mesTransferencia')"
+                                                         value="#{archivoSPIView.transferencias.fechaAfectacion}" readonly="true" >
+                                                <f:convertDateTime pattern="MM/yyyy" />
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="@next" value="Localidad:" style="font-weight: bold"/>
+                                            <p:inputText id="localidad" style="width: 100%;text-transform: uppercase" onkeypress="focusNextOnEnter(event, 'localidad')"
+                                                         value="#{archivoSPIView.transferencias.localidad}">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="responsablesGrid">
+                                        <p:fieldset legend="Responsable 1" style="margin-bottom:10px">
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                                    <p:inputText id="identificacion1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'identificacion1')"
+                                                                 value="#{archivoSPIView.transferencias.responsable1.persona.identificacion}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Nombre:" style="font-weight: bold"/>
+                                                    <p:inputText id="responsable1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'responsable1')"
+                                                                 value="#{archivoSPIView.transferencias.responsable1.persona.nombreCompleto}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Cargo 1:" style="font-weight: bold"/>
+                                                    <p:inputText id="cargo1" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo1')"
+                                                                 value="#{archivoSPIView.transferencias.responsable1.distributivo.cargo.nombreCargo}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                        <p:fieldset legend="Responsable 2" style="margin-bottom:10px">
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Idetificación:" style="font-weight: bold"/>
+                                                    <p:inputText id="identificacion2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'identificacion2')"
+                                                                 value="#{archivoSPIView.transferencias.responsable2.persona.identificacion}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Responsable 2:" style="font-weight: bold"/>
+                                                    <p:inputText id="responsable2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'responsable2')"
+                                                                 value="#{archivoSPIView.transferencias.responsable2.persona.nombreCompleto}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:outputLabel for="@next" value="Cargo 2:" style="font-weight: bold"/>
+                                                    <p:inputText id="cargo2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'cargo2')"
+                                                                 value="#{archivoSPIView.transferencias.responsable2.distributivo.cargo.nombreCargo}" readonly="true" >
+                                                    </p:inputText>
+                                                </h:panelGroup>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+                                    </p:panelGrid>
+
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                        <p:fieldset legend="Listado de Transferencias:">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridDescripcion">
+                                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                                    <p:inputTextarea id="detalleTransferencia" rows="7"
+                                                                     style="width: 100%;border: 1px solid #cccccc;text-transform: uppercase"
+                                                                     readonly="#{archivoSPIView.transferencias.id == null ? false:true}"
+                                                                     value="#{archivoSPIView.transferencias.descripcion}"/> 
+                                                </p:panelGrid> 
+                                            </p:panelGrid>
+                                            <p:fieldset legend="Acciones Rapida del concepto del detalle de la transferencia:" style="margin-bottom: 10px">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                    <h:panelGrid columns="2" style="margin-bottom:3px" cellpadding="5">
+                                                        <p:selectOneRadio id="accionSeleccionado" value="#{archivoSPIView.conceptoSeleccionado}" 
+                                                                          converter="#{utilConverter}"  layout="grid" columns="5" >
+                                                            <f:selectItem itemLabel="NINGUNO" itemValue="#{null}" />
+                                                            <f:selectItems value="#{archivoSPIView.conceptoTransferencia}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                                            <p:ajax update="detalleTransferenciaTable" listener="#{archivoSPIView.actualizarTabla()}"/>
+                                                        </p:selectOneRadio>
+                                                    </h:panelGrid>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:fieldset>
+                                        <p:fieldset legend="Institución Pública Ordenante (IP):" style="margin-bottom:  10px">
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCuentaBancaria">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <p:outputLabel for="@next" value="Cta. Cte. en BCE:" style="font-weight: bold"/>
+                                                    <p:inputText id="ctaCteBCE" style="width: 100%;" readonly="true" onkeypress="focusNextOnEnter(event, 'ctaCteBCE')"
+                                                                 value="#{archivoSPIView.transferencias.ctaCteBceIp}" maxlength="8" >
+                                                        <p:keyFilter regEx="/[\d]/"/>
+                                                    </p:inputText>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <p:outputLabel for="@next" value="Nombre Institución:" style="font-weight: bold"/>
+                                                    <p:inputText id="nombreInstitucion" style="width: 100%;text-transform: uppercase"
+                                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'nombreInstitucion')"
+                                                                 value="#{archivoSPIView.transferencias.nombreInstitucion}">
+                                                    </p:inputText>
+                                                </p:panelGrid>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                                    <p:outputLabel value="CORRESPONSAL:" style="font-weight: bold"/>
+                                                    <p:selectBooleanCheckbox id="corresponsal" value="#{archivoSPIView.transferencias.corresponsal}"
+                                                                             disabled="#{archivoSPIView.transferencias.id == null ? false:true}">
+                                                        <p:ajax update="corresponsalGrid" listener="#{archivoSPIView.activarCorresponsal()}" />
+                                                    </p:selectBooleanCheckbox>
+                                                </h:panelGrid>
+                                            </p:panelGrid>
+
+                                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="corresponsalGrid" >
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <p:outputLabel for="@next" value="Cta. Rotativa Pagos:" style="font-weight: bold"/>
+                                                    <p:inputText id="ctaRotativa" style="width: 100%;" maxlength="8" onkeypress="focusNextOnEnter(event, 'ctaRotativa')"
+                                                                 readonly="#{archivoSPIView.camposCorresponsal}"
+                                                                 value="#{archivoSPIView.transferencias.ctaRotativa}">
+                                                        <p:keyFilter regEx="/[\d]/"/>
+                                                    </p:inputText>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <p:outputLabel for="@next" value="Cta. Cte en BCE:" style="font-weight: bold"/>
+                                                    <p:inputText id="ctaCteBCE2" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'ctaCteBCE2')"
+                                                                 maxlength="8" readonly="#{archivoSPIView.camposCorresponsal}"
+                                                                 value="#{archivoSPIView.transferencias.ctaCteBceCorresponsal}">
+                                                        <p:keyFilter regEx="/[\d]/"/>
+                                                    </p:inputText>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <p:outputLabel for="@next" value="Nombre Corresponsal:" style="font-weight: bold"/>
+                                                    <p:inputText id="nombreCorresponsal" style="width: 100%;text-transform: uppercase" 
+                                                                 readonly="#{archivoSPIView.camposCorresponsal}"
+                                                                 onkeypress="focusNextOnEnter(event, 'nombreCorresponsal')"
+                                                                 value="#{archivoSPIView.transferencias.nombreCorresponsal}">
+                                                    </p:inputText>
+                                                </p:panelGrid>
+                                            </p:panelGrid>
+                                        </p:fieldset>
+
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                                <p:dataTable  id="detalleTransferenciaTable" widgetVar="detalleTransferenciaTable" var="detalleTransferencia" value="#{archivoSPIView.detalleTrasferencias}"
+                                              paginator="true" rows="50" style="width: 100%;" rowsPerPageTemplate="50,60,70,100" lazy="true" editable="true" editMode="cell"
+                                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                                    <p:column headerText="Cédula, RUC, Pasaporte" style="width:7vw;text-align: center">
+                                        <h:outputText value="#{detalleTransferencia.identificacion}" />
+                                    </p:column>
+                                    <p:column headerText="Referencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{detalleTransferencia.referencia}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 12vw;">
+                                        <h:outputText value="#{detalleTransferencia.nombreBeneficiario}" />
+                                    </p:column>
+                                    <p:column headerText="Institución Financiera" style="width: 7vw;text-align: center">
+                                        <h:outputText value="#{detalleTransferencia.institucionFinanciera.cuentaCorriente}" />
+                                    </p:column>
+                                    <p:column headerText="Cuenta Beneficiario" style="width: 6vw;text-align: center">
+                                        <h:outputText value="#{detalleTransferencia.cuentaBcoBeneficiario}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 3vw;text-align: center">
+                                        <h:outputText value="#{detalleTransferencia.tipoCuenta}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 4vw;">
+                                        <h:outputText value="#{detalleTransferencia.valor}" style="float: right"> 
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Concepto" style="width: 6vw;text-align: center">
+                                        <p:cellEditor>
+                                            <f:facet name="output"><h:outputText value="#{detalleTransferencia.concepto}" /></f:facet>
+                                            <f:facet name="input">
+                                                <h:selectOneMenu value="#{detalleTransferencia.concepto}" style="width:100%">
+                                                    <f:selectItem itemLabel="-Seleccione-" itemValue=""/>
+                                                    <f:selectItems value="#{archivoSPIView.conceptoTransferencia}" var="ti" itemLabel="#{ti.texto}" itemValue="#{ti.codigo}"/>
+                                                </h:selectOneMenu>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                    <p:column headerText="Detalle" style="width: 12vw;">
+                                        <p:cellEditor>
+                                            <f:facet name="output">
+                                                <h:outputText value="#{detalleTransferencia.detalle}" />
+                                            </f:facet>
+                                            <f:facet name="input">
+                                                <p:inputText value="#{detalleTransferencia.detalle}" >
+                                                    <p:keyFilter regEx="/[\d]/"/>
+                                                </p:inputText>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                </p:dataTable>
+                                <center>
+                                    <p:commandButton value="Generar SPI" icon="fa fa-save" actionListener="#{archivoSPIView.OpenMenuArchivosDlg(true)}" update="transferenciaTable"
+                                                     styleClass="Fs16" style="width: 100px;margin: 15px 5px" title="Guarda y genera el archivo de la transferencia" rendered="#{archivoSPIView.nuevo}"/> 
+                                    <p:commandButton value="Actualizar SPI" icon="fa fa-save" actionListener="#{archivoSPIView.OpenMenuArchivosDlg(false)}" update="transferenciaTable"
+                                                     styleClass="Fs16" style="width: 100px;margin: 15px 5px" title="Genera el archivo de la transferencia" rendered="#{!archivoSPIView.nuevo}" /> 
+                                    <p:commandButton value="Cancelar" icon="fa fa-remove" actionListener="#{archivoSPIView.vaciarFormulario('CANCELAR')}" 
+                                                     styleClass="Fs16" class="red-button" style="width: 100px;margin: 15px 5px">
+                                        <p:confirm header="Confirmación" message="Los datos ingresados no se guardaran ¿Desea cancelar de todas maneras?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandButton> 
+                                </center>
+                            </h:panelGroup>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="pi pi-check" />
+                                <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="pi pi-times" />
+                            </p:confirmDialog>  
+
+                        </p:tab>
+                        <p:tab title="Documentos">
+                            <u:documents entiti="#{archivoSPIView.tramite}" id="idDocumentos"/>
+                        </p:tab>
+                    </p:tabView>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="comprobantePagoDLG" header="Comprobantes de Pago" widgetVar="comprobantePagoDLG" width="80%" style="margin-top: 100px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="top">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobantePagoForm" style="width: 100%;" >
+
+                    <p:dataTable  id="comprobantePagoTable" widgetVar="comprobantePagoTable" var="comprobantePago" value="#{archivoSPIView.comprobantePagoLazyModel}"
+                                  paginator="true" rows="10" style="width: 100%;" rowsPerPageTemplate="10,15" lazy="true" rowKey="#{comprobantePago.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado"> 
+
+                        <p:column style="width:10px">
+                            <p:rowToggler />
+                        </p:column>
+                        <p:column headerText="Nº de Comprobante" style="width: 3vw;text-align: center" filterBy="#{comprobantePago.numComprobante}">
+                            <h:outputText value="#{comprobantePago.numComprobante}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 8vw;">
+                            <h:outputText value="#{comprobantePago.detalle}" />
+                        </p:column>
+                        <p:column headerText="Fecha de Emisión" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.fechaComprobante}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Período" style="width: 3vw;text-align: center">
+                            <h:outputText value="#{comprobantePago.periodo}" />
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 4vw;text-align: center" filterBy="#{comprobantePago.estado}" >
+                            <h:outputText value="#{comprobantePago.estado}" />
+                        </p:column>
+                        <p:column headerText="Seleccionar" style="width: 2vw;text-align: center">
+                            <p:commandLink actionListener="#{archivoSPIView.seleccionarComprobantePago(comprobantePago)}" title="SELECCIONAR" process="@this">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #99ff00;"></i>
+                            </p:commandLink>
+                        </p:column>
+
+                        <p:rowExpansion>
+                            <br></br>
+                            <h:panelGroup id="dataRowTable" layout="block">
+                                <p:dataTable id="rowTable" widgetVar="rowTable" var="beneficiario"
+                                             value="#{archivoSPIView.viewDetalleBeneficiarios(comprobantePago)}"
+                                             rows="10" style="width: 100%;border: 1px solid black"                                                      
+                                             emptyMessage="No existe beneficiarios asociados a este comprobante de pago">
+                                    <p:column headerText="Cuenta Bancaria" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.cuentaBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre del Banco" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.detalleBanco.banco.nombreBanco}" />
+                                    </p:column>
+                                    <p:column headerText="Tipo Cuenta" style="width: 5vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.detalleBanco.tipoCuenta.texto}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 8vw;">
+                                        <h:outputText value="#{beneficiario.beneficiario.nombre}" />
+                                    </p:column>
+                                    <p:column headerText="Nº de Transferencia" style="width: 4vw;text-align: center">
+                                        <h:outputText value="#{beneficiario.numeroTransferencia}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 3vw;">
+                                        <h:outputText value="#{beneficiario.valor}" style="float: right">
+                                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                </p:dataTable>
+                            </h:panelGroup> 
+
+                            <br></br>
+                        </p:rowExpansion>
+
+                    </p:dataTable>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="comprobanteSPIDialog" header="Adjuntar Comprobante SPI" widgetVar="comprobanteSPIDialog" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteSPIForm" style="width: 100%;">
+                    <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:outputLabel for="@next" value="Fecha de Acreditación:"  style="font-weight: bold"/>
+                            <p:calendar id="acreeditacionFecha" pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"                                        
+                                        value="#{archivoSPIView.detalleTransferencia.fechaAcreditacion}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="comprobanteSPIForm"/>
+                            </p:calendar>   
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:fileUpload fileUploadListener="#{archivoSPIView.handleFileUploadComprobanteSPI}" id="fileUpload"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                                  mode="advanced" dragDropSupport="false" rendered="#{archivoSPIView.detalleTransferencia.fechaAcreditacion != null ? true:false}"
+                                  update="messages" />
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+
+
+        <p:dialog id="comprobanteSPIDialog_2" header="Adjuntar Comprobante SPI" widgetVar="comprobanteSPIDialog_2" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="comprobanteSPIForm_2" style="width: 100%;">
+                    <p:fieldset>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha de Acreditación:"  style="font-weight: bold"/><br/>
+                            <p:calendar id="acreeditacionFecha_" pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"                                        
+                                        value="#{archivoSPIView.fechaAcreditacion}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="comprobanteSPIForm_2"/>
+                            </p:calendar>  
+                        </h:panelGroup>
+                    </p:fieldset> 
+                    <br/>
+                    <p:fileUpload fileUploadListener="#{archivoSPIView.subirDocGeneral}" id="fileUpload_2"  onstart="pbAjaxLong.start()"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar"
+                                  mode="advanced" dragDropSupport="false" rendered="#{archivoSPIView.fechaAcreditacion != null ? true:false}"
+                                  />
+                    <br/>
+                    <p:progressBar id="progress1" widgetVar="pbAjaxLong" ajax="true" value="#{archivoSPIView.progress2}" 
+                                   labelTemplate="{value}%" styleClass="p-mt-3" global="true" >
+                    </p:progressBar>
+                    <br/>   
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{archivoSPIView.detalleTransferencia}" showDelete="true"/>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="menuArchivosDlg" header="Menú de archivos de Descarga" widgetVar="menuArchivosDlg" width="20%" draggable="true"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center" closable="false">
+            <h:form prependId="false">
+                <p:outputPanel id="menuArchivosForm" style="width: 100%;" >
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridBtn">
+                        <p:commandButton value="Generar SPI.zip" icon="fa fa-file-zip-o" actionListener="#{archivoSPIView.generarArchivosDescargas(1)}" update="gridBtn"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{archivoSPIView.btn_1}"/>
+                        <p:commandButton value="Generar Archivo Proveedores.txt" icon="fa fa-file-text" actionListener="#{archivoSPIView.generarArchivosDescargas(2)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{archivoSPIView.btn_2}"/> 
+                        <p:commandButton value="Generar Reporte SPI" icon="fa fa-file-pdf-o" actionListener="#{archivoSPIView.generarArchivosDescargas(3)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" disabled="#{archivoSPIView.btn_3}"/>
+                        <p:commandButton value="Generar Archivo de Ventanilla" icon="fa fa-file-pdf-o" actionListener="#{archivoSPIView.generarArchivosDescargas(4)}" update="menuArchivosForm"
+                                         styleClass="Fs16" style="width: 100%;" 
+                                         disabled="#{archivoSPIView.btn_4}"/>
+                        <p:commandButton value="Salir" icon="fa fa-home" actionListener="#{archivoSPIView.generarArchivosDescargas(5)}" 
+                                         styleClass="Fs16" style="width: 100%;" class="btn-red" disabled="#{archivoSPIView.btn_3}">
+                            <p:confirm header="Mensaje de Confirmación" message="¿Esta seguro desea salir?" icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                    </p:panelGrid>
+                </p:outputPanel>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{archivoSPIView.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Anular tarea" title="Anular Tarea" process="frmDlgObser" update="frmDlgObser"
+                                                 actionListener="#{archivoSPIView.closeObservacionDlg()}" style="width: 100%;"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

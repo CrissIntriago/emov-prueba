@@ -1,0 +1,122 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../../WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Listado de Orden de Requisición
+    </ui:define>
+    <ui:param name="tittle" value="  ORDENES DE REQUISICIONES" />
+
+    <ui:define name="content">
+        <style type="text/css">
+            .estadoa {
+                background-color: #DCEDC8 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+            .estadob {
+                background-color: rgba(247,0,0,0.4) !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+        </style>
+
+
+
+        <h:form id="frmMain">
+
+            <div style="width: 25% !important; display: inline-block; float: left;">
+                <div class="ui-g" style="float: right; width: 100% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer; text-align: center">EMITIDO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estadoa" style="cursor: pointer; text-align: center">APROBADO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer; text-align: center">ANULADO</div>
+                </div>
+            </div>
+            <br></br>
+            <p:commandButton id="mostrarColumnas" type="button" value="Columnas Visibles" style="width:170px; float: right;" icon="fa fa-align-justify" />
+            <p:columnToggler datasource="ordenReq" trigger="mostrarColumnas" />
+            <br></br>
+            <br></br>
+            <br></br>
+            <center>
+                <p:dataTable id="ordenReq" widgetVar="ordenReq" var="item" value="#{solicitudesRequisicionView.lazyOrdenRequisicion}" paginator="true" rows="10" 
+                             style="width: 100%;" paginatorPosition="bottom" expandableRowGroups="true" 
+                             rowStyleClass="#{item.estadoSolicitud eq 'APROBADO'? 'estadoa' :null} #{item.estadoSolicitud eq 'ANULADO' ? 'estado-inactivo':null}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="enter" paginatorAlwaysVisible="false"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true"  rowExpandMode="single"
+                             emptyMessage="No existen Solicitudes con el criterio de búsqueda especificado">
+
+                    <f:facet name="header">
+                        Ordenes de Requisiciones
+                    </f:facet>
+                    <p:column style="width:16px">
+                        <p:rowToggler />
+                    </p:column>
+                    <p:column headerText="No. Orden" style="width: 15%; font-weight: bold; text-align: center" filterBy="#{item.codigo}" filterMatchMode="contains">
+                        <h:outputText value="#{item.codigo}" />
+                    </p:column>                                    
+                    <p:column headerText="Funcionario" style="width: 18%;" filterBy="#{item.servidorSolicitante.persona.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{item.servidorSolicitante.persona.nombre} #{item.servidorSolicitante.persona.apellido}" />
+                    </p:column>
+                    <p:column headerText="Unidad" style="width: 25%;" filterBy="#{item.unidadAdministrativa.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{item.unidadAdministrativa.nombre}" />
+                    </p:column>
+                    <p:column headerText="Cargo" style="width: 12%;" filterBy="#{item.servidorSolicitante.distributivo.cargo.nombreCargo}" filterMatchMode="contains">
+                        <h:outputText value="#{item.servidorSolicitante.distributivo.cargo.nombreCargo}" />
+                    </p:column>
+                    <p:column headerText="Fecha Emitida" style="width: 12%; text-align: center;">
+                        <h:outputText value="#{item.fechaEmision}" >
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Estado Solicitud" style="width: 10%; text-align: center;" filterBy="#{item.estadoSolicitud}" filterMatchMode="contains">
+                        <f:facet name="filter"> 
+                            <p:selectOneMenu value="#{solicitudesRequisicionView.estadoOrd}" onchange="PF('ordenReq').filter()" styleClass="custom-filter"   style="width: 100%;">
+                                <f:selectItem itemLabel="-Todos-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItem itemLabel="Emitido" itemValue="EMITIDO"/>
+                                <f:selectItem itemLabel="Aprobado" itemValue="APROBADO"/>
+                                <f:selectItem itemLabel="Anulado" itemValue="ANULADO"/>
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{item.estadoSolicitud}" />
+                    </p:column>
+                    <p:column headerText="N° Trámite" style="width:8%; font-size: 12px; text-align: center;">
+                        <h:outputText value="#{item.numeroTramite}" />
+                    </p:column>
+                    <p:rowExpansion>
+                        <center>
+                            <p:dataTable id="Subta" var="item1" value="#{solicitudesRequisicionView.getItemByOrdenRequisicion(item)}" style="width:75%">
+                                <f:facet name="header">
+                                    LISTADO DE ITEMS DE #{item.codigo}
+                                </f:facet>
+                                <p:column headerText="Código" width="12%" style="text-align: center">
+                                    <h:outputText value="#{item1.item.codigoAgrupado}" />
+                                </p:column>
+                                <p:column headerText="Nombre de Item" width="30%">
+                                    <h:outputText value="#{item1.item.descripcion}" />
+                                </p:column>
+                                <p:column headerText="Tipo de Medida"  width="10%">
+                                    <h:outputText value="#{item1.item.tipoMedida.descripcion}" />
+                                </p:column>
+                                <p:column headerText="Stock"  width="10%">
+                                    <h:outputText value="#{item1.item.cantidadExistente}" />
+                                </p:column>
+                                <p:column headerText="Cantidad Solicitada" width="10%" >
+                                    <h:outputText value="#{item1.cantidadSolicitada}" />
+                                </p:column>
+                            </p:dataTable>
+                        </center>
+
+                    </p:rowExpansion>
+
+                </p:dataTable>
+            </center>
+
+        </h:form>
+    </ui:define>
+</ui:composition>

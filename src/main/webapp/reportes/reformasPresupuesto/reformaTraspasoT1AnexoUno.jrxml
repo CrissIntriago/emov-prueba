@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="report name" pageWidth="842" pageHeight="595" orientation="Landscape" whenNoDataType="AllSectionsNoDetail" columnWidth="802" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="387bd8c4-f1a0-4150-9b80-9effefdc61d8">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<style name="bold" scaleImage="FillFrame" isBold="true" isItalic="false" isUnderline="false" isStrikeThrough="false" pdfFontName="Helvetica-Bold" isPdfEmbedded="false"/>
+	<parameter name="id" class="java.lang.Long">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["D:\\EMOT_APP\\emot\\src\\main\\webapp\\reportes\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="ENTIDAD" class="java.lang.Object">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="MOSTRAR_FECHA_IMPRESION" class="java.lang.Boolean" isForPrompting="false"/>
+	<parameter name="MARCA_AGUA" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["d:\\user\\Desktop\\SISTEMA ORIGAMI GT EMOT\\MARCA DE AGUA.jpg"]]></defaultValueExpression>
+	</parameter>
+	<queryString>
+		<![CDATA[SELECT a.partida, a.item AS item, a.estructura AS estructura,
+COALESCE(a.monto,0.00) AS monto,
+COALESCE(a.incremento,0.00) AS incremento,
+COALESCE(a.reduccion,0.00) AS reducciON ,
+COALESCE(a.reformado,0.00) AS reformado ,
+COALESCE(b.totalmonto,0) AS totalmonto,
+COALESCE(b.totalsuplemento,0) AS totalsuplemento,
+COALESCE(b.totalreduccion,0) AS totalreduccion,
+COALESCE(b.totalreformado,0) AS totalreformado,
+'ANEXO 1 - REFORMA TRASPASO'||case WHEN r.tipo=true THEN ' TIPO 1' WHEN r.tipo=false THEN ' TIPO 2'
+END AS tipo,r.fecha_traspaso_reforma,'No.'||r.numeracion||' ('||r.codigo||')' AS numeracion,
+NOW() AS fecha_actual
+FROM (SELECT pr.codigo_presupuestario AS partida,
+	  cp.descripciON AS item,
+	  plp.descripciON AS estructura,
+	  SUM(pr.monto) AS monto,
+	  SUM(pr.traspaso_incremento) AS incremento,
+	  SUM(pr.traspaso_reduccion) AS reduccion,
+	  SUM(pr.monto_reformada) AS reformado
+	FROM presupuesto.reforma_traspaso r
+	INNER JOIN producto pr ON pr.codigo_reforma_traspaso=r.id
+	INNER JOIN presupuesto.pres_catalogo_presupuestario cp ON pr.item_new=cp.id
+	INNER JOIN presupuesto.pres_plan_programatico plp ON pr.estructura_new= plp.id
+	WHERE r.id=$P{id}
+	AND pr.codigo_presupuestario is not null
+	GROUP BY partida,item,estructura) AS a,
+
+(SELECT SUM(ab.monto) AS totalmonto, SUM(ab.suplemento) AS totalsuplemento,
+ SUM(ab.reduccion) AS totalreduccion,SUM(ab.reformado) AS totalreformado
+ FROM (SELECT pr.codigo_presupuestario AS partida,
+	   SUM(pr.monto) AS monto,
+       SUM(pr.traspaso_incremento) AS suplemento,
+	   SUM(pr.traspaso_reduccion) AS reduccion,
+	   SUM(pr.monto_reformada) AS reformado
+     FROM presupuesto.reforma_traspaso r
+    INNER JOIN producto pr ON pr.codigo_reforma_traspaso=r.id
+    WHERE r.id=$P{id}
+	   AND pr.codigo_presupuestario is not null
+    GROUP BY partida) AS ab
+) AS b,
+presupuesto.reforma_traspaso r
+WHERE r.id=$P{id};]]>
+	</queryString>
+	<field name="partida" class="java.lang.String"/>
+	<field name="item" class="java.lang.String"/>
+	<field name="estructura" class="java.lang.String"/>
+	<field name="monto" class="java.math.BigDecimal"/>
+	<field name="incremento" class="java.math.BigDecimal"/>
+	<field name="reduccion" class="java.math.BigDecimal"/>
+	<field name="reformado" class="java.math.BigDecimal"/>
+	<field name="totalmonto" class="java.math.BigDecimal"/>
+	<field name="totalsuplemento" class="java.math.BigDecimal"/>
+	<field name="totalreduccion" class="java.math.BigDecimal"/>
+	<field name="totalreformado" class="java.math.BigDecimal"/>
+	<field name="tipo" class="java.lang.String"/>
+	<field name="fecha_traspaso_reforma" class="java.sql.Timestamp"/>
+	<field name="numeracion" class="java.lang.String"/>
+	<field name="fecha_actual" class="java.sql.Timestamp"/>
+	<background>
+		<band height="555" splitType="Stretch">
+			<image scaleImage="FillFrame">
+				<reportElement mode="Opaque" x="0" y="-21" width="825" height="576" uuid="8bbcc7b5-7986-4b12-8ed2-d5216f03bbef"/>
+				<imageExpression><![CDATA[$P{MARCA_AGUA}]]></imageExpression>
+			</image>
+		</band>
+	</background>
+	<title>
+		<band height="106" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="0" width="802" height="100" uuid="0f5f8fb7-59e8-4436-b60d-ccc1e80b0c69"/>
+				<subreportParameter name="PERIODO">
+					<subreportParameterExpression><![CDATA[$F{numeracion}]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="NOMBRE_REPORTE">
+					<subreportParameterExpression><![CDATA[$F{tipo}]]></subreportParameterExpression>
+				</subreportParameter>
+				<dataSourceExpression><![CDATA[new net.sf.jasperreports.engine.data.JRBeanCollectionDataSource(Arrays.asList($P{ENTIDAD}))]]></dataSourceExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR} + "titleH.jasper"]]></subreportExpression>
+			</subreport>
+		</band>
+	</title>
+	<pageHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement style="bold" x="0" y="0" width="133" height="20" uuid="93128aff-20fe-4959-9c92-0d477b16cc3a"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font isBold="true" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Fecha de Elaboración:]]></text>
+			</staticText>
+			<textField pattern="dd/MM/yyyy" isBlankWhenNull="true">
+				<reportElement x="133" y="0" width="158" height="20" uuid="8b64e848-4480-498f-a00a-f996a0f8aafb"/>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{fecha_traspaso_reforma}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="61" splitType="Stretch">
+			<staticText>
+				<reportElement style="bold" x="0" y="0" width="802" height="34" uuid="927d7dac-2a29-4c26-a21a-1fdfc555b4a9"/>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[REFORMA PARTIDAS EGRESOS]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="64" y="34" width="204" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="dd7e4d5c-67a6-4870-bc69-3f472d2fce0d"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Item Presupuestario]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="565" y="34" width="79" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="dab874d4-9a8a-4a5d-8728-a47910da691d"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Incremento]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="644" y="34" width="79" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="240ba9c5-562d-4ddc-82f3-af7542f56d35"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Reducción]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="0" y="34" width="64" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="b6828855-2e7c-49e8-92f0-aecf6c93387d"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Partida]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="268" y="34" width="218" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="3f2d4c92-1ede-4d2b-8d68-f47409bad933"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Estructura Programatica]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="723" y="34" width="79" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="9fdbcccf-a20e-4f20-a401-ec53d6687bc8"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Presupuesto Reformado]]></text>
+			</staticText>
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="486" y="34" width="79" height="27" forecolor="#000000" backcolor="#CCCCCC" uuid="9d59b834-922e-43f9-b8cc-ea58575b9c17"/>
+				<box>
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8" isBold="true"/>
+				</textElement>
+				<text><![CDATA[Presupuesto Codificado]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="26" splitType="Stretch">
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="0" y="0" width="64" height="26" isPrintWhenDetailOverflows="true" uuid="17138aeb-26f8-4dd2-9fc0-25c77abeb817"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{partida}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="64" y="0" width="204" height="26" isPrintWhenDetailOverflows="true" uuid="4cf940b9-bee9-41a7-a7c1-0c2266194213"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{item}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true">
+				<reportElement stretchType="RelativeToBandHeight" x="268" y="0" width="218" height="26" isPrintWhenDetailOverflows="true" uuid="d6631b1b-101a-44c0-947e-61f641059113"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{estructura}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="486" y="0" width="79" height="26" isPrintWhenDetailOverflows="true" uuid="a6b98757-5142-4a2f-97ae-391e90471e2c"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{monto}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="565" y="0" width="79" height="26" isPrintWhenDetailOverflows="true" uuid="8ab68a33-59a1-4ee4-b178-e932f2d7b19c"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{incremento}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="644" y="0" width="79" height="26" isPrintWhenDetailOverflows="true" uuid="3e45b8bf-3d87-4326-be99-05f18b21c46b"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{reduccion}]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToBandHeight" x="723" y="0" width="79" height="26" isPrintWhenDetailOverflows="true" uuid="6d0ec0ac-8d68-4978-86c8-df1087e491ed"/>
+				<box topPadding="1" leftPadding="3" bottomPadding="1" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{reformado}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<columnFooter>
+		<band height="17" splitType="Stretch"/>
+	</columnFooter>
+	<pageFooter>
+		<band height="25" splitType="Stretch">
+			<staticText>
+				<reportElement x="0" y="5" width="97" height="20" uuid="3e9089cd-c713-4d0e-84e3-789017a5d74d">
+					<printWhenExpression><![CDATA[$P{MOSTRAR_FECHA_IMPRESION}]]></printWhenExpression>
+				</reportElement>
+				<box leftPadding="2"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isBold="false" isItalic="true"/>
+				</textElement>
+				<text><![CDATA[Fecha de impresión:]]></text>
+			</staticText>
+			<textField isStretchWithOverflow="true" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="682" y="5" width="80" height="20" uuid="f9033326-6e77-421d-9176-79e0888e7b88"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["Página "+$V{PAGE_NUMBER}+" de"]]></textFieldExpression>
+			</textField>
+			<textField isStretchWithOverflow="true" evaluationTime="Report" isBlankWhenNull="true">
+				<reportElement stretchType="RelativeToTallestObject" x="762" y="5" width="40" height="20" uuid="c645f65a-ee5e-4d1f-909c-76a17a871f80"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<line>
+				<reportElement x="0" y="4" width="802" height="1" uuid="bc4a028e-c47f-443f-b288-da6c9f5e53fb"/>
+			</line>
+			<textField pattern="dd/MM/yyyy HH.mm.ss">
+				<reportElement x="97" y="5" width="171" height="20" uuid="fd74c0de-d5ed-4543-b4f8-df7c1341436e">
+					<printWhenExpression><![CDATA[$P{MOSTRAR_FECHA_IMPRESION}]]></printWhenExpression>
+				</reportElement>
+				<textElement verticalAlignment="Middle">
+					<font size="8" isItalic="true"/>
+				</textElement>
+				<textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement style="bold" mode="Opaque" x="268" y="0" width="218" height="20" forecolor="#000000" backcolor="#CCCCCC" uuid="2d780d2e-cd6c-4038-be81-4925099c2456"/>
+				<box leftPadding="1" rightPadding="5">
+					<pen lineWidth="0.5"/>
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font isBold="true"/>
+				</textElement>
+				<text><![CDATA[Total:]]></text>
+			</staticText>
+			<textField pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="486" y="0" width="79" height="20" uuid="eaab8222-c8aa-4437-9ca4-2504e09adfef"/>
+				<box leftPadding="3" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{totalmonto}]]></textFieldExpression>
+			</textField>
+			<textField pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="644" y="0" width="79" height="20" uuid="3a2c1959-a1d7-4659-a494-1e9ac5b7f98f"/>
+				<box leftPadding="3" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{totalreduccion}]]></textFieldExpression>
+			</textField>
+			<textField pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="723" y="0" width="79" height="20" uuid="c82e3c8e-3ecc-4aa0-bea8-6c716bf29ad2"/>
+				<box leftPadding="3" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{totalreformado}]]></textFieldExpression>
+			</textField>
+			<textField pattern="$ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="565" y="0" width="79" height="20" uuid="d88856bd-734d-41ab-86df-8b04dfac3b4c"/>
+				<box leftPadding="3" rightPadding="3">
+					<topPen lineWidth="0.5"/>
+					<leftPen lineWidth="0.5"/>
+					<bottomPen lineWidth="0.5"/>
+					<rightPen lineWidth="0.5"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{totalsuplemento}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

@@ -1,0 +1,421 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Plan Presupuesto Egreso</ui:define>
+    <ui:param name="tittle" value="Proforma de Egreso"/>
+    <ui:define name="content">
+
+        <div class="ui-g-12">
+            <h:form id="formMain" prependId="false">
+                <p:fieldset legend="Información" style="margin-bottom: 2%; padding: 20px 20px;">
+                    <p:outputLabel for="descripcion" value="Descripción:" style="margin-right: 2%;" />
+                    <p:inputText id="descripcion" value="#{proformaEgresosSinProcesoView.catalogoProforma.descripcion}"  required="true"
+                                 style="margin-right: 5%; width: 50%;text-transform: uppercase" />
+                    <p:outputLabel value="Período:" escape="false" style="margin-right: 2%;"/>
+                    <p:selectOneMenu value="#{proformaEgresosSinProcesoView.catalogoProforma.periodoCatalogo}"  id="sel" converter="#{utilConverter}" 
+                                     styleClass="custom-filter" style="margin-right: 5%; width: 15%;">
+                        <p:ajax  listener="#{proformaEgresosSinProcesoView.actualizarTabla()}" update="formMain,fmtablaegresopresupuesto"/>
+                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                        <f:selectItems value="#{proformaEgresosSinProcesoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p}"/>
+                    </p:selectOneMenu>
+                    <p:commandButton disabled="#{proformaEgresosSinProcesoView.bloqueo==false?true:false}"  id="buscar_btn" value="  Registrar/Actualizar"  
+                                     update="formMain" actionListener="#{proformaEgresosSinProcesoView.generarProforma()}" icon="fa fa-save" styleClass="Fs16"/>
+                </p:fieldset>
+            </h:form>
+        </div>  
+        <div>
+
+            <h:form  prependId="false" id="fmtablaegresopresupuesto">
+                <p:panel header="Opciones" class="ui-g-9">
+                    <p:panelGrid columns="6" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:commandButton disabled="#{!proformaEgresosSinProcesoView.bloqueo}" actionListener="#{proformaEgresosSinProcesoView.dlgProformaPresup()}" 
+                                             value="Partida Directa" style="width: 150px;" icon="fa fa-plus" />
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+                            <p:commandButton disabled="#{!proformaEgresosSinProcesoView.bloqueo}" actionListener="#{proformaEgresosSinProcesoView.anadirPppa()}" 
+                                             value="PAPP" update="fmtablaegresopresupuesto" style="width: 150px;" icon="fa fa-plus" />
+                        </p:panelGrid>
+
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:commandButton disabled="#{!proformaEgresosSinProcesoView.bloqueo}" actionListener="#{proformaEgresosSinProcesoView.anadirDistributivo()}"
+                                             value="Distributivo" update="fmtablaegresopresupuesto" style="width: 150px; " icon="fa fa-plus" />
+
+                        </p:panelGrid>
+
+<!--                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:commandButton disabled="#{!proformaEgresosSinProcesoView.bloqueo}"  actionListener="#{proformaEgresosSinProcesoView.añadirDistributivoAnexo()}"
+                                             value="Distributivo Anexo" update="fmtablaegresopresupuesto" style="width: 150px;" icon="fa fa-plus" />
+
+                        </p:panelGrid>-->
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+
+                            <p:commandButton value="Limpiar filtros"
+                                             icon="ui-icon-refresh" update="fmtablaegresopresupuesto"
+                                             styleClass="Fs16" style="width: 150px;"/> 
+
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+                            <p:commandButton value="Proforma Egresos PDF" 
+                                             icon="fa fa-file-pdf-o"
+                                             process="@this,formMain" class="red-btn"
+                                             actionListener="#{proformaEgresosSinProcesoView.imprimirRep(false)}"
+                                             styleClass="Fs16" style="width: 150px;" >
+                            </p:commandButton>
+
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+                            <p:commandButton value="Proforma Egresos Excel"
+                                             icon="fa fa-file-excel-o"
+                                             process="@this"
+                                             actionListener="#{proformaEgresosSinProcesoView.imprimirRep(true)}"
+                                             styleClass="Fs16" style="width: 150px;">
+                            </p:commandButton>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+
+                            <p:commandButton value="Resumen Grupos PDF"
+                                             icon="fa fa-file-pdf-o"
+                                             process="@this" class="red-btn"
+                                             actionListener="#{proformaEgresosSinProcesoView.imprimirResumen(false)}"
+                                             styleClass="Fs16" style="width: 150px;">
+                            </p:commandButton>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+
+
+                            <p:commandButton value="Resumen Grupos Excel"
+                                             icon="fa fa-file-excel-o"
+                                             process="@this"
+                                             actionListener="#{proformaEgresosSinProcesoView.imprimirResumen(true)}"
+                                             styleClass="Fs16" style="width: 150px;">
+                            </p:commandButton>
+                        </p:panelGrid>
+
+
+
+
+                    </p:panelGrid>
+                </p:panel>
+
+                <p:panel header="Glosario" class="ui-g-3">
+                    <ul>
+                        <li style="margin-top: 13px;">PAPP => Plan Anual Politica Pública</li>
+                        <li style="margin-top: 13px;">PD   => Plan Distributivo</li> 
+                        <li style="margin-top: 13px;">PDI  => Partidas Directas</li>
+                        <li style="margin-top: 15px;">PDA  => Plan Distributivo Anexo</li>
+
+                    </ul>
+
+                </p:panel>
+
+                <p:panelGrid columns="1" layout="grid">
+                    <p:outputLabel  style="width: 100%; font-size: 12px; font-weight: bold;" 
+                                    value="ESTADO: #{proformaEgresosSinProcesoView.bloqueo==false?'APROBADO':'NO APROBADO'}"/>
+                </p:panelGrid>
+
+                <p:dataTable rendered="#{proformaEgresosSinProcesoView.tabla}" expandableRowGroups="true" value="#{proformaEgresosSinProcesoView.proformaPresupuestoLazy}" id="proformaEgresos"  widgetVar="proformaEgresos"
+                             paginatorPosition="bottom" var="item" rows="10" paginator="true"  
+                             paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,20,25,35,50" lazy="true" rowIndexVar="index"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                             emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <f:facet name="header" >
+                        <span style="height: 15px; font-size: 14px; font-weight: bold;">PROFORMA</span> 
+
+                    </f:facet>
+                    <p:column headerText="No." style="width: 15px; text-align: center;" >
+                        <h:outputText value="#{index+1}"/>
+                    </p:column>
+
+                    <p:column filterBy="#{item.estructruaNew.id}" headerText="Estructura Programática"  style="width: 20%;padding: 10px 10px 10px 10px">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('proformaEgresos').filter()" filter="true" filterMatchMode="startsWith" styleClass="custom-filter" style="width: 90% !important;">
+                                <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{proformaEgresosSinProcesoView.listEstructura}" var="c" itemLabel="#{c.descripcion}" itemValue="#{c.id}"/>
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{item.estructruaNew.nombre.toUpperCase()}" />
+                    </p:column>
+
+
+                    <p:column  headerText="Partida Presupuestaria" style="width: 20%;text-align: center;" filterBy="#{item.partidaPresupuestaria}" filterMatchMode="contains" sortBy="#{item.partidaPresupuestaria}">
+                        <p:outputLabel value="#{item.partidaPresupuestaria}" />
+                    </p:column>
+
+                    <p:column filterBy="#{item.itemNew.id}" headerText="Item Presupuestario"  style="width: 30%;">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('proformaEgresos').filter()" filter="true" filterMatchMode="startsWith" styleClass="custom-filter" style="width: 90% !important;">
+                                <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{proformaEgresosSinProcesoView.listItem}" var="c" itemLabel="#{c.descripcion}" itemValue="#{c.id}"/>
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{item.itemNew.descripcion.toUpperCase()}" />
+                    </p:column>
+
+                    <p:column filterBy="#{item.codigo}" headerText="Tipo" style="width: 10%;text-align: center">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('proformaEgresos').filter()" filter="true" filterMatchMode="startsWith" styleClass="custom-filter" style="width: 90% !important;">
+                                <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItem itemLabel="PDI" itemValue="PDI"/>
+                                <f:selectItem itemLabel="PAPP" itemValue="PAPP"/>
+                                <f:selectItem itemLabel="PD" itemValue="PD"/>
+                                <f:selectItem itemLabel="PDA" itemValue="PDA"/>
+                            </p:selectOneMenu>
+                        </f:facet>
+
+                        <p:outputLabel value="#{item.codigo}" />
+                    </p:column>
+
+                    <p:column  headerText="Período" style="width: 10%;text-align: center" >
+                        <p:outputLabel value="#{item.periodo}"/>
+                    </p:column>
+
+
+
+                    <p:column  headerText="Monto" style="width: 10%;" filterBy="#{item.valor}">
+                        <p:outputLabel value="#{item.valor}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </p:column>
+
+
+                    <p:columnGroup type="footer">
+                        <p:row>
+                            <p:column colspan="6" style="text-align:right;font-weight: bold; font-size: 14px;" footerText="Total Presupuesto:" />
+                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                <f:facet name="footer">
+                                    <h:outputText value="#{proformaEgresosSinProcesoView.total}">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </f:facet>
+                            </p:column>
+
+                            <p:column style="font-weight: bold;" footerText="" />
+                        </p:row>
+                    </p:columnGroup>
+
+                    <p:column  headerText="Acciones" style="width: 10%;text-align: center;" >
+
+                        <p:commandLink disabled="#{item.condicion==true and proformaEgresosSinProcesoView.bloqueo==true?'false':'true'}"  title="Editar " process="@this" actionListener="#{proformaEgresosSinProcesoView.edatarDlgProformaPresup(item)}" >
+                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                        </p:commandLink>
+                        <p:commandLink title="Eliminar" disabled="#{item.condicion==true and proformaEgresosSinProcesoView.bloqueo==true?'false':'true'}"   process="@this" actionListener="#{proformaEgresosSinProcesoView.eliminarProforma(item)}" update="fmtablaegresopresupuesto">
+                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la partida Presupuestaria"  icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog> 
+
+            </h:form>
+
+        </div>
+
+
+
+        <p:dialog id="DlgproformaRegistro" header="Formulario Partida Presupuestaria" widgetVar="DlgproformaRegistro" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form id="formPresegres" prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel for="EstructuraProgramatica" value="Estructura Programática:"/>
+                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith" id="EstructuraProgramatica" panelStyle="width:22%"
+                                                     var="e" value="#{proformaEgresosSinProcesoView.proformaPresupuesto.estructruaNew}" converter="#{utilConverter}"  style="width: 165px;">
+                                        <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{proformaEgresosSinProcesoView.listEstructura}" var="n" itemLabel="#{n.codigo}" itemValue="#{n}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="Código"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.codigo}" style="font-weight: bold;" />
+                                        </p:column>
+
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                                    <p:outputLabel for="advanced" value="Ítem Presupuestario:"/>
+                                    <p:selectOneMenu id="advanced" value="#{proformaEgresosSinProcesoView.proformaPresupuesto.itemNew}" converter="#{utilConverter}" panelStyle="width:22%"
+                                                     effect="fade" var="ta" style="width: 165px;" filter="true" filterMatchMode="startsWith">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                                        <f:selectItems value="#{proformaEgresosSinProcesoView.listItem}" var="item" itemLabel="#{item.codigo}" itemValue="#{item}" />
+
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="Código"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.codigo}" style="font-weight: bold;"/>
+                                        </p:column>
+
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                                    <p:outputLabel for="Fuente" value="Fuente:"/>
+                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith"  id="Fuente" value="#{proformaEgresosSinProcesoView.proformaPresupuesto.fuenteNew}" panelStyle="width:22%"
+                                                     style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{proformaEgresosSinProcesoView.listFuente}" var="n" itemLabel="#{n.codFuente} - #{n.nombre}" itemValue="#{n}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="Código"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.codFuente}" style="font-weight: bold;" />
+                                        </p:column>
+
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Fuente"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.nombre}" />
+                                        </p:column>
+
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                    <p:outputLabel for="@next" value="Valor Asignado:"/>
+                                    <p:inputNumber  id="Monto" decimalPlaces="2" value="#{proformaEgresosSinProcesoView.proformaPresupuesto.valor}"/>
+                                </p:panelGrid>
+
+                            </p:panelGrid>
+                            <center>
+                                <p:commandButton value="Guardar" update="fmtablaegresopresupuesto" 
+                                                 icon="ui-icon-plus"  actionListener="#{proformaEgresosSinProcesoView.saveEgresos()}"
+                                                 styleClass="Fs16" style="width: auto; margin-bottom: 15px;" />
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="DlgCodigosRepetidos" header="Lista de códigos repetidos" widgetVar="DlgCodigosRepetidos" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formcodigoRep" prependId="false">  
+
+                <p:dataList value="#{proformaEgresosSinProcesoView.listaCodigosRepetidos}" var="item" type="ordered">
+                    <f:facet name="header">
+                        Codigos Repetidos
+                    </f:facet>
+                    #{item}
+                </p:dataList>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario de impresión Proforma de Egreso"
+                  widgetVar="dlgImp"
+                  modal="true"
+                  height="333px" width="400px"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgImps">
+            <h:form prependId="false" id="frmImp">
+                <p:growl id="msgsss" showDetail="true"/>
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outPanelImp" style="width: 100%"> 
+                                <center>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="tipo Flujo:" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaEgresosSinProcesoView.codigoPro.codigo}" style="width: 250px !important;"
+                                                             styleClass="custom-filter"  >
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}" />
+                                                <f:selectItem itemLabel="PDI" itemValue="PDI"/>
+                                                <f:selectItem itemLabel="PAPP" itemValue="PAPP"/>
+                                                <f:selectItem itemLabel="PD" itemValue="PD"/>
+                                                <f:selectItem itemLabel="PDA" itemValue="PDA"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1" >
+                                            <p:outputLabel value="Estructura Programática" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaEgresosSinProcesoView.pp.estructuraProgramatica}" converter="entityConverter" style="width: 250px !important;"
+                                                             styleClass="custom-filter">
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                                <f:selectItems value="#{proformaEgresosSinProcesoView.filtroEstrcutrua}" var="c" itemLabel="#{c.descripcion}" itemValue="#{c}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Ítem Presupuestario" style="width: 100%; font-weight: bold" />
+                                            <p:selectOneMenu filter="true" filterMatchMode="startsWith" value="#{proformaEgresosSinProcesoView.cp.itemPresupuestario}" converter="entityConverter" style="width: 250px !important;"
+                                                             styleClass="custom-filter" >
+                                                <f:selectItem itemLabel="Todas" itemValue="#{null}"/>
+                                                <f:selectItems value="#{proformaEgresosSinProcesoView.filtroItem}" var="c" itemLabel="#{c.descripcion}" itemValue="#{c}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Imprimir PDF"
+                                                     icon="ui-icon-print"
+                                                     process="frmImp"
+                                                     actionListener="#{proformaEgresosSinProcesoView.imprimirRep(false)}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="Exportar Excel"
+                                                     icon="ui-icon-save"
+                                                     process="frmImp"
+                                                     actionListener="#{proformaEgresosSinProcesoView.imprimirRep(true)}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+                                    <p:commandButton value="limpiar Filtros"
+                                                     icon="ui-icon-refresh"
+                                                     process="@this"
+                                                     actionListener="#{proformaEgresosSinProcesoView.limpiarFiltr()}">
+                                    </p:commandButton>
+                                    <p:spacer width="10" />
+
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+
+
+    </ui:define>
+</ui:composition>

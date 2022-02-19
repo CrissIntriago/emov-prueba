@@ -1,0 +1,557 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:r="http://primefaces.org/ui"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">         
+
+                <h:form id="mainForm" prependId="false" >
+                    <p:commandButton value="Actualizar" icon="fa fa-refresh" actionListener="#{liquidacionInquiMB.init()}" 
+                                     style="width: auto;" update="mainForm"/>
+                    <p:tabView prependId="false" id="datoInquilinatoTeb">
+                        <p:ajax event="tabChange" listener="#{liquidacionInquiMB.onTabChange}" update="mainForm"/>
+                        <!--                        <p:ajax event="tabChange" listener="# {liquidacionInquiMB.onTabChange}" />                     -->
+                        <p:tab title="Registro" id="id_registro">
+                            <div style="width: 51%; margin: auto;" >                        
+                                <dialog:consultaPredioGeneral predio="#{liquidacionInquiMB.predio}" id="prediosConsulta"
+                                                              consultar="#{liquidacionInquiMB.consultar()}"
+                                                              tipoCons="#{liquidacionInquiMB.tipoCons}"                                                      
+                                                              tipo="#{liquidacionInquiMB.esUrbano}"
+                                                              update="mainForm"/>
+                            </div>
+                            <br/> <br/>
+                            <div style="width: 50%; margin: auto; margin-top: 8%;">
+                                <p:fieldset legend="Informacion Adicional" id="datoInfor">
+                                    <p:panelGrid columns="3" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Avaluo Municipal: " class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{liquidacionInquiMB.predio.avaluoMunicipal}" readonly="true">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Sector Predio: " class="FontBold"/>
+                                            <p:selectOneMenu id="listaCatalogos" value="#{liquidacionInquiMB.catalogo}" converter="#{utilConverter}" style="width: 200px;">
+                                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                <f:selectItems value="#{liquidacionInquiMB.listaSecotrPredio}" var="al" itemLabel="#{al.nombre}" itemValue="#{al}"/>
+                                                <p:ajax listener="#{liquidacionInquiMB.cargarItmes()}" process="listaCatalogos" update="listaAlquiler"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  id="listaAlquiler">
+                                            <p:outputLabel value="Descripción del alquiler: " class="FontBold"/>
+                                            <p:selectOneMenu  value="#{liquidacionInquiMB.comisaria.alquiler}" converter="#{utilConverter}" style="width: 200px;">
+                                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                <f:selectItems value="#{liquidacionInquiMB.listaAlquiler}" var="al" itemLabel="#{al.texto}" itemValue="#{al}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1">
+                                            <p:outputLabel value="Año de inquilinato:" class="FontBold"/>
+                                            <p:inputText style="width: 100%" value="#{liquidacionInquiMB.comisaria.anioInquilinato}" >
+                                                <p:keyFilter mask="num"/>
+                                            </p:inputText>
+                                        </p:panelGrid>
+
+                                        <h:panelGroup layout="block">
+                                            <p:outputLabel value="Cedula: " class="FontBold"/>
+                                            <p:inputText id="identificacionComple" style="width: 85%" value="#{liquidacionInquiMB.comisaria.ente.identificacionCompleta}" readonly="true"/>
+                                            <p:commandLink  process="@this" update="identificacionComple,nombres,telefono,email,direccion"  
+                                                            actionListener="#{liquidacionInquiMB.buscarInquilino()}" style="width: auto;">
+                                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                            </p:commandLink>
+                                        </h:panelGroup>
+                                        <p:panelGrid columns="1"  style="width: 100%" >
+                                            <p:outputLabel  value="Nombres: " class="FontBold"/>
+                                            <p:inputText id="nombres" style="width: 100%" value="#{liquidacionInquiMB.comisaria.ente.nombreCompleto}" readonly="true"/>
+                                        </p:panelGrid>
+
+                                        <p:panelGrid columns="1"  style="width: 100%" >
+                                            <p:outputLabel value="Telefono "  class="FontBold"/>
+                                            <p:inputText  id="telefono" style="width: 100%" value="#{liquidacionInquiMB.comisaria.ente.telefono}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  style="width: 100%" >
+                                            <p:outputLabel value="Correo: "  class="FontBold"/>
+                                            <p:inputText id="email" style="width: 100%" value="#{liquidacionInquiMB.comisaria.ente.email}" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1"  style="width: 100%" >
+                                            <p:outputLabel value="Dirección: "   class="FontBold"/>
+                                            <p:inputText id="direccion" style="width: 100%" readonly="true" value="#{liquidacionInquiMB.comisaria.ente.direccion}"/>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+
+
+
+                                <br/>
+                                <center>
+                                    <p:commandButton  value="Registrar" icon="fa fa-save" style="width: auto;" actionListener="#{liquidacionInquiMB.save()}" update="mainForm"/>    
+                                </center>                           
+
+                            </div>
+                        </p:tab>
+                        <p:tab title="Liquidar" id="liquidacionviewTab" >
+
+                            <div style="width: 80%;margin: auto;">
+                                <p:dataTable  expandableRowGroups="true" id="datos" widgetVar="datos" paginatorPosition="bottom" var="liqui"
+                                              value="#{liquidacionInquiMB.detalleLazy}" rows="20" paginator="true" 
+                                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                                              rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                                              emptyMessage="No existen datos con el criterio de busqueda especificado">
+
+                                    <p:column headerText="Clave Catastral" filterBy="#{liqui.inquilinatoCarpeta.predio.claveCat}" filterMatchMode="exact" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.inquilinatoCarpeta.predio.claveCat}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Tipo Predio" filterBy="#{liqui.inquilinatoCarpeta.predio.tipoPredio}" filterMatchMode="exact" width="50" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.inquilinatoCarpeta.predio.tipoPredio}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Año" filterBy="#{liqui.anio}" width="50" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.anio}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Tipo" filterBy="#{liqui.tipo.nombre}" filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.tipo.nombre}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Detalle" filterBy="#{liqui.observacion}" filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.observacion}"/>
+                                    </p:column>
+                                    <p:column headerText="Identificación" filterBy="#{liqui.inquilinatoCarpeta.propietario.identificacionCompleta}" 
+                                              filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.inquilinatoCarpeta.propietario.identificacionCompleta}"/>
+                                    </p:column>
+                                    <p:column headerText="Inquilino" filterBy="#{liqui.inquilinatoCarpeta.propietario.nombreCompleto}" filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{liqui.inquilinatoCarpeta.propietario.nombreCompleto}"/>
+                                    </p:column>
+
+                                    <p:column headerText="*****" width="150" style="text-align: center;">
+                                        <p:commandButton disabled="#{liqui.liquidacion ne null}" icon="fa fa-check" actionListener="#{liquidacionInquiMB.liquidar(liqui)}"/>
+                                        <p:spacer width="10"/>
+                                        <p:commandButton  icon="fa fa-search" actionListener="#{liquidacionInquiMB.visualizar(liqui.liquidacion)}"/>
+                                        <p:spacer width="10"/>
+                                        <p:commandButton disabled="#{liqui.liquidacion eq null}"  icon="fa fa-print" actionListener="#{liquidacionInquiMB.imprimir(liqui.liquidacion)}"/>
+                                    </p:column>
+
+                                </p:dataTable>
+                            </div>
+
+
+                        </p:tab>
+
+                        <p:tab title="Consultas Avanzadas" id="consultaLiquidacionInquilinato">
+                            <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         value="#{liquidacionInquiMB.lazyLiquidacionInquilinatoView}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                         selectionMode="single" rowKey="#{titulo.id}" selection="#{liquidacionInquiMB.liquidacionTemp}" filterEvent="enter">
+                                <p:ajax event="rowSelect" update="dtLiquidaciones"/>
+                                <p:column  headerText="ID Liquidación" width="50" filterBy="#{titulo.idLiquidacion}" filterStyle="width: 60%;">
+                                    <h:outputText value="#{titulo.idLiquidacion}" />
+                                </p:column>
+                                <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                                    <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                                </p:column>
+
+                                <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 60%;">
+                                    <h:outputText value="#{titulo.anio}"/>
+                                </p:column>
+                                <p:column headerText="Predio" width="200" filterBy="#{titulo.predio.claveCat}" filterMatchMode="contains">
+                                    <h:outputText value="#{titulo.predio.claveCat}" />
+                                </p:column>                              
+                                <p:column headerText="Validador" width="100" >
+                                    <h:outputText value="#{titulo.usuarioValida eq null or titulo.usuarioValida eq ''?titulo.liquidadorResponsable:titulo.usuarioValida}" />
+                                </p:column>
+                                <p:column headerText="Fecha emision" width="200" >
+                                    <h:outputText value="#{titulo.fechaIngreso}" >
+                                        <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacionCompleta}" filterStyle="width: 80%;">
+
+                                    <h:outputText  value="#{titulo.comprador.identificacionCompleta}" />
+                                </p:column>
+                                <p:column headerText="Solicitante" width="250" filterBy="#{titulo.comprador.nombreCompleto}" filterMatchMode="contains">
+
+                                    <h:outputText  value="#{titulo.comprador.nombreCompleto}"/>
+                                </p:column>
+
+                                <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+
+                                <p:column headerText="Estado" width="65"><h:outputText value="#{ !titulo.validada ? 'Sin validar' : titulo.estadoLiquidacion.descripcion}" 
+                                                                                       style="font-weight: bold;"/></p:column>
+                                <p:column headerText="*******" width="50" >
+                                    <p:commandLink actionListener="#{liquidacionInquiMB.imprimirTemp(titulo.id)}" 
+                                                   title="#{titulo.idLiquidacion}" process="@this">                                   
+                                        <i class="fa fa-fw fa-print" style="font-size: 1.5em;" />
+                                    </p:commandLink>
+
+
+
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                                <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                            </p:confirmDialog>
+                            <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones">
+                                <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" 
+                                            process="@this" actionListener="#{liquidacionInquiMB.calculosAdicionales()}"/>
+                            </p:contextMenu>
+
+                        </p:tab>
+
+
+
+                    </p:tabView>         
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlgoInspeccion" widgetVar="dlgoInspeccion"  position="center" draggable="false" header="Formulario de Inspección " width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="550" >
+            <h:form id="fmInpeccion" prependId="false">
+                <center>
+                    <h2 style="font-weight: bold; color: blue;">No.Predio: #{liquidacionInquiMB.predio.numPredio}</h2>
+                    <hr style="color: blue; background: blue;"/>
+                </center>                
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Tipo Predio:" class="FontBold"/>
+                        <p:inputText  required="true" style="width: 100%;" value="#{liquidacionInquiMB.predio.tipoPredio eq null?'':(liquidacionInquiMB.predio.tipoPredio eq 'U'?'URBABNO':'RURAL')}" 
+                                      readonly="true"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Clave Catastral:" class="FontBold"/>
+                        <p:inputText required="true" style="width: 100%;" value="#{liquidacionInquiMB.predio.claveCat}" readonly="true"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Fecha:" class="FontBold"/>
+                        <p:calendar value="#{liquidacionInquiMB.inspeccion.fecha}" navigator="true" locale="es"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Hora:" class="FontBold"/>
+                        <p:calendar value="#{liquidacionInquiMB.inspeccion.hora}" pattern="HH:MM" locale="es"/>
+                    </p:panelGrid>   
+
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Delegado de Inpección:" class="FontBold"/>   
+                        <h:panelGroup>
+                            <p:inputText required="true" style="width: 80%;" value="#{liquidacionInquiMB.inspeccion.delegado.nombreCompleto}"/>
+                            <p:commandLink process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"  actionListener="#{liquidacionInquiMB.cargarLazyServidor(2)}" style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Comisario:" class="FontBold"/>
+                        <h:panelGroup>
+                            <p:inputText required="true" style="width: 80%;" value="#{liquidacionInquiMB.inspeccion.comisario.persona.nombreCompleto}"/>
+                            <p:commandLink  process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"  actionListener="#{liquidacionInquiMB.cargarLazyServidor(1)}" style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Lugar:" class="FontBold"/>
+                        <p:inputText value="#{liquidacionInquiMB.inspeccion.lugar}" style="width: 100%;"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Motivo:" class="FontBold"/>                    
+                        <p:inputTextarea required="true" rows="5" cols="8" value="#{liquidacionInquiMB.inspeccion.motivo}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Observación:" class="FontBold"/>
+                        <p:inputTextarea required="true" rows="5" cols="8" value="#{liquidacionInquiMB.inspeccion.observacion}" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Registrar" icon="fa fa-save" style="width: auto;" update="fmInpeccion"  actionListener="#{liquidacionInquiMB.saveInspeccion()}"/>
+                </center>
+            </h:form>           
+        </p:dialog>
+        <p:dialog id="dlogoServidores" widgetVar="dlogoServidores" width="50%" position="center" draggable="false" header="Formulario de Inspección"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="fmrServidores" prependId="false">
+                <p:dataTable  expandableRowGroups="true" id="dataServidores" widgetVar="dataServidores" paginatorPosition="bottom" var="servidor"
+                              value="#{liquidacionInquiMB.lazyServidor}" rows="20" paginator="true" 
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                              rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                              emptyMessage="No existen datos con el criterio de busqueda especificado">
+                    <f:facet name="header">
+                        Servidores                      
+                    </f:facet>
+                    <p:column headerText="Indentificación" width="100" filterBy="#{servidor.persona.identificacionCompleta}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{servidor.persona.identificacionCompleta}"/>
+                        </center>
+                    </p:column>
+                    <p:column headerText="Nombres" filterBy="#{servidor.persona.nombreCompleto}" filterMatchMode="contains">
+                        <h:outputText value="#{servidor.persona.nombreCompleto}"/>
+                    </p:column>
+                    <p:column headerText="*****" width="50">
+                        <center>
+                            <p:commandButton icon="fa fa-check" actionListener="#{liquidacionInquiMB.seleccionar(servidor)}" update="fmInpeccion,fmrServidores,mainForm" 
+                                             oncomplete="PF('dlogoServidores').hide()" />
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogoNumSolcitud" widgetVar="dlogoNumSolcitud" width="20%" position="center" draggable="false" header="Formulario de Inspección"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="fmNumSolicitud" prependId="false">
+                <center>
+                    <h:outputText value="SOLICITUD : #{liquidacionInquiMB.inspeccion.noSolicitud}" style="font-size: 20px;font-weight: bold;color: blue;"/>
+                    <br/><br/>
+                    <p:commandButton value="Aceptar" actionListener="#{liquidacionInquiMB.closeDialogos()}" style="width: auto; margin-top: 3%;"  update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogovisulizacion" widgetVar="dlogovisulizacion" width="50%" position="center" draggable="false" header="Visualización"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="frmVisualizaiion" prependId="false">
+                <p:fieldset legend="Predio"> 
+                    <p:panelGrid columns="3" columnClasses="ui-g-4, ui-g-4, ui-g-4" layout="grid" styleClass="ui-panelgrid-blank">
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Clave Catastral: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.numPredio}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>   
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="No.Predio:" class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.clavePreial}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>   
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Avaluo Muinipal: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.avaluoMunicipal}" style="width: 100%;" readonly="true">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:inputText>
+                        </p:panelGrid>                          
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Información Adicional:">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank">
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Nombres: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.ente.nombre}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Apellidos: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.ente.apellido}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Descripción Alquiler: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.alquiler.texto.toUpperCase()}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Año Inquilinato: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.anioInquilinato}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <!--rendered="# {liquidacionInquiMB.comisaria.inspeccion ne null}"-->
+                <p:fieldset legend="solicitud de Inspección NO. #{liquidacionInquiMB.comisaria.inspeccion.noSolicitud}" rendered="#{liquidacionInquiMB.comisaria.inspeccion ne null}"  >
+                    <p:panelGrid columns="2" columnClasses="ui-g-6,ui-g-6" layout="grid" styleClass="ui-panelgrid-blank">                       
+                        <p:panelGrid columns="1" style="width: 100%;"> 
+                            <p:outputLabel value="Motivo: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.inspeccion.motivo}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid >
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Comisario: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.inspeccion.comisario.persona.nombreCompleto}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Delegado: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.inspeccion.delegado.nombreCompleto}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Observación: " class="FontBold"/>
+                            <p:inputText value="#{liquidacionInquiMB.comisaria.inspeccion.observacion}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+
+                <center>
+                    <p:commandButton value="Aceptar" oncomplete="PF('dlogovisulizacion').hide()" style="width: auto; margin-top: 3%;"  update="frmVisualizaiion"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+
+
+        <p:dialog widgetVar="dlgSolicitante" header="LISTADO DE CONTRIBUYENTES" appendTo="@(body)" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="frmSolicitante">
+
+                <div align="right">
+                    <p:commandButton title="Nuevo" actionListener="#{liquidacionInquiMB.nuevoCliente()}"  value="Nuevo" icon="fa fa-plus"/>
+
+                </div>
+
+                <div align="center">
+                    <p:dataTable var="s" value="#{liquidacionInquiMB.lazyCliente}" style="width: 98%;text-align: center;" lazy="true" 
+                                 paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                                 selection="#{liquidacionInquiMB.clienteSeleccion}" rowKey="#{s.id}">
+                        <p:ajax event="rowSelect" update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowUnselect"  update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowSelectRadio"  update="frmSolicitante:btnSeleccionar" />
+                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                        <p:column headerText="CI/RUC" width="150" filterBy="#{s.identificacionCompleta}" filterStyle="width: 90%;">
+                            <h:outputText value="#{s.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Nombres" filterBy="#{s.nombreCompleto}"  filterStyle="width: 95%;">
+                            <h:outputText value="#{s.nombreCompleto}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+                <br></br>
+                <center>
+                    <p:commandButton id="btnSeleccionar" value="Seleccionar" icon="ui-icon-plus" actionListener="#{liquidacionInquiMB.seleccionar()}"
+                                     style="height: 30px" update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgLiquidacion" id="dlgLiquidacion" header="LIQUIDACIÓN DE INQUILINATO" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="formDialogoLiquidacion" prependId="false">
+                <p:panelGrid columns="2" columnClasses="ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                    <p:fieldset legend="Información">
+                        <p:panelGrid columns="2" layout="grid" style="width: 100%;">
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Predio:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{liquidacionInquiMB.liquidacion.predio.claveCat}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Tipo Predio:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{liquidacionInquiMB.liquidacion.predio.tipoPredio}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Avaluo:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{liquidacionInquiMB.liquidacion.predio.avaluoMunicipal}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Indentificación:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{liquidacionInquiMB.liquidacion.comprador.identificacionCompleta}" style="width: 100%;"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Contribuyente:" class="FontBold"/>
+                                <p:inputText value="#{liquidacionInquiMB.liquidacion.comprador.nombreCompleto}" style="width: 100%;"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" columnClasses="ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <p:outputLabel value="Observación:" class="FontBold"/>
+                            <p:inputTextarea rows="5" cols="12" value="#{liquidacionInquiMB.liquidacion.observacion}" style="width: 100%"/>
+                        </p:panelGrid>
+
+                    </p:fieldset>
+                    <p:fieldset legend="Rubros">
+                        <center> <h2>Año de Inquilinitao - #{liquidacionInquiMB.liquidacion.anio}</h2></center>
+                        <br/>
+                        <p:dataTable  id="dtRubros" widgetVar="dtRubros" reflow="true" value="#{liquidacionInquiMB.rubros}"  
+                                      var="itemrubros" rowIndexVar="indice" style="width: 100%;margin: auto;"  editable="true" editMode="cell">
+                            <p:column headerText="Seleccionar" width="10%">
+                                <center>     
+                                    <p:selectBooleanCheckbox value="#{itemrubros.cobrar}">
+                                        <p:ajax listener="#{liquidacionInquiMB.calcularPago()}" 
+                                                update="dtRubros,totalLiquidacion"/>
+                                    </p:selectBooleanCheckbox>
+                                </center>
+                            </p:column>
+                            <p:column headerText="Descripción" >
+                                <h:outputText value="#{itemrubros.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                <p:cellEditor disabled="true">
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{itemrubros.valorCalculo}">
+
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{itemrubros.valorCalculo}">                                                    
+                                            <f:convertNumber pattern="#0.00" locale="pt_BR"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>                                  
+                            </p:column>
+                        </p:dataTable> 
+                        <h:panelGroup layout="block">
+                            <div align="right">
+                                <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                <p:outputLabel  value=" " style="font-weight: bold; font-size: 14px;font-weight: bold;"/>
+                                <p:inputText id="totalLiquidacion" value="#{liquidacionInquiMB.liquidacion.totalPago}"
+                                             readonly="true" style="width: auto; text-align: right;font-size: 14px;background: yellow;font-weight: bold;">
+                                    <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />                                            
+                                </p:inputText>
+                            </div>
+                        </h:panelGroup>
+                    </p:fieldset>
+                </p:panelGrid>
+
+                <center>
+                    <p:commandButton value="Generar" style="width: auto;" icon="fa fa-save" actionListener="#{liquidacionInquiMB.generarLiquidacion()}"/>
+                    <p:spacer width="10"/> 
+                    <p:commandButton value="Cancelar" style="width: auto;background: red;" icon="fa fa-close" oncomplete="PF('dlgLiquidacion').hide()"
+                                     update="formDialogoLiquidacion"/>
+                </center>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgNumeroLiquidacion" header="Codigo de liquidacion generado" resizable="false" modal="true">
+            <h:form id="formLiq">
+
+                <h:panelGrid styleClass="noBorder" columns="1" >
+                    <p:outputLabel value="#{liquidacionInquiMB.liquidacion.idLiquidacion} " style="font-weight: bold; font-size: 25px; text-align: center;" />
+                </h:panelGrid>
+
+                <center>
+                    <p:commandButton value="Imprimir" styleClass="btnStyle" actionListener="#{liquidacionInquiMB.imprimir(liquidacionInquiMB.liquidacion)}" update="mainForm"/>
+                    <p:spacer width="10"/>
+
+                    <p:commandButton  value="Aceptar"  actionListener="#{liquidacionInquiMB.resetear()}" oncomplete="PF('dlgNumeroLiquidacion').hide();"   
+                                      style="width: auto; margin-top: 3%;"    update="formLiq,mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{liquidacionInquiMB.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+
+
+
+    </ui:define>
+</ui:composition>

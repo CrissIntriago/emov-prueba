@@ -1,0 +1,898 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Retención SRI
+    </ui:define>
+
+    <ui:define name="content">
+
+        <h:form id="formMain" prependId="false">
+            <script type="text/javascript">
+                $(document).ready(function () {
+                    $("form").keypress(function (e) {
+                        if (e.which == 13) {
+                            return false;
+                        }
+                    });
+                });
+            </script>
+            <style>
+                .ui-wizard-step-title{
+                    font-size: 12px !important;
+                    font-weight: bolder !important;
+                }
+                /*
+                                .ui-widget-header{
+                                    background-color: white !important;
+                                }
+                
+                                .ui-corner-top{
+                                    background-color: black !important;
+                                }*/
+                .hasDatepicker{
+                    width: 68% !important;
+                }
+                .ui-selectonemenu-filter-container {
+                    width: 98% !important;
+                }
+                .ui-datatable-footer.ui-widget-header.ui-corner-bottom{
+                    background: none;
+                    border-color: #e4e4e4;
+                    text-align: right;
+                }
+            </style>
+            <div class="ui-fluid">
+
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <center>
+                            <h2>Comprobante de Retención</h2>
+                        </center>
+                        <div class="card card-w-title">
+                            <div class="ui-g">
+                                <br/><br/><br/><br/>
+                                <div class="ui-g-12">
+
+                                    <h:body styleClass="exception-body accessdenied-body" rendered="#{!retencionSRIView.accesoComprobante}">
+                                        <center>
+                                            <div class="exception-band">
+                                                <div class="exception-content">
+                                                    <h1>ACCESO DENEGADO</h1>
+                                                    <p>No tienes los permisos</p>
+                                                    <p:graphicImage name="images/logo.png" library="barcelona-layout" />
+                                                </div>
+                                            </div>
+                                        </center>
+                                        <h:outputStylesheet name="css/layout-green.css" library="barcelona-layout" />
+                                    </h:body>
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{retencionSRIView.accesoComprobante}">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <h:panelGrid columns="2" cellpadding="5">
+                                                <p:outputLabel value="Establecimiento:"  style="font-weight: bolder"/>
+                                                <p:outputLabel value="#{retencionSRIView.cajero.entidad.rucEntidad} -
+                                                               #{retencionSRIView.cajero.entidad.nombreEntidad}" 
+                                                               style="margin-left: 10px; font-weight: bolder"/>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridPeriodos">
+                                            <h:panelGrid columns="2" cellpadding="5">
+                                                <p:outputLabel for="fechaEmisiones23" value="Fecha de emisión:" style="font-weight: bolder"/>
+                                                <p:calendar id="fechaEmisiones23"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es" readonlyInput="true" 
+                                                            value="#{retencionSRIView.liquidacion.fechaEmision}" style="width: 100%">
+                                                    <p:ajax event="dateSelect" listener="#{retencionSRIView.setPeriodoFiscal()}" update="idPeriodoFiscal"/>
+                                                </p:calendar> 
+                                            </h:panelGrid>
+                                            <h:panelGrid columns="3" cellpadding="5" id="idPeriodoFiscal">
+                                                <p:outputLabel value="Período fiscal:" style="font-weight: bolder"/>
+                                                <p:selectOneMenu id="anio" 
+                                                                 value="#{retencionSRIView.liquidacion.anio}" 
+                                                                 style="width: 100%;margin: 0px 10px" >
+                                                    <p:ajax update="formMain" listener="#{retencionSRIView.actualizarPeriodoFiscal()}"/>
+                                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{retencionSRIView.anios}"
+                                                                   var="anio"
+                                                                   itemLabel="#{anio}"
+                                                                   itemValue="#{anio}"/>
+                                                </p:selectOneMenu>
+                                                <p:selectOneMenu id="mes" 
+                                                                 value="#{retencionSRIView.liquidacion.mes}" 
+                                                                 style="width: 100%;margin: 0px 10px" >
+                                                    <p:ajax update="formMain" listener="#{retencionSRIView.actualizarPeriodoFiscal()}"/>
+                                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                                  noSelectionOption="true" />
+                                                    <f:selectItems value="#{retencionSRIView.meses}"
+                                                                   var="mes"
+                                                                   itemLabel="#{mes}"
+                                                                   itemValue="#{retencionSRIView.mes(mes)}"/>
+                                                </p:selectOneMenu>
+                                            </h:panelGrid>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <div class="ui-g">
+                                        <div class="ui-g-6">    
+                                            <p:fieldset id="fldInfoDiarioGeneral" legend="Datos Diario General" 
+                                                        style="margin-bottom:20px; font-weight: bold;" rendered="#{retencionSRIView.accesoComprobante}">
+
+                                                <p:panelGrid id="pnlDiarioGeneral" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="numTransaccion"  value="N° Transacción" style="width: 100%"/>
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="numTransaccion" class="panelInput"  
+                                                                         required="false"   
+                                                                         value="#{retencionSRIView.diarioGeneral.numeroTransaccion}" 
+                                                                         readonly="#{retencionSRIView.readOnlyInput}"/>
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="periodoDiario" value="Período:" style="width: 100%;"/>
+                                                        <p:inputText id="periodoDiario" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.diarioGeneral.periodo}"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="fechaElaboracion" value="Fecha de Elaboración" style="width: 100%;"/>
+                                                        <p:inputText id="fechaElaboracion" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.diarioGeneral.fechaElaboracion}">
+                                                            <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="clase" value="Clase:" style="width: 100%;"/>
+                                                        <p:inputText id="clase" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.diarioGeneral.clase.texto}"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="tipo" value="Tipo:" style="width: 100%;"/>
+                                                        <p:inputText id="tipo" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.diarioGeneral.tipo.texto}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="observacion" value="Detalle: " style="width: 100%"/>
+                                                        <p:inputTextarea id="observacion" rows="5" cols="33" value="#{retencionSRIView.diarioGeneral.observacion}"
+                                                                         readonly="true"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/>
+                                            </p:fieldset>
+
+                                            <p:fieldset id="fdInfoDocumentoRetencion" legend="Documento objeto de retención" 
+                                                        style="margin-bottom:20px; font-weight: bold;" rendered="#{retencionSRIView.accesoComprobante}">       
+                                                <p:outputPanel  style="width: 100%">
+                                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                            <p:outputLabel value="Comprobante:" for="comprobanteS"
+                                                                           style="width: 100%;"/>
+                                                            <p:selectOneMenu id="comprobanteS" 
+                                                                             converter="comprobantesConverter"
+                                                                             value="#{retencionSRIView.liquidacion.comprobanteModifica}"
+                                                                             style="font-weight: bolder; width: 100%"  
+                                                                             disabled="#{retencionSRIView.readOnlyInput}">
+                                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                                <f:selectItems value="#{retencionSRIView.comprobantes}"
+                                                                               var="comprobante"
+                                                                               itemLabel="#{comprobante.descripcion}"
+                                                                               itemValue="#{comprobante}"/>
+                                                            </p:selectOneMenu>
+                                                        </p:panelGrid>
+                                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                            <p:outputLabel value="Emisión" for="emision"
+                                                                           style="width: 100%;" />
+                                                            <p:selectOneMenu id="emision" 
+                                                                             value="#{retencionSRIView.liquidacion.tipoEmision}"
+                                                                             style="font-weight: bolder; width: 100%"
+                                                                             disabled="#{retencionSRIView.readOnlyInput}">
+                                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                                <f:selectItem itemLabel="FÍSICA" itemValue="FÍSICA"  />
+                                                                <f:selectItem itemLabel="ELECTRÓNICA" itemValue="ELECTRÓNICA" noSelectionOption="true" />
+                                                            </p:selectOneMenu>
+                                                        </p:panelGrid>
+                                                    </p:panelGrid>
+
+                                                    <p:panelGrid id="panelGridFactura" columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                                                 rendered="#{retencionSRIView.accesoComprobante}">
+                                                        <p:commandButton id="btnAggFactura" value="Añadir Factura"
+                                                                         update="formComprobantesFacturas"
+                                                                         onclick="PF('dataTableFacturasRegistradas').clearFilters()"
+                                                                         rendered="#{retencionSRIView.renderedBotones}"
+                                                                         actionListener="#{retencionSRIView.formFactura(null)}"
+                                                                         immediate="true"
+                                                                         style="width: 150px;" icon="fa fa-plus"/>
+
+                                                    </p:panelGrid>
+                                                    <p:dataTable  id="dataTableFacturas" 
+                                                                  widgetVar="dataTableFacturas"
+                                                                  var="factura" 
+                                                                  selectionMode="single"
+                                                                  value="#{retencionSRIView.facturas}"
+                                                                  selection="#{retencionSRIView.facturaSeleccionada}" 
+                                                                  rowKey="#{factura.id}"
+                                                                  disabledSelection="#{retencionSRIView.disabledAjaxSelection}">
+                                                        <p:ajax event="rowSelect" listener="#{retencionSRIView.facturaSeleccionadaDataTable}"
+                                                                process="fdInfoDocumentoRetencion"/>
+                                                        <p:column headerText="N° Factura" style="text-align: center; width: 20%">
+                                                            <h:outputText value="#{factura.numFactura}" />
+                                                        </p:column>
+                                                        <p:column headerText="N° Autorización"  style="text-align: center; width: 30%" >
+                                                            <h:outputText value="#{factura.numAutorizacion}" />
+                                                        </p:column>
+                                                        <p:column headerText="Fecha Emisión" style="text-align: center; width: 15%">
+                                                            <h:outputText value="#{factura.fechaFactura}">
+                                                                <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                                            </h:outputText>
+                                                        </p:column>
+                                                        <p:column headerText="Fecha Caducidad" style="text-align: center; width: 15%">
+                                                            <h:outputText value="#{factura.fechaCaducidad}" >
+                                                                <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                                            </h:outputText>
+                                                        </p:column>
+                                                        <p:column headerText="Acciones" style="text-align: center; width: 20%"
+                                                                  rendered="#{retencionSRIView.renderedBotones}">
+                                                            <center>
+                                                                <p:commandLink title="Editar Datos" process="@this" 
+                                                                               actionListener="#{retencionSRIView.formFactura(factura)}">
+                                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Editar Valores IVA" process="@this" 
+                                                                               actionListener="#{retencionSRIView.agregarValoresIVAFactura(factura)}">
+                                                                    <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Editar Datos Pago" process="fdInfoDocumentoRetencion" 
+                                                                               actionListener="#{retencionSRIView.desplegarDialogDatosPago(factura)}">
+                                                                    <i class="fa fa-credit-card" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                                </p:commandLink>    
+                                                                <p:commandLink title="Eliminar" process="@this" 
+                                                                               rendered="#{retencionSRIView.renderedBotones}"
+                                                                               actionListener="#{retencionSRIView.eliminarFactura(factura)}">
+                                                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                                                    <p:confirm header="Confirmación de eliminación"
+                                                                               message="¿Está seguro de eliminar la factura?"
+                                                                               icon="fa fa-exclamation-triangle" />
+                                                                </p:commandLink>        
+                                                            </center>
+                                                        </p:column>                                                  
+                                                    </p:dataTable>
+                                                </p:outputPanel>
+                                                <br/>
+                                            </p:fieldset>
+                                        </div>
+                                        <div class="ui-g-6">
+                                            <p:fieldset id="fldInfoComprobante" legend="Sujeto Retenido"
+                                                        style="margin-bottom:27px; font-weight: bold;" 
+                                                        rendered="#{retencionSRIView.accesoComprobante}">
+
+                                                <p:panelGrid id="pnlDatos" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                                    <h:panelGroup>
+                                                        <p:outputLabel for="identificacion"  value="Identificacion:" style="width: 100%"/>
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="identificacion" class="panelInput" 
+                                                                         required="false"   
+                                                                         value="#{retencionSRIView.liquidacion.identificacionProveedor}"
+                                                                         readonly="#{retencionSRIView.readOnlyInput}"/> 
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="sujetoRetenido" value="Datos:" style="width: 100%;"/>
+                                                        <p:inputText id="sujetoRetenido" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.liquidacion.solicitante.cliente.nombreCompleto}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="direccion" value="Dirección" style="width: 100%;"/>
+                                                        <p:inputText id="direccion" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.liquidacion.solicitante.cliente.direccion}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="correo" value="Correo Electrónico:" style="width: 100%;"/>
+                                                        <p:inputText id="correo" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.liquidacion.solicitante.cliente.email}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel for="telefono" value="Télefono:" style="width: 100%;"/>
+                                                        <p:inputText id="telefono" class="panelInput" readonly="true" 
+                                                                     value="#{retencionSRIView.liquidacion.solicitante.cliente.telefono}">
+                                                        </p:inputText>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/><br/><br/><br/><br/>
+                                            </p:fieldset>
+
+                                            <p:fieldset id="fldInfoDetalleRetencion" legend="Cuentas Contables Retenciones"
+                                                        style="margin-bottom:27px; font-weight: bold;" 
+                                                        rendered="#{retencionSRIView.accesoComprobante}">
+                                                <p:dataTable id="dataTableDetallesCuentas" 
+                                                             widgetVar="dataTableDetallesCuentas"
+                                                             var="detallesCuenta" 
+                                                             value="#{retencionSRIView.detalleTransacciones}"
+                                                             selection="#{retencionSRIView.detalleTransaccionesSeleccionados}" 
+                                                             rowKey="#{detallesCuenta.id}" disabledSelection="#{retencionSRIView.disabledAjaxSelection}">
+
+                                                    <!--                                                    <p:ajax event="rowSelect" listener="# {retencionSRIView.cargarCuentaRubro}"
+                                                                                                                update="rubrosCuenta"/>-->
+                                                    <p:column selectionMode="multiple" style="width:5px;text-align:center">
+                                                    </p:column>
+                                                    <p:column headerText="Cuenta" width="20" style="text-align: center">
+                                                        <h:outputText value="#{detallesCuenta.cuentaContable.codigo}" />
+                                                    </p:column>
+                                                    <p:column headerText="Nombre" width="60">
+                                                        <h:outputText value="#{detallesCuenta.cuentaContable.nombre}" />
+                                                    </p:column>
+                                                    <p:column headerText="Valor" width="15" style="text-align: center">
+                                                        <h:outputText value="#{detallesCuenta.haber}" >
+                                                            <f:convertNumber type="currency" currencySymbol="$ "/>
+                                                        </h:outputText>
+                                                    </p:column>  
+                                                    <f:facet name="footer">
+                                                        <p:commandButton process="dataTableDetallesCuentas" 
+                                                                         update="rubrosCuenta" style="width: auto;"
+                                                                         icon="fa fa-check-circle" 
+                                                                         value="Aceptar" actionListener="#{retencionSRIView.cargarCuentaRubro}"/>
+                                                    </f:facet>
+                                                </p:dataTable>
+                                                <br/>
+
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Sustento Comprobante" for="sustentoComp" style="width: 100%;"/>
+                                                    <p:selectOneMenu id="sustentoComp" 
+                                                                     style="width: 100%;font-weight: bolder;"
+                                                                     value="#{retencionSRIView.detalleCompras.codSustento}"
+                                                                     panelStyle="width:25%"
+                                                                     disabled="#{retencionSRIView.readOnlyInput}"
+                                                                     filter="true" filterMatchMode="startsWith">
+                                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                        <f:selectItems value="#{retencionSRIView.sustentosComprobantes}"
+                                                                       var="sustcomp"
+                                                                       itemLabel="#{sustcomp.codigo} - #{sustcomp.tipoSustento}"
+                                                                       itemValue="#{sustcomp.codigo}"/>
+                                                    </p:selectOneMenu>
+                                                </p:panelGrid>
+
+                                                <p:panelGrid id="rubrosCuenta" columns="1" layout="grid" 
+                                                             styleClass="ui-panelgrid-blank form-group">
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Rubros de Cuenta Contable"/> <br/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup style="display: block; text-align: center">
+                                                        <p:selectOneMenu id="retencionCuentaRubro" panelStyle="width:200px"
+                                                                         value="#{retencionSRIView.cuentaContableRetencion}" 
+                                                                         style="width: 300px;" filterMatchMode="contains" filter="TRUE"
+                                                                         converter="#{utilConverter}">
+                                                            <p:ajax listener="#{retencionSRIView.cargarRetencionValor()}" 
+                                                                    process="retencionCuentaRubro,baseImponible" update="pnlValores,btnAgregarDetalle"/>
+                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                                          noSelectionOption="true" />
+                                                            <f:selectItems value="#{retencionSRIView.cuentaContableRetenciones}"
+                                                                           var="cuentaRetencion"
+                                                                           itemLabel="#{cuentaRetencion.retencion.codigo} - #{cuentaRetencion.retencion.descripcion}"
+                                                                           itemValue="#{cuentaRetencion}"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                    <br/>
+                                                </p:panelGrid>  
+
+                                                <p:panelGrid id="pnlValores" columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Base Imponible"/> <br/>
+                                                        <p:inputNumber id="baseImponible" value="#{retencionSRIView.baseImponible}" 
+                                                                       decimalPlaces="2"
+                                                                       inputStyleClass="text-align: right"
+                                                                       readonly="#{!retencionSRIView.renderedBotones}">
+                                                            <p:ajax event="blur" listener="#{retencionSRIView.calcularValorRetencion()}" 
+                                                                    update="pnlValores, btnAgregarDetalle"/>
+                                                        </p:inputNumber>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="% Retención"/> <br/>
+                                                        <p:inputNumber id="valorRetencion" value="#{retencionSRIView.impuesto}" inputStyleClass="text-align: right"
+                                                                       symbol="%" symbolPosition="s" emptyValue="always"
+                                                                       style="text-align: right" readonly="true"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup>
+                                                        <p:outputLabel value="Valor Retenido"/> <br/>
+                                                        <p:inputText id="valorTotal" value="#{retencionSRIView.valorTotal}"  style="text-align: right" readonly="true"/> 
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <br/>
+                                                <center>
+                                                    <p:commandButton id="btnAgregarDetalle" value="Añadir Retención"
+                                                                     disabled="#{!retencionSRIView.activarBtnDetalle}"
+                                                                     actionListener="#{retencionSRIView.agregarDetalle()}"
+                                                                     process="formMain"
+                                                                     update="pnlValores,detalleRetencion,
+                                                                     btnAgregarDetalle"
+                                                                     style="width: 30%" icon="fa fa-plus"/>
+                                                </center>
+                                                <br/>
+                                            </p:fieldset>
+                                        </div>
+
+                                        <p:fieldset legend="Detalle de comprobante de retención"   
+                                                    style="margin-bottom:20px; font-weight: bold;" 
+                                                    rendered="#{retencionSRIView.accesoComprobante}" id="fieldSetDetalleComprobante">
+                                            <p:dataTable id="detalleRetencion" 
+                                                         widgetVar="detalleRetencion"
+                                                         rowIndexVar="i"
+                                                         value="#{retencionSRIView.liquidacionDetalles}"
+                                                         var="detalle"
+                                                         emptyMessage="No existen impuestos">
+                                                <p:column headerText="#" width="13">
+                                                    #{i+1}
+                                                </p:column>
+                                                <p:column headerText="N° Factura" width="100">
+                                                    #{detalle.numFactura}
+                                                </p:column>
+                                                <p:column headerText="Impuesto" width="75">
+                                                    #{detalle.rubro.rubroTipo.descripcion}
+                                                </p:column>
+                                                <p:column headerText="Código" width="75">
+                                                    #{detalle.rubro.codigo}
+                                                </p:column>
+                                                <p:column headerText="Descripción">
+                                                    #{detalle.rubro.descripcion}
+                                                </p:column>
+                                                <p:column headerText="Base imponible" width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.baseImponible}"  />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="% Retención"  width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.impuesto}" style="text-align: right !important" />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="Valor Retenido" width="100">
+                                                    <div align="right">
+                                                        <p:outputLabel value="#{detalle.valor}" style="text-align: right !important" />
+                                                    </div>
+                                                </p:column>
+                                                <p:column headerText="Acción"  width="70" rendered="#{retencionSRIView.renderedBotones}">
+                                                    <center>
+                                                        <p:commandLink title="Eliminar" 
+                                                                       actionListener="#{retencionSRIView.removerDetalle(detalle)}"
+                                                                       update="detalleRetencion">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" 
+                                                                       message="¿Está seguro de eliminar el detalle?,
+                                                                       El registro se eliminará y no se podra recuperar" 
+                                                                       icon="fa fa-exclamation-triangle"/>
+                                                        </p:commandLink>                                                
+                                                    </center>
+                                                </p:column>
+                                            </p:dataTable>
+                                            <center>
+                                                <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 50%">
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:commandButton value="Generar Retención" 
+                                                                     process="@this"
+                                                                     actionListener="#{retencionSRIView.guardarEmitirRetencion()}" 
+                                                                     rendered="#{retencionSRIView.renderedBotones}"
+                                                                     style="width: 100%;" icon="fa fa-save"  />
+                                                </h:panelGroup>
+                                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                    <p:commandButton value="Completar Tarea"  actionListener="#{retencionSRIView.abriDlogo()}"
+                                                                     icon="fa fa-external-link" process="@this" style="width: 100%;background: #0081cb;"/>
+                                                </h:panelGroup>
+                                            </p:panelGrid>   
+                                            </center>
+                                            
+                                            <br></br>
+                                        </p:fieldset>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br></br>
+            </div>
+        </h:form>
+        <p:dialog id="dialogComprobante" closeOnEscape="true" header="Comprobante Objeto de Retención" widgetVar="dialogComprobante" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionSRIView.accesoComprobante}"
+                  width="600">
+            <h:form id="formComprobantesFacturas" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formComprobante" style="width: 100%;" >
+                                <p:tabView id="TabViewFacturas" prependId="false" >
+                                    <p:tab title="Crear Factura">
+                                        <center>
+                                            <p:panelGrid columns="2" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank">
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Fecha de Emisión:" for="fechaEmision"/>
+                                                    <p:calendar id="fechaEmision"  
+                                                                placeholder="dd/MM/yyyy"
+                                                                showOn="button" 
+                                                                navigator="true"
+                                                                locale="es"
+                                                                value="#{retencionSRIView.factura.fechaFactura}" required="true"
+                                                                onkeypress="focusNextOnEnter(event, 'fechaCaducidad')" readonlyInput="true"
+                                                                maxdate="#{retencionSRIView.factura.fechaCaducidad}">
+                                                        <p:ajax event="dateSelect" update="fechaCaducidad"/>
+                                                    </p:calendar>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Fecha de Caducidad:" for="fechaCaducidad"/>
+                                                    <p:calendar id="fechaCaducidad"  
+                                                                placeholder="dd/MM/yyyy"
+                                                                showOn="button" 
+                                                                navigator="true"
+                                                                value="#{retencionSRIView.factura.fechaCaducidad}"
+                                                                onkeypress="focusNextOnEnter(event, 'numeroComprobante')" readonlyInput="true"
+                                                                mindate="#{retencionSRIView.factura.fechaFactura}"
+                                                                disabled="#{empty retencionSRIView.factura.fechaFactura}">
+                                                    </p:calendar>
+                                                </p:panelGrid>
+                                                <p:panelGrid id="panelNumFactura" columns="1" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:outputLabel value="Número de Comprobante:"/>
+                                                    <p:panelGrid columns="3"  >
+                                                        <p:inputText  id="entidad"
+                                                                      placeholder="001"
+                                                                      maxlength="3"
+                                                                      style="width: 25px;"
+                                                                      value="#{retencionSRIView.factura.entidad}"
+                                                                      onkeypress="focusNextOnEnter(event, 'establecimiento')">
+                                                            <p:ajax event="change" process="entidad" update="entidad"
+                                                                    listener="#{retencionSRIView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                        <p:inputText  id="establecimiento"
+                                                                      placeholder="001"
+                                                                      maxlength="3"
+                                                                      style="width: 25px;"
+                                                                      value="#{retencionSRIView.factura.establecimiento}"
+                                                                      onkeypress="focusNextOnEnter(event, 'secuencia')">
+                                                            <p:ajax event="change" process="establecimiento" update="establecimiento"
+                                                                    listener="#{retencionSRIView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                        <p:inputText  id="secuencia"
+                                                                      placeholder="00000001"
+                                                                      maxlength="9"
+                                                                      style="width: 60px;"
+                                                                      value="#{retencionSRIView.factura.secuencia}"
+                                                                      onkeypress="focusNextOnEnter(event, 'numeroAutorizacion')">
+                                                            <p:ajax event="change" process="secuencia" update="secuencia"
+                                                                    listener="#{retencionSRIView.formatNumeroComprobante()}"/> 
+                                                        </p:inputText>
+                                                    </p:panelGrid>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                    <p:outputLabel value="Número de Autorización" for="numeroAutorizacion"/>
+                                                    <p:inputText  id="numeroAutorizacion"
+                                                                  style="width: 100% !important;"
+                                                                  value="#{retencionSRIView.factura.numAutorizacion}" required="true">
+                                                        <!--                                                        <p:ajax event="keyup" update="guardar-valores-f" process="numeroAutorizacion" 
+                                                                                                                        listener="# {retencionSRIView.validateNumAutorizacion()}"/>-->
+                                                    </p:inputText>   
+                                                </p:panelGrid> 
+                                            </p:panelGrid>
+                                        </center>
+                                        <br/>
+                                        <center>
+                                            <p:commandButton value="Guardar" update="formComprobante"
+                                                             id="guardar-valores-f"
+                                                             icon="ui-icon-save" actionListener="#{retencionSRIView.aggFactura()}"
+                                                             styleClass="Fs16"/>
+                                            <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                             styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogComprobante').hide();"/>
+
+                                        </center>
+                                    </p:tab>
+                                    <p:tab title="Facturas registradas" rendered="#{retencionSRIView.renderTabFactura}">
+                                        <br/>
+                                        <p:dataTable  id="dataTableFacturasRegistradas"
+                                                      widgetVar="dataTableFacturasRegistradas"
+                                                      reflow="true" 
+                                                      paginator="true" 
+                                                      lazy="true" rows="10"
+                                                      var="facturaRegistradas"
+                                                      value="#{retencionSRIView.facturasLazyRegis}"
+                                                      rowsPerPageTemplate="10,20" 
+                                                      paginatorPosition="bottom"
+                                                      filterEvent="enter"
+                                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                      emptyMessage="No se encontraron resultados"
+                                                      style="font-size: 11px" tableStyle="table-layout:auto">
+                                            <p:column headerText="N° Factura" filterBy="#{facturaRegistradas.numFactura}">
+                                                <h:outputText value="#{facturaRegistradas.numFactura}" />
+                                            </p:column>
+                                            <p:column headerText="N° Autorización" filterBy="#{facturaRegistradas.numAutorizacion}">
+                                                <h:outputText value="#{facturaRegistradas.numAutorizacion}" />
+                                            </p:column>
+                                            <p:column headerText="Fecha Emisión" sortBy="#{facturaRegistradas.fechaFactura}">
+                                                <h:outputText value="#{facturaRegistradas.fechaFactura}">
+                                                    <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Fecha Caducidad" sortBy="#{facturaRegistradas.fechaCaducidad}">
+                                                <h:outputText value="#{facturaRegistradas.fechaCaducidad}" >
+                                                    <f:convertDateTime pattern="yyyy/MM/dd"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Acciones" style="font-weight: 500;" width="100">
+                                                <center>
+                                                    <p:commandLink title="Seleccionar Factura" process="@this" 
+                                                                   update="dataTableFacturas"
+                                                                   actionListener="#{retencionSRIView.aggFacturaSeleccionada(facturaRegistradas)}">
+                                                        <i class="fa fa-arrow-circle-o-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                                                    </p:commandLink>    
+                                                </center>
+                                            </p:column>                                                  
+                                        </p:dataTable>
+                                        <br></br>
+                                        <br></br>
+                                    </p:tab>
+                                </p:tabView>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dialogDetalleBases" closeOnEscape="true" header="Detalle de Bases Imponibles y Retenciones de Impuesto
+                  Al Valor Agregado" widgetVar="dialogDetalleBases" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionSRIView.accesoComprobante}">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outputBase" style="width: 100%;" >
+                                <p:fieldset legend="Bases Imponibles" style="font-weight: bold;">
+                                    <p:panelGrid  id="pnlDatosBasesIva" columns="2" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="baseImponibleCero"  value="Base Imponible IVA 0%" style="width: 100%"/>
+                                            <p:inputNumber id="baseImponibleCero" decimalPlaces="2" 
+                                                           value="#{retencionSRIView.factura.baseImponibleIva}"
+                                                           readonly="#{retencionSRIView.readOnlyInput}">
+                                                <p:ajax event="keyup" update="subtotal" listener="#{retencionSRIView.actualizarSubtotalFactura}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="baseImponibleDif" value="Base imponible IVA diferente de 0%" style="width: 100%;"/>
+                                            <p:inputNumber id="baseImponibleDif" decimalPlaces="2" 
+                                                           readonly="#{retencionSRIView.readOnlyInput}" 
+                                                           value="#{retencionSRIView.factura.baseImponibleDiferente}">
+                                                <p:ajax event="keyup" update="montoIva,subtotal" listener="#{retencionSRIView.calculoIvaDiferenteCero}" />
+                                            </p:inputNumber>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                    <p:panelGrid  id="pnlDatosBases" columns="3" columnClasses="ui-grid-col-20" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="subtotal" value="Subtotal" style="width: 100%;"/>
+                                            <p:inputNumber id="subtotal" value="#{retencionSRIView.factura.subtotalRenta}" 
+                                                           decimalPlaces="2" readonly="true"/>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="montoIva" value="Monto IVA" style="width: 100%;"/>
+                                            <p:inputText id="montoIva" class="panelInput" 
+                                                         value="#{retencionSRIView.factura.montoIva}"  readonly="true">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="montoICE" value="Monto ICE" style="width: 100%;"/>
+                                            <p:inputText id="montoICE" class="panelInput"
+                                                         value="#{retencionSRIView.factura.montoIce}">
+                                            </p:inputText>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <br/><br/>
+                                <center>
+                                    <p:commandButton value="Guardar" update="outputBase, panelGridFactura,fldInfoDetalleRetencion,dataTableFacturas" 
+                                                     id="guardar-bases"
+                                                     disabled="#{retencionSRIView.disabledguardarBases}"
+                                                     icon="ui-icon-save" actionListener="#{retencionSRIView.guardarValoresIVAFactura()}"
+                                                     styleClass="Fs16"/>
+                                    <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                     update="dataTableFacturas"
+                                                     styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogDetalleBases').hide();"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{retencionSRIView.observacion.observacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Culminar tarea"  title="Culminar tarea" process="frmDlgObser" update="frmDlgObser"
+                                                 actionListener="#{retencionSRIView.completarTarea()}" 
+                                                 style="width: 100%;"  />   
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="dialogDetallePagos" closeOnEscape="true" header="Detalle Información de Pago"
+                  widgetVar="dialogDetallePagos" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" rendered="#{retencionSRIView.accesoComprobante}">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12"> 
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outputDatosPagos" style="width: 100%;" >
+                                <p:panelGrid id="pnlDatosPagos" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <h:panelGroup>
+                                        <p:outputLabel for="pagos_A"  value="Pago a:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="pagos_A" style="width: 275px"
+                                                         value="#{retencionSRIView.factura.pagoExterior.pagoLocExt}" required="true">
+                                            <f:selectItem itemLabel="PAGO A RESIDENTE/ESTABLECIMIENTO PERMANENTE" 
+                                                          itemValue="01"/>
+                                            <f:selectItem itemLabel="PAGO A NO RESIDENTE" 
+                                                          itemValue="02"/>
+                                            <p:ajax listener="#{retencionSRIView.loadDatosPago}" process="pagos_A"
+                                                    update="typereg,paisRegimenGeneral,paisParaisoFiscal,
+                                                    denomi,paisesPago,dobleTributacion,normaLegal"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="typereg"  value="Tipo Régimen:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="typereg" style="width: 275px"
+                                                         value="#{retencionSRIView.factura.pagoExterior.tipoRegi}"
+                                                         disabled="#{retencionSRIView.disabledPago}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItem itemLabel="Régimen general" 
+                                                          itemValue="01"/>
+                                            <f:selectItem itemLabel="Paraíso fiscal" 
+                                                          itemValue="02"/>
+                                            <f:selectItem itemLabel="Régimen fiscal preferente o jurisdicción de menor imposición" 
+                                                          itemValue="03"/>
+                                            <p:ajax listener="#{retencionSRIView.loadDatosRegimenExterior}" 
+                                                    update="typereg,paisRegimenGeneral,paisParaisoFiscal,
+                                                    denomi,paisesPago,dobleTributacion,normaLegal"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisRegimenGeneral"  value="Régimen General:" style="width: 100%"/>
+                                        <p:selectOneMenu id="paisRegimenGeneral" style="width: 275px"
+                                                         value="#{retencionSRIView.factura.pagoExterior.paisEfecPagoGen}"
+                                                         disabled="#{retencionSRIView.disabledRegimenGeneral}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionSRIView.paises}"
+                                                           var="paises"
+                                                           itemLabel="#{paises.descripcion}"
+                                                           itemValue="#{paises.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisParaisoFiscal"  value="Paraíso Fiscal:" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="paisParaisoFiscal" style="width: 275px"
+                                                         value="#{retencionSRIView.factura.pagoExterior.paisEfecPagoParFis}"
+                                                         disabled="#{retencionSRIView.disabledParaisoFiscal}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionSRIView.paisParaisoFiscal}"
+                                                           var="paisParaisoFiscal"
+                                                           itemLabel="#{paisParaisoFiscal.paisElegir}"
+                                                           itemValue="#{paisParaisoFiscal.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="denomi"  value="Denominación" style="width: 100%"/><br/>
+                                        <p:inputText id="denomi" value="#{retencionSRIView.factura.pagoExterior.denopago}"
+                                                     disabled="#{retencionSRIView.disabledDenominacion}"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup>
+                                        <p:outputLabel for="paisesPago"  value="País" style="width: 100%"/><br/>
+                                        <p:selectOneMenu id="paisesPago" style="width: 275px"
+                                                         value="#{retencionSRIView.factura.pagoExterior.paisEfecPago}"
+                                                         disabled="#{retencionSRIView.disabledDenominacion}"
+                                                         filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionSRIView.paises}"
+                                                           var="paisEfecP"
+                                                           itemLabel="#{paisEfecP.descripcion}"
+                                                           itemValue="#{paisEfecP.codigo}"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                                <br/> 
+                                <h:panelGrid columns="2" cellpadding="3">
+                                    <p:outputLabel for="dobleTributacion"  
+                                                   value="¿Aplica convenio de doble tributación?" 
+                                                   style="width: 100%"/>
+                                    <p:selectOneRadio id="dobleTributacion" 
+                                                      value="#{retencionSRIView.factura.pagoExterior.aplicConvDobTrib}" 
+                                                      unselectable="true"
+                                                      disabled="#{retencionSRIView.disabledPago}">
+                                        <f:selectItem itemLabel="SI" itemValue="NO" />
+                                        <f:selectItem itemLabel="NO" itemValue="SI" />
+                                    </p:selectOneRadio>
+                                    <p:outputLabel for="normaLegal"  
+                                                   value="¿Pago sujeto a retención en aplicación de la norma legal?" 
+                                                   style="width: 100%"/>
+                                    <p:selectOneRadio id="normaLegal" 
+                                                      value="#{retencionSRIView.factura.pagoExterior.pagExtSujRetNorLeg}"
+                                                      unselectable="true"
+                                                      disabled="#{retencionSRIView.disabledPago}">
+                                        <f:selectItem itemLabel="SI" itemValue="NO" />
+                                        <f:selectItem itemLabel="NO" itemValue="SI"/>
+                                    </p:selectOneRadio>
+                                </h:panelGrid>
+                                <br/> 
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                                    <h:panelGrid columns="1">                    
+                                        <p:outputLabel value="Formas de Pago" 
+                                                       style="width: 100%"/>
+                                        <p:selectOneMenu id="select-forma-pago" style="width: 275px"
+                                                         value="#{retencionSRIView.formaPagoSelection}"
+                                                         converter="#{utilConverter}">
+                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" 
+                                                          noSelectionOption="true" />
+                                            <f:selectItems value="#{retencionSRIView.formasPagos}"
+                                                           var="formaPagos"
+                                                           itemLabel="#{formaPagos.descripcion}"
+                                                           itemValue="#{formaPagos}"/>
+                                            <p:ajax update="select-forma-pago,dataTableFormasPago" listener="#{retencionSRIView.aggFormasPago}"
+                                                    process="select-forma-pago"/>
+                                        </p:selectOneMenu>
+                                    </h:panelGrid>
+                                    <h:panelGrid columns="1">
+                                        <p:dataTable  id="dataTableFormasPago" 
+                                                      widgetVar="dataTableFormasPago"
+                                                      var="formasPago"  
+                                                      value="#{retencionSRIView.facturaFormasPago}"
+                                                      style="font-size: 11px" tableStyle="table-layout:auto">
+                                            <p:column headerText="Codigo">
+                                                <h:outputText value="#{formasPago.formaPago.codigo}" />
+                                            </p:column>
+                                            <p:column headerText="N° Autorización">
+                                                <h:outputText value="#{formasPago.formaPago.descripcion}" />
+                                            </p:column>
+                                            <p:column headerText="Acciones" style="font-weight: 500;" width="100"
+                                                      rendered="#{retencionSRIView.renderedBotones}">
+                                                <center>
+                                                    <p:commandLink title="Eliminar" process="@this"
+                                                                   actionListener="#{retencionSRIView.eliminarFormasPago(formasPago)}">
+                                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                                        <p:confirm header="Confirmación de eliminación"
+                                                                   message="¿Está seguro de eliminar la forma de pago?"
+                                                                   icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>        
+                                                </center>
+                                            </p:column>                                                  
+                                        </p:dataTable>
+                                    </h:panelGrid>
+                                </p:panelGrid>
+                                <br/>
+                                <center>
+                                    <p:commandButton value="Guardar" update="outputDatosPagos,panelGridFactura" 
+                                                     process="outputDatosPagos"
+                                                     icon="ui-icon-save" actionListener="#{retencionSRIView.guardarDatosPago()}"
+                                                     styleClass="Fs16"/>
+                                    <p:commandButton value="Cancelar" style="width: auto; margin-left: 15px" process="@this"
+                                                     update="dataTableFacturas"
+                                                     styleClass="red-btn" icon="ui-icon-clear" oncomplete="PF('dialogDetallePagos').hide();"/>
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

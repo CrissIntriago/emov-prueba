@@ -1,0 +1,156 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        PRESUPUESTO - Generación de Archivos MEF
+    </ui:define>
+    <ui:param name="tittle" value="Presupuesto - Generación de Archivos MEF"/>
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12" style="margin-top: 4%;">
+                    <!--Archivos SINAFIP-->
+                    <p:outputPanel id="fomInfo" >                        
+                        <p:fieldset id="fieldsetArchivoSinafipPre" legend="OPCIONES DE ARCHIVO" 
+                                    collapsed="false"
+                                    style="width: 71%;margin:auto; font-weight: bold;box-shadow: 4px 4px 4px 2px rgba(0, 0, 0, 0.2);">
+                            <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                    <p:outputLabel value="Tipo de Archivo: " for="@next"/>
+                                    <p:selectOneMenu id="tipoArchivo" value="#{archivosSinafipPresupuestoView.tipoArchivo}" style="width: 100%" required="true">
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItem itemLabel="Presupuesto Inicial" itemValue="PI" />
+                                        <f:selectItem itemLabel="Cédula Presupuestaria" itemValue="CP" />
+                                        <p:ajax update="formMain" listener="#{archivosSinafipPresupuestoView.actualizarDatosView()}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Período" escape="false" for="@next"/>
+                                    <p:selectOneMenu  id="periodo" value="#{archivosSinafipPresupuestoView.busqueda.anio}" style="width: 100%" required="true"> 
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{archivosSinafipPresupuestoView.periodos}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                                        <p:ajax update="formMain" listener="#{archivosSinafipPresupuestoView.actualizarDatosView()}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{archivosSinafipPresupuestoView.bolMeses}">
+                                    <p:outputLabel value="Mes: " escape="false" for="@next"/>
+                                    <p:selectOneMenu  id="mes" value="#{archivosSinafipPresupuestoView.mes}" style="width: 100%" required="true">
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{archivosSinafipPresupuestoView.mesesAnio}" var="m" itemLabel="#{m.texto}" itemValue="#{m.orden}"/>
+                                        <p:ajax update="fldInfoPresupuesto" listener="#{archivosSinafipPresupuestoView.formatFecha()}" process="periodo"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+
+                        </p:fieldset>
+
+                        <p:fieldset id="fldInfoPresupuesto" legend="DATOS A GENERAR" 
+                                    style="margin-bottom:20px; width: 71%; height:50%; font-weight: bold; text-align: left; margin:auto; margin-top: 20px;box-shadow: 4px 4px 4px 2px rgba(0, 0, 0, 0.2);">
+
+                            <p:panelGrid id="panelData" rendered="#{archivosSinafipPresupuestoView.mostrarTablaPresupuesto}" columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:dataTable id="dtData" 
+                                             widgetVar="dtData"
+                                             value="#{archivosSinafipPresupuestoView.listItem}"
+                                             var="pre" rowIndexVar="p"
+                                             paginator="true" rows="10" 
+                                             rowsPerPageTemplate="10,50,100" 
+                                             paginatorPosition="bottom"
+                                             filterEvent="enter"
+                                             emptyMessage="No se encontró ningún registro para mostrar."
+                                             style="font-size: 11px"
+                                             editable="true" editMode="cell">
+                                    <p:column headerText="N°" style="font-weight: 600;" width="40" >
+                                        <center>
+                                            <h:outputText value="#{p+1}"/>   
+                                        </center>
+                                    </p:column>
+                                    <p:column headerText="Código" style="font-weight: 500;" width="100" filterBy="#{pre.codigo}">
+                                        <center>
+                                            <h:outputText value="#{pre.codigo}"/>
+                                        </center>
+                                    </p:column>
+
+                                    <p:column headerText="Descripción" style="font-weight: 500;" width="170" filterBy="#{pre.descripcion}">
+                                        <h:outputText value="#{pre.descripcion}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Tipo" style="font-weight: 500;" width="80" filterBy="#{pre.ingreso}">
+                                        <f:facet name="filter">
+                                            <p:selectOneMenu onchange="PF('dtData').filter()" styleClass="custom-filter">
+                                                <f:converter converterId="javax.faces.Boolean" />
+                                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                                <f:selectItem itemLabel="Ingreso" itemValue="true" />
+                                                <f:selectItem itemLabel="Egreso" itemValue="false" />
+                                            </p:selectOneMenu>
+                                        </f:facet>
+                                        <center>
+                                            <h:outputText value="#{pre.ingreso ? 'INGRESO': 'EGRESO'}"/>
+                                        </center>
+                                    </p:column>
+
+                                    <p:column headerText="Presupuesto Inicial" style="font-weight: 500;" width="120" rendered="#{archivosSinafipPresupuestoView.mostrarDatosIniciales}">
+                                        <div style="text-align: right">
+                                            <h:outputText value="#{pre.presupuestoInicial}">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText> 
+                                        </div>
+                                    </p:column>
+                                    <p:column headerText="Presupuesto Codificado" style="font-weight: 500;" width="110" rendered="#{archivosSinafipPresupuestoView.mostrarDatosCedula}">
+                                        <div style="text-align: right">
+                                            <h:outputText value="#{pre.codificado}">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText> 
+                                        </div>
+                                    </p:column>
+                                    <p:column headerText="Comprometido" style="font-weight: 500;" width="110" rendered="#{archivosSinafipPresupuestoView.mostrarDatosCedula}">
+                                        <div style="text-align: right">
+                                            <h:outputText value="#{pre.compromiso}">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText> 
+                                        </div>
+                                    </p:column>
+                                    <p:column headerText="Devengado" style="font-weight: 500;" width="110" rendered="#{archivosSinafipPresupuestoView.mostrarDatosCedula}">
+                                        <div style="text-align: right">
+                                            <h:outputText value="#{pre.devengado}">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText> 
+                                        </div>
+                                    </p:column>
+                                    <p:column headerText="Orientación de Gasto" style="font-weight: 500; text-align: center"  width="130">
+                                        <p:cellEditor rendered="#{!pre.ingreso}">
+                                            <center>
+                                                <f:facet name="output"><h:outputText value="#{pre.orientacionGastos}" /></f:facet>
+
+                                                <f:facet name="input">
+                                                    <p:inputText value="#{pre.orientacionGastos}"  rendered="#{!pre.ingreso}"/>
+                                                </f:facet>
+                                            </center>
+                                        </p:cellEditor>
+                                    </p:column>
+                                </p:dataTable>             
+                            </p:panelGrid>
+
+                            <p:outputPanel style="margin-top: 25px;">
+                                <center>
+                                    <p:commandButton value="Generar Archivo" process="formMain"
+                                                     icon="fa fa-fw fa-file-pdf-o" actionListener="#{archivosSinafipPresupuestoView.generarArchivoPlano()}" style="width: auto; margin-bottom: 15px;margin-left: 15px;"
+                                                     styleClass="Fs16" update="formMain"/>
+                                    <p:commandButton value="Cancelar Archivo" icon="ui-icon-clear"
+                                                     actionListener="#{archivosSinafipPresupuestoView.cancelar()}" style="width: auto; margin-left: 15px;"
+                                                     styleClass="red-btn" update="formMain"/>
+                                </center>
+                            </p:outputPanel>
+                        </p:fieldset>
+                    </p:outputPanel>
+                </div>
+            </div>
+        </h:form>
+
+    </ui:define>
+
+</ui:composition>

@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Asignación de Partidas PAPP</ui:define>
+    <ui:param name="tittle" value=" Partidas Presupuestarias del PAPP"/>
+    <ui:define name="content">
+        <style>
+            .condicion1{
+                background-color: #E7C402 !important;
+            }
+            .condicion2{
+
+                background-color: white !important;
+            }
+            .condicion3{
+                background-color: #E7C402 !important;
+                color:white;
+            }
+            #comboItem{
+                width: 20px;
+
+            }
+
+        </style>
+
+        <div class="ui-g ui-fluid">
+
+
+            <div  class="ui-g-12">
+                <h:form id="formTablaMain" prependId="false">
+                    <div class="ui-g-12">
+                        <div class="ui-g-6">
+                            <p:panelGrid columns="2" columnClasses="ui-grid-col-6" layout="grid" styleClass="ui-panelgrid-blank form-group" style="border: 1px solid; border-color:#00796b ; border-radius: 10px 10px 10px 10px;">
+                                <h:panelGroup layout="block" >
+                                    <p:outputLabel value="Periodo:"  for="getanios" class="FontBold"/>
+                                    <p:selectOneMenu id="getanios" value="#{asignacionPartidasPappSinProcesoView.busqueda.anio}" >
+                                        <p:ajax listener="#{asignacionPartidasPappSinProcesoView.cargarDatosTablaGeneralPlanAnual()}" update="formTablaMain"/>
+                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                        <f:selectItems value="#{asignacionPartidasPappSinProcesoView.listaAnio}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-6" align="right"> 
+                            <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" style="margin:15px 0px">
+                                <p:commandButton value="Limpiar Filtros" style="width: 150px;margin-bottom: 1%;" icon="fa fa-eraser"
+                                                 onclick="PF('dataTablePlane').clearFilters()" 
+                                                 actionListener="#{asignacionPartidasPappSinProcesoView.clearAllFilters}"
+                                                 update="dataTablePlane">
+                                    <p:resetInput target="dataTablePlane" />
+                                </p:commandButton>
+
+                                <p:commandButton  value="Comprobar valores"  process="@this"  class="red-btn"
+                                                  action="#{asignacionPartidasPappSinProcesoView.verificadorDeValores()}"  style="width: 150px"
+                                                  icon="ui-icon-check-box" update="formTablaMain,formActividadProductosConsulta"  styleClass="Fs16" />
+
+                                <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: 150px;" icon="fa fa-align-justify" />
+                                <p:columnToggler datasource="dataTablePlane" trigger="mostrarColumnas" />
+                            </p:panelGrid>
+                        </div>
+                    </div>
+
+                    <div class="ui-g-12">
+                        <!--                    <p:remoteCommand name="onCellEdit" update="dataTablePlane" />-->
+
+                        <div style="float:right;padding-top: 10px">
+
+
+                            <h:commandLink title="Exportar Excel xls" >
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>
+                                <p:dataExporter type="xlsxstream" target="dataTablePlane" fileName="partidasPapp#{asignacionPartidasPappSinProcesoView.busqueda.anio}" />
+                            </h:commandLink>
+
+                            <h:commandLink title="Exportar Excel xlsx" rendered="false">
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:dataExporter type="xlsxstream" target="dataTablePlane" fileName="partidasPappxlsx" />
+                            </h:commandLink>
+
+                            <h:commandLink  title="Exportar xml" rendered="false">
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>
+                                <p:dataExporter type="xml" target="dataTablePlane" fileName="partidasPappxml" />
+                            </h:commandLink>
+
+                        </div>
+
+                        <p:dataTable  id="dataTablePlane" widgetVar="dataTablePlane" var="item" value="#{asignacionPartidasPappSinProcesoView.productoAsignacion}" 
+                                      paginator="true" rows="10" paginatorPosition="bottom" style="text-align:center"
+                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown} {Exporters}"
+                                      rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="true"
+                                      editable="true" editMode="cell"
+                                      filterEvent="keyup"
+                                      scrollable="true" scrollWidth="100%"  rowIndexVar="index"
+                                      rowStyleClass="#{item.codigoPresupuestario.isEmpty()||item.codigoPresupuestario==null? 'condicion1':'condicion2'}"
+                                      emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <f:facet name="header">
+                                <h2 style="font-weight: bold; font-size: 12px">  TABLA GENERAL DE LOS PLANES ANUALES - #{asignacionPartidasPappSinProcesoView.busqueda.anio == 0 ? '20XX':asignacionPartidasPappSinProcesoView.busqueda.anio}</h2>
+                            </f:facet>
+                            <p:column headerText="No." style="width: 15px; text-align: center;" >
+                                <h:outputText value="#{index+1}"/>
+                            </p:column>
+
+                            <!--                        <p:ajax event="cellEdit" oncomplete="onCellEdit()"  />                        -->
+                          
+                            <p:column headerText="Codigo" style="width: 100px;"  filterBy="#{item.actividadOperativa.planProgramaProyecto.codigo}">
+                                <h:outputText value="#{item.actividadOperativa.planProgramaProyecto.codigo}" />
+                            </p:column>
+                            <p:column headerText="Plan, programa y/o proyecto" style="width: 200px;"  filterBy="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto.toUpperCase()}"   style="text-align: justify;"/>
+                            </p:column>
+                            <p:column headerText="Actividad Operativa" style="width: 200px;"  filterBy="#{item.actividadOperativa.nombreActividad}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.nombreActividad.toUpperCase()}"   style="text-align: justify;"/>
+                            </p:column>
+                            <p:column headerText="Objetivo Operativa" style="width: 200px;"  filterBy="#{item.actividadOperativa.objetivoOperativo}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.objetivoOperativo.toUpperCase()}"   style="text-align: justify;"/>
+                            </p:column>
+                            <p:column headerText="Medición Meta" style="width: 100px;background:#E4E5E6" filterBy="#{item.actividadOperativa.medicionMeta}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.medicionMeta}" />
+                            </p:column>
+                            <p:column headerText="Enero" filterBy="#{item.eneroMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.eneroMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.eneroMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Febrero" filterBy="#{item.febreroMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.febreroMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.febreroMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Marzo" filterBy="#{item.actividadOperativa.marzoMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.marzoMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.marzoMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Abril" filterBy="#{item.actividadOperativa.abrilMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.abrilMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.abrilMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Mayo" filterBy="#{item.mayoMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.mayoMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.mayoMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Junio" filterBy="#{item.actividadOperativa.junioMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.junioMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.junioMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Julio" filterBy="#{item.julioMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.julioMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.julioMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Agosto" filterBy="#{item.actividadOperativa.agostoMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.agostoMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.agostoMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Septiembre" filterBy="#{item.actividadOperativa.septiembreMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.septiembreMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.septiembreMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Octubre" filterBy="#{item.actividadOperativa.octubreMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.octubreMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.octubreMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Noviembre" filterBy="#{item.actividadOperativa.noviembreMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.noviembreMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.noviembreMeta}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Diciembre" filterBy="#{item.actividadOperativa.diciembreMeta}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.diciembreMeta ==null ? 'SIN DEFINIR':item.actividadOperativa.diciembreMeta}" style="float: right;"/>
+                            </p:column>
+
+                            <p:column headerText="Indicador Meta" style="width: 200px;"  filterBy="#{item.actividadOperativa.indicadorMeta}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.indicadorMeta.toUpperCase()}"   style="text-align: justify;"/>
+                            </p:column>
+                            <p:column headerText="Unidad Responsable" style="width: 200px;"  filterBy="#{item.actividadOperativa.unidadResponsable.nombre}" filterMatchMode="contains">
+                                <!--                                <f:facet name="filter">
+                                                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith" effect="fade" value="{asignacionPartidasPappSinProcesoView.idUnidad}" onchange="PF('dataTablePlane').filter()" 
+                                                                                     styleClass="custom-filter"   style="width: 100%;">
+                                                                        <p:ajax listener="{asignacionPartidasPappSinProcesoView.sumatotalArticulosPartidas()}" update="formTablaMain"/>
+                                                                        <f:selectItem itemLabel="Todos" itemValue="{null}" noSelectionOption="true" />
+                                                                        <f:selectItems value="{asignacionPartidasPappSinProcesoView.unidades}" var="n" itemLabel="{n.nombre.toUpperCase()}" itemValue="{n.id}"/>
+                                                                    </p:selectOneMenu>
+                                                                </f:facet>-->
+                                <h:outputText value="#{item.actividadOperativa.unidadResponsable.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column headerText="Monto Actividad" style="width: 100px;background:#E4E5E6;" filterBy="#{item.actividadOperativa.monto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.actividadOperativa.monto}"   style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Presupuesto Enero" filterBy="#{item.actividadOperativa.enero}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.enero ==null ? 'SIN DEFINIR':item.actividadOperativa.enero}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Febrero" filterBy="#{item.actividadOperativa.febrero}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.febrero==null ? 'SIN DEFINIR':item.actividadOperativa.febrero}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Marzo" filterBy="#{item.actividadOperativa.marzo}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.marzo ==null ? 'SIN DEFINIR':item.actividadOperativa.marzo}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Abril" filterBy="#{item.actividadOperativa.abril}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.abril==null ? 'SIN DEFINIR':item.actividadOperativa.abril}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Mayo" filterBy="#{item.actividadOperativa.mayo}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.mayo ==null ? 'SIN DEFINIR':item.actividadOperativa.mayo}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Junio" filterBy="#{item.actividadOperativa.junio}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.junio ==null ? 'SIN DEFINIR':item.actividadOperativa.junio}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Julio" filterBy="#{item.actividadOperativa.julio}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.julio ==null ? 'SIN DEFINIR':item.actividadOperativa.julio}" 
+                                               style="float: right;"/>
+                            </p:column>
+
+                            <p:column headerText="Presupuesto Agosto" filterBy="#{item.actividadOperativa.agosto}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.agosto ==null ? 'SIN DEFINIR':item.actividadOperativa.agosto}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Septiembre" filterBy="#{item.actividadOperativa.septiembre}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.septiembre ==null ? 'SIN DEFINIR':item.actividadOperativa.septiembre}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Octubre" filterBy="#{item.actividadOperativa.octubre}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.octubre ==null ? 'SIN DEFINIR':item.actividadOperativa.octubre}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Noviembre" filterBy="#{item.actividadOperativa.noviembre}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.noviembre ==null ? 'SIN DEFINIR':item.actividadOperativa.noviembre}" style="float: right;"/>
+                            </p:column>
+                            <p:column headerText="Presupuesto Diciembre" filterBy="#{item.actividadOperativa.diciembre}" style="width: 150px;" >
+                                <p:outputLabel value="#{item.actividadOperativa.diciembre ==null ? 'SIN DEFINIR':item.actividadOperativa.diciembre}" style="float: right;"/>
+                            </p:column>
+
+                            <p:column headerText="Producto" style="width: 200px;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                                <h:outputText value="#{item.descripcion.toUpperCase()}"/>
+                            </p:column>
+                            <p:column headerText="Monto Producto" style="width: 100px;background:#E4E5E6;" filterBy="#{item.monto}" filterMatchMode="contains">
+                                <h:outputText value="#{item.monto}" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Ítem Presupuestario" style="width: 200px;" filterBy="#{item.itemNew.codigo}" filterMatchMode="contains" >
+                                <!--                                <f:facet name="filter">
+                                                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith" effect="fade" onchange="PF('dataTablePlane').filter()" styleClass="custom-filter" style="width: 100%;">
+                                                                        <f:selectItem itemLabel="Todos" itemValue="{null}" noSelectionOption="true" />
+                                                                        <f:selectItems value="{asignacionPartidasPappSinProcesoView.listaCatalogoPresupuestos}" var="n" itemLabel="{n.codigo}" itemValue="{n.id}"/>
+                                                                    </p:selectOneMenu>
+                                                                </f:facet>-->
+                                <p:cellEditor disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" >
+                                    <f:facet name="output"><h:outputText value="#{item.itemNew.codigo}" id="columnaItem"/></f:facet>
+                                    <f:facet name="input" id="comboItem">
+                                        <p:selectOneMenu id="advanced" value="#{item.itemNew}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                         effect="fade" var="t" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Item Presupuestario" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{asignacionPartidasPappSinProcesoView.listItem}" var="theme" itemLabel="#{theme.codigo} #{theme.descripcion}" itemValue="#{theme}" />
+
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{t.descripcion}" />
+
+                                            </p:column>
+                                            <p:ajax disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" event="change" update="columnaItem,columnaEstructura,columnaFuente,ini"
+                                                    listener="#{asignacionPartidasPappSinProcesoView.editarCell(item)}" />
+                                        </p:selectOneMenu>
+
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Estructura Programática" style="width: 200px;" filterBy="#{item.estructruaNew.codigo}" filterMatchMode="contains">
+                                <!--                                <f:facet name="filter">
+                                                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith" effect="fade"  onchange="PF('dataTablePlane').filter()" styleClass="custom-filter" autoWidth="false" style="width: 100%;">
+                                                                        <f:selectItem itemLabel="Todos" itemValue="{null}" noSelectionOption="true" />
+                                                                        <f:selectItems value="{asignacionPartidasPappSinProcesoView.listaPlanProgramatico}" var="n" itemLabel="{n.codigo}" itemValue="{n.id}"/>
+                                                                    </p:selectOneMenu>
+                                                                </f:facet>-->
+                                <p:cellEditor disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" >
+                                    <f:facet name="output"><h:outputText value="#{item.estructruaNew.codigo}" id="columnaEstructura" /></f:facet>
+                                    <f:facet name="input">
+                                        <p:selectOneMenu value="#{item.estructruaNew}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                         effect="fade" var="e" style="width:160px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione Estructura Programática" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems  value="#{asignacionPartidasPappSinProcesoView.listEstructura}" var="ni" itemLabel="#{ni.codigo} - #{ni.nombre}" itemValue="#{n}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="codigo"/>
+                                                </f:facet>
+                                                <h:outputText value="#{e.codigo}" style="font-weight: bold;" />
+                                            </p:column>
+
+                                            <p:column style="width: 80%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Nombre"/>
+                                                </f:facet>
+                                                <h:outputText value="#{e.nombre}" />
+                                            </p:column>
+                                            <p:ajax disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" event="change" update="columnaItem,columnaEstructura,columnaFuente,ini"
+                                                    listener="#{asignacionPartidasPappSinProcesoView.editarCell(item)}" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+
+                            <p:column headerText="Fuente" style="width: 200px;" filterBy="#{item.fuenteNew.nombre}" filterMatchMode="contains">
+                                
+                                <p:cellEditor disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" >
+                                    <f:facet name="output"><h:outputText value="#{item.fuenteNew.nombre}" id="columnaFuente"/></f:facet>
+                                    <f:facet name="input">
+                                        <p:selectOneMenu value="#{item.fuenteNew}" converter="#{utilConverter}" panelStyle="width:400px"
+                                                         effect="fade" var="f" style="width:160px" filter="true" filterMatchMode="startsWith">
+                                            <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems  value="#{asignacionPartidasPappSinProcesoView.listFuente}" var="n" itemLabel="#{n.codFuente} #{n.nombre}" itemValue="#{n}" />
+                                            <p:column style="width:10%" >
+                                                <f:facet name="header">
+                                                    <h:outputText value="Código"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.codFuente}" style="font-weight: bold;" />
+                                            </p:column>
+
+                                            <p:column style="width: 50%;">
+                                                <f:facet name="header">
+                                                    <h:outputText value="Fuente"/>
+                                                </f:facet>
+                                                <h:outputText value="#{f.nombre}" />
+                                            </p:column>
+
+                                        
+                                            <p:ajax disabled="#{asignacionPartidasPappSinProcesoView.bloqueo}" event="change" update="columnaItem,columnaEstructura,columnaFuente,ini,dataTablePlane,formTablaMain"
+                                                    listener="#{asignacionPartidasPappSinProcesoView.editarCell(item)}" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+
+
+                            <p:column headerText="Partida Presupuestaria" style="width: 200px;" filterBy="#{item.codigoPresupuestario}" filterMatchMode="contains" >
+                                <h:outputText  value="#{item.codigoPresupuestario}" id="ini"/>
+                            </p:column>
+                            <p:column headerText="Periodo" style="width: 200px;">
+                                <h:outputText value="#{item.periodo}" />
+                            </p:column>
+
+                        </p:dataTable>
+
+
+                        <p:panelGrid columns="2" style="margin-top: 1%;float: right; text-align: right; font-size: 14px; font-weight: bold;" >
+                            <f:facet name="header">
+                                Información Adicional
+                            </f:facet>
+
+                            <h:outputText value="Monto Total Actividad" />
+                            <h:outputText value="#{asignacionPartidasPappSinProcesoView.totalActividades}" >
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+
+                            <h:outputText value="Monto Total Producto" />
+                            <h:outputText value="#{asignacionPartidasPappSinProcesoView.totalProducto}" >
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+
+
+                        </p:panelGrid>
+
+                    </div>
+                </h:form> 
+
+            </div>
+        </div>
+
+
+
+        <p:dialog id="dlgActividadProductosConsulta" widgetVar="dlgActividadProductosConsulta" 
+                  modal="true" showEffect="fade" 
+                  position="center" width="60%" height="400"
+                  hideEffect="fade" resizable="false">
+            <h:form id="formActividadProductosConsulta" prependId="false">  
+                <h:panelGroup id="dlgActividadProductosTable" layout="block">
+                    <p:dataTable value="#{asignacionPartidasPappSinProcesoView.list}" 
+                                 id="actividadProductosTable"  widgetVar="actividadProductosTable"
+                                 paginatorPosition="bottom" var="actividadProductos" rows="15" paginator="true"  style="text-align: center"
+                                 paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                 rowsPerPageTemplate="15,25,35,45" reflow="true">
+                        <f:facet name="header">
+                            INFORMACIÓN DEL MONTO DE ACTIVIDADES EN RELACIÓN CON SUS RESPECTIVO MONTO DE PRODUCTOS
+                        </f:facet> 
+                        <p:column headerText="Nombre de la Actividad" style="width: 30%">
+                            <h:outputText value="#{actividadProductos.actividadOperativa.nombreActividad}" />
+                        </p:column>
+                        <p:column headerText="Monto de la Actividad" style="width: 20%">
+                            <h:outputText  value="#{actividadProductos.actividadOperativa.monto}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Total de los Productos" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.montoTotalDeProductos}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Monto de Diferencia" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.diferencia}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 20%">
+                            <h:outputText value="#{actividadProductos.montoTotalDeProductos == actividadProductos.actividadOperativa.monto ? 'EQUILIBRADO':'DESEQUILIBRADO'}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

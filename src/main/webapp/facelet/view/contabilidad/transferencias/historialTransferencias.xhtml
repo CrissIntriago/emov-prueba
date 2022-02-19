@@ -1,0 +1,126 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Transferencias registradas
+    </ui:define>
+    <ui:param name="tittle" value="Transferencias registradas" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset legend="Selección de periodo" style="width: 25%;margin-bottom: 15px">
+                        <p:selectOneMenu value="#{contTransferenciasView.opcionBusqueda.anio}"  style="width: 100%;">
+                            <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                            <f:selectItems value="#{contTransferenciasView.listaPeriodo}" var="periodo" itemValue="#{periodo}"/>
+                            <p:ajax update="transferenciaTable" listener="#{contTransferenciasView.loadLazyModel()}"/>
+                        </p:selectOneMenu>
+                    </p:fieldset>                                      
+                    <p:dataTable  id="transferenciaTable" widgetVar="transferenciaTable" var="transferencia" value="#{contTransferenciasView.contTransferenciasLazy}" 
+                                  paginator="true" rows="50" style="width: 100%;" rowKey="#{transferencia.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="No." style="width: 5%;text-align: center" filterMatchMode="contains" filterBy="#{transferencia.numReferencia}">
+                            <h:outputText value="#{transferencia.numReferencia}"/>
+                        </p:column>
+                        <p:column headerText="Mes" style="width: 10%;text-align: center" sortBy="#{transferencia.fechaAfectacion}">
+                            <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                <f:convertDateTime pattern="MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="F. registro" style="width: 10%;text-align: center" sortBy="#{transferencia.fechaAfectacion}">
+                            <h:outputText value="#{transferencia.fechaAfectacion}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 35%;" filterMatchMode="contains" filterBy="#{transferencia.descripcion}">
+                            <h:outputText value="#{transferencia.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 10%;text-align: center" sortBy="#{transferencia.estadoTransferencia}">
+                            <h:outputText value="#{transferencia.estadoTransferencia}" >
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="F. acreditación" style="width: 10%;text-align: center" sortBy="#{transferencia.fechaAcreditacion}">
+                            <h:outputText value="#{transferencia.fechaAcreditacion}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="F. anulación" style="width: 10%;text-align: center" sortBy="#{transferencia.fechaAnulacion}">
+                            <h:outputText value="#{transferencia.fechaAnulacion}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 20%;text-align: center">
+                            <p:commandLink title="Editar" process="@this" actionListener="#{contTransferenciasView.form(transferencia,false)}" 
+                                           class="editar" 
+                                           rendered="#{(transferencia.estadoTransferencia == 'ACREEDITADO' or transferencia.estadoTransferencia =='ACREEDITADO-PARCIAL' or transferencia.estadoTransferencia =='ANULADO')?false:true}">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: blue"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Pdf" process="@this" actionListener="#{contTransferenciasView.reporte(transferencia,'pdf')}" 
+                                           class="editar">
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Excel" process="@this" actionListener="#{contTransferenciasView.reporte(transferencia,'xlsx')}" 
+                                           class="editar">
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: green"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Anular" process="@this" actionListener="#{contTransferenciasView.anularGeneral(transferencia)}"
+                                           rendered="#{transferencia.estadoTransferencia == 'REGISTRADO'?true:false}">
+                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red"></i>
+                                <p:confirm header="Confirmación de anulado" message="¿Está seguro desea anular la transferencia?" icon="fa fa-exclamation-triangle"/>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{contTransferenciasView.uploadDoc(transferencia)}" 
+                                           title="SUBIR COMPROBANTE SPI" process="@this"
+                                           rendered="#{transferencia.estadoTransferencia == 'ANULADO'?false:true}">
+                                <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #33ffcc;"></i>
+                            </p:commandLink>
+                            <p:commandLink actionListener="#{contTransferenciasView.verDocumentos(transferencia)}" 
+                                           title="Documentos" process="@this">
+                                <i class="fa fa-folder" style="font-size: 1.5em; margin-right: 8px; color: gray;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="uploadDocDlg" header="Adjuntar documentación" widgetVar="uploadDocDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="uploadDocForm" style="width: 100%;">
+                    <p:fieldset legend="Fecha de acreditación:" style="margin-bottom: 10px">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value=""  style="font-weight: bold"/><br/>
+                            <p:calendar id="acreeditacionFecha" pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                        mindate="#{contTransferenciasView.fechaAcreditacion}"
+                                        value="#{contTransferenciasView.fechaAcreditacion}" style="width: 100%">
+                                <p:ajax event="dateSelect" update="uploadDocForm"/>
+                            </p:calendar>  
+                        </h:panelGroup>
+                    </p:fieldset>
+                    <p:fileUpload fileUploadListener="#{contTransferenciasView.subirDocGeneral}" id="fileUpload"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" 
+                                  mode="advanced" dragDropSupport="false" rendered="#{contTransferenciasView.fechaAcreditacion != null ? true:false}"
+                                  update="messages" />
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="60%">
+            <h:form id="viewDocumentoForm" prependId="false">
+                <u:documents entiti="#{contTransferenciasView.contTransferencias}" showDelete="true"/>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

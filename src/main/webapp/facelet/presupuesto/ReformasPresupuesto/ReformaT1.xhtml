@@ -1,0 +1,1363 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">
+        Reforma Traspaso Tipo 1
+    </ui:define>
+    <ui:define name="content">
+        <style>
+            .condicion1{background-color: #E7C402 !important;}
+            .condicion2{background-color: white !important;}
+            .condicion3{background-color: #E7C402 !important;color:white;}
+            #comboItem{width: 20px;}
+        </style>
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <u:titleTask task="#{reformaT1View.tarea}" tramite="#{reformaT1View.tramite}" />
+            </div>
+            <div class="ui-g-12">
+                <h:panelGroup id="accionesButton" layout="block">
+                    <p:commandButton icon="fa fa-plus"  value="Nueva Solicitud" actionListener="#{reformaT1View.registrarMostrarOcultar()}"
+                                     styleClass="Fs16" style="width: auto;margin: 20px 10px 20px" rendered="#{reformaT1View.btnRegistrar}"
+                                     update="accionesButton,formBusqueda,formBusquedaCons,formTablaReforma,formMain,actividadesOperativa,productos"/>
+                    <p:commandButton icon="fa fa-search" value="Consultar Solicitudes" actionListener="#{reformaT1View.consultarMostrarOcultar()}"
+                                     styleClass="Fs16" style="width: auto;margin: 20px 10px 20px" rendered="#{reformaT1View.btnConsultar}"
+                                     update="accionesButton,formBusqueda,formBusquedaCons,formTablaReforma,formMain,actividadesOperativa,productos" />
+                </h:panelGroup>
+            </div>
+            <h:form id="formBusqueda" style="width:98%;">
+                <p:fieldset id="fsetBusqueda" legend="REFORMA" toggleable="true" toggleSpeed="500" collapsed="false" style="width:100%; margin-left: 5px" rendered="#{reformaT1View.formBusqRegistrar}">
+                    <p:panelGrid columns="10" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Unidad Administrativa:" style="margin-right: 10px;" />
+                            <p:selectOneMenu filter="true" id="unidAdminis" value="#{reformaT1View.idUnidadA}" styleClass="custom-filter" style="width: 100%;">
+                                <p:ajax update="formTablaReforma,formBusqueda"/>
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{reformaT1View.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <!--(NUEVO) SELECCION DE TIPO DE REFORMA-->
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Tipo de Traspaso:" style="margin-right: 10px;" />
+                            <p:selectOneMenu filter="true" value="#{reformaT1View.tipoTraspaso}" styleClass="custom-filter" disabled="#{!reformaT1View.disabledTipoTraspaso()}" style="width: 100%;">
+                                <p:ajax listener="#{reformaT1View.generarTipoTraspaso()}" 
+                                        update="formTablaReforma,formBusqueda,formReformaPartidaDirecta,botonesReforma,proformaEgresos,dataTReformaT1"/>
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItem itemLabel="PLAN ANUAL POLÍTICA PÚBLICA" itemValue="PAPP" />
+                                <f:selectItem itemLabel="PARTIDAS DIRECTAS" itemValue="PDI" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="text-align: center" id="gridBotonesGenerarR">
+                            <p:commandButton value="Generar Reforma PAPP" process="periodop,unidAdminis" actionListener="#{reformaT1View.generarReforma(true)}" rendered="#{reformaT1View.renderBtnGenRefPAPP}"
+                                             icon="fa fa-check-square-o" update="formTablaReforma,formBusqueda,formMain,dataTReformaT1" disabled="#{reformaT1View.btnGenerarReforma}"
+                                             styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                            <p:commandButton value="Generar Reforma PDI" process="periodop,unidAdminis" actionListener="#{reformaT1View.generarReforma(true)}" rendered="#{reformaT1View.renderBtnGenRefPDI}"
+                                             icon="fa fa-check-square-o" update="formTablaReforma,formBusqueda,formMain,dataTReformaT1"
+                                             styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                        </p:panelGrid>
+                        <p:spacer width="20"/>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Código:"/>
+                            <p:inputText value="#{reformaT1View.reformaTraspaso.codigo}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Fecha:"/>
+                            <p:calendar value="#{reformaT1View.reformaTraspaso.fechaTraspasoReforma}" pattern="dd-MM-yyyy" navigator="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Estado:"/>
+                            <p:inputText value="#{reformaT1View.reformaTraspaso.estadoReformaTramite == null ? reformaT1View.reformaTraspaso.estadoReforma.texto:reformaT1View.reformaTraspaso.estadoReformaTramite.texto}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Período:" style="margin-right:  10px;" />
+                            <p:selectOneMenu value="#{reformaT1View.busqueda.anio}" id="periodop">
+                                <p:ajax listener="#{reformaT1View.cargarDatosTablaGeneralPlanAnual()}" update="formTablaReforma,formBusqueda"/>
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.listaAnio}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+            </h:form>
+
+            <h:form id="formBusquedaCons" style="width:98%;">
+                <p:fieldset id="fsetBusquedaCons" legend="Buscar" toggleable="true" toggleSpeed="500" collapsed="false" style="width:100%; margin-left: 5px" rendered="#{reformaT1View.formBusqConsultar}">
+                    <p:panelGrid columns="7" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Código Reforma:"/>
+                            <p:selectOneMenu value="#{reformaT1View.reformaTraspaso.id}" id="codReform">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.listaCodReforma}" var="p" itemLabel="#{p.codigo}" itemValue="#{p.id}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Período:" style="margin-right:  10px;" />
+                            <p:selectOneMenu value="#{reformaT1View.reformaTraspaso.periodo}" id="period" disabled="true">
+                                <p:ajax listener="#{reformaT1View.cargarDatosTablaGeneralPlanAnual()}" update="formTablaReforma,formBusquedaCons"/>
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.listaAnio}" var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="text-align: center">
+                            <p:commandButton value="Consultar Reforma" process="period,codReform" actionListener="#{reformaT1View.buscarEditar()}"
+                                             icon="fa fa-search" update="formTablaReforma,formBusquedaCons,formMain,botonesReforma" 
+                                             styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                        </p:panelGrid>
+                        <p:spacer width="30"/>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Fecha Reforma:"/>
+                            <p:calendar value="#{reformaT1View.reformaTraspaso.fechaTraspasoReforma}" pattern="dd-MM-yyyy" navigator="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Estado:"/>
+                            <p:inputText value="#{reformaT1View.reformaTraspaso.estadoReformaTramite == null ? reformaT1View.reformaTraspaso.estadoReforma.texto:reformaT1View.reformaTraspaso.estadoReformaTramite.texto}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Unidad Administrativa:" style="margin-right:  10px;" />
+                            <p:selectOneMenu filter="true" id="unidAdmin" value="#{reformaT1View.idUnidadA}" styleClass="custom-filter" disabled="true">
+                                <p:ajax update="formTablaReforma,formBusqueda"/>
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{reformaT1View.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+            </h:form>
+
+            <div class="ui-g-12">
+                <h:form id="formTablaReforma" prependId="false" style="width:100%;">
+                    <p:panel rendered="#{reformaT1View.bolPapp}">
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" style="margin:15px 0px; float: right">
+                            <p:commandButton value="Limpiar filtros"  process="@this"
+                                             icon="ui-icon-refresh" onclick="PF('dataTReformaT1').clearFilters()" update="dataTReformaT1"
+                                             styleClass="Fs16" style="width: auto"/>
+                            <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto;" icon="fa fa-align-justify" />
+                        </p:panelGrid>
+                        <p:commandButton value="Nuevo PAPP"  process="@this" actionListener="#{reformaT1View.nuevoPAPP()}" disabled="#{reformaT1View.btnNuevoPapp}"
+                                         icon="ui-icon-plus" update="formTablaReforma,formMain,actividadesOperativa,productos"
+                                         styleClass="Fs16" style="width: auto; float: left; margin-top: 20px;"/>
+                        <p:columnToggler datasource="dataTReformaT1" trigger="mostrarColumnas" />
+                        <br></br>
+                        <br></br>
+                        <br></br>
+                        <br></br>
+                        <br></br>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" columnClasses="ui-grid-col-12">
+                            <p:dataTable id="dataTReformaT1" widgetVar="dataTReformaT1" var="item" value="#{reformaT1View.listaProducto}" 
+                                         paginator="true" rows="15" paginatorPosition="bottom" style="text-align:center;width:100%;"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="10,15,20,30,40,50,100" lazy="false"
+                                         editable="true" editMode="cell" rowIndexVar="can"
+                                         filterEvent="keyup" rowExpandMode="single"
+                                         scrollable="true" scrollWidth="100%" rowStyleClass="#{item.codigoPresupuestario.isEmpty()||item.codigoPresupuestario==null? 'condicion1':'condicion2'}"
+                                         emptyMessage="No existen productos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    <center>TABLA REFORMA DE LOS PLANES ANUALES - #{reformaT1View.busqueda.anio == 0 ? '20XX':reformaT1View.busqueda.anio}</center>
+                                </f:facet>
+                                <p:column style="width:2%">
+                                    <p:rowToggler />
+                                </p:column>
+                                <p:column headerText="#" style="width:2%; font-weight: bold;" >
+                                    <h:outputText value="#{can +1 }"/>
+                                </p:column>
+                                <p:column headerText="Producto" style="width: 21%;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                                    <h:outputText value="#{item.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Monto" style="width: 5%;">
+                                    <h:outputText value="#{item.monto}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Unidad Responsable" style="width: 18%;">
+                                    <h:outputText value="#{item.actividadOperativa.unidadResponsable.nombre}" />
+                                </p:column>
+                                <p:column headerText="Partida Presupuestaria" style="width: 8%;" filterBy="#{item.codigoPresupuestario}" filterMatchMode="contains" sortBy="#{item.codigoPresupuestario}">
+                                    <h:outputText value="#{item.codigoPresupuestario.isEmpty()||item.codigoPresupuestario==null ? 'S/N':item.codigoPresupuestario}" />
+                                </p:column>
+                                <p:column headerText="Reservas Aprobadas" style="width: 8%;">
+                                    <h:outputText value="#{item.reserva}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Saldo Disponible" style="width: 8%;">
+                                    <h:outputText value="#{item.saldoDisponible}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column headerText="Traspaso Incremento" style="width: 8%;">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input">
+                                            <p:inputNumber value="#{item.traspasoIncremento}" disabled="#{reformaT1View.bolReformaT1}">
+                                                <p:ajax listener="#{reformaT1View.calcular(item, true)}" update="dataTReformaT1"/>
+                                            </p:inputNumber>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Traspaso Reducción" style="width: 8%;">
+                                    <p:cellEditor>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </h:outputText>
+                                        </f:facet>
+                                        <f:facet name="input"><p:inputNumber value="#{item.traspasoReduccion}" disabled="#{reformaT1View.bolReformaT1}" decimalSeparator="," thousandSeparator=".">
+                                                <p:ajax listener="#{reformaT1View.calcular(item, false)}" update="dataTReformaT1"/>
+                                            </p:inputNumber></f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Monto Reformada" style="width: 8%;">
+                                    <h:outputText value="#{item.montoReformada}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:rowExpansion>
+                                    <center>
+                                        <p:dataTable id="Subta" var="subt" value="#{item}" style="width:97%">
+                                            <p:column headerText="Nombre del plan, programa, proyecto" style="width: 260px;" filterBy="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}">
+                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion == null ? 'NO APLICA':subt.actividadOperativa.planProgramaProyecto.planAnual.planLocal.descripcion}" />
+                                            </p:column>
+                                            <p:column headerText="Nº de identificación" style="width: 100px;" >
+                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.id}" />
+                                            </p:column>
+                                            <p:column headerText="Plan, programa y/o proyecto" style="width: 200px;"  filterBy="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" >
+                                                <h:outputText value="#{subt.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                            </p:column>
+                                            <p:column headerText="Actividad Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.nombreActividad}">
+                                                <h:outputText value="#{subt.actividadOperativa.nombreActividad}" />
+                                            </p:column>
+                                            <p:column headerText="Objetivo Operativa" style="width: 200px;"  filterBy="#{subt.actividadOperativa.objetivoOperativo}">
+                                                <h:outputText value="#{subt.actividadOperativa.objetivoOperativo}" />
+                                            </p:column>
+                                            <p:column headerText="Medición Meta" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.medicionMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Meta IT" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.eneroMeta + subt.actividadOperativa.febreroMeta + subt.actividadOperativa.marzoMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Meta IIT" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.abrilMeta + subt.actividadOperativa.mayoMeta + subt.actividadOperativa.junioMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Meta IIIT" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.julioMeta + subt.actividadOperativa.agostoMeta + subt.actividadOperativa.septiembreMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Meta IIIVT" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.octubreMeta + subt.actividadOperativa.noviembreMeta + subt.actividadOperativa.diciembreMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Indicador Meta" style="width: 200px;"  filterBy="#{subt.actividadOperativa.indicadorMeta}">
+                                                <h:outputText value="#{subt.actividadOperativa.indicadorMeta}" />
+                                            </p:column>
+                                            <p:column headerText="Monto Actividad" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.monto}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Presupuesto Cuatrimestre 1" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre1Actividad}" >
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Presupuesto Cuatrimestre 2" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre2Actividad}" >
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Presupuesto Cuatrimestre 3" style="width: 100px;">
+                                                <h:outputText value="#{subt.actividadOperativa.cuatrimestre3Actividad}">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column>
+                                            <p:column headerText="Item Presupuestario" style="width: 200px;">
+                                                <h:outputText value="#{subt.itemNew == null ? 'Sin definir':subt.itemNew.codigo}" />
+                                            </p:column>
+                                            <p:column headerText="Estructura Programática" style="width: 200px;">
+                                                <h:outputText value="#{subt.estructruaNew == null ? 'Sin definir':subt.estructruaNew.codigo}" />
+                                            </p:column>
+                                            <p:column headerText="Fuente" style="width: 200px;">
+                                                <h:outputText value="#{subt.fuenteNew == null ? 'Sin definir':subt.fuenteNew.nombre}"/>
+                                            </p:column>
+                                            <p:column headerText="Tipo Fuente" style="width: 200px;">
+                                                <h:outputText value="#{subt.fuenteNew == null ? 0:subt.fuenteNew.tipoFuente.orden} - #{subt.fuenteNew == null ? 'Sin Fuente':subt.fuenteNew.tipoFuente.texto}" style="text-align: left"/>
+                                            </p:column>
+                                            <p:column headerText="Partida Presupuestaria" style="width: 200px;">
+                                                <h:outputText value="#{subt.codigoPresupuestario == null ? 'S/Partida':subt.codigoPresupuestario}" id="ini"/>
+                                            </p:column>
+                                            <p:column headerText="Período" style="width: 200px;">
+                                                <h:outputText value="#{subt.periodo}" />
+                                            </p:column>
+                                        </p:dataTable>
+                                    </center>
+                                </p:rowExpansion>
+                            </p:dataTable>
+                        </p:panelGrid>
+                        <br></br>
+                        <div class="ui-g-12">
+                            <p:panelGrid columns="2" id="gridTotales" style="margin-top: 1%;float: right; text-align: right; font-size: 13px; font-weight: bold;" >
+                                <f:facet name="header">
+                                    Información Adicional
+                                </f:facet>
+                                <h:outputText value="Total Traspaso Incremento" />
+                                <h:outputText value="#{reformaT1View.totalTraspasoIncremento}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                                <h:outputText value="Total Traspaso Reducción" />
+                                <h:outputText value="#{reformaT1View.totalTraspasoReduccion}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                                <h:outputText value="Monto Total Reformado" />
+                                <h:outputText value="#{reformaT1View.totalMontoReformado}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:panelGrid>
+                        </div>
+                        <br></br>
+                        <!--                            <center>
+                                                        <p:commandButton value="#{reformaT1View.formBusqConsultar == true ? 'Editar':'Guardar'} Reforma" actionListener="#{reformaT1View.saveReformaTraspaso()}"
+                                                                         icon="ui-icon-save" update="formTablaReforma,formBusqueda" disabled="#{reformaT1View.btnGuardar}"
+                                                                         styleClass="Fs16" style="width: 150px; text-align: center; "/>
+                                                        <p:spacer width="10" />
+                                                        <p:commandButton  disabled="#{reformaT1View.btnContinuarTerminarTarea}"  value="Completar Tarea" icon="fa fa-check-square-o" actionListener="#{reformaT1View.dlogoObservaciones()}" 
+                        
+                                                                          style="width: auto;background: #0081cb"/>
+                                                        <p:spacer width="10"/>
+                                                        <p:commandButton value="Cancelar" icon="ui-icon-clear" disabled="#{reformaT1View.btnCancelar}"
+                                                                         actionListener="#{reformaT1View.resetValuesReforma()}" style="width: 150px; text-align: center; "
+                                                                         styleClass="red-btn" update="formTablaReforma:dataTReformaT1,formBusqueda,formBusquedaCons,accionesButton,formTablaReforma"/>
+                                                    </center>-->
+                    </p:panel>
+                </h:form>
+            </div>
+
+
+
+            <!--(NUEVO) REFORMA PARTIDA DIRECTA-->
+            <div class="ui-g-12">  
+                <h:form prependId="false" id="formReformaPartidaDirecta">
+                    <!--<p:poll interval="30" update="proformaEgresos"/>-->
+                    <p:panel rendered="#{reformaT1View.bolPartidaDirecta}" >         
+                        <p:commandButton disabled="#{reformaT1View.btnNuevoPartidaDirecta}" value="Nuevo" icon="fa fa-plus" style="width: auto; margin-top: 1%; margin-bottom: 1%;"
+                                         actionListener="#{reformaT1View.abriDlgPartidas()}"/>
+                        <p:dataTable expandableRowGroups="true" value="#{reformaT1View.proformaPresupuestoLazy}" id="proformaEgresos"  widgetVar="proformaEgresos"
+                                     paginatorPosition="bottom" var="item" rows="10" paginator="true"  
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,20,25,35,50" lazy="true" rowIndexVar="index" editable="true" editMode="cell"
+                                     emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            
+                            <f:facet name="header">
+                                Partidas Directas
+                            </f:facet>
+                            <p:column headerText="No." style="width: 20px;">
+                                <h:outputText value="#{index+1}" />
+                            </p:column>
+                            <p:column headerText="Estructura Programática"  style="width: 20%;">
+                                <h:outputText value="#{item.estructruaNew.nombre.toUpperCase()}" />
+                            </p:column>
+                            <p:column  headerText="Partida Presupuestaria" style="width: 20%;text-align: center" filterBy="#{item.partidaPresupuestaria}" sortBy="#{item.partidaPresupuestaria}" filterMatchMode="contains">
+                                <p:outputLabel value="#{item.partidaPresupuestaria}" />
+                            </p:column>
+                            <p:column  headerText="Item Presupuestario"  style="width: 30%;">
+                                <h:outputText value="#{item.itemNew.descripcion.toUpperCase()}" />
+                            </p:column>
+                            <p:column  headerText="Tipo" style="width: 10%;text-align: center">
+                                <p:outputLabel value="#{item.codigo}" />
+                            </p:column>
+                            <p:column  headerText="Período" style="width: 7%;text-align: center" >
+                                <p:outputLabel value="#{item.periodo}"/>
+                            </p:column>
+                            <p:column  headerText="Valor Codificado" style="width: 15%;">
+                                <p:outputLabel value="#{item.valor}" style="float: right" >
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column  headerText="Valor Disponible" style="width: 15%;" id="columnaDisponible">
+                                <p:outputLabel value="#{item.valor - reformaT1View.obtieneTotalComprometido(item.partidaPresupuestaria) - reformaT1View.obtieneTotalReservado(item.partidaPresupuestaria)}" style="float: right" >
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            
+                            <p:column headerText="Traspaso Incremento" style="width: 15%;">
+                                <p:cellEditor>
+                                    <f:facet name="input">
+                                        <p:inputNumber id="suplemento"
+                                                       value="#{item.traspasoIncremento}" style="width:100%;">
+                                            <p:ajax event="change" listener="#{reformaT1View.calcularPartidaDirecta(item, true)}" update="proformaEgresos"/>
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output"> 
+                                        <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column headerText="Traspaso Reducción" style="width: 15%;">
+                                <p:cellEditor disabled="#{item.codigoReformaTraspaso!=null and item.codigoReferencia==null?true:false}" >
+                                    <f:facet name="input">
+                                        <p:inputNumber id="reduccion"
+                                                       value="#{item.traspasoReduccion}" style="width:100%;">
+                                            <p:ajax event="change" listener="#{reformaT1View.calcularPartidaDirecta(item, false)}" update="proformaEgresos"/>
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output"> 
+                                        <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column  headerText="Reforma codificado" style="width: 15%;">
+                                <p:outputLabel value="#{item.reformaCodificado}" style="float: right" >
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: auto;">
+                                <p:commandLink style="width: auto;" title="Editar" process="@this" actionListener="#{reformaT1View.editarPartidaDirectaValor(item)}"
+                                               disabled="#{item.codigoReformaTraspaso!=null and item.codigoReferencia==null?false:true}">
+                                    <p:graphicImage value="/resources/icons/editar.png"  width="16" height="15" style="margin-right: 8px;"/>    
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                        <div align="right" style="margin-right: 5px">
+                            <p:panelGrid columns="2" style="margin-top: 1%;text-align: right; font-size: 13px; font-weight: bold;" >
+                                <f:facet name="header">
+                                    Información Adicional
+                                </f:facet>
+                                <h:outputText value="Total Traspaso Incremento" />
+                                <h:outputText value="#{reformaT1View.totalTraspasoIncrementoPDirecta}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                                <h:outputText value="Total Traspaso Reducción" />
+                                <h:outputText value="#{reformaT1View.totalTraspasoReduccionPDirecta}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                                <h:outputText value="Monto Total Reformado" />
+                                <h:outputText value="#{reformaT1View.totalMontoReformadoPDirecta}" >
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:panelGrid>
+                        </div>
+                    </p:panel>
+                </h:form>
+            </div>
+            <!--Botones Reforma-->
+            <div class="ui-g-12">
+                <h:form id="botonesReforma">
+                    <h:panelGroup layout="block" rendered="#{reformaT1View.btnTraspasos}" id="grupoBotonesReforma">
+                        <center>
+                            <p:commandButton value="#{reformaT1View.formBusqConsultar == true ? 'Editar':'Guardar'} Reforma" actionListener="#{reformaT1View.saveReformaTraspaso()}"
+                                             icon="ui-icon-save" update="formTablaReforma,formBusqueda" disabled="#{reformaT1View.btnGuardar}"
+                                             styleClass="Fs16" style="width: 150px; text-align: center; "/>
+                            <p:spacer width="10" />
+                            <p:commandButton  disabled="#{reformaT1View.btnContinuarTerminarTarea}" value="Completar Tarea" icon="fa fa-check-square-o" actionListener="#{reformaT1View.dlogoObservaciones()}"
+                                              style="width: auto;background: #0081cb"/>
+                            <p:spacer width="10"/>
+                            <p:commandButton value="Cancelar" icon="ui-icon-clear" disabled="#{reformaT1View.btnCancelar}"
+                                             actionListener="#{reformaT1View.resetValuesReforma()}" style="width: 150px; text-align: center; "
+                                             styleClass="red-btn" update="dataTReformaT1,formBusqueda,formBusquedaCons,accionesButton,formTablaReforma"/>
+                        </center>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="DlgproformaRegistroPartidas" header="Formulario Partida Presupuestaria" widgetVar="DlgproformaRegistroPartidas" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form id="formPresegresoPartidas" prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel for="EstructuraProgramatica" value="Estructura Programatica:"/>
+                                    <p:selectOneMenu  filter="true" filterMatchMode="contains" id="EstructuraProgramatica" panelStyle="width:22%"
+                                                     var="e" value="#{reformaT1View.proformaPresupuestoPlanificado.estructruaNew}" converter="#{utilConverter}"  style="width: 165px;">
+                                        <f:selectItem itemLabel="Seleccione Estructura Programática" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems  value="#{reformaT1View.listaPresPlanProgramatico}" var="n" itemLabel="#{n.codigo} #{n.descripcion}" itemValue="#{n}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.codigo}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                                    <p:outputLabel for="advanced" value="Item Presupuestaria:"/>
+                                    <p:selectOneMenu id="advanced" value="#{reformaT1View.proformaPresupuestoPlanificado.itemNew}" converter="#{utilConverter}" panelStyle="width:22%"
+                                                     effect="fade" var="ta" style="width: 165px;" filter="true" filterMatchMode="contains">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                                        <f:selectItems value="#{reformaT1View.listaPresCataPresupuestario}" var="item" itemLabel="#{item.codigo} #{item.descripcion}" itemValue="#{item}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.codigo}" style="font-weight: bold;"/>
+                                        </p:column>
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                                    <p:outputLabel for="Fuente" value="Fuente:"/>
+                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith"  id="Fuente" value="#{reformaT1View.proformaPresupuestoPlanificado.fuenteNew}" panelStyle="width:22%"
+                                                     style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{reformaT1View.listaPresFuenteFinanciamiento}" var="n" itemLabel="#{n.tipoFuente.orden}//#{n.nombre}//#{n.tipoFuente.texto}" itemValue="#{n}" />
+                                        <p:column style="width:5%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="Código"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.codFuente}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Tipo Fuente"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.nombre}" />
+                                        </p:column>
+                                        <p:column style="width: 60%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Fuente"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.tipoFuente.texto}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+<!--                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                    <p:outputLabel for="@next" value="Valor Asignado:"/>
+                                    <p:inputNumber id="Monto" decimalPlaces="2" value="#{reformaT1View.proformaPresupuestoPlanificado.valor}"/>
+                                </p:panelGrid>-->
+                            </p:panelGrid>
+                            <center>
+                                <p:commandButton value="Guardar" update="formReformaPartidaDirecta" actionListener="#{reformaT1View.savePdReforma()}"
+                                                 icon="fa fa-save" styleClass="Fs16" style="width: auto; margin-bottom: 15px;" />
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgPapp" header="Formulario de PAPP" widgetVar="dlgPapp" width="85%" height="600" modal="true" showEffect="fold" hideEffect="fold" resizable="fold" >
+            <div class="ui-g-12">
+                <p:accordionPanel id="formMain" prependId="false" style="width: 100%; border: 1px solid #FCFBFB" activeIndex="#{reformaT1View.indiceDeAcordian}">
+                    <p:tab title="|ACTIVIDAD OPERATIVA|" rendered="#{reformaT1View.registraNuevoPapp}">
+                        <h:form id="actividadesOperativa" prependId="false" rendered="#{reformaT1View.registraNuevoPapp}">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:commandButton value="Nueva Actividad" icon="fa fa-plus" actionListener="#{reformaT1View.openActividadOperativa(null)}"
+                                                 oncomplete="PF('DlgActividadReforma').show()" update="formActividad,formActividadReforma" style="width: auto;"/>
+                            </p:panelGrid>
+                            <p:dataTable rendered="#{reformaT1View.registraNuevoPapp}" expandableRowGroups="true" id="listaactividad" widgetVar="listaactividad" paginatorPosition="bottom" var="item"
+                                         value="#{reformaT1View.lazyActividadOperativas}" rows="20" paginator="true"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         style="text-align: center; margin: 20px"
+                                         rowsPerPageTemplate="20,25,35,50" lazy="true"
+                                         emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE ACTIVIDADES - #{reformaT1View.busqueda.anio == 0 ? '20XX':reformaT1View.busqueda.anio}
+                                </f:facet>
+                                <p:column  headerText="Plan proyecto programa" style="width: 20%"  filterBy="#{item.planProgramaProyecto.planAnual.planLocal.descripcion}" groupRow="true">
+                                    <h:outputText value="#{item.planProgramaProyecto.planAnual.planLocal.descripcion == null ?'NO APLICA':item.planProgramaProyecto.planAnual.planLocal.descripcion}" />
+                                </p:column>
+                                <p:column  headerText="PLAN, PROGRAMA Y/O PROYECTO" style="width: 20%" filterBy="#{item.planProgramaProyecto.nombreProgramaProyecto}" groupRow="true">
+                                    <h:outputText value="#{item.planProgramaProyecto.nombreProgramaProyecto}" />
+                                </p:column>
+                                <p:column  headerText="Actividad Operacional" style="width: 20%" filterBy="#{item.nombreActividad}">
+                                    <h:outputText value="#{item.nombreActividad}"/>
+                                </p:column>
+                                <p:column  headerText="Monto" style="width: 8%" filterBy="#{item.monto}">
+                                    <h:outputText value="#{item.monotReformado}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </p:column>
+                                <p:column  headerText="Unidad Responsable" style="width: 16%" filterBy="#{item.unidadResponsable.id}" >
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('listaactividad').filter()" styleClass="custom-filter"   style="width: 100%;">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{reformaT1View.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{item.unidadResponsable.nombre}"/>
+                                </p:column>
+                                <p:column  headerText="Período" style="width: 5%; " >
+                                    <h:outputText value="#{item.periodo} "/>
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink disabled="#{reformaT1View.bloqueo}" title="Añadir Producto" process="@this" actionListener="#{reformaT1View.añadirActividadOperativa(item)}">
+                                        <i class="fa fa-plus" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink disabled="#{reformaT1View.bloqueo}" title="Editar Actividad"   process="@this"  update="listaactividad" actionListener="#{reformaT1View.editarActividadOperativa(item)}" >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15" 
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink disabled="#{item.numeroOrdenId eq null ? false:true}" title="Eliminar"   process="@this"  actionListener="#{reformaT1View.eliminarActividadOperativa(item)}" update="listaactividad">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar la actividad del plan proyecto"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+
+                    <p:tab title="|PRODUCTOS|" rendered="#{reformaT1View.registraNuevoPapp}">
+                        <h:form id="productos" prependId="false" rendered="#{reformaT1View.registraNuevoPapp}">
+                            <p:dataTable rendered="#{reformaT1View.registraNuevoPapp}"   expandableRowGroups="true" value="#{reformaT1View.productoLazy}" id="listaProductos" widgetVar="listaProductos"
+                                         paginatorPosition="bottom" var="item" rows="20" paginator="true"  style="text-align: center;margin: 20px"
+                                         paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                                         emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE PRODUCTOS - #{reformaT1View.busqueda.anio == 0 ? '20XX':reformaT1View.busqueda.anio}
+                                </f:facet>
+                                <p:column  headerText="Plan-Programa-Proyecto" filterBy="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" groupRow="true">
+                                    <p:outputLabel value="#{item.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                </p:column>
+                                <p:column  headerText="Actividad Operacional/Monto" filterBy="#{item.actividadOperativa.nombreActividad}" groupRow="true" style="width: 25%;" filterMatchMode="contains">
+                                    <div style="width: 100%;">
+                                        <div style="width: 70%;float: left;">
+                                            <p:outputLabel value="#{item.actividadOperativa.nombreActividad}"/>
+                                        </div>
+                                        <div style="width: 30%;float: right;text-align: right;">
+                                            <p:outputLabel value="#{item.actividadOperativa.monotReformado}" class="FontBold">
+                                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                            </p:outputLabel>
+                                        </div>
+                                    </div>
+                                </p:column>
+                                <p:column headerText="Producto" filterBy="#{item.descripcion}">
+                                    <p:outputLabel value="#{item.descripcion}"/>
+                                </p:column>
+                                <p:column headerText="Monto Producto" style="text-align: right;">
+                                    <p:outputLabel value="#{item.monto}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>                                
+                                <p:column headerText="Reserva" style="text-align: right;">
+                                    <p:outputLabel value="#{item.reserva}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>                                
+                                <p:column headerText="Saldo Disponible" style="text-align: right;">
+                                    <p:outputLabel value="#{item.totalSaldoDisponible}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column headerText="Traspaso Incremento" style="text-align: right;">
+                                    <p:outputLabel value="#{item.traspasoIncremento}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column headerText="Traspaso Reducción" style="text-align: right;">
+                                    <p:outputLabel value="#{item.traspasoReduccion}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column headerText="Monto Reformado" style="text-align: right;">
+                                    <p:outputLabel value="#{item.montoReformada}">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:outputLabel>
+                                </p:column>
+                                <p:column headerText="Acciones" style="text-align: center; width: 8%">
+                                    <p:commandLink disabled="#{item.codigoReformaTraspaso!=null and item.numeroOrdenId == null and item.estadoPapp == null?false:true}" title="Añadir Producto a la Reforma" 
+                                                   actionListener="#{reformaT1View.anadirProductoAReforma(item)}" update="listaProductos,dataTReformaT1"   process="@this" >
+                                        <i class="fa fa-arrow-circle-o-left" style="font-size: 1.5em; margin-right: 8px; color: blue;"></i>
+                                    </p:commandLink>
+                                    <p:commandLink  disabled="#{item.codigoReformaTraspaso!=null and item.numeroOrdenId==null?false:true}"  title="Editar Producto" actionListener="#{reformaT1View.editarProducto(item)}"   process="@this"  >
+                                        <p:graphicImage value="/resources/icons/editar.png"
+                                                        width="16" height="15"  
+                                                        style="margin-right: 8px;"/>  
+                                    </p:commandLink>
+                                    <p:commandLink disabled="#{item.numeroOrdenId==null?false:true}" title="Eliminar" actionListener="#{reformaT1View.eliminarProducto(item)}" update="listaProductos,dataTReformaT1"   process="@form" >
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar este producto?"  icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </h:form>
+                    </p:tab>
+                </p:accordionPanel>
+            </div>
+        </p:dialog>
+
+        <p:dialog width="400" id="DdlgProducto"  header="Producto" widgetVar="DdlgProducto" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProducto" prependId="false">
+                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" style="width: 100%">
+                    <p:outputLabel value="Nombre Producto:" />
+                    <p:inputText value="#{reformaT1View.producto.descripcion}" onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%"/>
+                </p:panelGrid>
+                <br></br>
+                <center>
+                    <p:commandButton value="Añadir"
+                                     icon="ui-icon-plus"  actionListener="#{reformaT1View.saveProducto()}"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px;" update="productos,dataTReformaT1"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlgPlanProyecto"  header="Formulario Plan-Proyecto" widgetVar="DlgPlanProyecto" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formPlanProyecto"  prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formProgramaProyecto" style="width: 100%;">
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="Nombre del plan anual, programa, proyecto"/>
+                                    <p:selectOneMenu value="#{reformaT1View.programaProyecto.nombreProgramaProyecto}" onkeyup="javascript:this.value = this.value.toUpperCase();" editable="true" style="width: 100%" >
+                                        <f:selectItem itemLabel="NO APLICA" itemValue="NO APLICA"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <center>
+                    <p:commandButton value="Adicionar" actionListener="#{reformaT1View.savePlanNombreProyecto()}"
+                                     icon="ui-icon-plus" styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="900" id="DlgActividad"  header="Actividad Operativa" widgetVar="DlgActividad" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formActividad" prependId="false">
+                <p:fieldset title="DESCRIPCIÓN" legend="DESCRIPCIÓN" toggleable="true" rendered="#{reformaT1View.actividad.numeroOrdenId eq null}">
+                    <p:panelGrid columns="2" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PLAN" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaT1View.programaProyecto.programa.panificacion.descripcion eq null? 'NO APLICA': 
+                                                  reformaT1View.programaProyecto.programa.panificacion.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PROGRAMA" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaT1View.programaProyecto.programa.descripcion eq null?'NO APLICA':
+                                                  reformaT1View.programaProyecto.programa.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>                  
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                        <h:panelGroup>
+                            <h:outputText value="PROYECTO " style="font-size: 20px; font-weight: bold;"/>
+                            <p:commandLink title="Buscar Proyecto" oncomplete="PF('dlogoProyecto').show()" process="@this" 
+                                           actionListener="#{reformaT1View.loadingProgramas()}" update="fomProyecto,datatable2">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                        <p:inputTextarea value="#{reformaT1View.programaProyecto.nombreProgramaProyecto.toUpperCase()}" readonly="true" style="width: 100%" rows="5" cols="12"/>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset title="DATOS ADICIONALES" legend="DATOS ADICIONALES" toggleable="true">
+                    <p:panelGrid columns="4" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:panelGroup>
+                                <h:outputText value="PAI:"/>
+                                <p:selectOneRadio value="#{reformaT1View.actividad.pai}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                </p:selectOneRadio>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="2" styleClass="ui-panelgrid-blank" style="width: 100%;" id="editlabelaniopresupuestopar">
+                            <h:panelGroup>
+                                <h:outputText value="PRESUPUESTO PARTICIPATIVO:" class="FontBold"/>
+                                <p:selectOneRadio value="#{reformaT1View.actividad.presupuestoParticipacion}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                    <p:ajax update="editlabelaniopresupuestopar"/>
+                                </p:selectOneRadio>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{reformaT1View.actividad.presupuestoParticipacion}" style="width: 85px">
+                                <h:outputText value="PERIODO: " style="font-size: 15px; font-weight: bold;width: 85px"/>
+                                <p:inputText style="font-size: 14px; font-weight: bold; width: 85px" value="#{reformaT1View.actividad.presParticipacionAnio}"
+                                             required="true" requiredMessage="REQUERIDO" id="editpresPartiAnio"/>
+                                <p:message for="editpresPartiAnio"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="GRUPO ATENCION:" class="FontBold"/>
+                            <p:selectOneRadio value="#{reformaT1View.actividad.grupoAtencion}" unselectable="true">
+                                <f:selectItem itemLabel="SI" itemValue="true"/>
+                                <f:selectItem itemLabel="NO" itemValue="false"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="COMPONENTE:" class="FontBold"/>
+                            <p:selectOneMenu value="#{reformaT1View.actividad.tipoComponete}" converter="#{utilConverter}" style="width: 100%;">
+                                <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.listacomponentes}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:fieldset class="ui-g-1">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                            <h:outputText value="NUEVO/ARRASTRE:" class="FontBold"/> 
+                            <p:selectBooleanButton value="#{reformaT1View.actividad.arrastre}" onLabel="NUEVO" offLabel="ARRASTRE" style="width:auto;"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset class="ui-g-10">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="NOMBRE DE LA ACTIVIDAD:" class="FontBold"/>
+                            <p:inputTextarea value="#{reformaT1View.actividad.nombreActividad}"  style="width: 95%" rows="2" cols="7" scrollHeight="5" disabled="#{reformaT1View.actividad.numeroOrdenId ne null}"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:fieldset>
+                <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank">
+<!--                    <p:panelGrid  columns="1"   >
+                        <p:outputLabel value="Nombre Actividad:" />
+                        <p:inputText value="#{reformaT1View.actividad.nombreActividad}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>-->
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Objetivo Operativo:" />
+                        <p:inputText value="#{reformaT1View.actividad.objetivoOperativo}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Descripción meta:" />
+                        <p:inputText value="#{reformaT1View.actividad.descripcionMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Medición Porcentaje:" />
+                        <p:selectBooleanButton style="widows: auto;" value="#{reformaT1View.actividad.medicionPorcentaje}" 
+                                               onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check">
+                            <p:ajax update="medMeta" listener="#{reformaT1View.cambiarMedicionPorcentual()}"/>
+                        </p:selectBooleanButton>
+                    </p:panelGrid>
+
+                </p:panelGrid>
+                <p:fieldset legend="Detalles de Actividad">
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Medicion Meta:" />
+                            <p:inputNumber id="medMeta" value="#{reformaT1View.actividad.medicionMeta}" disabled="#{reformaT1View.actividad.medicionPorcentaje}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 1:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cuatrimestre1Meta}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 2:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cuatrimestre2Meta}"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 3:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cuatrimestre3Meta}"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Actividad">
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Monto:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.monotReformado}"/>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 1:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cr1}"/>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 2:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cr2}"/>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Cuatrimestre 3:" />
+                            <p:inputNumber value="#{reformaT1View.actividad.cr3}"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Indicador meta:" />
+                        <p:inputText value="#{reformaT1View.actividad.indicadorMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1">
+                        <p:outputLabel value="Unidad Administrativa:" />
+                        <p:selectOneMenu value="#{reformaT1View.actividad.unidadResponsable}" converter="#{utilConverter}" disabled="true">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItems value="#{reformaT1View.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="text-align: center;">
+                        <p:commandButton value="AÑÁDIR"  actionListener="#{reformaT1View.saveActividadOperativa()}"
+                                         icon="ui-icon-plus"  update="actividadesOperativa,listaProductos" style="margin: auto; width: 100%" />
+                    </p:panelGrid>
+                </p:panelGrid>
+
+
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="300" id="DlgProductoTraspaso"  header="Producto" widgetVar="DlgProductoTraspaso" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formProductoTraspaso" prependId="false">
+
+                <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1"  styleClass="form-group ui-panelgrid-blank" >
+                        <p:outputLabel value="Monto Suplemento:" />
+                        <p:inputNumber value="#{reformaT1View.producto.traspasoIncremento}"/>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1"  styleClass="form-group ui-panelgrid-blank" >
+                        <p:commandButton value="Añadir"
+                                         icon="ui-icon-plus"  actionListener="#{reformaT1View.editarTraspaso()}"
+                                         styleClass="Fs16" style="width: auto; margin-bottom: 15px;" update="productos"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{reformaT1View.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{reformaT1View.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog width="80%" height="500" id="DlgActividadReforma"  header="Actividad Operativa" widgetVar="DlgActividadReforma"
+                  modal="true" showEffect="fold" hideEffect="fold" resizable="false">
+            <h:form id="formActividadReforma" prependId="false">
+                <p:fieldset title="DESCRIPCIÓN" legend="DESCRIPCIÓN" toggleable="true">
+                    <p:panelGrid columns="2" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PLAN" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaT1View.programaProyecto.programa.panificacion.descripcion eq null? 'NO APLICA': 
+                                                  reformaT1View.programaProyecto.programa.panificacion.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="PROGRAMA" style="font-size: 20px; font-weight: bold;"/>
+                            <p:inputText style="width: 100%"
+                                         value="#{reformaT1View.programaProyecto.programa.descripcion eq null?'NO APLICA':
+                                                  reformaT1View.programaProyecto.programa.descripcion.toUpperCase()}" readonly="true"/>
+                        </p:panelGrid>                  
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                        <h:panelGroup>
+                            <h:outputText value="PROYECTO " style="font-size: 20px; font-weight: bold;"/>
+                            <p:commandLink title="Buscar Proyecto" oncomplete="PF('dlogoProyecto').show()" process="@this" 
+                                           actionListener="#{reformaT1View.loadingProgramas()}" update="fomProyecto,datatable2">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                        <p:inputTextarea value="#{reformaT1View.programaProyecto.nombreProgramaProyecto.toUpperCase()}" readonly="true" style="width: 100%" rows="5" cols="12"/>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset title="DATOS ADICIONALES" legend="DATOS ADICIONALES" toggleable="true">
+                    <p:panelGrid columns="4" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:panelGroup>
+                                <h:outputText value="PAI:"/>
+                                <p:selectOneRadio value="#{reformaT1View.actividad.pai}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                </p:selectOneRadio>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="2" styleClass="ui-panelgrid-blank" style="width: 100%;" id="labelaniopresupuestopar">
+                            <h:panelGroup>
+                                <h:outputText value="PRESUPUESTO PARTICIPATIVO:" class="FontBold"/>
+                                <p:selectOneRadio value="#{reformaT1View.actividad.presupuestoParticipacion}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                    <p:ajax update="labelaniopresupuestopar"/>
+                                </p:selectOneRadio>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{reformaT1View.actividad.presupuestoParticipacion}">
+                                <h:outputText value="PERIODO: " style="font-size: 15px; font-weight: bold;"/>
+                                <p:inputText style="font-size: 14px; font-weight: bold;" value="#{reformaT1View.actividad.presParticipacionAnio}"
+                                             required="true" requiredMessage="REQUERIDO" id="presPartiAnio"/>
+                                <p:message for="presPartiAnio"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="GRUPO ATENCION:" class="FontBold"/>
+                            <p:selectOneRadio value="#{reformaT1View.actividad.grupoAtencion}" unselectable="true">
+                                <f:selectItem itemLabel="SI" itemValue="true"/>
+                                <f:selectItem itemLabel="NO" itemValue="false"/>
+                            </p:selectOneRadio>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:outputText value="COMPONENTE:" class="FontBold"/>
+                            <p:selectOneMenu value="#{reformaT1View.actividad.tipoComponete}" converter="#{utilConverter}" style="width: 100%;">
+                                <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.listacomponentes}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <p:fieldset class="ui-g-1">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                            <h:outputText value="NUEVO/ARRASTRE:" class="FontBold"/> 
+                            <p:selectBooleanButton value="#{reformaT1View.actividad.arrastre}" onLabel="NUEVO" offLabel="ARRASTRE" style="width:auto;"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset class="ui-g-10">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="NOMBRE DE LA ACTIVIDAD:" class="FontBold"/>
+                            <p:inputTextarea value="#{reformaT1View.actividad.nombreActividad}"  style="width: 95%" rows="2" cols="7" scrollHeight="5"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:fieldset>
+                <p:fieldset title="PROGRAMACIÓN META" legend="PROGRAMACIÓN META" toggleable="true" tabindex="-1">
+                    <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <p:panelGrid columns="2" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="OBJETIVO OPERATIVO:" class="FontBold"/>
+                                <p:inputText value="#{reformaT1View.actividad.objetivoOperativo}" style="width: 100%"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="DESCRIPCION META:" class="FontBold"/>
+                                <p:inputText value="#{reformaT1View.actividad.descripcionMeta}" style="width: 100%"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="MEDICION PORCENTAJE:" class="FontBold"/>
+                                <p:selectBooleanButton value="#{reformaT1View.actividad.medicionPorcentaje}" onIcon="fa fa-check" offIcon="fa fa-close"
+                                                       onLabel="SI" offLabel="NO" style="width:6rem">
+                                    <p:ajax update="medMeta1" listener="#{reformaT1View.cambiarMedicionPorcentual()}"/>
+                                </p:selectBooleanButton>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="MEDICIÓN META:" class="FontBold"/>
+                                <p:inputNumber id="medMeta1" readonly="true"
+                                               value="#{reformaT1View.actividad.medicionMeta}" decimalPlaces="2"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup>
+                                <p:outputLabel value="DISTRIBUCCIÓN META:" class="FontBold"/>
+                                <p:selectOneMenu value="#{reformaT1View.actividad.distribucionMeta}" converter="#{utilConverter}" style="width: 100%;">
+                                    <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{reformaT1View.distribuccionMetaList}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                    <p:ajax listener="#{reformaT1View.renderizarDistribuccionMeta()}" update="groupDistrubtionMeta"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup>
+                                <p:outputLabel value="INDICADOR META" class="FontBold"/>
+                                <p:inputText value="#{reformaT1View.actividad.indicadorMeta}" placeholder="EJECUTADO/PLANIFICADO" style="width: 100%;"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </div>
+                    <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <h:panelGroup id="groupDistrubtionMeta">
+                            <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.semesteMetal}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE UNO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.semestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.semestrDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.trimestreMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreTresMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE CUATRO:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreCuatroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.cuatrimestreMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE UNO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreUnoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE DOS:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreDosMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE TRES:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreTresMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.mensualMeta}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ENERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.eneroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="FEBRERO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.febreroMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MARZO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.marzoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ABRIL" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.abrilMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MAYO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.mayoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JUNIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.junioMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JULIO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.julioMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="AGOSTO" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.agostoMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEPTIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.septiembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="OCTUBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.octubreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="NOVIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.noviembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DICIEMBRE" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.diciembreMeta}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </h:panelGroup>
+                    </div>
+                </p:fieldset>
+                <p:fieldset title="PROGRAMACIÓN FINANCIERA" legend="PROGRAMACIÓN FINANCIERA" toggleable="true">
+                    <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <div class="ui-g-6">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%;">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="PRESUPUESTO PROPIO:" class="FontBold"/>
+                                    <p:inputNumber id="presu_inicial" value="#{reformaT1View.actividad.presupuestoPropio}" style="background: orange; " decimalPlaces="2">
+                                        <p:ajax event="keyup" listener="#{reformaT1View.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                    </p:inputNumber>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="PRESUPUESTO FINANCIAMIENTO:" class="FontBold"/>
+                                    <p:inputNumber id="presu_fina" value="#{reformaT1View.actividad.presupuestoFinanciamiento}" style="background: orange;" decimalPlaces="2" >
+                                        <p:ajax event="keyup"  listener="#{reformaT1View.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                    </p:inputNumber>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MONTO:" class="FontBold"/>
+                                    <p:inputNumber id="montoActividad" value="#{reformaT1View.actividad.monto}" readonly="true" style="background: yellow; " decimalPlaces="2" />
+                                </p:panelGrid>                          
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-6">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="DISTRIBUCCION:" class="FontBold"/>
+                                <p:selectOneMenu value="#{reformaT1View.actividad.tipoDistribuccion}" converter="#{utilConverter}" style="width: 100%;">
+                                    <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{reformaT1View.distribuccion}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                    <p:ajax listener="#{reformaT1View.renderizarDistribuccion()}" update="groupDistrubtion"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </div>
+                    </div>
+                    <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                        <h:panelGroup id="groupDistrubtion">
+                            <p:panelGrid id="semestral" columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.semeste}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE UNO REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.semestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEMESTRE DOS REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.semestrDos}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid id="trimestral" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.trimestre}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE UNO REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE DOS REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreDos}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE TRES REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreTres}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="TRIMESTRE CUATRO REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.trimestreCuatro}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid id="cuatrimestre" columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.cuatrimestre}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE UNO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreUno}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE DOS REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreDos}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="CUATRIMESTRE TRES REFORMA:" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.cuatrimestreTres}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid id="mensual" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{reformaT1View.mensual}">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ENERO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.eneroReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="FEBRERO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.febreroReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MARZO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.marzoReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="ABRIL REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.abrilReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MAYO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.mayoReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JUNIO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.junioReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="JULIO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.julioReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="AGOSTO REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.agostoReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="SEPTIEMBRE REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.septiembreReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="OCTUBRE REFORMA" class="FontBold"/>
+                                    <p:inputNumber  value="#{reformaT1View.actividad.octubreReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="NOVIEMBRE REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.noviembreReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DICIEMBRE REFORMA" class="FontBold"/>
+                                    <p:inputNumber value="#{reformaT1View.actividad.diciembreReforma}" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                        </h:panelGroup>
+                    </div>
+                </p:fieldset>
+                <p:fieldset legend="RESPONSABILIDAD" toggleable="true">
+                    <div class="ui-g-4">
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <p:outputLabel value="UNIDAD RESPONSABLE:" class="FontBold"/>
+                            <p:selectOneMenu  disabled="false"  value="#{reformaT1View.actividad.unidadResponsable}" converter="#{utilConverter}" required="true">
+                                <f:selectItem  itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{reformaT1View.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                    </div>
+                </p:fieldset>
+                <br/>
+                <center>
+                    <p:commandButton value="Grabar"  actionListener="#{reformaT1View.saveActividadOperativaReforma()}" process="@form"
+                                     update="formActividad,actividadesOperativa,listaactividad" icon="fa fa-save" style="width: 150px;"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" oncomplete="PF('DlgActividad').hide()" update="formActividad,actividadesOperativa"  icon="fa fa-close" style="width: 150px; background: red;"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog width="60%" height="500" id="dlogoProyecto"  header="Proyectos" widgetVar="dlogoProyecto"
+                  modal="true" showEffect="fold" hideEffect="fold" resizable="false">
+            <h:form id="fomProyecto" prependId="false">
+                <p:dataTable expandableRowGroups="true" id="datatable2" widgetVar="datatable2" var="a" value="#{reformaT1View.planAnualProgramaLazy}"
+                             rows="20"  style="width: auto;" paginator="true" paginatorPosition="bottom"  
+                             paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                             rowsPerPageTemplate="20,25,35,50" lazy="true" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                             emptyMessage="No existen datos con el criterio de busqueda especificado">  
+                    <p:column  headerText="PLAN" style="width: 10%;" groupRow="true" filterBy="#{a.programa.panificacion.codigo}" filterMatchMode="contains">
+                        <h:outputText style="font-style: bold" value="#{a.programa.panificacion ne null ? a.programa.panificacion.codigo:'NO APLICA'}" />
+                    </p:column>
+                    <p:column  headerText="PROGRAMA" style="width: 10%;" groupRow="true" filterBy="#{a.programa.codigo}" filterMatchMode="contains">
+                        <h:outputText style="font-style: bold" value="#{a.programa ne null?a.programa.codigo:'NO APLICA'}" />
+                    </p:column>
+                    <p:column headerText="PROYECTO" style="width: 10%;" filterBy="#{a.nombreProgramaProyecto}" filterMatchMode="contains">
+                        <h:outputText value="#{a.nombreProgramaProyecto  eq null ?'NO APLICA':a.nombreProgramaProyecto.toUpperCase()}" />
+                    </p:column>
+                    <p:column headerText="******" style="text-align: center; width: 3%">
+                        <p:commandLink  title="Seleccionar"  
+                                        process="@this" actionListener="#{reformaT1View.seleccionProyecto(a)}"
+                                        oncomplete="PF('dlogoProyecto').hide()" 
+                                        update="formActividadReforma,fomProyecto,formActividad" >
+                            <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px; "></i>                          
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>                   
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

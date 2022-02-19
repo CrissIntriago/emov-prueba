@@ -1,0 +1,498 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:b="http://bootsfaces.net/ui">
+    <ui:param name="tittle" value="INQUILINATO"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">          
+
+                <h:form id="mainForm" prependId="false" >
+                    <div style="width: 80%;margin: auto;">
+                        <p:dataTable  expandableRowGroups="true" id="dataList" widgetVar="dataList" paginatorPosition="bottom" var="item"
+                                      value="#{inquilinatoSP.lazy}" rows="20" paginator="true" 
+                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                                      rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+
+                                      emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                Inquilinato
+                                <p:commandLink  actionListener="#{inquilinatoSP.consultarComisaria()}" update="dataList">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: white;"></i>
+                                </p:commandLink>
+                            </f:facet>
+
+                            <p:ajax event="rowToggle" update="dtDetalleInquilinato" listener="#{inquilinatoSP.historialLiquidaciones(item)}"/>
+                            <p:column style="width:2rem">
+                                <p:rowToggler/>
+                            </p:column>
+
+                            <p:column headerText="Fecha Creaciòn">
+                                <p:outputLabel value="#{item.fechaCrea}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Clave Catastral" filterBy="#{item.predio.claveCat}" style="text-align: center;">
+                                <p:outputLabel value="#{item.predio.claveCat}"/> 
+                            </p:column>
+
+                            <p:column headerText="Tipo Predio" filterBy="#{item.predio.tipoPredio}" width="50" style="text-align: center;">
+                                <p:outputLabel value="#{item.predio.tipoPredio}"/> 
+                            </p:column>
+
+                            <p:column headerText="Identificación" filterBy="#{item.propietario.identificacionCompleta}" style="text-align: center;">
+                                <p:outputLabel value="#{item.propietario.identificacionCompleta}"/> 
+                            </p:column>
+
+                            <p:column headerText="Inquilino" filterBy="#{item.propietario.nombreCompleto}" style="text-align: center;">
+                                <p:outputLabel value="#{item.propietario.nombreCompleto}"/> 
+                            </p:column>
+
+                            <p:column headerText="Estado" filterBy="#{item.estado}" style="text-align: center;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('dataList').filter()" styleClass="custom-filter">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue=""/>
+                                        <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                        <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <p:outputLabel value="#{item.estado?'ACTIVO':'INACTIVO'}"/> 
+                            </p:column>
+
+                            <p:column headerText="*****" style="width: 6%;">
+                                <p:commandButton icon="fa fa-edit" actionListener="#{inquilinatoSP.carpetaEdit(item)}" oncomplete="PF('dlogoCarpetas').show()" update="frmCarpetas"/>
+                            </p:column>
+
+                            <p:rowExpansion >
+                                <p:dataTable id="dtDetalleInquilinato"  
+                                             value="#{inquilinatoSP.historialInquilinato}" 
+                                             style="width: 100%;"
+                                             var="hi" rows="5" 
+                                             paginator="true" paginatorPosition="top"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             widgetVar="dtDetalleInquilinato">
+                                    <f:facet name="header">
+                                        Historico
+                                    </f:facet>
+
+
+                                    <p:column headerText="Año" filterBy="#{hi.anio}" width="50" style="text-align: center;">
+                                        <p:outputLabel value="#{hi.anio}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Detalle" filterBy="#{hi.observacion}" filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{hi.observacion}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Estado" filterBy="#{hi.liquidacion.estadoLiquidacion.descripcion}" filterMatchMode="contains" style="text-align: center;">
+                                        <p:outputLabel value="#{hi.liquidacion.estadoLiquidacion.descripcion}"/>
+                                    </p:column>
+
+                                    <p:column headerText="*****" width="150" style="text-align: center;">
+                                        <!--<p:commandButton  disabled="#{hi.liquidacion ne null}" icon="fa fa-check" actionListener="#{inquilinatoSP.liquidar(hi)}"/>-->
+                                        <p:spacer width="10"/>
+                                        <p:commandButton  icon="fa fa-search" actionListener="#{inquilinatoSP.visualizar(hi.liquidacion)}"/>
+                                        <p:spacer width="10"/>
+                                        <p:commandButton disabled="#{hi.liquidacion eq null}"  icon="fa fa-print" actionListener="#{inquilinatoSP.imprimir(hi.liquidacion)}"/>
+                                    </p:column>
+
+                                </p:dataTable>
+                            </p:rowExpansion>
+                        </p:dataTable>
+                    </div>
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog id="dlogoCarpetas" widgetVar="dlogoCarpetas"  position="center" draggable="false" header="Formulario de Carpetas " width="50%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false"  >
+            <h:form id="frmCarpetas" prependId="false">
+                <p:panelGrid layout="grid" columns="3" columnClasses="ui-g-4, ui-g-4,ui-g-4" style="width: 100%" styleClass="ui-panlegrid-blank">
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel value="Clave Predial:" class="FontBold"/>
+                        <p:inputText value="#{inquilinatoSP.carpeta.predio.claveCat}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="FontBold" value="Tipo Predio:"/>
+                        <p:inputText value="#{inquilinatoSP.carpeta.predio.tipoPredio eq 'U'?'URBANO':'RURAL'}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="FontBold" value="Identificación Contribuyente:"/>
+                        <p:inputText value="#{inquilinatoSP.carpeta.propietario.identificacionCompleta}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="FontBold" value="Nombres Contribuyente"/>                        
+                        <p:inputText value="#{inquilinatoSP.carpeta.propietario.nombreCompleto}" readonly="true" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel value="Fecha de Creación:" class="FontBold"/>
+                        <p:inputText value="#{inquilinatoSP.carpeta.fechaCrea}" readonly="true" style="width: 100%;">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </p:inputText>
+                    </p:panelGrid>
+
+                    <p:panelGrid style="width: 100%" columns="1">
+                        <p:outputLabel class="Estado" value="Estado:"/>
+                        <p:selectOneMenu style="width: 100%;" value="#{inquilinatoSP.carpeta.estado}">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                            <f:selectItem itemLabel="Activo" itemValue="true"/>
+                            <f:selectItem itemLabel="Inactivo" itemValue="false"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </p:panelGrid>
+
+                <center style="margin-top: 2%;">
+                    <p:commandButton icon="fa fa-save" actionListener="#{inquilinatoSP.editarCarpeta()}" value="Guardar" style="width: auto;"  oncomplete="PF('dlogoCarpetas').hide()" update="frmCarpetas,mainForm"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" style="width: auto; background: red;" icon="fa fa-close"  oncomplete="PF('dlogoCarpetas').hide()" update="frmCarpetas,mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgoInspeccion" widgetVar="dlgoInspeccion"  position="center" draggable="false" header="Formulario de Inspección " width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="550" >
+            <h:form id="fmInpeccion" prependId="false">
+                <center>
+                    <h2 style="font-weight: bold; color: blue;">No.Predio: #{inquilinatoSP.predio.numPredio}</h2>
+                    <hr style="color: blue; background: blue;"/>
+                </center>                
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Tipo Predio:" class="FontBold"/>
+                        <p:inputText  required="true" style="width: 100%;" value="#{inquilinatoSP.predio.tipoPredio eq null?'':(inquilinatoSP.predio.tipoPredio eq 'U'?'URBABNO':'RURAL')}" 
+                                      readonly="true"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Clave Catastral:" class="FontBold"/>
+                        <p:inputText required="true" style="width: 100%;" value="#{inquilinatoSP.predio.claveCat}" readonly="true"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Fecha:" class="FontBold"/>
+                        <p:calendar value="#{inquilinatoSP.inspeccion.fecha}" navigator="true" locale="es"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Hora:" class="FontBold"/>
+                        <p:calendar value="#{inquilinatoSP.inspeccion.hora}" pattern="HH:MM" locale="es"/>
+                    </p:panelGrid>   
+
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Delegado de Inpección:" class="FontBold"/>   
+                        <h:panelGroup>
+                            <p:inputText required="true" style="width: 80%;" value="#{inquilinatoSP.inspeccion.delegado.nombreCompleto}"/>
+                            <p:commandLink process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"  actionListener="#{inquilinatoSP.cargarLazyServidor(2)}" style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Comisario:" class="FontBold"/>
+                        <h:panelGroup>
+                            <p:inputText required="true" style="width: 80%;" value="#{inquilinatoSP.inspeccion.comisario.persona.nombreCompleto}"/>
+                            <p:commandLink  process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"  actionListener="#{inquilinatoSP.cargarLazyServidor(1)}" style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Lugar:" class="FontBold"/>
+                        <p:inputText value="#{inquilinatoSP.inspeccion.lugar}" style="width: 100%;"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Motivo:" class="FontBold"/>                    
+                        <p:inputTextarea required="true" rows="5" cols="8" value="#{inquilinatoSP.inspeccion.motivo}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Observación:" class="FontBold"/>
+                        <p:inputTextarea required="true" rows="5" cols="8" value="#{inquilinatoSP.inspeccion.observacion}" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                </p:panelGrid>
+                <br/>
+                <center>
+                    <p:commandButton value="Registrar" icon="fa fa-save" style="width: auto;" update="fmInpeccion"  actionListener="#{inquilinatoSP.saveInspeccion()}"/>
+                </center>
+            </h:form>           
+        </p:dialog>
+        <p:dialog id="dlogoServidores" widgetVar="dlogoServidores" width="50%" position="center" draggable="false" header="Formulario de Inspección"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="fmrServidores" prependId="false">
+                <p:dataTable  expandableRowGroups="true" id="dataServidores" widgetVar="dataServidores" paginatorPosition="bottom" var="servidor"
+                              value="#{inquilinatoSP.lazyServidor}" rows="20" paginator="true" 
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"                                                                                    
+                              rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                              emptyMessage="No existen datos con el criterio de busqueda especificado">
+                    <f:facet name="header">
+                        Servidores                      
+                    </f:facet>
+                    <p:column headerText="Indentificación" width="100" filterBy="#{servidor.persona.identificacionCompleta}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{servidor.persona.identificacionCompleta}"/>
+                        </center>
+                    </p:column>
+                    <p:column headerText="Nombres" filterBy="#{servidor.persona.nombreCompleto}" filterMatchMode="contains">
+                        <h:outputText value="#{servidor.persona.nombreCompleto}"/>
+                    </p:column>
+                    <p:column headerText="*****" width="50">
+                        <center>
+                            <p:commandButton icon="fa fa-check" actionListener="#{inquilinatoSP.seleccionar(servidor)}" update="fmInpeccion,fmrServidores,mainForm" 
+                                             oncomplete="PF('dlogoServidores').hide()" />
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogoNumSolcitud" widgetVar="dlogoNumSolcitud" width="20%" position="center" draggable="false" header="Formulario de Inspección"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="fmNumSolicitud" prependId="false">
+                <center>
+                    <h:outputText value="SOLICITUD : #{inquilinatoSP.inspeccion.noSolicitud}" style="font-size: 20px;font-weight: bold;color: blue;"/>
+                    <br/><br/>
+                    <p:commandButton value="Aceptar" actionListener="#{inquilinatoSP.closeDialogos()}" style="width: auto; margin-top: 3%;"  update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogovisulizacion" widgetVar="dlogovisulizacion" width="50%" position="center" draggable="false" header="Visualización"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="frmVisualizaiion" prependId="false">
+                <p:fieldset legend="Predio"> 
+                    <p:panelGrid columns="3" columnClasses="ui-g-4, ui-g-4, ui-g-4" layout="grid" styleClass="ui-panelgrid-blank">
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Clave Catastral: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.numPredio}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>   
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="No.Predio:" class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.clavePreial}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>   
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Avaluo Muinipal: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.avaluoMunicipal}" style="width: 100%;" readonly="true">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:inputText>
+                        </p:panelGrid>                          
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Información Adicional:">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank">
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Nombres: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.ente.nombre}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Apellidos: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.ente.apellido}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Descripción Alquiler: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.alquiler.texto.toUpperCase()}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Año Inquilinato: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.anioInquilinato}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+                <!--rendered="# {inquilinatoSP.comisaria.inspeccion ne null}"-->
+                <p:fieldset legend="solicitud de Inspección NO. #{inquilinatoSP.comisaria.inspeccion.noSolicitud}" rendered="#{inquilinatoSP.comisaria.inspeccion ne null}"  >
+                    <p:panelGrid columns="2" columnClasses="ui-g-6,ui-g-6" layout="grid" styleClass="ui-panelgrid-blank">                       
+                        <p:panelGrid columns="1" style="width: 100%;"> 
+                            <p:outputLabel value="Motivo: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.inspeccion.motivo}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid >
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Comisario: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.inspeccion.comisario.persona.nombreCompleto}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Delegado: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.inspeccion.delegado.nombreCompleto}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:outputLabel value="Observación: " class="FontBold"/>
+                            <p:inputText value="#{inquilinatoSP.comisaria.inspeccion.observacion}" style="width: 100%;" readonly="true"/>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </p:fieldset>
+
+                <center>
+                    <p:commandButton value="Aceptar" oncomplete="PF('dlogovisulizacion').hide()" style="width: auto; margin-top: 3%;"  update="frmVisualizaiion"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+
+
+
+        <p:dialog widgetVar="dlgSolicitante" header="LISTADO DE CONTRIBUYENTES" appendTo="@(body)" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="frmSolicitante">
+
+                <div align="right">
+                    <p:commandButton title="Nuevo" actionListener="#{inquilinatoSP.nuevoCliente()}"  value="Nuevo" icon="fa fa-plus"/>
+
+                </div>
+
+                <div align="center">
+                    <p:dataTable var="s" value="#{inquilinatoSP.lazyCliente}" style="width: 98%;text-align: center;" lazy="true" 
+                                 paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                                 selection="#{inquilinatoSP.clienteSeleccion}" rowKey="#{s.id}">
+                        <p:ajax event="rowSelect" update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowUnselect"  update="frmSolicitante:btnSeleccionar" />
+                        <p:ajax event="rowSelectRadio"  update="frmSolicitante:btnSeleccionar" />
+                        <p:column headerText="*" selectionMode="single" style="width:30px;text-align:center" />
+                        <p:column headerText="CI/RUC" width="150" filterBy="#{s.identificacionCompleta}" filterStyle="width: 90%;">
+                            <h:outputText value="#{s.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Nombres" filterBy="#{s.nombreCompleto}"  filterStyle="width: 95%;">
+                            <h:outputText value="#{s.nombreCompleto}" style="text-transform: uppercase"/>
+                        </p:column>
+                        <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                            <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div>
+                <br></br>
+                <center>
+                    <p:commandButton id="btnSeleccionar" value="Seleccionar" icon="ui-icon-plus" actionListener="#{inquilinatoSP.seleccionar()}"
+                                     style="height: 30px"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgLiquidacion" id="dlgLiquidacion" header="LIQUIDACIÓN DE INQUILINATO" width="70%" responsive="true" closable="true" closeOnEscape="true" modal="true" position="center">
+            <h:form id="formDialogoLiquidacion" prependId="false">
+                <p:panelGrid columns="2" columnClasses="ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                    <p:fieldset legend="Información">
+                        <p:panelGrid columns="2" layout="grid" style="width: 100%;">
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Predio:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{inquilinatoSP.liquidacion.predio.claveCat}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Tipo Predio:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{inquilinatoSP.liquidacion.predio.tipoPredio}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Avaluo:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{inquilinatoSP.liquidacion.predio.avaluoMunicipal}" style="width: 100%;"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Indentificación:" class="FontBold"/>
+                                <p:inputText readonly="true" value="#{inquilinatoSP.liquidacion.comprador.identificacionCompleta}" style="width: 100%;"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:outputLabel value="Contribuyente:" class="FontBold"/>
+                                <p:inputText value="#{inquilinatoSP.liquidacion.comprador.nombreCompleto}" style="width: 100%;"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" columnClasses="ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <p:outputLabel value="Observación:" class="FontBold"/>
+                            <p:inputTextarea rows="5" cols="12" value="#{inquilinatoSP.liquidacion.observacion}" style="width: 100%"/>
+                        </p:panelGrid>
+
+                    </p:fieldset>
+                    <p:fieldset legend="Rubros">
+                        <center> <h2>Año de Inquilinitao - #{inquilinatoSP.liquidacion.anio}</h2></center>
+                        <br/>
+                        <p:dataTable  id="dtRubros" widgetVar="dtRubros" reflow="true" value="#{inquilinatoSP.rubros}"  
+                                      var="itemrubros" rowIndexVar="indice" style="width: 100%;margin: auto;"  editable="true" editMode="cell">
+                            <p:column headerText="Seleccionar" width="10%">
+                                <center>     
+                                    <p:selectBooleanCheckbox value="#{itemrubros.cobrar}">
+                                        <p:ajax listener="#{inquilinatoSP.calcularPago()}" 
+                                                update="dtRubros,totalLiquidacion"/>
+                                    </p:selectBooleanCheckbox>
+                                </center>
+                            </p:column>
+                            <p:column headerText="Descripción" >
+                                <h:outputText value="#{itemrubros.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Valor" style="width: 20%; text-align: right">
+                                <p:cellEditor disabled="true">
+                                    <f:facet name="input">
+                                        <p:inputNumber value="#{itemrubros.valorCalculo}">
+
+                                        </p:inputNumber>
+                                    </f:facet>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{itemrubros.valorCalculo}">                                                    
+                                            <f:convertNumber pattern="#0.00" locale="pt_BR"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:cellEditor>                                  
+                            </p:column>
+                        </p:dataTable> 
+                        <h:panelGroup layout="block">
+                            <div align="right">
+                                <h:outputText  value="Total a cancelar: " style="font-weight: bold;" />
+                                <p:outputLabel  value=" " style="font-weight: bold; font-size: 14px;font-weight: bold;"/>
+                                <p:inputText id="totalLiquidacion" value="#{inquilinatoSP.liquidacion.totalPago}"
+                                             readonly="true" style="width: auto; text-align: right;font-size: 14px;background: yellow;font-weight: bold;">
+                                    <f:convertNumber maxFractionDigits="2"  minFractionDigits="2" />                                            
+                                </p:inputText>
+                            </div>
+                        </h:panelGroup>
+                    </p:fieldset>
+                </p:panelGrid>
+
+                <center>
+                    <p:commandButton value="Generar" style="width: auto;" icon="fa fa-save" actionListener="#{inquilinatoSP.generarLiquidacion()}"/>
+                    <p:spacer width="10"/> 
+                    <p:commandButton value="Cancelar" style="width: auto;background: red;" icon="fa fa-close" oncomplete="PF('dlgLiquidacion').hide()"
+                                     update="formDialogoLiquidacion"/>
+                </center>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgNumeroLiquidacion" header="Codigo de liquidacion generado" resizable="false" modal="true">
+            <h:form id="formLiq">
+
+                <h:panelGrid styleClass="noBorder" columns="1" >
+                    <p:outputLabel value="#{inquilinatoSP.liquidacion.idLiquidacion} " style="font-weight: bold; font-size: 25px; text-align: center;" />
+                </h:panelGrid>
+
+                <center>
+                    <p:commandButton value="Imprimir" styleClass="btnStyle" actionListener="#{inquilinatoSP.imprimir(inquilinatoSP.liquidacion)}" update="mainForm"/>
+
+                    <p:commandButton value="Aceptar" styleClass="btnStyle" actionListener="#{inquilinatoSP.aceptar()}"
+                                     update="mainForm"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{inquilinatoSP.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

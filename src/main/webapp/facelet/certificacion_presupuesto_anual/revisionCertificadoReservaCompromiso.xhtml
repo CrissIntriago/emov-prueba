@@ -1,0 +1,252 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Revision Reserva de Compromiso</ui:define>
+
+    <ui:define name="content">
+
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{revisionReservaCompromiso.tarea}" tramite="#{revisionReservaCompromiso.tramite}" />
+                </div>
+            </div>
+
+            <div class="ui-g-12">
+                <p:commandButton value="Limpiar Filtros" style="width: auto; margin-bottom: 2%;" icon="fa fa-eraser"
+                                 onclick="PF('datarevision').clearFilters()" 
+                                 actionListener="#{revisionReservaCompromiso.clearAllFilters}"
+                                 update="datarevision">
+                    <p:resetInput target="datarevision" />
+                </p:commandButton>
+
+                <h:form prependId="false" id="forMain">
+                    <p:dataTable id="datarevision" widgetVar="datarevision" var="item" value="#{revisionReservaCompromiso.lazy}" paginator="true" rows="25" style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="25,30,40,50,100" lazy="true" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            <h2 style="font-weight: bold; font-size: 12px">RESERVAS DE COMPROMISO</h2>
+                        </f:facet>
+                        <p:column headerText="Codigo" style="width:10%;text-align: center" filterBy="#{item.secuancialForFilter}" filterMatchMode="contains">
+                            <p:outputLabel value="#{item.secuancialForFilter}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 20%;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{item.descripcion.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Requiriente" style="width: 20%;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('datarevision').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{revisionReservaCompromiso.unidadFiltros}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.unidadRequiriente.nombre.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="Beneficiacio" style="width: 20%">
+                            <p:outputLabel value="#{item.beneficiario == null ? 'PROCESO INICIAL':item.beneficiario.nombreCompleto.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 10%;text-align: center">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('datarevision').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                    <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{revisionReservaCompromiso.estadoFiltro}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.estado.texto.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="Fecha Solcitud" style="width: 10%; text-align: center;">
+                            <p:outputLabel value="#{item.fechaSolicitud}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 10%; text-align: center;">
+                            <p:commandLink  title="Enviar" process="@this" actionListener="#{revisionReservaCompromiso.enviarRevisionsolicitud(item)}" update="datarevision">
+                                <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink  title="Visualizar" process="@this"  actionListener="#{revisionReservaCompromiso.openDlgoVisualizacion(item)}">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>   
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="DlgoVisualizacionRevision"  header="Detalle Solcilitud" widgetVar="DlgoVisualizacionRevision" modal="true" 
+                  width="85%" showEffect="fade" hideEffect="fade" resizable="false" height="500">
+            <h:form id="formVisualizacionRevision"  prependId="false">
+                <div class="ui-g-12">
+                    <div class="ui-g-7">
+                        <p:fieldset legend="INFORMACIÓN">
+                            <p:panelGrid  columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Nº DE SOLICITUD:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value= "#{revisionReservaCompromiso.solcitudReserva.secuancialForFilter}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="ESTADO:" style="font-weight: bold;"/><br/>
+                                    <p:outputLabel value= "#{revisionReservaCompromiso.solcitudReserva.estado.texto}" style="text-transform: uppercase"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel style="font-weight: bold;" value="FECHA SOLICITUD:"/><br/>
+                                    <p:outputLabel value="#{revisionReservaCompromiso.solcitudReserva.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:outputLabel>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="DESCRIPCIÓN:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{revisionReservaCompromiso.solcitudReserva.descripcion}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-5">
+                        <p:fieldset legend="BENEFICIARIO">
+                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="TIPO:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{revisionReservaCompromiso.solcitudReserva.beneficiario == null ? 'PROCESO INICIAL':(revisionReservaCompromiso.solcitudReserva.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR')}"/>
+                                </h:panelGroup> 
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="IDENTIFICACIÓN:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{revisionReservaCompromiso.solcitudReserva.beneficiario == null ? 'PROCESO INICIAL':revisionReservaCompromiso.solcitudReserva.beneficiario.identificacion}#{revisionReservaCompromiso.solcitudReserva.tipoBeneficiario == true ? '001':''}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="BENEFICIARIO:" style="font-weight: bold;" /><br/>
+                                    <p:outputLabel value="#{revisionReservaCompromiso.solcitudReserva.beneficiario == null ? 'PROCESO INICIAL':revisionReservaCompromiso.solcitudReserva.beneficiario.nombreCompleto}"/>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                </div>
+
+                <div class="ui-g-12">
+                    <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="5" 
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowsPerPageTemplate="5,10,20,25,30,35" 
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="datosEnDetalle" 
+                                  value="#{revisionReservaCompromiso.solicitudesDetalles}" var="item">
+                        <f:facet name="header">
+                            LISTADO DE PRODUCTOS
+                        </f:facet>
+
+                        <p:column headerText="CONCEPTO" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} 
+                                           #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="DESCRIPCION" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} 
+                                           #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="PARTIDA" style="width: 10%;text-align: center">
+                            <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.refDistributivo.partidaPresupuestaria} #{item.partidasDirecta.partidaPresupuestaria}"/>
+                        </p:column>
+
+                        <p:column headerText="MONTO SOLICITADO" style="width: 20%">
+                            <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>      
+
+                        <p:columnGroup type="footer">
+                            <p:row>
+                                <p:column colspan="3" style="text-align:right;font-weight: bold; font-size: 13px;" footerText="Suma:" />
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{revisionReservaCompromiso.totalSolicitado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+                            </p:row>
+                        </p:columnGroup>
+
+                    </p:dataTable>    
+
+                </div>
+
+                <div class="ui-g-12">
+                    <p:tabView>
+                        <p:tab title="REQUISITOS" titleStyle="border-right: 2px solid #eaeaea">
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="5" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          id="requisitoData" widgetVar="requisitosTablaView" var="requisito" rowsPerPageTemplate="5,10,20,25,30,35"
+                                          value="#{revisionReservaCompromiso.procedimientoRequisitoList}"
+                                          style="margin: 20px 0px" lazy="true"  
+                                          emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE REQUISITOS
+                                </f:facet>
+                                <p:column headerText="PROCEDIMIENTO" groupRow="true">
+                                    <h:outputText value="#{requisito.idProcedimiento.nombre}"/>
+                                </p:column>
+                                <p:column headerText="REQUISITO" style="width:30%;">
+                                    <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                    <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                    <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column rendered="false" headerText="ACCIONES" style="width:10%;text-align: center">
+                                    <p:commandLink title="VER REQUISITO"  update="viewPDF" >
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>  
+                        </p:tab>
+                        <p:tab title="DOCUMENTOS" titleStyle="border-right: 2px solid #eaeaea">
+                            <u:documents entiti="#{revisionReservaCompromiso.solcitudReserva}"/>
+
+                        </p:tab>
+                    </p:tabView>
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="viewPDF" widgetVar="viewPDF" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false" width="80%"  header="RUTA DEL ARCHIVO: #{revisionReservaCompromiso.fileName}">
+            <p:media value="#{revisionReservaCompromiso.fileName}" width="100%" height="600px" player="pdf">
+            </p:media>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{revisionReservaCompromiso.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{revisionReservaCompromiso.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

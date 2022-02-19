@@ -1,0 +1,867 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:c="http://xmlns.jcp.org/jsp/jstl/core" 
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Anulación de Reserva de Compromiso Financiero</ui:define> 
+    <ui:param name="tittle" value="Anulación de Reserva de Compromiso Financiero"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="ui-inputgroup" style="margin-bottom: 15px">
+                            <p:selectOneMenu value="#{anulacionReservaSinProcesoView.opcionBusqueda.anio}"  style="width: 18%;border:1px solid #00796B;text-align: center">
+                                <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo-" itemDisabled="true"/>
+                                <f:selectItems value="#{anulacionReservaSinProcesoView.listaPeriodo}" var="p" itemLabel="RESERVAS DE COMPROMISO DEL #{p}" itemValue="#{p}"/>
+                                <p:ajax listener="#{anulacionReservaSinProcesoView.actualizarListadoReservas()}" update="dataSolciitudesReserva"/> 
+                            </p:selectOneMenu>
+                            <p:commandButton icon="fa fa-paint-brush" onclick="PF('dataSolciitudesReserva').clearFilters()" 
+                                             actionListener="#{anulacionReservaSinProcesoView.clearAllFilters}"
+                                             style="border-radius: 0px;width: 50px" update="dataSolciitudesReserva" title="Limpiar Filtro">
+                                <p:resetInput target="dataSolciitudesReserva" />
+                            </p:commandButton>
+                        </div>
+                        <h:panelGroup id="consultaTable" layout="block" rendered="#{anulacionReservaSinProcesoView.panel1}">
+                            <p:dataTable id="dataSolciitudesReserva" widgetVar="dataSolciitudesReserva" var="item" value="#{anulacionReservaSinProcesoView.lazyReal}" paginator="true" rows="10" 
+                                         paginatorPosition="bottom" rowsPerPageTemplate="10,15,20,25,30,35,40,45,50,100" lazy="true" 
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         emptyMessage="No existen cuentas con el criterio de busqueda especificado">
+
+                                <f:facet name="header">
+                                    <h2 style="font-weight: bold; font-size: 12px">RESERVAS DE COMPROMISO</h2>
+                                </f:facet>
+
+                                <p:column headerText="SOLICITUD" style="width: 8%;" filterBy="#{item.secuancialForFilter}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{item.secuancialForFilter}" />
+                                </p:column>
+
+                                <p:column headerText="DESCRIPCIÓN" style="width: 20%;" filterBy="#{item.descripcion}" filterMatchMode="contains">
+                                    <p:outputLabel value="#{item.descripcion.toUpperCase()}"/>
+
+                                </p:column>
+
+                                <p:column headerText="UNIDAD REQUIRIENTE" style="width: 20%;" filterBy="#{item.unidadRequiriente.id}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataSolciitudesReserva').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                            <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{anulacionReservaSinProcesoView.unidadFiltros}" var="c" itemLabel="#{c.nombre}" itemValue="#{c.id}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <p:outputLabel value="#{item.unidadRequiriente.nombre.toUpperCase()}"/>
+                                </p:column>
+
+                                <p:column headerText="BENEFICIARIO" style="width: 20%;">
+                                    <p:outputLabel value="#{item.beneficiario == null ? 'PROCESO INICIAL':item.beneficiario.nombreCompleto.toUpperCase()}"/>
+                                </p:column>
+
+                                <p:column headerText="FECHA SOLICITUD" style="width: 10%; text-align: center;">
+                                    <p:outputLabel value="#{item.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                    </p:outputLabel>
+                                </p:column>
+
+                                <p:column headerText="ESTADO" style="width:10%; text-align: center;" filterBy="#{item.estado.id}">
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dataSolciitudesReserva').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                            <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{anulacionReservaSinProcesoView.estadoFiltro}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <p:outputLabel value="#{item.estado.texto.toUpperCase()}"/>
+                                </p:column>
+
+                                <p:column headerText="ACCIONES" style="width: 12%; text-align: center;">
+
+                                    <p:commandLink   title="ELIMINAR" process="@this" update="dataSolciitudesReserva" actionListener="#{anulacionReservaSinProcesoView.motivoAnulacion(item)}" disabled="#{item.estado.codigo =='ADA' or item.estado.codigo =='LIQUI' ?true:false}">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    </p:commandLink>
+
+                                    <p:commandLink  title="VISUALIZAR" process="@this" update="dataSolciitudesReserva" actionListener="#{anulacionReservaSinProcesoView.visualizarDetalleSolcitud(item)}" >
+                                        <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+
+
+
+                                </p:column> 
+
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </div>
+                    <div class="ui-g-12">
+                        <h:panelGroup id="registroDeSolicitud"  rendered="#{anulacionReservaSinProcesoView.panel2}">
+                            <div class="ui-g-8">
+                                <p:fieldset legend="Información" id="informacionFielset" style="margin-bottom: 10px">
+                                    <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="N° DE SOLICITUD:" style="font-weight: bold;"/>
+                                            <p:inputText readonly="true" id="codigofecha" value="#{anulacionReservaSinProcesoView.reservaCompromiso.secuencial}" />
+
+                                        </p:panelGrid>
+
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="PERÍODO:" style="font-weight: bold;"/>
+                                            <p:inputText id="idPeriodo" value="#{anulacionReservaSinProcesoView.reservaCompromiso.periodo}" readonly="true">
+
+                                            </p:inputText>
+
+                                        </p:panelGrid>
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="FECHA SOLICITUD:" style="font-weight: bold;"/>
+                                            <p:calendar value="#{anulacionReservaSinProcesoView.reservaCompromiso.fechaSolicitud}" locale="es" navigator="true" 
+                                                        readonly="true" pattern="dd-MM-yyyy" />
+                                        </p:panelGrid>
+
+                                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel for="@next" value="DESCRIPCIÓN:" style="font-weight: bold;"/>
+                                            <p:inputTextarea id="descripcion" style="border: 1px solid #BDBDBD; border-radius:5px 5px 5px 5px;text-transform: uppercase"  
+                                                             onkeyup="javascript:this.value = this.value.toUpperCase();" rows="5"
+                                                             value="#{anulacionReservaSinProcesoView.reservaCompromiso.descripcion}">
+                                            </p:inputTextarea>
+                                        </p:panelGrid>
+
+
+
+                                        <p:panelGrid style="text-align: center"  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:commandButton icon="fa fa-search-plus" style="width: auto" value="Agregar Detalle: Plan Anual Política Pública" 
+                                                             actionListener="#{anulacionReservaSinProcesoView.accionComponenetes()}"  update="codigofecha,registroDeSolicitud"/>
+                                            <p:commandButton icon="fa fa-search-plus" style="width: auto" value="Agregar Detalle: Distributivo y Partidas Directas" 
+                                                             actionListener="#{anulacionReservaSinProcesoView.accionComponentesDistriuvtioPartida()}" update="codigofecha,registroDeSolicitud" />
+                                        </p:panelGrid>
+
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </div>
+                            <div class="ui-g-4">
+                                <p:fieldset legend="Detalle Beneficiario">
+                                    <h:panelGroup id="beneficiarioPanel" layout="block">
+                                        <p:commandButton icon="fa fa-search-plus" value="Buscar Beneficiario" onclick="PF('dlgBeneficiario').show();"
+                                                         styleClass="Fs16" style="width: auto;margin-top: 20px;margin-left: 20px" />       
+                                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel value="BENEFICIARIO:" style="font-weight: bold;" />
+                                                <p:inputText readonly="true" value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':anulacionReservaSinProcesoView.reservaCompromiso.beneficiario.nombreCompleto}" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel value="TIPO:" style="font-weight: bold"/>
+                                                <p:inputText readonly="true" 
+                                                             value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':anulacionReservaSinProcesoView.reservaCompromiso.beneficiario.identificacion}#{anulacionReservaSinProcesoView.reservaCompromiso.tipoBeneficiario == true ? '001':''}"/> 
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                                <p:outputLabel value="IDENTIFICACIÓN:" style="font-weight: bold;" />
+                                                <p:inputText readonly="true" value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario.identificacion}#{anulacionReservaSinProcesoView.reservaCompromiso.tipoBeneficiario == true ? '001':''}"/>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </h:panelGroup>
+                                </p:fieldset>
+                            </div>
+                        </h:panelGroup>
+                    </div>
+                    <div class="ui-g-12">
+                        <h:panelGroup id="tabRegistroDeSolicitud" rendered="#{anulacionReservaSinProcesoView.panel2}">
+                            <p:tabView id="tabladimnamica" prependId="false" >
+                                <p:tab title="Plan Anual Politicas Publicas" titleStyle="border-right: 2px solid #eaeaea">
+                                    <h:panelGroup id="tabPAPP" rendered="#{anulacionReservaSinProcesoView.panel2}">  
+                                        <p:dataTable  paginator="true"  paginatorPosition="bottom" style=" margin: 10px"
+                                                      rowsPerPageTemplate="5,10,15,20"
+                                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                      rowIndexVar="inedex"  editable="true" editMode="cell"
+                                                      emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                                      id="tablaSolicitud" value="#{anulacionReservaSinProcesoView.listaGlobalDetalleSolicitudCompromisos}" var="PAPP">
+
+                                            <p:ajax event="cellEdit" listener="#{anulacionReservaSinProcesoView.solicitarReservas(PAPP)}" oncomplete="tablaSolicitud"  /> 
+
+                                            <p:column headerText="Plan-Programa-Proyecto"  style="width: 13%">
+                                                <h:outputText value="#{PAPP.actividadProducto.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                                            </p:column>
+
+                                            <p:column headerText="Actividad Operariva"  style="width: 12%">
+                                                <h:outputText value="#{PAPP.actividadProducto.actividadOperativa.nombreActividad}" />
+                                            </p:column>
+
+                                            <p:column headerText="Producto"  style="width: 12%">
+                                                <h:outputText value="#{PAPP.actividadProducto.descripcion}" />
+                                            </p:column> 
+
+                                            <p:column headerText="Partida" style="width: 8%;text-align: center">
+                                                <h:outputText value="#{PAPP.actividadProducto.codigoPresupuestario}" />
+                                            </p:column> 
+                                            <p:column headerText="Item" style="width: 12%">
+                                                <h:outputText value="#{PAPP.actividadProducto.itemPresupuestario.descripcion}"/>
+                                            </p:column> 
+
+                                            <p:column headerText="Función"  style="width: 12%">
+                                                <h:outputText value="#{PAPP.actividadProducto.estructuraProgramatica.descripcion}">
+
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Presupuestado"  style="width: 9%">
+                                                <h:outputText value="#{PAPP.actividadProducto.montoReformada}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Disponible"  style="width: 8%">
+                                                <h:outputText value="#{PAPP.montoDisponible}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Comprometido"  style="width: 8%">
+                                                <h:outputText value="#{PAPP.montoComprometido==null?'---':PAPP.montoComprometido}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Solicitado" style="width: 8%;">
+                                                <p:cellEditor>
+                                                    <f:facet name="output">
+                                                        <h:outputText value="#{PAPP.montoSolicitado}" style="float: right"> 
+                                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputText>
+                                                    </f:facet>
+                                                    <f:facet name="input">
+                                                        <p:inputNumber value="#{PAPP.montoSolicitado}" style="width:96%" >
+                                                        </p:inputNumber>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column> 
+
+                                            <p:column headerText="Quitar"  style="width: 6%;text-align: center">
+                                                <p:commandLink actionListener="#{anulacionReservaSinProcesoView.eliminadoMemoriaDetalleSOlicitud(PAPP)}" 
+                                                               title="Remover" update="tabladimnamica">
+                                                    <i class="fa fa-minus-circle" style="font-size: 1.5em;color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar este PAPP"  icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </p:column>
+
+                                        </p:dataTable>
+                                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                        </p:confirmDialog>
+                                    </h:panelGroup>
+                                </p:tab>
+
+                                <p:tab title="Plan Distributivo y Partidas Directas" titleStyle="border-right: 2px solid #eaeaea" > 
+                                    <h:panelGroup id="tabPD">
+                                        <p:dataTable paginator="true"  paginatorPosition="bottom" style="margin: 10px"
+                                                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                     rowsPerPageTemplate="5,10,15,20" rows="5" rowIndexVar="index"
+                                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                     emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                                     id="tablaSolicitud2" value="#{anulacionReservaSinProcesoView.listaGlobalDetalleSolicitudPartidas}" var="PD">
+
+                                            <p:column headerText="Concepto" style="width: 10%">
+                                                <h:outputText value="Distributivo" />
+                                            </p:column>
+
+                                            <p:column headerText="Partida" style="width: 10%;text-align: center">
+                                                <h:outputText value="#{PD.presupuesto.partida}" />
+                                            </p:column>
+
+                                            <p:column headerText="Item" style="width: 25%">
+                                                <h:outputText value="#{PD.presupuesto.item.descripcion}" />
+                                            </p:column>
+
+                                            <p:column headerText="Función" style="width: 20%">
+                                                <h:outputText value="#{PD.presupuesto.estructura.descripcion}" />
+                                            </p:column>
+
+                                            <p:column headerText="Monto Presupuestado" style="width: 10%">
+                                                <h:outputText value="#{PD.presupuesto.codificado}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column>
+
+                                            <p:column headerText="Monto Disponible" style="width: 10%">
+                                                <h:outputText value="#{PD.montoDisponible}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Comprometido" style="width: 10%">
+                                                <h:outputText value="#{PD.montoComprometido==null?'----':PD.montoComprometido}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Monto Solicitado" style="width: 10%;">
+                                                <h:outputText value="#{PD.montoSolicitado}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                </h:outputText>
+                                            </p:column> 
+
+                                            <p:column headerText="Acciones"  style="width: 5%;;text-align: center">
+                                                <p:commandLink actionListener="#{anulacionReservaSinProcesoView.abrirDlgoPartidas(PD)}" title="Monto solicitado" update="tablaSolicitud2">
+                                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink actionListener="#{anulacionReservaSinProcesoView.eliminarPArtidasDirectasAndDistributivo(PD)}" title="Remover" update="tablaSolicitud2">
+                                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; color: red;"></i>
+                                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar esta Partida"  icon="fa fa-exclamation-triangle" />
+                                                </p:commandLink>
+                                            </p:column>
+
+                                        </p:dataTable>
+                                        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                        </p:confirmDialog>
+                                    </h:panelGroup>
+                                </p:tab>
+
+                                <p:tab title="Requisitos" titleStyle="border-right: 2px solid #eaeaea">
+
+                                    <h:panelGroup id="tabRequisito">
+                                        <center>
+                                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" >
+                                                <p:outputLabel for="@next" value="ELEGIR PROCEDIMIENTO:" style="width: 100%;font-weight: bold" />
+                                                <p:selectOneMenu id="procedimientos" value="#{anulacionReservaSinProcesoView.procedimientoSeleccionado}" converter="#{utilConverter}" 
+                                                                 panelStyle="width:15%" style="width: 300px;">
+                                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                                    <f:selectItems  value="#{anulacionReservaSinProcesoView.procedimientoList}" var="t" itemLabel="#{t.nombre}" itemValue="#{t}"/>
+                                                    <p:ajax listener="#{anulacionReservaSinProcesoView.cargarRequisitos()}" update="requisitosTabla"/>
+                                                </p:selectOneMenu>             
+                                            </p:panelGrid>
+                                        </center>
+
+                                        <p:dataTable id="requisitosTabla" widgetVar="requisitosTabla" var="requisito" 
+                                                     value="#{anulacionReservaSinProcesoView.procedimientoRequisitoList}"
+                                                     rows="15" style="margin: 20px" lazy="true"  
+                                                     emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+
+                                            <f:facet name="header">
+                                                LISTADO DE REQUISITOS
+                                            </f:facet>
+                                            <p:column headerText="NOMBRE" style="width:30%;">
+                                                <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                            </p:column>
+                                            <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                                <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                            </p:column>
+                                            <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                                <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                            </p:column>
+                                            <p:column headerText="ACCIONES" style="width:10%;text-align: center">
+                                                <p:commandLink title="CARGAR REQUISITO" actionListener="#{anulacionReservaSinProcesoView.requisitoSeleccionado(requisito)}" >
+                                                    <i class="fa fa-cloud-upload" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink title="VER REQUISITO" actionListener="#{anulacionReservaSinProcesoView.vizualizarPDF(requisito)}" update="viewPDF"  >
+                                                    <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                                <p:commandLink title="QUITAR REQUISITO" actionListener="#{anulacionReservaSinProcesoView.eliminarPDF(requisito)}">
+                                                    <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                </p:commandLink>
+                                            </p:column>
+                                        </p:dataTable> 
+
+                                    </h:panelGroup>
+
+                                    <h:panelGroup>
+                                        <div style="width: auto; margin:15px ;text-align: center; font-size: 20px;">
+                                            <p:commandButton rendered="#{anulacionReservaSinProcesoView.mostrarButton}"
+                                                             icon="fa fa-codepen" value="REGISTRAR  RESERVAR" actionListener="#{anulacionReservaSinProcesoView.savesolicitud()}" 
+                                                             style="width: 10%;margin-right: 20px" update="formMain,dlgBeneficiario"/>
+                                            <p:commandButton rendered="#{anulacionReservaSinProcesoView.ocultarbutton}"  icon="fa fa-codepen" value="EDITAR RESERVA" 
+                                                             actionListener="#{anulacionReservaSinProcesoView.editarReservaCompromiso()}" 
+                                                             style="width: 10%;margin-right: 20px" 
+                                                             update="formMain"/>
+                                            <p:commandButton  icon="fa fa-remove" value="CANCELAR" style="width: 10%;background: red;" 
+                                                              actionListener="#{anulacionReservaSinProcesoView.resetSolicitud()}" 
+                                                              update="formMain"/>
+                                        </div>
+                                    </h:panelGroup>
+                                </p:tab>
+                            </p:tabView>
+                        </h:panelGroup>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+
+        <p:dialog id="dlgmotivoAnulacion" widgetVar="dlgmotivoAnulacion" width="30%" position="center" draggable="false" header="Motivo Anulación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="formmotAnulacion">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{anulacionReservaSinProcesoView.observacionAnulacion}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgmotivoAnulacion').hide()" style="width: 150px;margin: 10px"/>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Anular" title="Anular Certificación" process="formmotAnulacion" update="formmotAnulacion"
+                                             actionListener="#{anulacionReservaSinProcesoView.abriDlogoAnulacion()}" style="background: red; width: 150px;margin: 10px">
+                                <p:confirm header="Confirmación de eliminación" message="Está seguro de eliminar la Solicitud #{anulacionReservaSinProcesoView.formatoCodigo(anulacionReservaSinProcesoView.reservaCompromiso.secuencial)}-#{anulacionReservaSinProcesoView.reservaCompromiso.periodo}?" icon="fa fa-exclamation-triangle"/>
+                            </p:commandButton>
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+
+        <p:dialog id="dlogComenatio" widgetVar="dlogComenatio"  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="formComentario" prependId="false">  
+                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" >
+                    <p:outputLabel value="Comentario:"/>
+                    <p:inputTextarea rows="10" cols="50" style="border: 1px solid #BDBDBD; border-radius: 10px 10px 10px 10px;" value="#{anulacionReservaSinProcesoView.reservaCompromiso.comentario}" />
+
+                </p:panelGrid>
+
+                <center>
+                    <p:commandButton value="Aceptar" style="width: auto;" actionListener="#{anulacionReservaSinProcesoView.eliminarSolicitudCompleta()}" update="formMain"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgBeneficiario" widgetVar="dlgBeneficiario" width="50%" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="formDlgBeneficiario" prependId="false">  
+                <center>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" >
+                        <p:outputLabel value="ELEGIR TIPO BENEFICIARIO" style="width: 100%;font-weight: bold" />
+                        <p:selectOneMenu value="#{anulacionReservaSinProcesoView.reservaCompromiso.tipoBeneficiario}"
+                                         panelStyle="width:15%" style="width: 300px;">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true"/>
+                            <f:selectItem itemLabel="PROVEEDOR" itemValue="#{true}" />
+                            <f:selectItem itemLabel="SERVIDOR" itemValue="#{false}" />
+                            <p:ajax listener="#{anulacionReservaSinProcesoView.CargarDatosBeneficiario()}" update="proveedorBeneficiario,servidorBeneficiario,formDlgBeneficiario"/>
+                        </p:selectOneMenu>             
+                    </p:panelGrid>
+                </center>
+                <h:panelGroup id="proveedorBeneficiario" layout="block" rendered="#{anulacionReservaSinProcesoView.panelProveedor}">
+                    <p:dataTable id="beneficiarioTable" widgetVar="beneficiarioTable" value="#{anulacionReservaSinProcesoView.proveedorLazy}"
+                                 var="beneficiario" style="margin: 20px" rows="5" lazy="true" filterEvent="enter"
+                                 rowsPerPageTemplate="5,10,15,20"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" paginator="true"
+                                 paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <p:column headerText="Nº DE IDENTIFICACION " filterBy="#{beneficiario.cliente.identificacion}" style="width: 10%;text-align: center">
+                            <h:outputText value="#{beneficiario.cliente.identificacion}001" />
+                        </p:column> 
+                        <p:column headerText="NOMBRE" filterBy="#{beneficiario.cliente.nombre}" style="width: 20%">
+                            <h:outputText value="#{beneficiario.cliente.nombreCompleto}" />
+                        </p:column>
+                        <p:column headerText="AÑADIR"  style="width: 5%;text-align: center">
+                            <p:commandButton icon="fa fa-plus" 
+                                             actionListener="#{anulacionReservaSinProcesoView.AñadirBeneficiarioProveedor(beneficiario)}" update="beneficiarioPanel"
+                                             styleClass="green-button"/>    
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+                <h:panelGroup id="servidorBeneficiario" layout="block" rendered="#{anulacionReservaSinProcesoView.panelServidor}">
+                    <p:dataTable id="servidorTable" widgetVar="servidorTable" value="#{anulacionReservaSinProcesoView.servidorLazy}"
+                                 var="servidor" style="margin: 20px" rows="5" lazy="true" filterEvent="enter"
+                                 rowsPerPageTemplate="5,10,15,20"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 emptyMessage="No existen cuentas con el criterio de busqueda especificado" paginator="true"
+                                 paginatorPosition="bottom" paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <p:column headerText="Nº DE IDENTIFICACION " filterBy="#{servidor.persona.identificacion}" style="width: 10%;text-align: center">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column> 
+                        <p:column headerText="NOMBRE" filterBy="#{servidor.persona.nombre}" style="width: 20%">
+                            <h:outputText value="#{servidor.persona.nombreCompleto}" />
+                        </p:column>
+                        <p:column headerText="AÑADIR"  style="width: 5%;text-align: center">
+                            <p:commandButton icon="fa fa-plus" 
+                                             actionListener="#{anulacionReservaSinProcesoView.AñadirBeneficiarioServidor(servidor)}" update="beneficiarioPanel"
+                                             styleClass="green-button"/>    
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="Dlogo"  header="Ingrese el Monto Solicitado" widgetVar="Dlogo" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDlogo"  prependId="false">
+                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:inputNumber value="#{anulacionReservaSinProcesoView.detalleSolicitud.montoSolicitado}" decimalPlaces="2" />
+                </p:panelGrid>
+                <div style="text-align: center;">
+                    <p:commandButton  value="Añadir" actionListener="#{anulacionReservaSinProcesoView.solicitarReservas()}"
+                                      icon="ui-icon-plus"  update="tabPAPP"
+                                      styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </div>                                                  
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="Dlogo2" width="80%"  header="Planes Anuales Programa Proyecto de #{anulacionReservaSinProcesoView.reservaCompromiso.periodo}" widgetVar="Dlogo2" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formDlogo2"  prependId="false">
+
+                <div align="right">
+                    <p:commandButton  value="REGRESAR" 
+                                      icon="fa fa-sign-in"  onclick="PF('Dlogo2').hide()"  update="formDlogo2"
+                                      styleClass="Fs16" style="  background: red;  width: auto; margin-right: 20px" />
+                </div>
+
+                <p:dataTable  paginator="true"  paginatorPosition="bottom" style="margin: 20px"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true" scrollHeight="300"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="tablaSeleccion" value="#{anulacionReservaSinProcesoView.listaProductos}" var="item2">
+
+                    <p:column headerText="PLAN-PROGRAMA-PROYECTO" style="width: 10%">
+                        <h:outputText value="#{item2.actividadOperativa.planProgramaProyecto.nombreProgramaProyecto}" />
+                    </p:column>
+
+                    <p:column headerText="ACTIVIDAD OPERATIVA" style="width: 10%" >
+                        <h:outputText value="#{item2.actividadOperativa.nombreActividad}" />
+                    </p:column> 
+
+                    <p:column headerText="Producto" style="width: 10%">
+                        <h:outputText value="#{item2.descripcion}" />
+                    </p:column> 
+
+                    <p:column headerText="Partida" style="width: 7%;text-align: center">
+                        <h:outputText value="#{item2.codigoPresupuestario}" />
+                    </p:column> 
+
+                    <p:column headerText="Item" style="width: 10%">
+                        <h:outputText value="#{item2.itemPresupuestario.descripcion}" />
+                    </p:column> 
+
+                    <p:column headerText="Función" style="width: 8%">
+                        <h:outputText value="#{item2.estructuraProgramatica.descripcion}" />
+                    </p:column> 
+
+                    <p:column headerText="Monto" style="width: 5%">
+                        <h:outputText value="#{item2.montoReformada}" style="float: right">
+                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column> 
+
+                    <p:column headerText="Acciones" style="width: 4%;text-align: center">
+                        <p:commandLink  title="SELECCIONAR" update="tablaSolicitud" process="@this" actionListener="#{anulacionReservaSinProcesoView.añadiendoFormato(item2)}">
+                            <i class="fa fa-chevron-circle-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="Dlogo3" width="85%"  header="Partidas Directas y Distributivo #{anulacionReservaSinProcesoView.reservaCompromiso.periodo}" 
+                  widgetVar="Dlogo3" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+
+            <h:form id="formDlogo3"  prependId="false">
+
+                <div align="right">
+                    <p:commandButton  value="REGRESAR" 
+                                      icon="fa fa-sign-in"  onclick="PF('Dlogo3').hide()"  update="formDlogo2"
+                                      styleClass="Fs16" style="  background: red;  width: auto; margin-right: 20px" />
+                </div>
+
+                <p:dataTable  paginator="true"  paginatorPosition="bottom" style="text-align: center; margin: 20px"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="10,15,20,25" scrollable="true" scrollHeight="300"
+                              emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                              value="#{anulacionReservaSinProcesoView.listaPresupuesto}" var="item3">
+
+                    <p:column headerText="CONCEPTO" style="width: 5%">
+                        <h:outputText value="Distributivo" />
+                    </p:column>
+
+                    <p:column headerText="PARTIDA" style="width: 4%">
+                        <h:outputText value="#{item3.partida}" />
+                    </p:column> 
+
+                    <p:column headerText="ITEM" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item3.item.descripcion}" />
+                    </p:column>
+
+                    <p:column headerText="FUNCIÓN" style="width: 10%; text-align: justify">
+                        <h:outputText value="#{item3.estructura.descripcion}" />
+                    </p:column>
+
+                    <p:column headerText="MONTO" style="width: 3%;">
+                        <h:outputText value="#{item3.codificado}" style="float: right">
+                            <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column> 
+
+                    <p:column headerText="Acciones" style="width: 2%">
+                        <p:commandLink  title="SELECCIONAR" update="tabPD" actionListener="#{anulacionReservaSinProcesoView.seleccionPresupuestoDPD(item3)}">
+                            <i class="fa fa-chevron-circle-right" style="font-size: 1.5em; color: #0D47A1;"></i>
+                        </p:commandLink>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="DlEdicionPartida"  header="Ingresar el Monto a Solicitar" position="center"
+                  widgetVar="DlEdicionPartida" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formEdicionPartida"  prependId="false">
+
+                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:inputNumber value="#{anulacionReservaSinProcesoView.detalleSolicitud.montoSolicitado}" decimalPlaces="2" />
+                </p:panelGrid>
+                <div style="text-align: center;">
+                    <p:commandButton  value="Añadir" actionListener="#{anulacionReservaSinProcesoView.solicitarReservasPartidas()}"
+                                      icon="ui-icon-plus"  update="tablaSolicitud2,formEdicionPartida"
+                                      styleClass="Fs16" style="width: auto; margin-bottom: 15px; margin-top: 5%;" />
+                </div>                                                  
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="requisitoDialog" header="Adjuntar archivos de requitos" widgetVar="requisitoDialog" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form id="requisitoDialogForm" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:fileUpload fileUploadListener="#{anulacionReservaSinProcesoView.handleFileUpload}"
+                                          mode="advanced" uploadLabel="Cargar"
+                                          invalidFileMessage="Solo acepta archivos PDF"
+                                          dragDropSupport="false" label="Seleccionar" skinSimple="true"
+                                          update="messages1"  fileLimit="1"
+                                          fileLimitMessage="Solo puede subir 1"
+                                          cancelLabel="Eliminar"/>
+                            <p:growl id="messages1" showDetail="true" />
+                        </div>
+                    </div>
+                </div>
+            </h:form> 
+        </p:dialog>
+
+        <p:dialog id="viewPDF" widgetVar="viewPDF" modal="true" showEffect="fade" position="center"
+                  hideEffect="fade" resizable="false" width="80%"  header="RUTA DEL ARCHIVO: #{anulacionReservaSinProcesoView.fileName}">
+            <p:media value="#{anulacionReservaSinProcesoView.fileName}" width="100%" height="600px" player="pdf">
+            </p:media>
+        </p:dialog>
+
+        <p:dialog id="DlgoVisualizacion"  header="Detalle Solcilitud de Reserva de Compromiso" position="center"
+                  widgetVar="DlgoVisualizacion" modal="true" width="80%" showEffect="fade" hideEffect="fade" resizable="false">
+            <p:ajax event="close" listener="#{anulacionReservaSinProcesoView.handleCloseForm}" />
+            <h:form id="formVisualizacion"  prependId="false">
+                <div class="ui-g-12">
+                    <div class="ui-g-7">
+                        <p:fieldset legend="INFORMACIÓN">
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="DESCRIPCIÓN:" style="font-weight: bold;" />                       
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel   value="#{anulacionReservaSinProcesoView.reservaCompromiso.descripcion}"/>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{anulacionReservaSinProcesoView.reservaCompromiso.comentario.toString().length()>0?true:false}">
+                                    <p:outputLabel value="OBSERVACION: " style="font-weight: bold;" />
+                                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.comentario}"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="Nº DE SOLICITUD:" style="font-weight: bold;" />
+                                    <p:outputLabel value= "#{anulacionReservaSinProcesoView.formatoCodigo(anulacionReservaSinProcesoView.reservaCompromiso.secuencial)}-#{anulacionReservaSinProcesoView.reservaCompromiso.periodo}" style="margin-right: 3%;"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="ESTADO:" style="font-weight: bold;"/>
+                                    <p:outputLabel value= "#{anulacionReservaSinProcesoView.reservaCompromiso.estado.texto}" style="margin-right: 3%;text-transform: uppercase"/>
+                                </p:panelGrid>   
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel style="font-weight: bold;" value="FECHA SOLICITUD:   "/>
+                                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.fechaSolicitud}">
+                                        <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                    </p:outputLabel>
+                                </p:panelGrid>
+                            </p:panelGrid> 
+                        </p:fieldset>
+                    </div>
+                    <div class="ui-g-5">
+                        <p:fieldset legend="BENEFICIARIO">
+                            <p:panelGrid  columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="TIPO:" style="font-weight: bold;" />
+                                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':(anulacionReservaSinProcesoView.reservaCompromiso.tipoBeneficiario == true ? 'PROVEEDOR':'SERVIDOR')}"/>
+                                </p:panelGrid>    
+
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="IDENTIFICACIÓN:" style="font-weight: bold;" />
+                                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':anulacionReservaSinProcesoView.reservaCompromiso.beneficiario.identificacion}#{anulacionReservaSinProcesoView.reservaCompromiso.tipoBeneficiario == true ? '001':''}"/>
+                                </p:panelGrid>  
+                            </p:panelGrid>
+
+                            <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid  columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:outputLabel value="BENEFICIARIO:" style="font-weight: bold;" />
+                                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.beneficiario == null ? 'PROCESO INICIAL':anulacionReservaSinProcesoView.reservaCompromiso.beneficiario.nombreCompleto}"/>
+                                </p:panelGrid> 
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </div>
+                </div>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{anulacionReservaSinProcesoView.reservaCompromiso.estado.codigo == 'ADA' ? true:false}">
+                    <p:outputLabel value="Motivo Anulación: " style="font-weight: bold;" />
+                    <p:outputLabel value="#{anulacionReservaSinProcesoView.reservaCompromiso.observacionAnulacion}"/>
+                </p:panelGrid>
+                <div class="ui-g-12">
+                    <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="5" rowsPerPageTemplate="5,10,15,20"
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  emptyMessage="No existen cuentas con el criterio de busqueda especificado" id="datosEnDetalle" value="#{anulacionReservaSinProcesoView.visualizacionSolicitud}" var="item">
+                        <f:facet name="header">
+                            LISTADO DE PRODUCTOS
+                        </f:facet>
+                        <p:column headerText="CONCEPTO" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column headerText="PARTIDA" style="width: 20%;text-align: center">
+                            <p:outputLabel value="#{item.actividadProducto.codigoPresupuestario} #{item.refDistributivo.partidaPresupuestaria} #{item.partidasDirecta.partidaPresupuestaria}"/>
+                        </p:column>
+                        <p:column headerText="ITEM" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.itemNew.descripcion.toUpperCase()} #{item.refDistributivo.idPresupuesto.descripcion.toUpperCase()} #{item.partidasDirecta.itemNew.descripcion.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="FUNCIÓN" style="width: 20%">
+                            <p:outputLabel value="#{item.actividadProducto.estructruaNew.descripcion.toUpperCase()} #{item.refDistributivo.idEstructura.descripcion.toUpperCase()} #{item.partidasDirecta.estructruaNew.descripcion.toUpperCase()}" />
+                        </p:column>
+
+                        <p:column headerText="MONTO SOLICITADO" style="width: 8%">
+                            <p:outputLabel value="#{item.montoSolicitado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>    
+
+                        <p:column headerText="MONTO COMPROMETIDO" style="width: 8%">
+                            <p:outputLabel value="#{item.montoComprometido}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>  
+
+                        <p:column headerText="MONTO EJECUTADO" style="width: 8%">
+                            <p:outputLabel value="#{item.ejecutado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>  
+
+                        <p:column headerText="MONTO LIQUIDADO" style="width: 8%">
+                            <p:outputLabel value="#{item.liquidado}" style="float: right">
+                                <f:convertNumber currencySymbol="$" type="currency" currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>  
+
+                        <p:columnGroup type="footer">
+                            <p:row>
+                                <p:column colspan="4" style="text-align:right;font-weight: bold; font-size: 13px;" footerText="Suma:" />
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{anulacionReservaSinProcesoView.totalSolicitado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column  style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{anulacionReservaSinProcesoView.totalComprometido}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{anulacionReservaSinProcesoView.totalEjecutado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                                <p:column style="text-align: right;font-weight: bold; font-size: 13px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{anulacionReservaSinProcesoView.totalLiquidado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+                            </p:row>
+                        </p:columnGroup>
+
+                    </p:dataTable>    
+                </div>
+
+                <div class="ui-g-12">
+
+
+
+                    <p:tabView rendered="#{anulacionReservaSinProcesoView.renderedSinRequisitos}">
+                        <p:tab title="REQUISITOS" >
+                            <p:dataTable  paginator="true"  paginatorPosition="bottom" rows="5" rowsPerPageTemplate="5,10,15,20"
+                                          currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                          paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                          id="requisitosTablaView" widgetVar="requisitosTablaView" var="requisito" 
+                                          value="#{anulacionReservaSinProcesoView.procedimientoRequisitoList}"
+                                          style="margin: 20px 0px" lazy="true"  
+                                          emptyMessage="No existen requisitos con el criterio de busqueda especificado">
+                                <f:facet name="header">
+                                    LISTADO DE REQUISITOS
+                                </f:facet>
+                                <p:column headerText="NOMBRE" style="width:30%;">
+                                    <h:outputText value="#{requisito.idRequisito.nombre}" />
+                                </p:column>
+                                <p:column headerText="DESCRIPCIÓN" style="width:30%;" >
+                                    <h:outputText value="#{requisito.idRequisito.descripcion}" />
+                                </p:column>
+                                <p:column headerText="OBLIGATORIO" style="width:10%; text-align: center" >
+                                    <h:outputText value="#{requisito.obligatorio == true ? 'SI':'NO'}" />
+                                </p:column>
+                                <p:column rendered="false" headerText="ACCIONES" style="width:10%;text-align: center">
+                                    <p:commandLink title="VER REQUISITO" actionListener="#{anulacionReservaSinProcesoView.vizualizarPDF(requisito)}" update="viewPDF" >
+                                        <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>  
+                        </p:tab>
+                        <p:tab title="DOCUMENTOS">
+                            <u:documents entiti="#{anulacionReservaSinProcesoView.reservaCompromiso}"/>
+                        </p:tab>
+                    </p:tabView>
+
+                </div>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{anulacionReservaSinProcesoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{anulacionReservaSinProcesoView.completarTareaAnulacion()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

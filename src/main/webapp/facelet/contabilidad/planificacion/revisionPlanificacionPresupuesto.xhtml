@@ -1,0 +1,640 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Programación Egreso</ui:define>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <u:titleTask task="#{revisionPlanIEView.tarea}" tramite="#{revisionPlanIEView.tramite}" />
+            </div>
+
+            <div class="ui-g-12">
+                <h:form id="formRevision" prependId="false">
+                    <p:fieldset legend="Buscar">
+                        <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value="Período" escape="false"/>
+                                <p:selectOneMenu  value="#{revisionPlanIEView.busqueda.anio}">
+
+                                    <f:selectItems value="#{revisionPlanIEView.periodos}" var="p" itemLabel="#{p.periodo}" itemValue="#{p.periodo}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:outputLabel value=""/>
+                                <p:commandLink title="Buscar"  action="#{revisionPlanIEView.actualizar()}" update="formRevision">
+                                    <p:graphicImage value="/resources/icons/buscar.png"
+                                                    width="37" height="37" 
+                                                    style="margin:auto;  width: auto;"/>
+                                </p:commandLink>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+                        <div align="right">
+                            <p:commandButton disabled="#{revisionPlanIEView.estadoGeneral.codigo=='PRO'?true:false}" actionListener="#{revisionPlanIEView.aprobarSolicitud(true)}" 
+                                             icon="fa fa-thumbs-up" style="width: 100px;margin-bottom:  2%;position: relative; right: 0;margin-left: 15px; background: #0081cb;" 
+                                             value="Aprobar"/>
+
+                            <p:commandButton disabled="#{revisionPlanIEView.estadoGeneral.codigo=='PRO'?true:false}" actionListener="#{revisionPlanIEView.aprobarSolicitud(false)}" 
+                                             icon="fa fa-thumbs-down" style="width: 100px;margin-bottom:  2%;position: relative; right: 0;margin-left: 15px;" 
+                                             class="red-btn" value="Rechazar"/>
+                        </div>
+                    </p:fieldset>
+                    <p:panel header="Estado: #{revisionPlanIEView.estadoGeneral.texto==null?'REGISTRADO':revisionPlanIEView.estadoGeneral.texto}">
+
+                        <p:tabView dynamic="true" cache="true" effect="fold" id="viewDetalle" prependId="false">
+                            <p:tab title="PIM" titleStyle="border-right: 2px solid #eaeaea">
+
+                                <p:dataTable id="pimTable" widgetVar="pimTable" var="item" value="#{revisionPlanIEView.lazyIngresos}" 
+                                             paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" emptyMessage="No existen cuentas con el criterio de busqueda especificado"
+                                             editable="true" editMode="cell" selectionMode="single" rowKey="#{item.id}">
+
+
+                                    <p:ajax event="cellEdit" listener="#{pimView.guardarPIM(item)}" update="pimTable"/>
+                                    <p:column headerText="Código Partida" style="width:75px;text-align: center">
+                                        <h:outputText value="#{revisionPlanIEView.getPartidaIngreso(item.periodo,item.itemNew)}"/>
+                                    </p:column>
+
+                                    <p:column headerText="Nombre" style="width:250px;text-align: left">
+                                        <h:outputText value="#{item.itemNew.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Presupuesto Inicial" style="width:250px;">
+                                        <h:outputText value="#{revisionPlanIEView.presupuestoInical(item.periodo,item.itemNew)}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+
+
+                                    <p:column headerText="Enero" style="width:100px;">
+
+                                        <h:outputText value="#{item.enero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                                
+                                    </p:column>
+
+                                    <p:column headerText="Febrero" style="width:100px;">
+                                        <h:outputText value="#{item.febrero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Marzo" style="width:100px;">
+                                        <h:outputText value="#{item.marzo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Abril" style="width:100px;">
+                                        <h:outputText value="#{item.abril}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Mayo" style="width:100px;">
+                                        <h:outputText value="#{item.mayo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Junio" style="width: 100px;">
+                                        <h:outputText value="#{item.junio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Julio" style="width:100px;">
+                                        <h:outputText value="#{item.julio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Agosto" style="width: 100px;">
+                                        <h:outputText value="#{item.agosto}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+
+                                    </p:column>
+                                    <p:column headerText="Septiembre" style="width: 100px;">
+                                        <h:outputText value="#{item.septiembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Octubre" style="width: 100px;">
+                                        <h:outputText value="#{item.octubre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Noviembre" style="width: 100px;">
+                                        <h:outputText value="#{item.noviembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Diciembre" style="width: 100px;">
+                                        <h:outputText value="#{item.diciembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:column headerText="Total PIM" style="width: 100px;text-align: center;">
+                                        <h:outputText value="#{item.totalAnio}" style="width:100%;text-align: center;" >
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:columnGroup type="footer">
+                                        <p:row id="footerPIM" style="width: 100px;font-weight: bold;font-size: 17px;">
+
+
+                                            <p:column colspan="2" style="text-align:right;font-weight: bold;width: 100px;font-size: 0.9vw;" footerText="Total:" />                                
+
+
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalItem}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalEnero}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalFebrero}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalMarzo}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalAbril}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalMayo}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalJunio}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalJulio}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalAgosto}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalSeptiembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalOctubre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalNoviembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalDiciembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalPIM}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                        </p:row>
+                                    </p:columnGroup>
+                                </p:dataTable>
+                            </p:tab>
+                            <p:tab title="PEG" titleStyle="border-right: 2px solid #eaeaea">
+
+                                <p:dataTable id="pemTable" widgetVar="pemTable" var="data" value="#{revisionPlanIEView.lazyEgresos}" paginator="true" rows="15" style="width: 100%;" 
+                                             paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="15,20,30,40,50,100" lazy="true" 
+                                             emptyMessage="No existen cuentas con el criterio de busqueda especificado" 
+                                             selectionMode="single"  rowKey="#{data.id}">
+
+                                    <p:columnGroup type="header">
+                                        <p:row>
+                                            <p:column style="width:16px" />
+                                            <p:column headerText="Código" style="width: 100px; font-weight: bold; font-size: 12px;" filterBy="#{item.codigoItem}"/>
+                                            <p:column headerText="Descripción" style="width: 100px;text-align: justify"  filterBy="#{item.itemNew.descripcion}"/>
+                                            <p:column headerText="Tipo" style="width: 100px;"  filterBy="#{item.tipoCodigo}"/>
+                                            <p:column headerText="Distribuir" style="width:100px;text-align: center"/>
+                                            <p:column headerText="Monto" style="width: 100px;"/>
+                                            <p:column headerText="Enero" style="width:100px;"/>
+                                            <p:column headerText="Febrero" style="width:100px;"/>
+                                            <p:column headerText="Marzo" style="width:100px;"/>
+                                            <p:column headerText="Abril" style="width:100px;"/>
+                                            <p:column headerText="Mayo" style="width:100px;"/>
+                                            <p:column headerText="Junio" style="width: 100px;"/>
+                                            <p:column headerText="Julio" style="width:100px;"/>
+                                            <p:column headerText="Agosto" style="width: 100px;"/>
+                                            <p:column headerText="Septiembre" style="width: 100px;"/>
+                                            <p:column headerText="Octubre" style="width: 100px;"/>
+                                            <p:column headerText="Noviembre" style="width: 100px;"/>                 
+                                            <p:column headerText="Diciembre" style="width: 100px;"/>
+                                            <p:column headerText="Total PEG" style="width: 100px;"/>
+
+                                        </p:row>
+                                    </p:columnGroup>
+
+
+
+                                    <p:column style="width:16px" >
+                                        <p:rowToggler/>
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.codigoItem}"/>
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.itemNew.descripcion.toUpperCase()}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <h:outputText value="#{data.tipoCodigo}"/>
+                                    </p:column>
+                                    <p:column>
+                                        <p:selectBooleanCheckbox value="#{data.distribucion}" 
+                                                                 disabled="true">
+                                           
+                                        </p:selectBooleanCheckbox>
+                                    </p:column>
+                                    <p:column>
+                                        <h:outputText value="#{data.montoActividad}" style="float: right;font-weight: bold;" >
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.enero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.febrero}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column>
+                                        <h:outputText value="#{data.marzo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                            
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.abril}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.mayo}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                                 
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.junio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.julio}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                                  
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.agosto}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                                  
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.septiembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+
+                                    </p:column>
+                                    <p:column >
+                                        <h:outputText value="#{data.octubre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+
+                                    </p:column>
+                                    <p:column >                                       
+                                        <h:outputText value="#{data.noviembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>                                                                                 
+                                    </p:column>
+                                    <p:column >                                                                                  
+                                        <h:outputText value="#{data.diciembre}" style="float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:column >
+                                        <h:outputText value="#{data.totalAnio}" style="font-weight: bold;float: right;">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+
+
+
+
+                                    <p:columnGroup type="footer">
+                                        <p:row  >
+                                            <p:column style="text-align:left" footerText=""/>
+                                            <p:column style="text-align:left" footerText=""/>
+                                            <p:column style="text-align:left" footerText=""/>
+                                            <p:column style="text-align:left" footerText=""/>
+                                            <p:column style="text-align:right; font: 14px;" footerText="Total:"  class="FontBold"/>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalMonto}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalEnero}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalFebrero}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalMarzo}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalAbril}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalMayo}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalJunio}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalJulio}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalAgosto}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalSeptiembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalOctubre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalNoviembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalDiciembre}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                            <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                                <f:facet name="footer">
+                                                    <h:outputText value="#{revisionPlanIEView.totalPem}">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </f:facet>
+                                            </p:column>
+
+                                        </p:row>
+
+                                  
+                                    </p:columnGroup>
+
+                                    <p:rowExpansion>
+                                        <br></br>
+                                        <br></br>
+                                        <h:panelGroup id="dataRowTable" layout="block">
+                                            <!--                                            <p:panelGrid style="height: 70px;">
+                                                                                            <p:commandButton id="mostrarColumnas" type="button" value="Mostrar Columnas" style="width: auto;margin-bottom: 10px;float: right" icon="fa fa-align-justify" />
+                                                                                        </p:panelGrid>
+                                                                                        <p:columnToggler datasource="rowTable" trigger="mostrarColumnas" />-->
+
+
+                                            <p:dataTable id="rowTable" widgetVar="rowTable" var="pro" value="#{revisionPlanIEView.viewActividadByProducto(data)}" 
+                                                         paginator="true" rows="5" style="width: 100%;" 
+                                                         paginatorPosition="bottom"
+                                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                         rowsPerPageTemplate="5,10,20" 
+                                                         emptyMessage="No existen actividades registradas">
+                                               
+                                                <p:column headerText="Producto" style="width: 20%; text-align: justify" >
+                                                    <h:outputText value="#{pro.descripcion}"/>
+                                                </p:column>
+                                                <p:column headerText="Monto del Producto" >
+                                                    <h:outputText value="#{pro.monto}" style="float:right;">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="Actividad" style="width: 20%; text-align: justify">
+                                                    <h:outputText value="#{pro.actividadOperativa.nombreActividad}" />
+                                                </p:column>
+                                                <p:column headerText="Monto de la Actividad" >
+                                                    <h:outputText value="#{pro.actividadOperativa.monto}" style="float:right;">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="N-Plan-C1" >
+                                                    <h:outputText value="#{pro.actividadOperativa.cuatrimestre1Actividad}" style="float:right;">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="N-Plan-C2" >
+                                                    <h:outputText value="#{pro.actividadOperativa.cuatrimestre2Actividad}" style="float:right;">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>
+                                                <p:column headerText="N-Plan-C3" >
+                                                    <h:outputText value="#{pro.actividadOperativa.cuatrimestre3Actividad}" style="float:right;">
+                                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                                    </h:outputText>
+                                                </p:column>                                          
+
+                                            </p:dataTable>  
+                                        </h:panelGroup>                                
+                                        <br></br>
+                                        <br></br>
+                                    </p:rowExpansion>
+
+                                </p:dataTable>
+
+                            </p:tab>
+                        </p:tabView>
+
+                    </p:panel>
+
+
+                </h:form>
+
+            </div>
+
+
+        </div>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{revisionPlanIEView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{revisionPlanIEView.completarTarea(1)}" rendered="#{revisionPlanIEView.btnAprobar}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{revisionPlanIEView.completarTarea(0)}" rendered="#{revisionPlanIEView.btnRechazar}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

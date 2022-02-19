@@ -1,0 +1,412 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Acción Personal
+    </ui:define>
+    <ui:param name="tittle" value="Acción Personal" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="panelAccion" layout="block">
+                        <h:panelGroup id="panelCargo" layout="block">
+                            <p:commandButton value="Adicionar Accion Personal"
+                                             icon="ui-icon-plus" 
+                                             styleClass="Fs16" style="width: auto; margin-bottom: 15px;"
+                                             actionListener="#{thAccionPersonalView.form(null)}"    />
+                        </h:panelGroup> 
+                        <p:dataTable id="dtaccionpersonal" widgetVar="acc" var="acc" style="width: 100%; 
+                                     text-align: center" reflow="true" paginator="true" lazy="true" rows="25"
+                                     rowsPerPageTemplate="25,50,100" filterEvent="enter" value="#{thAccionPersonalView.thAccionPersonalLazyModel}" 
+                                     emptyMessage="No se encontro ningun accion personal"
+                                     selection="#{thAccionPersonalView.thAccionPersonal}" rowKey="#{acc.id}"
+                                     paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                            <f:facet name="header">
+                                Accion Personal
+                            </f:facet>
+                            <p:column headerText="Codigo" style="width: 15%; " >
+                                <h:outputText value="#{acc.codigo}" />
+                            </p:column>
+                            <p:column headerText="Servidor Público" style="width: 25%; " >
+                                <h:outputText value="#{acc.servidor.persona.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Responsable Administrativo" style="width: 25%; " >
+                                <h:outputText value="#{acc.responsableAdministrativo.persona.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Recursos Humanos" style="width: 25%; " >
+                                <h:outputText value="#{acc.recursosHumano.persona.nombreCompleto}"/>
+                            </p:column>
+                            <p:column headerText="Motivo" style="width: 25%; " >
+                                <h:outputText value="#{acc.codActa=='0'?'Contrato':acc.codActa=='1'?'Acuerdo':'Otros'}"/>
+                            </p:column>
+                            <p:column headerText="Fecha Accion Personal" style="width: 18%; " id="espacioFecha">
+                                <h:outputText value="#{acc.fechaAccionPersonal}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acciones" style="text-align: center; width: 10%">
+                                <p:commandLink  title="Editar Accion Personal" process="@this" actionListener="#{thAccionPersonalView.form(acc)}" update="formMain">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>    
+                                <p:commandLink title="Eliminar Accion Personal"   process="@this" 
+                                               update="dtaccionpersonal"
+                                               actionListener="#{thAccionPersonalView.delete(acc)}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                    <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro que quiere eliminar accion de personal: ?"
+                                               icon="fa fa-exclamation-triangle"/>
+                                </p:commandLink>
+                                <p:commandLink title="Generar Reporte de Usuario" actionListener="#{thAccionPersonalView.reporteThAccionPersonal(acc,true)}">
+                                    <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 5px; color: red;"/>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id ="accionDialog" header="Formulario - Acción de Personal" widgetVar="accionDialog" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="70%" height="500">
+            <h:form prependId="false" id="frmAccion">
+                <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Funcionario" id="setFuncionario">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Buscar" class="nuevo"
+                                                 icon="ui-icon-plus" actionListener="#{thAccionPersonalView.openDlgSer()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                    <p:ajax event="dialogReturn" listener="#{thAccionPersonalView.selectDataSer2}" update="setFuncionario" />
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Identificación"  style="font-weight: bold"/>
+                                <p:inputText id="idFuncionario" value="#{thAccionPersonalView.thAccionPersonal.servidor.persona.identificacion}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>                            
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Nombre:"  style="font-weight: bold"/>
+                                <p:inputText id="nomFuncionario" value="#{thAccionPersonalView.thAccionPersonal.servidor.persona.nombreCompleltoSql}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Talento humano" id="setTalentoHumano">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Buscar" class="nuevo"
+                                                 icon="ui-icon-plus" actionListener="#{thAccionPersonalView.openDlgSer()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                    <p:ajax event="dialogReturn" listener="#{thAccionPersonalView.selectDataSer}" update="setTalentoHumano" />
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Identificación"  style="font-weight: bold"/>
+                                <p:inputText id="idTalentoHumano" value="#{thAccionPersonalView.thAccionPersonal.recursosHumano.persona.identificacion}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>                            
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Nombre:"  style="font-weight: bold"/>
+                                <p:inputText id="nomTalentoHumano" value="#{thAccionPersonalView.thAccionPersonal.recursosHumano.persona.nombreCompleltoSql}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Responsable Registro" id="setResponsable">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Buscar" class="nuevo"
+                                                 icon="ui-icon-plus" actionListener="#{thAccionPersonalView.openDlgSer()}"
+                                                 styleClass="Fs16" style="width: 100%;">
+                                    <p:ajax event="dialogReturn" listener="#{thAccionPersonalView.selectDataSer1}" update="setResponsable" />
+                                </p:commandButton>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Identificación"  style="font-weight: bold"/>
+                                <p:inputText id="idResponsable" value="#{thAccionPersonalView.thAccionPersonal.responsableAdministrativo.persona.identificacion}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>                            
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Nombre:"  style="font-weight: bold"/>
+                                <p:inputText id="nomResponsable" value="#{thAccionPersonalView.thAccionPersonal.responsableAdministrativo.persona.nombreCompleltoSql}"
+                                             style="width: 100%" readonly="true"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Tipo Accion Personal:">
+                        <p:selectOneRadio id="customRadio"  layout="custom" value="#{thAccionPersonalView.thAccionPersonal.codActa}">
+                            <f:selectItem itemLabel="Contrato" itemValue="0" />
+                            <f:selectItem itemLabel="Acuerdo" itemValue="1" />
+                            <f:selectItem itemLabel="Otros" itemValue="2" />
+                        </p:selectOneRadio>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                                <h:outputLabel for="opt1" value="Decreto" />
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                                <h:outputLabel for="opt2" value="Acuerdo" />
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:radioButton id="opt3" for="customRadio" itemIndex="2" />
+                                <h:outputLabel for="opt3" value="Resolución" />
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No."  style="font-weight: bold"/>
+                                <p:inputText id="codigoAP" value="#{thAccionPersonalView.thAccionPersonal.codigo}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/><br/>
+                                <p:calendar id="fechaAP"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaAP')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.thAccionPersonal.fechaAccionPersonal}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar> 
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No. De Afiliación IESS"  style="font-weight: bold"/>
+                                <p:inputText id="codigoIess" value="#{thAccionPersonalView.thAccionPersonal.accionpersonal}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Explicación">
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Explicación:"  style="font-weight: bold"/>
+                                <p:inputTextarea id="explicacionAP" value="#{thAccionPersonalView.thAccionPersonal.explicacion}"
+                                                 style="width: 100%"/>
+                            </h:panelGroup>                                
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Detalle">
+                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:selectManyCheckbox id="grid" value="#{thAccionPersonalView.thAccionPersonal.codMotivoApList}" layout="grid" columns="5" styleClass="grid-checkbox">
+                                    <f:selectItems value="#{thAccionPersonalView.motivoList}" var="city" itemLabel="#{city.texto}" itemValue="#{city.codigo}"/>
+                                    <p:ajax process="grid"/>
+                                </p:selectManyCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Situación Actual">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Proceso:"  style="font-weight: bold"/>
+                                <p:inputText id="procesoSA" value="#{thAccionPersonalView.situacionActual.proceso}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Subproceso:"  style="font-weight: bold"/>
+                                <p:inputText id="subprocesoSA" value="#{thAccionPersonalView.situacionActual.subProceso}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Puesto:"  style="font-weight: bold"/>
+                                <p:inputText id="puestoSA" value="#{thAccionPersonalView.situacionActual.puesto}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Lugar de Trabajo:"  style="font-weight: bold"/>
+                                <p:inputText id="trabjaoSA" value="#{thAccionPersonalView.situacionActual.lugarTrabajo}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Remuneración:"  style="font-weight: bold"/>
+                                <p:inputText id="remuneracionSA" value="#{thAccionPersonalView.situacionActual.remuneracion}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Cod. Partida:"  style="font-weight: bold"/>
+                                <p:inputText id="codPartidaSA" value="#{thAccionPersonalView.situacionActual.codPartida}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Partida Presupuestaria:"  style="font-weight: bold"/>
+                                <p:inputText id="nomPartidaSA" value="#{thAccionPersonalView.situacionActual.nomPartida}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Situación Propuesta">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Proceso:"  style="font-weight: bold"/>
+                                <p:inputText id="procesoSP" value="#{thAccionPersonalView.situacionPropuesta.proceso}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Subproceso:"  style="font-weight: bold"/>
+                                <p:inputText id="subprocesoSP" value="#{thAccionPersonalView.situacionPropuesta.subProceso}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Puesto:"  style="font-weight: bold"/>
+                                <p:inputText id="puestoSP" value="#{thAccionPersonalView.situacionPropuesta.puesto}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Lugar de Trabajo:"  style="font-weight: bold"/>
+                                <p:inputText id="trabjaoSP" value="#{thAccionPersonalView.situacionPropuesta.lugarTrabajo}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Remuneración:"  style="font-weight: bold"/>
+                                <p:inputText id="remuneracionSP" value="#{thAccionPersonalView.situacionPropuesta.remuneracion}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Cod. Partida:"  style="font-weight: bold"/>
+                                <p:inputText id="codPartidaSP" value="#{thAccionPersonalView.situacionPropuesta.codPartida}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Partida Presupuestaria:"  style="font-weight: bold"/>
+                                <p:inputText id="nomPartidaSP" value="#{thAccionPersonalView.situacionPropuesta.nomPartida}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset> 
+                </p:panelGrid>
+                <p:panelGrid columns="3" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Acta Final del Concurso">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No."  style="font-weight: bold"/>
+                                <p:inputText id="numFinalAP" value="#{thAccionPersonalView.actaFinal.num}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/>
+                                <p:calendar id="fechaFinalAP"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaFinalAP')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.actaFinal.fecha}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar> 
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Recursos Humanos">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No."  style="font-weight: bold"/>
+                                <p:inputText id="numTthhlAP" value="#{thAccionPersonalView.actaRecursoHumano.num}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/>
+                                <p:calendar id="fechaTthhlAP"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaTthhlAP')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.actaRecursoHumano.fecha}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar> 
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Caucion Registrada">
+                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No."  style="font-weight: bold"/>
+                                <p:inputText id="nomCaucionAP" value="#{thAccionPersonalView.caucion.num}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/>
+                                <p:calendar id="fechaCaucionAP"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaCaucionAP')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.caucion.fecha}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:fieldset legend="Información del Reemplazo">
+                        <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Nombre"  style="font-weight: bold"/>
+                                <p:inputText id="nombreRE" value="#{thAccionPersonalView.infoReemplazoModel.nombre}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Puesto:"  style="font-weight: bold"/>
+                                <p:inputText id="puestoRE" value="#{thAccionPersonalView.infoReemplazoModel.puesto}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Quien Ceso:"  style="font-weight: bold"/>
+                                <p:inputText id="funcionesRE" value="#{thAccionPersonalView.infoReemplazoModel.funciones}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Acción Registrada:"  style="font-weight: bold"/>
+                                <p:inputText id="accionRE" value="#{thAccionPersonalView.infoReemplazoModel.accion}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/><br/>
+                                <p:calendar id="fechaRE"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaRE')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.infoReemplazoModel.fecha}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Afiliación:"  style="font-weight: bold"/>
+                                <p:inputText id="colegioRE" value="#{thAccionPersonalView.infoReemplazoModel.colegio}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="No."  style="font-weight: bold"/>
+                                <p:inputText id="numReemplazoAP" value="#{thAccionPersonalView.reemplazo.num}"
+                                             style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Fecha:"  style="font-weight: bold"/><br/>
+                                <p:calendar id="fechaReemplazoAP"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                            onkeypress="focusNextOnEnter(event, 'fechaReemplazoAP')" readonlyInput="true"
+                                            value="#{thAccionPersonalView.reemplazo.fecha}" style="width: 100%">
+                                    <p:ajax event="dateSelect"/>
+                                </p:calendar>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{thAccionPersonalView.save()}" update="formMain" process="frmAccion"
+                                     id="idGuardar" styleClass="Fs16" style="width: auto; margin: 10px;"/> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+
+</ui:composition>

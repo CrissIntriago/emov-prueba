@@ -1,0 +1,875 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Plan Anual Politica Publica</ui:define>
+    <ui:define name="content">
+        <style>
+            .condicion1{
+                background-color: #E7C402 !important;
+            }
+            .condicion2{
+
+                background-color: white !important;
+            }
+            .condicion3{
+                background-color: #E7C402 !important;
+                color:white;
+            }
+            #comboItem{
+                width: 20px;
+
+            }
+
+        </style>
+
+        <div class="ui-g ui-fluid">
+            <comp:titleTask task="#{planAnualView.tarea}" tramite="#{planAnualView.tramite}" />    
+            <div class="ui-g-12">
+                <h:form prependId="false" id="actividadesOperativa">
+                    <p:panel rendered="false" header="Busqueda Plan">
+                        <p:panelGrid columns="1" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="Año:" />
+                                <p:selectOneMenu value="#{planAnualView.busqueda.anio}" style="width: 100%; margin-top: 10px;">
+                                    <p:ajax listener="#{planAnualView.cargandofecha()}" update="actividadesOperativa" />
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{planAnualView.listaAnio}" var="p" itemLabel="#{p.nombre}" itemValue="#{p.anio}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:panel>
+                    <p:panelGrid columns="4" layout="grid" columnClasses="ui-grid-col-3" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Unidad: "  class="FontBold"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%; " value="#{planAnualView.cupoPresupuesto.unidadAdministrativa.nombre}"/>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo Asignado: " class="FontBold" /><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%;" value="#{planAnualView.totalCupo}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+                            <p:outputLabel style="font-size: 12px; margin-top: 2%;" value="Cupo Registrado: " class="FontBold"/><br/>
+                            <p:outputLabel style="font-size: 12px;margin-top: 2%;" value="#{planAnualView.cupoAsigando}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </h:panelGroup>
+                        <h:panelGroup class="Wid100 TaskProperty" layout="block" >
+
+                            <p:outputLabel value="Estado:" style="font-size: 12px;" class="FontBold"/><br/>
+                            <p:outputLabel style="font-size: 12px" value="#{planAnualView.bloqueo==true?'APROBADO':'NO APORBADO'}"/>
+                        </h:panelGroup>
+
+                    </p:panelGrid>
+
+
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <p:commandButton value="Nuevo" icon="fa fa-plus"  actionListener="#{planAnualView.openActividadOperativa(null)}"
+                                         oncomplete="PF('DlgActividad').show()" update="formActividad" style="width: auto;"/>
+                    </p:panelGrid>
+
+
+                    <p:dataTable  expandableRowGroups="true" id="listaactividad" widgetVar="listaactividad" paginatorPosition="bottom" var="itemActividad"
+                                  value="#{planAnualView.lazyActividadOperativas}" rows="20" paginator="true" 
+                                  paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  rowStyleClass="#{planAnualView.verificarCuadradoReparticion(itemActividad)==false?'condicion1':'condicion2'}"
+                                  style="margin: 20px"
+                                  rowsPerPageTemplate="20,25,35,50,100" lazy="true"
+                                  emptyMessage="No existen actividades con el criterio de busqueda especificado">
+                        <f:facet name="header">
+                            LISTADO DE ACTIVIDADES - #{planAnualView.busqueda.anio == 0 ? '20XX':planAnualView.busqueda.anio}
+                        </f:facet>
+
+                        <p:column  headerText="PLAN" style="width: 10%;" filterBy="#{itemActividad.planProgramaProyecto.programa.panificacion.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{itemActividad.planProgramaProyecto ne null and itemActividad.planProgramaProyecto.programa ne null
+                                                   and itemActividad.planProgramaProyecto.programa.panificacion ne null?
+                                                   itemActividad.planProgramaProyecto.programa.panificacion.codigo.toUpperCase():'NO APLICA'}"/>
+                        </p:column>
+
+                        <p:column  headerText="PROGRAMA" style="width: 10%;" filterBy="#{itemActividad.planProgramaProyecto.programa.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{itemActividad.planProgramaProyecto ne null and itemActividad.planProgramaProyecto.programa ne null?
+                                                   itemActividad.planProgramaProyecto.programa.codigo:'NO APLICA'}"/>
+                        </p:column>
+
+
+                        <p:column  headerText="PROYECTO" style="width: 10%;" filterBy="#{itemActividad.planProgramaProyecto.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{itemActividad.planProgramaProyecto ne null?itemActividad.planProgramaProyecto.codigo.toUpperCase():'NO APLICA'}"/>
+                        </p:column>
+
+                        <p:column  headerText="Actividad Operacional" style="width: 40%;" filterBy="#{itemActividad.nombreActividad}" filterMatchMode="contains">
+                            <h:outputText value="#{itemActividad.nombreActividad.toUpperCase()}"/>
+                        </p:column>
+                        <p:column  headerText="Monto Codificado" style="width: 8%;" filterBy="#{itemActividad.monto}">
+                            <h:outputText value="#{itemActividad.monotReformado}" style="float: right;font-size: 14px;" class="FontBold">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Unidad Responsable" style="width: 16%; " filterBy="#{itemActividad.unidadResponsable.id}" >
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('listaactividad').filter()" styleClass="custom-filter"   style="width: 100%;"  filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{planAnualView.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{itemActividad.unidadResponsable.nombre.toUpperCase()}"/>
+                        </p:column>
+
+                        <p:column  headerText="Período" style="width: 5%;text-align: center; " >
+                            <h:outputText value="#{itemActividad.periodo} "/>
+                        </p:column>
+
+                        <p:column  headerText="Estado" style="width: 40%;" filterBy="#{itemActividad.estadoPapp.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{itemActividad.estadoPapp.descripcion.toUpperCase()}"/>
+                        </p:column>
+                        <p:column headerText="******" style="text-align: center; width: 15%">
+
+
+                            <p:commandLink disabled="#{planAnualView.bloqueo}" title="PRODUCTOS"   process="@this"  
+                                           actionListener="#{planAnualView.openProductos(itemActividad)}"
+                                           oncomplete="PF('dlogoproductos').show()"  update="productos">
+                                <p:graphicImage value="/resources/icons/productos.png"
+                                                width="16" height="15" 
+                                                style="margin-right: 8px;"/>  
+
+                            </p:commandLink>
+                            <p:commandLink disabled="#{planAnualView.bloqueo}" title="EDITAR ACTIVIDAD"     
+                                           actionListener="#{planAnualView.openActividadOperativa(itemActividad)}"
+                                           oncomplete="PF('DlgActividad').show()"  update="formActividad">
+                                <p:graphicImage value="/resources/icons/editar.png"
+                                                width="16" height="15" 
+                                                style="margin-right: 8px;"/>  
+                            </p:commandLink>
+                            <p:commandLink disabled="#{planAnualView.bloqueo}" title="Eliminar"    update="listaactividad"
+                                           actionListener="#{planAnualView.eliminarActividadOperativa(itemActividad)}" 
+                                           >
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar la esta plan proyecto"  icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                            <p:commandLink   disabled="#{!planAnualView.bloqueo}"   title="Restribuccion"     actionListener="#{planAnualView.abrirDlogoRestribuccion(itemActividad)}">
+                                <i class="fa fa-pie-chart" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>                   
+                    <center>
+                        <p:commandButton  value="Completar Tarea" icon="fa fa-check-square-o" actionListener="#{cupoPresupuestoView.abriDlogo()}" style="width: auto;background: #0081cb"/>
+                    </center>
+                </h:form>
+            </div>
+
+
+
+
+            <ui:include id="ActividadesProductos"  src="/common/Dialog/dlgReporte.xhtml" />
+
+         
+
+            <p:dialog width="60%" height="500" id="dlogoProyecto"  header="Proyectos" widgetVar="dlogoProyecto"
+                      modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="fomrProyecto" prependId="false">
+
+
+
+                    <p:dataTable   expandableRowGroups="true" id="datatable2" widgetVar="datatable2" 
+                                   var="a" value="#{planAnualView.planAnualProgramaLazy}" rows="20"  style="width: auto;"
+                                   paginator="true" paginatorPosition="bottom"  
+                                   paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                  
+                                   rowsPerPageTemplate="20,25,35,50" lazy="true" 
+                                   currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                   emptyMessage="No existen datos con el criterio de busqueda especificado">  
+
+                        <p:column  headerText="PLAN" style="width: 10%;" groupRow="true" filterBy="#{a.planAnual.planLocal.descripcion}" >
+                            <h:outputText style="font-style: bold" value="#{a.programa ne null and a.programa.panificacion ne null? a.programa.panificacion.codigo:'NO APLICA'}" />
+                        </p:column>
+                        <p:column  headerText="PROGRAMA" style="width: 10%;" groupRow="true" filterBy="#{a.planAnual.planLocal.descripcion}" >
+                            <h:outputText style="font-style: bold" value="#{a.programa ne null?a.programa.codigo:'NO APLICA'}" />
+                        </p:column>
+                        <p:column headerText=" PROYECTO" style="width: 10%;" filterBy="#{a.nombreProgramaProyecto}">
+                            <h:outputText value="#{a.nombreProgramaProyecto  eq null ?'NO APLICA':a.nombreProgramaProyecto.toUpperCase()}" />
+                        </p:column>
+
+                        <p:column headerText="******" style="text-align: center; width: 3%">
+
+                            <p:commandLink  title="Seleccionar"  
+                                            process="@this" actionListener="#{planAnualView.seleccionProyecto(a)}"
+                                            oncomplete="PF('dlogoProyecto').hide()" 
+                                            update="formActividad,fomrProyecto" >
+                                <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px; "></i>                          
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>                   
+            </p:dialog>
+
+            <p:dialog width="80%" height="500" id="DlgActividad"  header="Actividad Operativa" widgetVar="DlgActividad"
+                      modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="formActividad" prependId="false">
+                    <p:fieldset title="DESCRIPCIÓN"  legend="DESCRIPCIÓN" toggleable="true">
+                        <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="PLAN" style="font-size: 20px; font-weight: bold;"/>
+                                <p:inputText style="width: 100%"
+                                             value="#{planAnualView.programaProyecto.programa.panificacion.descripcion eq null? 'NO APLICA': 
+                                                      planAnualView.programaProyecto.programa.panificacion.descripcion.toUpperCase()}" readonly="true"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="PROGRAMA" style="font-size: 20px; font-weight: bold;"/>
+                                <p:inputText style="width: 100%"
+                                             value="#{planAnualView.programaProyecto.programa.descripcion eq null?'NO APLICA':
+                                                      planAnualView.programaProyecto.programa.descripcion.toUpperCase()}" readonly="true"/>
+                            </p:panelGrid>                  
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:panelGroup>
+                                <h:outputText value="PROYECTO" style="font-size: 20px; font-weight: bold;"/>
+                                <p:commandLink title="Buscar Proyecto" oncomplete="PF('dlogoProyecto').show()"  update="fomrProyecto" process="@this" 
+                                               actionListener="#{planAnualView.loadingProigramas()}">
+                                    <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                </p:commandLink>
+                            </h:panelGroup>
+
+                            <p:inputTextarea value="#{planAnualView.programaProyecto.nombreProgramaProyecto.toUpperCase()}" readonly="true" style="width: 100%" rows="5" cols="12"/>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset title="DATOS ADICIONALES"  legend="DATOS ADICIONALES" toggleable="true">
+                        <p:panelGrid columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="PAI:"/>
+                                <p:selectOneRadio value="#{planAnualView.actividad.pai}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                </p:selectOneRadio>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="PRESUPUESTO PARTICIPATIVO:" class="FontBold"/>
+                                <p:selectOneRadio value="#{planAnualView.actividad.presupuestoParticipacion}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                </p:selectOneRadio>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="GRUPO ATENCION:" class="FontBold"/>
+                                <p:selectOneRadio value="#{planAnualView.actividad.grupoAtencion}" unselectable="true">
+                                    <f:selectItem itemLabel="SI" itemValue="true"/>
+                                    <f:selectItem itemLabel="NO" itemValue="false"/>
+                                </p:selectOneRadio>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <h:outputText value="COMPONENTE:" class="FontBold"/>
+                                <p:selectOneMenu value="#{planAnualView.actividad.tipoComponete}" converter="#{utilConverter}" style="width: 100%;">
+                                    <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{planAnualView.listacomponentes}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </p:panelGrid>
+
+
+
+                        <p:fieldset class="ui-g-1">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank">
+                                <h:outputText value="NUEVO/ARRASTRE:" class="FontBold"/> 
+                                <p:selectBooleanButton value="#{planAnualView.actividad.arrastre}" onLabel="NUEVO" offLabel="ARRASTRE" style="width:auto;"/>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset class="ui-g-10">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="NOMBRE DE LA ACTIVIDAD:" class="FontBold"/>
+                                <p:inputTextarea value="#{planAnualView.actividad.nombreActividad}"  style="width: 95%" rows="2" cols="7" scrollHeight="5"/>
+                            </p:panelGrid>
+                        </p:fieldset>
+
+
+                    </p:fieldset>
+
+                    <p:fieldset title="PROGRAMACIÓN META"  legend="PROGRAMACIÓN META" toggleable="true" tabindex="-1">
+
+                        <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                            <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="OBJETIVO OPERATIVO:" class="FontBold"/>
+                                    <p:inputText value="#{planAnualView.actividad.objetivoOperativo}" style="width: 100%"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DESCRIPCION META:" class="FontBold"/>
+                                    <p:inputText value="#{planAnualView.actividad.descripcionMeta}" style="width: 100%"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MEDICION PORCENTAJE:" class="FontBold"/>
+                                    <p:selectBooleanButton value="#{planAnualView.actividad.medicionPorcentaje}" onIcon="fa fa-check" offIcon="fa fa-close"
+                                                           onLabel="SI" offLabel="NO" style="width:6rem">
+                                        <p:ajax update="medMeta" listener="#{planAnualView.cambiarMedicionPorcentual()}"/>
+                                    </p:selectBooleanButton>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="MEDICIÓN META:" class="FontBold"/>
+                                    <p:inputNumber id="medMeta" readonly="#{planAnualView.actividad.medicionPorcentaje}"
+                                                   value="#{planAnualView.actividad.medicionMeta}" style="width: 300px" decimalPlaces="2"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:outputLabel value="DISTRIBUCCIÓN META:" class="FontBold"/>
+                                <p:selectOneMenu value="#{planAnualView.actividad.distribucionMeta}" converter="#{utilConverter}" style="width: 100%;">
+                                    <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                    <f:selectItems value="#{planAnualView.distribuccionMetaList}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                    <p:ajax listener="#{planAnualView.renderizarDistribuccionMeta()}" update="groupDistrubtionMeta"/>
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </div>
+
+                        <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+                            <h:panelGroup id="groupDistrubtionMeta">
+                                <p:panelGrid columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.semesteMetal}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEMESTRE UNO:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.semestreUnoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.semestrDosMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.trimestreMeta}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE UNO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreUnoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreDosMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE TRES:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreTresMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE CUATRO:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreCuatroMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.cuatrimestreMeta}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE UNO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreUnoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreDosMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE TRES:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreTresMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid  columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.mensualMeta}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="ENERO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.eneroMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="FEBRERO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.febreroMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="MARZO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.marzoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="ABRIL" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.abrilMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="MAYO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.mayoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="JUNIO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.junioMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="JULIO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.julioMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="AGOSTO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.agostoMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEPTIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.septiembreMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="OCTUBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.octubreMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="NOVIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.noviembreMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="DICIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.diciembreMeta}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                            </h:panelGroup>
+
+                        </div>
+                    </p:fieldset>
+
+                    <p:fieldset title="PROGRAMACIÓN FINANCIERA" legend="PROGRAMACIÓN FINANCIERA" toggleable="true">
+
+                        <div class="ui-g-5" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+
+                            <div class="ui-g-6">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%;">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="PRESUPUESTO PROPIO:" class="FontBold"/>
+                                        <p:inputNumber id="presu_inicial" value="#{planAnualView.actividad.presupuestoPropio}" style="background: orange; " decimalPlaces="2">
+                                            <p:ajax event="keyup" listener="#{planAnualView.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                        </p:inputNumber>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="PRESUPUESTO FINANCIAMIENTO:" class="FontBold"/>
+                                        <p:inputNumber id="presu_fina" value="#{planAnualView.actividad.presupuestoFinanciamiento}" style="background: orange;" decimalPlaces="2" >
+                                            <p:ajax event="keyup"  listener="#{planAnualView.sumaMontos()}" update="montoActividad" process="presu_inicial,presu_fina"/>
+                                        </p:inputNumber>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="MONTO:" class="FontBold"/>
+                                        <p:inputNumber id="montoActividad" value="#{planAnualView.actividad.monto}" readonly="true" style="background: yellow; " decimalPlaces="2" />
+                                    </p:panelGrid>                          
+                                </p:panelGrid>
+                            </div>
+                            <div class="ui-g-6">
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="DISTRIBUCCION:" class="FontBold"/>
+                                    <p:selectOneMenu value="#{planAnualView.actividad.tipoDistribuccion}" converter="#{utilConverter}" style="width: 100%;">
+                                        <f:selectItem itemLabel="Seleecione" itemValue="#{null}"/>
+                                        <f:selectItems value="#{planAnualView.distribuccion}" var="c" itemLabel="#{c.texto}" itemValue="#{c}"/>
+                                        <p:ajax listener="#{planAnualView.renderizarDistribuccion()}" update="groupDistrubtion"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                    <p:outputLabel value="AÑO:" class="FontBold"/>
+                                    <p:inputText value="#{planAnualView.actividad.anioPresPar}">
+                                        <p:keyFilter mask="num"/>
+                                    </p:inputText>
+
+                                </p:panelGrid>
+                            </div>
+
+                        </div>
+
+                        <div class="ui-g-7" style="border: 1px solid; border-color: #9D9999;height: 250px;">
+
+                            <h:panelGroup id="groupDistrubtion">
+                                <p:panelGrid id="semestral" columns="2" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.semeste}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEMESTRE UNO:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.semestreUno}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.semestrDos}" decimalPlaces="2"/>
+
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                                <p:panelGrid id="trimestral" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.trimestre}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE UNO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreUno}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreDos}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE TRES:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreTres}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="TRIMESTRE CUATRO:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.trimestreCuatro}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid id="cuatrimestre" columns="3" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.cuatrimestre}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE UNO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreUno}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE DOS:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreDos}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="CUATRIMESTRE TRES:" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.cuatrimestreTres}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+
+                                <p:panelGrid id="mensual" columns="4" style="width: 100%"   layout="grid" styleClass="ui-panelgrid-blank form-group" rendered="#{planAnualView.mensual}">
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="ENERO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.enero}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="FEBRERO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.febrero}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="MARZO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.marzo}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="ABRIL" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.abril}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="MAYO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.mayo}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="JUNIO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.junio}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="JULIO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.julio}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="AGOSTO" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.agosto}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="SEPTIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.septiembre}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="OCTUBRE" class="FontBold"/>
+                                        <p:inputNumber  value="#{planAnualView.actividad.octubre}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="NOVIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.noviembre}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                        <p:outputLabel value="DICIEMBRE" class="FontBold"/>
+                                        <p:inputNumber value="#{planAnualView.actividad.diciembre}" decimalPlaces="2"/>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>
+
+                            </h:panelGroup>
+                        </div>
+                    </p:fieldset>
+
+                    <p:fieldset legend="RESPONSABILIDAD" toggleable="true">
+                        <div class="ui-g-8">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="INDICADOR META" class="FontBold"/>
+                                <p:inputText value="#{planAnualView.actividad.indicadorMeta}" placeholder="EJECUTADO/PLANIFICADO" style="width: 100%;"/>
+                            </p:panelGrid>
+                        </div>
+                        <div class="ui-g-4">
+                            <p:panelGrid columns="1" styleClass="ui-panelgrid-blank" style="width: 100%">
+                                <p:outputLabel value="UNIDAD RESPONSABLE:" class="FontBold"/>
+                                <p:selectOneMenu style="width: 350px;"  disabled="true"  value="#{planAnualView.actividad.unidadResponsable}" converter="#{utilConverter}" required="true">
+                                    <f:selectItem  itemLabel="Seleccione" itemValue="#{null}" />
+                                    <f:selectItems value="#{planAnualView.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                                </p:selectOneMenu>
+                            </p:panelGrid>
+                        </div>
+
+
+                    </p:fieldset>
+
+                    <br/>
+                    <center>
+                        <p:commandButton value="Grabar"  actionListener="#{planAnualView.saveActividadOperativa()}" process="formActividad,actividadesOperativa"
+                                         update="formActividad,actividadesOperativa" icon="fa fa-save" style="width: 150px;"/>
+                        <p:spacer width="10"/>
+                        <p:commandButton value="Cancelar" oncomplete="PF('DlgActividad').hide()" update="formActividad,actividadesOperativa"  icon="fa fa-close" style="width: 150px; background: red;"/>
+                    </center>
+
+
+                </h:form>
+            </p:dialog>
+
+
+
+
+
+            <p:dialog width="800" id="DlgActividadRestribucciones"  header="Actividad Operativa" widgetVar="DlgActividadRestribucciones" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+                <h:form id="formActividadRestribucciones" prependId="false">
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid  columns="1"   >
+                            <p:outputLabel value="Nombre Actividad:" />
+                            <p:inputText readonly="true"  value="#{planAnualView.actividad.nombreActividad}" onkeypress="focusNextOnEnter(event, 'objetivo_operativoR')"  onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Objetivo Operativo:" />
+                            <p:inputText readonly="true" id="objetivo_operativoR" onkeypress="focusNextOnEnter(event, 'descripcion_metaR')" required="true" value="#{planAnualView.actividad.objetivoOperativo}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Descripción meta:" />
+                            <p:inputText readonly="true"  id="descripcion_metaR"  value="#{planAnualView.actividad.descripcionMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </p:panelGrid>
+
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Medición Porcentaje:" />
+                            <p:selectBooleanButton disabled="true"  style="widows: auto;" value="#{planAnualView.actividad.medicionPorcentaje}" 
+                                                   onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check">
+                                <p:ajax update="medMetaR" listener="#{planAnualView.cambiarMedicionPorcentual()}"/>
+                            </p:selectBooleanButton>
+                        </p:panelGrid>
+
+                    </p:panelGrid>
+                    <p:fieldset legend="Detalles de Actividad">
+                        <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Medicion Meta:" />
+                                <p:inputNumber readonly="true" required="true" id="medMetaR" value="#{planAnualView.actividad.medicionMeta}" disabled="#{planAnualView.actividad.medicionPorcentaje}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 1:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.cuatrimestre1Meta}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 2:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.cuatrimestre2Meta}"/>
+                            </p:panelGrid> 
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 3:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.cuatrimestre3Meta}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+
+
+
+
+
+                    <p:fieldset legend="Actividad">
+                        <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Monto:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.monto}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 1:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.cuatrimestre1Actividad}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 2:" />
+                                <p:inputNumber required="true" value="#{planAnualView.actividad.cuatrimestre2Actividad}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 3:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.cuatrimestre3Actividad}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Actividad Codificada">
+                        <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Monto Codificado:" />
+                                <p:inputNumber readonly="true" required="true" value="#{planAnualView.actividad.monotReformado}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 1 codificado:" />
+                                <p:inputNumber  required="true" value="#{planAnualView.actividad.cr1}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 2 codificado::" />
+                                <p:inputNumber required="true" value="#{planAnualView.actividad.cr2}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1">
+                                <p:outputLabel value="Cuatrimestre 3 codificado::" />
+                                <p:inputNumber required="true" value="#{planAnualView.actividad.cr3}"/>
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:panelGrid columns="4" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Indicador meta:" />
+                            <p:inputText  readonly="true" required="true" value="#{planAnualView.actividad.indicadorMeta}" onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1">
+                            <p:outputLabel value="Unidad Administrativa:" />
+                            <p:selectOneMenu disabled="true" required="true" value="#{planAnualView.actividad.unidadResponsable}" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{planAnualView.unidades}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}" />
+                            </p:selectOneMenu>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="text-align: center;">
+                            <p:commandButton value="AÑÁDIR"  actionListener="#{planAnualView.guardarRestribucciones()}"  process="formActividadRestribucciones"
+                                             icon="ui-icon-plus"  style="margin: auto; width: 100%" />
+                        </p:panelGrid>
+                    </p:panelGrid>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                      modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+                <div class="ui-g-12" >
+                    <h:form id="frmDlgObser">
+                        <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:inputTextarea value="#{planAnualView.observaciones}" onkeyup="toUpperCase(this)"
+                                                     rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                                </h:panelGroup> 
+                            </p:panelGrid>
+                            <center>
+                                <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                                 actionListener="#{planAnualView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                                <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                                 style="background: red; width: 150px;margin: 10px" />
+                            </center> 
+                        </p:outputPanel>
+                    </h:form>  
+                </div>
+            </p:dialog>
+
+        </div>
+
+
+
+        <p:sidebar widgetVar="dlogoproductos"  position="right"  baseZIndex="10000" style="width: 70%;">
+            <h:form id="productos" prependId="false">
+                <p:messages id="messages3" showDetail="true" closable="true">
+                    <p:autoUpdate/>
+                </p:messages>
+                <center>
+                    <!--                    <h2>PLAN: #{planAnualView.actividad.planProgramaProyecto ne null and planAnualView.actividad.planProgramaProyecto.programa ne null and 
+                                                        planAnualView.actividad.planProgramaProyecto.programa.panificacion ne null?
+                                                        planAnualView.actividad.planProgramaProyecto.programa.panificacion.descripcion.toUpperCase():'NO APLICA'}</h2>
+                        
+                                            <h2>PROGRAMA: #{planAnualView.actividad.planProgramaProyecto ne null and planAnualView.actividad.planProgramaProyecto.programa ne null?
+                                    planAnualView.actividad.planProgramaProyecto.programa.descripcion.toUpperCase():'NO APLICA'}</h2>
+                    <h2>PROYECTO: #{planAnualView.actividad.planProgramaProyecto ne null? 
+                                    planAnualView.actividad.planProgramaProyecto.nombreProgramaProyecto.toUpperCase():'NO APLICA'}</h2>-->
+                    <h2>NOMBRE ACTIVIDAD:</h2>   
+                    <h2 style="color: blue;">#{planAnualView.actividad.nombreActividad.toUpperCase()}</h2>
+                </center>
+
+
+                <div class="ui-g-2">
+                    <center>
+                        <h1>TOTAL ACTIVIDAD:</h1>
+                        <h:outputText value="#{planAnualView.actividad.monotReformado eq null?0:planAnualView.actividad.monotReformado}"
+                                      style="font-size: 20px;"/>
+                    </center>
+                </div>
+                <div class="ui-g-8" style="border: 1px solid; border-color:rgba(226, 225, 222, 1)">
+
+                    <p:panel header="FORMULARIO DE REGISTRO/EDICIÓN DE PRODUCTOS" id="formProducto" style="padding: 20px 20px 20px 20px">
+                        <p:panelGrid columns="1"   styleClass="form-group ui-panelgrid-blank" style="width: 100%;">
+                            <p:panelGrid  columns="1"   style="width: 100%;">
+                                <p:outputLabel for="@next" value="NOMBRE" class="FontBold"/>
+                                <p:inputText id="nombreProducto" required="true" class="panelInput"  
+                                             value="#{planAnualView.producto.descripcion}"  style="width: 100%;">
+                                </p:inputText>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1"   style="width: 100%;">
+                                <p:outputLabel for="@next" value="MONTO:"  class="FontBold"/>
+                                <p:inputNumber  id="monto-input-producto"  class="panelInput"  required="true" value="#{planAnualView.producto.monto}" style="width: 100%;">
+
+                                </p:inputNumber>
+
+
+                            </p:panelGrid>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="#{planAnualView.producto ne null and planAnualView.producto.id ne null?'EDITAR':'GRABAR'}"
+                                             icon="#{planAnualView.producto ne null and planAnualView.producto.id ne null?'fa fa-edit':'fa fa-save'}" 
+                                             actionListener="#{planAnualView.saveProducto()}" process="formProducto"
+                                             styleClass="Fs16" style="width: auto; margin-bottom: 15px;" update="productos"/>
+                            <p:spacer width="10"/>
+                            <p:commandButton value="Cancelar" icon="fa fa-close" oncomplete="PF('dlogoproductos').hide()"  style="background: red;" process="@this"
+                                             update="formProducto"/>
+                        </center>
+
+                    </p:panel>
+
+
+
+                    <p:panel header="LISTADO DE PRODUCTOS - #{planAnualView.busqueda.anio == 0 ? '20XX':planAnualView.busqueda.anio}" style="padding: 20px 20px 20px 20px">                  
+                        <p:dataTable  expandableRowGroups="true" value="#{planAnualView.productoLazy}" id="listaProductos" widgetVar="listaProductos"
+                                      paginatorPosition="bottom" var="item" rows="10" paginator="true"  style="margin: 20px"
+                                      paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="10,25,35,50" lazy="true"
+                                      currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      emptyMessage="No existen productos con el criterio de busqueda especificado">
+
+
+                            <p:column headerText="Producto" filterBy="#{item.descripcion}" filterMatchMode="contains" style="width: 20%">
+                                <p:outputLabel value="#{item.descripcion.toUpperCase()}"/>
+                            </p:column>
+                            <p:column headerText="Monto Producto" filterBy="#{item.montoReformada}" filterMatchMode="contains" style="width: 5%;">
+                                <p:outputLabel value="#{item.montoReformada}" class="FontBold" style="float: right;">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+
+
+                            <p:column headerText="Estado" filterBy="#{item.estadoPapp.texto}" filterMatchMode="contains" style="text-align: center;width: 5%">
+                                <p:outputLabel value="#{item.estadoPapp.texto.toUpperCase()}">
+
+                                </p:outputLabel>
+                            </p:column>
+
+
+
+                            <p:column headerText="Acciones" style="text-align: center; width: 5%">
+                                <p:commandLink disabled="#{planAnualView.bloqueo}" title="Editar Productos" actionListener="#{planAnualView.aniadirProducto(item)}"   
+                                               update="productos" process="@this"  >
+                                    <p:graphicImage value="/resources/icons/editar.png"
+                                                    width="16" height="15" 
+                                                    style="margin-right: 8px;"/>  
+                                </p:commandLink>
+                                <p:commandLink disabled="#{planAnualView.bloqueo}" title="Eliminar" actionListener="#{planAnualView.eliminarProducto(item)}"
+                                               update="listaProductos,totalProductos"   process="@this" >
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+
+                    </p:panel>
+                </div>
+                <div class="ui-g-2">
+                    <center>
+                        <h1>TOTAL PRODUCTOS:</h1>
+                        <h:outputText id="totalProductos" value="#{planAnualView.totalProductosOriginal eq null?0:planAnualView.totalProductosOriginal}"
+                                      style="font-size: 20px;"/>
+                    </center>
+                </div>
+            </h:form>
+
+        </p:sidebar>
+
+    </ui:define>
+</ui:composition>

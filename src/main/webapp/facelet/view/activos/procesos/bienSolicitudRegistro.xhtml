@@ -1,0 +1,944 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../../WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        REGISTROS DE BIENES
+    </ui:define>
+
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div class="ui-g-12">
+                <u:titleTask task="#{bienSolicitudRegistroView.tarea}" tramite="#{bienSolicitudRegistroView.tramite}" />
+                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                    <p:fieldset legend="Encabezado" style="font-weight: bold" id="igg">
+                        <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" id="ingresoFecha">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="codigoIngresoBien">
+                                <p:outputLabel value="CODIGÓ DE REGISTRO:" for="ingresoNum" style="font-weight: bold"/>
+                                <p:inputText  id="ingresoNum" style="width: 100%; font-weight: bold;" 
+                                              class="panelInput" readonly="true"
+                                              value="#{bienSolicitudRegistroView.bienesMovimiento.codigo}" >
+                                </p:inputText>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="FECHA DE INGRESO:" for="fechaIngreso" style="width: 100%;" title="dd-MM-yyyy"/>
+                                <p:calendar id="fechaIngreso" pattern="dd-MM-yyyy" mask="true" required="true" style="width: 100%; font-weight: bold;"
+                                            value="#{bienSolicitudRegistroView.bienesMovimiento.fechaIngreso}" navigator="true" yearRange="c-100:c+100" locale="es"/>
+                            </h:panelGroup>
+                            <!--                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                            <p:outputLabel value="PERIODO" for="anioIngresoBien" style="width: 100%; padding-bottom: 0px"/>
+                                                            <p:selectOneMenu value="#{bienSolicitudRegistroView.busqueda.anio}" 
+                                                                             style="width: 100%; text-align: right" id="anioIngresoBien"> 
+                                                                <f:selectItems value="#{bienSolicitudRegistroView.listaPeriodos}" 
+                                                                               var="p" itemLabel="#{p.anio}" itemValue="#{p.anio}" />
+                                                            </p:selectOneMenu>
+                                                        </h:panelGroup>-->
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+            </div>
+            <div class="ui-g-12">
+                <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid" id="cabecera">
+                    <p:fieldset legend="Tipo movimiento: " style="font-weight: bold;height: 166px" id="panelMovimiento">
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="TipoMov">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="tipoBien" value="Tipo de Bien" escape="false" style="width: 100%;font-weight:bold"/>
+                                <p:selectOneMenu id="tipoBien" value="#{bienSolicitudRegistroView.bienesItemRegistro.tipoBien}" style="width: 100%"
+                                                 styleClass="custom-filter" converter="entityConverter" required="true">
+                                    <p:ajax  listener="#{bienSolicitudRegistroView.mostrarClasificacionCuenta()}" update="asignarCtacbl" process="tipoBien"/>
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{bienSolicitudRegistroView.listCatalogoItem}" var="tipo" 
+                                                   itemLabel="#{tipo.texto}" itemValue="#{tipo}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="tipoAdquisicion" value="Tipo de Movimiento del Bien" escape="false" style="font-weight:bold"/>
+                                <p:selectOneMenu id="tipoAdquisicion" value="#{bienSolicitudRegistroView.bienesMovimiento.motivoMovimiento}" style="width: 100%"
+                                                 styleClass="custom-filter" converter="entityConverter" required="true">
+                                    <p:ajax  listener="#{bienSolicitudRegistroView.mostrarClasificacionCuenta()}" update="asignarCtacbl,panelFactura"/>
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{bienSolicitudRegistroView.listMotivoMovimiento}" var="motivo" 
+                                                   itemLabel="#{motivo.texto}" itemValue="#{motivo}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Catalogo bienes: " style="font-weight: bold;height: 166px" id="panelCatalogoBienes">
+                        <p:outputPanel id="outPanelCatalogo" style="width: 100%">
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="bienCatalogo">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="catalogoBien" >
+                                    <p:outputLabel for="mef" value="Bienes (MEF):" style="font-weight: bold"/>
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="#{bienSolicitudRegistroView.catalogoBLD.idBien}" id="mef" onkeypress="focusNextOnEnter(event, 'btn-catalogoBien')"
+                                                     placeholder="Buscar Catálogo" required="true" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                        <p:commandButton 
+                                            title="Buscar Catálogo de Bienes" 
+                                            icon="fa fa-search" id="btn-catalogoBien"
+                                            styleClass="green-button button-group" 
+                                            actionListener="#{bienSolicitudRegistroView.openDlgBienMEF()}"
+                                            process="@this">
+                                        </p:commandButton>
+                                    </div>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="descCatalogoBien">
+                                    <p:outputLabel for="descMef" value="Descripción" escape="false"/>
+                                    <p:inputText value="#{bienSolicitudRegistroView.catalogoBLD.descripcion}" id="descMef" readonly="true">
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:outputPanel>
+                    </p:fieldset>
+                    <p:fieldset legend="Asignar Cta. contable: " style="font-weight: bold;height: 166px" id="asignarCtacbl">
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Clasificación" escape="false" for="clasificacionCuenta" style="font-weight: bold;"/><br/>
+                                <p:selectOneMenu id="clasificacionCuenta" value="#{bienSolicitudRegistroView.bienesItemRegistro.clasificTipoBien}" style="width: 200px"
+                                                 styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains" required="true">
+                                    <p:ajax listener="#{bienSolicitudRegistroView.limpiarCuentaBienItem()}" update="asignarCtacbl,asignarCtaGru,codigoItemBien"/>
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{bienSolicitudRegistroView.listCuentaContable}" var="cta" 
+                                                   itemLabel="#{cta.codigo} #{cta.descripcion}" itemValue="#{cta}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="ctaContable" value="Cuenta Contable (Grupo): " style="font-weight: bold; width: 100%;"/>
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{bienSolicitudRegistroView.cuentaContable.codigo}" required="true"
+                                                 onkeypress="focusNextOnEnter(event, 'btn-cuenta')"
+                                                 id="ctaContable"  placeholder="Buscar Cuenta">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                    <p:commandButton title="Listado de Cuenta Contable" styleClass="green-button button-group" icon="fa fa-search" id="btn-cuenta" process="@this,clasificacionCuenta"
+                                                     actionListener="#{bienSolicitudRegistroView.buscarCuenta()}" update="asignarCtacbl,panelDatosBB,panelFactura">
+                                        <p:ajax event="dialogReturn" listener="#{bienSolicitudRegistroView.selectCuentaBien}" update="asignarCtacbl,panelDatosBB,panelFactura"/>
+                                    </p:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="descCtaContable" value="Descripción" style="font-weight: bold; width: 100%;"/>
+                                <p:inputText value="#{bienSolicitudRegistroView.cuentaContable.descripcion} " 
+                                             id="descCtaContable" readonly="true">
+                                    <p:keyFilter regEx="/[\d]/"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:fieldset legend="Asignar subgrupo: " style="font-weight: bold;height: 166px" id="asignarCtaGru">
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="activoFijo" value="Subgrupo Activo: " style="font-weight: bold; width: 100%;"/>
+                                <div class="ui-inputgroup">
+                                    <p:inputText value="#{bienSolicitudRegistroView.bienesItemRegistro.grupoPadre.codigoBienAgrupado}" 
+                                                 id="activoFijo" required="true"
+                                                 onkeypress="focusNextOnEnter(event, 'btn-grupoB')"
+                                                 placeholder="Buscar subgrupo" >
+                                        <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                        <p:ajax update="activoFijo"/>
+                                    </p:inputText>
+                                    <p:commandButton title="Listado de Subgrupo Activo" icon="fa fa-search" id="btn-grupoB" styleClass="green-button button-group" process="@this,ctaContable" 
+                                                     actionListener="#{bienSolicitudRegistroView.buscarGrupoBien()}" update="asignarCtaGru,codigoItemBien,ctaContable">
+                                    </p:commandButton>
+                                </div>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="descActivoFijo" value="Descripción" style="font-weight: bold; width: 100%;"/>
+                                <p:inputText value="#{bienSolicitudRegistroView.bienesItemRegistro.grupoPadre.descripcion}" 
+                                             id="descActivoFijo" readonly="true">
+                                    <p:keyFilter regEx="/[\d]/"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:fieldset legend="Registro bien: " style="font-weight: bold" id="panelDatosBB">
+                            <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="codigoItemBien" value="Código:"/>
+                                    <p:inputText id="codigoItemBien" value="#{bienSolicitudRegistroView.bienesItemRegistro.codigoBienAgrupado}" 
+                                                 style="width: 100%" readonly="true">
+                                        <p:keyFilter regEx="/[a-z A-Z]/i"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="descripcionBien" value="Descripción:"/>
+                                    <p:inputText id="descripcionBien" value="#{bienSolicitudRegistroView.bienesItemRegistro.descripcion}"  style="width: 100%;text-transform: uppercase" 
+                                                 required="true"
+                                                 onkeyup="toUpperCase(this)" onkeypress="focusNextOnEnter(event, 'marca')">
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="marca" value="Marca:" />
+                                    <p:inputText id="marca" value="#{bienSolicitudRegistroView.bienesItemRegistro.marca}" 
+                                                 onkeypress="focusNextOnEnter(event, 'modelo')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="modelo" value="Modelo:" />
+                                    <p:inputText id="modelo" value="#{bienSolicitudRegistroView.bienesItemRegistro.modelo}"  
+                                                 onkeypress="focusNextOnEnter(event, 'color1')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="color1" value="Color 1:" />
+                                    <p:inputText id="color1" value="#{bienSolicitudRegistroView.bienesItemRegistro.color1}"  
+                                                 onkeypress="focusNextOnEnter(event, 'color2')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                        <p:keyFilter regEx="/[a-z A-Z]/i"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="color2" value="Color 2:" />
+                                    <p:inputText id="color2" value="#{bienSolicitudRegistroView.bienesItemRegistro.color2}" 
+                                                 onkeypress="focusNextOnEnter(event, 'serie1')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();">
+                                        <p:keyFilter regEx="/[a-z A-Z]/i"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="serie1" value="Serie 1:" />
+                                    <p:inputText id="serie1" value="#{bienSolicitudRegistroView.bienesItemRegistro.serie1}" 
+                                                 onkeypress="focusNextOnEnter(event, 'serie2')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();" >
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="serie2" value="Serie 2:" />
+                                    <p:inputText id="serie2" value="#{bienSolicitudRegistroView.bienesItemRegistro.serie2}" 
+                                                 onkeypress="focusNextOnEnter(event, 'anioFab')"
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();" >
+                                        <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="anioFab" value="Año de Fabricación:" />
+                                    <p:inputText id="anioFab" value="#{bienSolicitudRegistroView.bienesItemRegistro.anioFabricacion}"  maxlength="4" 
+                                                 onkeypress="focusNextOnEnter(event, 'observacion')">
+                                        <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.vidaUtilTempBoolean}">
+                                    <p:outputLabel value="Material del Bien:" escape="false" for="materialBienTemp"/>
+                                    <p:selectOneMenu id="materialBienTemp" value="#{bienSolicitudRegistroView.vidaUtil}" style="width: 95%"
+                                                     styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains">
+                                        <p:ajax listener="#{bienSolicitudRegistroView.obtenerVidaUtil()}" update="materialBien,panelFactura"/>
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienSolicitudRegistroView.listVidaUtil}" var="cta" 
+                                                       itemLabel="#{cta.descripcion}" itemValue="#{cta}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.vidaUtilBoolean}">
+                                    <p:outputLabel for="materialBien" value="Material del Bien:" />
+                                    <p:inputText id="materialBien" value="#{bienSolicitudRegistroView.bienesItemRegistro.materialBien}" 
+                                                 onkeyup="toUpperCase(this)">
+                                        <p:keyFilter regEx="/[a-z A-Z]/i" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="estado" value="Estado del Bien:" escape="false"/>
+                                    <p:selectOneMenu id="estado" value="#{bienSolicitudRegistroView.bienesItemRegistro.estadoBien}"
+                                                     styleClass="custom-filter" converter="entityConverter" required="true">
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienSolicitudRegistroView.listEstadoBien}" var="estado" itemLabel="#{estado.texto}" itemValue="#{estado}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="uso" value="Uso" escape="false"/>
+                                    <p:selectOneMenu id="uso" value="#{bienSolicitudRegistroView.bienesItemRegistro.uso}"
+                                                     styleClass="custom-filter" required="true">
+                                        <f:selectItem itemLabel="Activo" itemValue="#{true}"/>
+                                        <f:selectItem itemLabel="Inactivo" itemValue="#{false}"/> 
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridProyecto">
+                                    <p:outputLabel  value="Componentes:" for="proyecto" style="width: 100%; font-weight: bold" />
+                                    <p:selectBooleanButton  id="proyecto" required="false" style="width: 100%"
+                                                            value="#{bienSolicitudRegistroView.bienesItemRegistro.tieneComponentes}" 
+                                                            onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check">
+                                        <p:ajax update="gridComponentes"/>
+                                    </p:selectBooleanButton>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Lote:" escape="false" for="lote" style="width: 100%; font-weight: bold"/>
+                                    <p:selectBooleanButton  id="lote" required="false" style="width: 100%"
+                                                            value="#{bienSolicitudRegistroView.lote}" 
+                                                            onLabel="Si" offLabel="No" offIcon="fa fa-times" onIcon="fa fa-check">
+                                        <p:ajax update="cantidad" event="valueChange"/>
+                                    </p:selectBooleanButton>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="observacion" value="Observación:" />
+                                    <p:inputTextarea id="observacion" value="#{bienSolicitudRegistroView.bienesItemRegistro.observacion}" rows="3" 
+                                                     autoResize="false" required="#{bienSolicitudRegistroView.bienesMovimiento.motivoMovimiento.orden eq 1 ? true:false}"
+                                                     onkeyup="toUpperCase(this)">
+                                    </p:inputTextarea>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:fieldset legend="Dimensiones: " style="font-weight: bold" id="dimensiones">
+                            <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="unidad_medida" value="Unidad Medida:" />
+                                    <p:selectOneMenu id="unidad_medida" value="#{bienSolicitudRegistroView.bienesItemRegistro.unidadMedida}"
+                                                     styleClass="custom-filter" converter="entityConverter">
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienSolicitudRegistroView.medidas}" var="m" itemLabel="#{m.texto}" itemValue="#{m}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="alto" value="Alto:" />
+                                    <p:inputText id="alto" value="#{bienSolicitudRegistroView.bienesItemRegistro.alto}" 
+                                                 onkeypress="focusNextOnEnter(event, 'ancho')">
+                                        <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="ancho" value="Ancho:" />
+                                    <p:inputText id="ancho" value="#{bienSolicitudRegistroView.bienesItemRegistro.ancho}" 
+                                                 onkeypress="focusNextOnEnter(event, 'largo')">
+                                        <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="largo" value="Largo:" />
+                                    <p:inputText id="largo" value="#{bienSolicitudRegistroView.bienesItemRegistro.largo}" 
+                                                 onkeypress="focusNextOnEnter(event, 'datosAdicBienes')">
+                                        <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos adicionales: " style="font-weight: bold" id="datosAdicionales">
+                            <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="De: " escape="false" for="datosAdicBienes"/>
+                                    <p:selectOneMenu id="datosAdicBienes" value="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional}" style="width: 95%"
+                                                     styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains">
+                                        <p:ajax update="datosAdicionales"/>
+                                        <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItems value="#{bienSolicitudRegistroView.listDatosAdicionales}" var="adic" 
+                                                       itemLabel="#{adic.texto}" itemValue="#{adic}"/>
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional eq null ? false:true}">
+                                    <p:outputLabel for="placaCodigoCatastral" value="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'Placa:':null} #{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-PREDI'? 'Código Catastral:':null} #{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-EQCAM'? 'Placa:':null}" />
+                                    <p:inputText id="placaCodigoCatastral" value="#{bienSolicitudRegistroView.bienesItemRegistro.placaCodigocatastral}" onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                                 onkeypress="focusNextOnEnter(event, 'chasis')">
+                                        <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional eq null ? false:true}">
+                                    <p:outputLabel for="chasis" value="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'No Chasis:':null} #{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-PREDI' ? 'Ubicación:':null} #{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-EQCAM' ? 'Código Chasis:':null}"/>
+                                    <p:inputText id="chasis" value="#{bienSolicitudRegistroView.bienesItemRegistro.ubicacionNumchasis}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                                 onkeypress="focusNextOnEnter(event, '')">
+                                        <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional eq null ? false:(bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-PREDI' ? false:true)}">
+                                    <p:outputLabel for="motorUbicacion" value="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'No Serie Motor:':null} #{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-EQCAM' ? 'Código Motor:':null}" />
+                                    <p:inputText id="motorUbicacion" value="#{bienSolicitudRegistroView.bienesItemRegistro.serieMotor}"  
+                                                 onkeyup="javascript:this.value = this.value.toUpperCase();" onkeypress="focusNextOnEnter(event, '')">
+                                        <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional eq null ? false:(bienSolicitudRegistroView.bienesItemRegistro.tipoDatoAdicional.codigo eq 'AD-PREDI' ? true:false)}">
+                                    <p:outputLabel for="fechInscripcion" value="Fecha de Inscripción:" />
+                                    <p:calendar pattern="dd-MM-yyyy" mask="true" id="fechInscripcion" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                value="#{bienSolicitudRegistroView.bienesItemRegistro.fechaInscripcionPredio}" 
+                                                onkeypress="focusNextOnEnter(event, '')"/>
+                                </h:panelGroup>
+
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Adquisición:" id="panelAdquisicion" style="font-weight: bold">
+                            <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                              rendered="#{bienSolicitudRegistroView.adquisicionesOrden.id == null ? true:false}">
+                                    <p:commandButton value="Añadir Adquisición" id="añadirProveedor" update="panelAdquisicion" process="@this"
+                                                     icon="fa fa-plus-circle" actionListener="#{bienSolicitudRegistroView.openDlgAdquisicion()}"
+                                                     style="width: 100%" styleClass="Fs16"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="ordenAdquisicion">
+                                    <p:outputLabel for="adq" value="No Orden:" escape="false"/>
+                                    <p:inputText value="#{bienSolicitudRegistroView.adquisicionesOrden.idProceso}" maxlength="12" id="adq"
+                                                 readonly="false" style="width: 100%">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="fechaEmisionAdq" value="Fecha de Emisión" />
+                                    <p:calendar pattern="dd-MM-yyyy" id="fechaEmisionAdq" locale="de" navigator="true" value="#{bienSolicitudRegistroView.adquisicionesOrden.fechaEmision}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="fechaAceptacionAdq" value="Fecha de Aceptación" />
+                                    <p:calendar pattern="dd-MM-yyyy" id="fechaAceptacionAdq" locale="de" navigator="true" value="#{bienSolicitudRegistroView.adquisicionesOrden.fechaAceptacion}" />
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Proveedor:" id="panelAdquisicionProveedor" style="font-weight: bold">
+                            <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" style="font-weight: bold;" layout="grid">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="proveedorAdq" value="RUC" />
+                                    <p:inputText id="proveedorAdq" value="#{bienSolicitudRegistroView.adquisicionesOrden.proveedor.cliente.identificacionCompleta}"   >
+                                        <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="razonSocialAdq" value="Razón Social" />
+                                    <p:inputText id="razonSocialAdq" value="#{bienSolicitudRegistroView.adquisicionesOrden.proveedor.cliente.nombre}" >
+
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="nomComercialAdq" value="Nombre Comercial" />
+                                    <p:inputText id="nomComercialAdq" value="#{bienSolicitudRegistroView.adquisicionesOrden.proveedor.cliente.apellido}"  readonly="true" >
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                    <p:fieldset legend="Factura " style="font-weight: bold" id="panelFactura" >
+                        <p:panelGrid  columns="6" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:commandButton value="Buscar Factura" id="openFactura" update="panelFactura" process="@this"
+                                                 icon="fa fa-search" actionListener="#{bienSolicitudRegistroView.openDialogFactura()}"
+                                                 style="width: 100%;" styleClass="Fs16"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="fechaAdquisicion" value="Fecha de Compra" style="width: 100%;"/>
+                                <p:calendar pattern="dd-MM-yyyy" mask="true" id="fechaAdquisicion" required="true" style="width: 100%;"
+                                            value="#{bienSolicitudRegistroView.bienesItemRegistro.fechaAdquisicion}" onkeypress="focusNextOnEnter(event, 'costo_input')"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="vidaUtil" value="Vida Útil" style="width: 100%;"/>
+                                <p:inputText id="vidaUtil" value="#{bienSolicitudRegistroView.bienesItemRegistro.vidaUtil}" 
+                                             required="true" style="width: 100%;" onkeypress="focusNextOnEnter(event, 'fechaUltDeprec_input')"
+                                             readonly="#{bienSolicitudRegistroView.habilitarVida}" maxlength="2">
+                                    <p:keyFilter regEx="/[\d\-]/"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{bienSolicitudRegistroView.utpe}">
+                                <p:outputLabel for="utpeVida" value="UTPE" style="width: 100%;" title="Unidades de Tiempo o de Producción Estimadas"/>
+                                <p:inputNumber id="utpeVida" style="width: 100%;" value="#{bienSolicitudRegistroView.bienesItemRegistro.utpe}" decimalSeparator="." thousandSeparator=",">
+                                    <p:keyFilter regEx="/[\d\-\.]/"/>
+                                </p:inputNumber>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                          rendered="#{bienSolicitudRegistroView.bienesMovimiento.motivoMovimiento.orden eq 1 ? true:false}">
+                                <p:outputLabel for="fechaUltDeprec" value="Fecha de Última Depreciación" style="width: 100%;"/>
+                                <p:calendar style="width: 100%;" pattern="dd-MM-yyyy" mask="true" id="fechaUltDeprec" 
+                                            onkeypress="focusNextOnEnter(event, 'deprecAcum_input')"
+                                            value="#{bienSolicitudRegistroView.bienesItemRegistro.fechaUltimDepreciacion}" />
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                          rendered="#{bienSolicitudRegistroView.bienesMovimiento.motivoMovimiento.orden eq 1 ? true:false}">
+                                <p:outputLabel for="deprecAcum" value="Depreciación Acumulada" style="width: 100%;"/>
+                                <p:inputNumber style="width: 100%;" id="deprecAcum" onkeypress="focusNextOnEnter(event, 'btnSave')"
+                                               value="#{bienSolicitudRegistroView.bienesItemRegistro.depreciacionAcumulada}" decimalSeparator="." thousandSeparator=",">
+                                    <p:keyFilter regEx="/[\d\-\.]/"/>
+                                </p:inputNumber>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="costo" value="Costo de Adquisición $" style="width: 100%;"/>
+                                <p:inputNumber style="width: 100%;" id="costo" value="#{bienSolicitudRegistroView.bienesItemRegistro.costoAdquisicion}" 
+                                               onkeypress="focusNextOnEnter(event, 'btnSave')"
+                                               decimalSeparator="." thousandSeparator="," required="true">
+                                    <p:ajax listener="#{bienSolicitudRegistroView.calcular()}" update="valorTotal"/>
+                                    <p:keyFilter regEx="/[\d\-\.]/"/>
+                                </p:inputNumber>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel style="width: 100%;" for="cantidad" value="Cantidad" />
+                                <p:inputText style="width: 100%;" id="cantidad" value="#{bienSolicitudRegistroView.bienesItemRegistro.cantidad}" 
+                                             onkeypress="focusNextOnEnter(event, 'btnSave')" readonly="#{bienSolicitudRegistroView.lote eq true ? false:true}" required="true">
+                                    <p:ajax listener="#{bienSolicitudRegistroView.calcular()}" update="valorTotal"/>
+                                    <p:keyFilter regEx="/[\d\-]/"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="valorTotal" value="Valor Total $" style="width: 100%;"/>
+                                <p:inputNumber style="width: 100%;" id="valorTotal" value="#{bienSolicitudRegistroView.bienesItemRegistro.valorTotal}" decimalSeparator="." thousandSeparator="," readonly="true">
+                                    <p:keyFilter regEx="/[\d\-\.]/"/>
+                                </p:inputNumber>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </p:panelGrid>
+                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" id="gridComponentes">
+                    <p:fieldset legend="Componentes" style="font-weight: bold"  
+                                rendered="#{bienSolicitudRegistroView.bienesItemRegistro.tieneComponentes}">
+                        <p:commandButton value="Adicionar" icon="fa fa-plus" id="btnNewComponente" disabled=""
+                                         process="@this" actionListener="#{bienSolicitudRegistroView.newComponentes(null,null)}" update="dtComponentes,frmdlgComp"
+                                         style="width: 150px;margin-bottom: 10px"> 
+                        </p:commandButton>
+                        <p:dataTable id="dtComponentes" widgetVar="dtComponentes" var="comp" paginator="true" rows="5" rowsPerPageTemplate="10,20,30,50" 
+                                     style="width: 100%;" paginatorPosition="bottom" reflow="true" filterEvent="keyup" paginatorAlwaysVisible="false"
+                                     rowIndexVar="can" value="#{bienSolicitudRegistroView.listBienesComponentes}"
+                                     emptyMessage="No existen componentes asignados al Bien" >
+                            <f:facet name="Listado de Componestes"></f:facet>
+                            <p:column headerText="#" style="width: 5%;" >
+                                <h:outputText value="#{can +1 }"/>
+                            </p:column>
+                            <p:column headerText="Código" style="width: 10%;">
+                                <h:outputText value="#{comp.codigoBien}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 40%;">
+                                <h:outputText value="#{comp.descripcion}" />
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 10%;">
+                                <h:outputText value="#{comp.estadoBien.texto}" />
+                            </p:column>
+                            <p:column headerText="Marca" style="width: 15%;">
+                                <h:outputText value="#{comp.marca}" />
+                            </p:column>
+                            <p:column headerText="Modelo" style="width: 10%;">
+                                <h:outputText value="#{comp.modelo}" />
+                            </p:column>
+                            <p:column headerText="Acciones" style="font-weight: bold; width: 10%">
+                                <center>  
+                                    <p:commandLink title="Editar" update="frmdlgComp" 
+                                                   actionListener="#{bienSolicitudRegistroView.newComponentes(comp,can)}" process="@this">
+                                        <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                    </p:commandLink>  
+                                    <p:commandLink title="Eliminar" process="@this" actionListener="#{bienSolicitudRegistroView.borrarCompLista(can)}"
+                                                   update="dtComponentes">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar el componente?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>         
+                                </center>
+                            </p:column>
+                        </p:dataTable>
+                    </p:fieldset>  
+                </p:panelGrid>
+                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="btns">
+                    <center>
+
+                        <p:commandButton disabled="#{bienSolicitudRegistroView.botonGuardar}" value="Guardar Registro" icon="fa fa-save"  
+                                         actionListener="#{bienSolicitudRegistroView.saveBienItem()}" id="btnGuarda"  
+                                         style="width: 170px;"  styleClass="Fs16" update="frmMain,btnContinuar, btnGuarda"/>
+                        <p:spacer width="10"/>
+                        <p:commandButton value="Continuar"  
+                                         disabled="#{bienSolicitudRegistroView.botonContinuar}"
+                                         icon="fa fa-check" 
+                                         id="btnContinuar" actionListener="#{bienSolicitudRegistroView.continuarProcesoEstados()}"
+                                         update="btnContinuar,aprob,desprob"
+                                         style=" width: 170px">
+                        </p:commandButton>
+                        <p:spacer width="10"/>
+                        <p:commandButton disabled="#{bienSolicitudRegistroView.botonAprobaciones}"
+                                         actionListener="#{bienSolicitudRegistroView.ingresarObservaciones(true)}" value="Aprobar"  id="aprob" 
+                                         icon="fa fa-arrow-circle-right"  style="width: 170px; background: #0081cb;"  
+                                         />
+                        <p:spacer width="10"/>
+                        <p:commandButton disabled="#{bienSolicitudRegistroView.botonRechazado}"
+                                         actionListener="#{bienSolicitudRegistroView.ingresarObservaciones(false)}" value="Rechazar" id="desprob"
+                                         icon="ui-icon-clear"                                                 
+                                         style="width: 170px; background:red">
+                        </p:commandButton>
+                    </center> 
+                </h:panelGroup>
+            </div>
+        </h:form>
+
+        <p:dialog header="Listado de subgrupos" widgetVar="dlgGrupoBien" modal="true" width="60%" height="450"
+                  resizable="false" showEffect="fade" hideEffect="fade" id="dlgGrupoBien">
+            <h:form prependId="false" id="frmItem" style="width: 100%">
+                <p:dataTable id="dtDlgGrupBien" widgetVar="dtDlgGrupBien" var="grup" value="#{bienSolicitudRegistroView.listBienesItem}" reflow="true" 
+                             paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="bottom" filterEvent="keyup"
+                             emptyMessage="No existe Grupo Bien de esa cuenta Contable." paginatorAlwaysVisible="false">
+                    <p:column headerText="CÓDIGO" style="width: 15%;text-align: center;" filterBy="#{grup.codigoBienAgrupado}">
+                        <h:outputText value="#{grup.cuentaContable.codigo} - #{grup.codigoBien}" />
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 50%;" filterBy="#{grup.descripcion}">
+                        <h:outputText value="#{grup.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Acciones" style="text-align: center; width: 10%;">
+                        <p:commandLink actionListener="#{bienSolicitudRegistroView.selectGrupoBien(grup)}" title="Agregar"  update="frmMain">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #66ff33;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Catálogo de bien" widgetVar="dlgCatalogoBien" modal="true" width="60%" height="500"
+                  resizable="true" showEffect="fade" hideEffect="fade" id="dlgCatalogoBien">
+            <h:form prependId="false" id="frmCatalogoBien" style=" width: 100%;">
+                <p:dataTable id="dtItem" 
+                             var="bien" value="#{bienSolicitudRegistroView.lazyCatalogoBLD}"
+                             reflow="true" 
+                             paginator="true" scrollable="true"
+                             lazy="true" rows="18" 
+                             rowsPerPageTemplate="18,30,50,100"
+                             paginatorPosition="bottom"
+                             filterEvent="keyup"
+                             emptyMessage="No existe Catálogo.">
+                    <f:facet name="header">
+                        Listado de catálogo de bienes
+                    </f:facet>
+                    <p:column headerText="Código" style="font-weight: bold; width: 20%; text-align: center" filterBy="#{bien.idBien}">
+                        <h:outputText value="#{bien.idBien}"/>   
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 40%" filterBy="#{bien.descripcion}" filterMatchMode="contains">
+                        <h:outputText value="#{bien.descripcion}"/> 
+                    </p:column>
+                    <p:column headerText="Item Presupuestario" style="width: 20%;text-align: center" filterBy="#{bien.itemPresupuestario}">
+                        <h:outputText value="#{bien.itemPresupuestario}"/>  
+                    </p:column>
+                    <p:column headerText="Acción" style="text-align: center; width: 10%">
+                        <p:commandLink actionListener="#{bienSolicitudRegistroView.selectDataCatalogo(bien)}" title="Agregar" 
+                                       update="panelCatalogoBienes">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #66ff33;"></i>
+                        </p:commandLink>
+                    </p:column>
+
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Registro de adquisiciones"
+                  widgetVar="dlgAdquisiciones"
+                  modal="true" width="80%"
+                  resizable="false" height="500"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgAdquisiciones">
+            <h:form  id="frmDlgAdquisicion" prependId="false">
+                <p:commandButton value="Mostrar Todo"
+                                 icon="fa fa-eye"
+                                 process="@this"
+                                 actionListener="#{bienSolicitudRegistroView.mostrarTodasAdquisiciones()}"
+                                 update="dtAdquisiciones"
+                                 style="width: 150px;margin-bottom: 20px">
+                </p:commandButton>
+                <p:dataTable id="dtAdquisiciones" var="ord" reflow="true"  paginator="true" 
+                             lazy="true" rows="5" rowsPerPageTemplate="10,50,100" 
+                             paginatorPosition="bottom"
+                             filterEvent="keyup" value="#{bienSolicitudRegistroView.listaAdaqui}"
+                             emptyMessage="No se encontró Ninguna orden de compra en el sistema.">
+                    <f:facet name="header">
+                        LISTA DE ORDEN DE ADQUISICION
+                    </f:facet>
+                    <p:column headerText="No Proceso" style="width: 15%;text-align: center" filterBy="#{ord.idProceso}" filterMatchMode="contains">
+                        <h:outputText value="#{ord.idProceso}" />
+                    </p:column>
+                    <p:column headerText="Tipo de Proceso" style="width: 20%;" filterBy="#{ord.idProceso}" filterMatchMode="contains">
+                        <h:outputText  value="#{ord.tipoProceso}"/>
+                    </p:column>
+                    <p:column headerText="No Contrato" style="width: 15%;text-align: center" filterBy="#{ord.idProceso}" filterMatchMode="contains">
+                        <h:outputText  value="#{ord.numeroContrato}"/>
+                    </p:column>
+                    <p:column headerText="Fecha Contrato" style="width: 10%;text-align: center" >
+                        <h:outputText  value="#{ord.fechaContrato}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Monto" style="width: 10%;" >
+                        <h:outputText  value="#{ord.valorContratado}" style="float: right">
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 22%;" >
+                        <h:outputText  value="#{ord.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Acción" style="text-align: center; width: 8%">
+                        <p:commandLink title="Seleccionar" actionListener="#{bienSolicitudRegistroView.closeSelectAdquisicion(ord)}" process="@this" update="panelAdquisicion,panelAdquisicionProveedor">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; color: #66ff33;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos de Factura"
+                  widgetVar="dlgFact"
+                  modal="true" width="60%" 
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  id="dlgFact">
+            <h:form prependId="false" id="frmFact">
+                <p:commandButton value="Añadir Factura" 
+                                 id="anadirFact" update="idFact,frmFactura" process="@this"
+                                 rendered="#{bienSolicitudRegistroView.adquisicionesOrden.id == null ? true:false}"
+                                 icon="fa fa-plus" actionListener="#{bienSolicitudRegistroView.abrirDialogoFacturaCambios()}"
+                                 style="width: 20%;margin-bottom: 20px" styleClass="Fs16"/>
+                <p:dataTable id="idFact" 
+                             var="fac" 
+                             reflow="true" 
+                             paginator="true" 
+                             lazy="true" rows="5" 
+                             rowsPerPageTemplate="5,10,50,100" 
+                             paginatorPosition="bottom"
+                             filterEvent="keyup"
+                             rowKey="#{fac.id}"
+                             value="#{bienSolicitudRegistroView.lazyFactura}"
+                             emptyMessage="No se encontró ninguna factura en el sistema.">
+                    <f:facet name="header">
+                        Lista de Facturas Registradas
+                    </f:facet>
+                    <p:column headerText="No Factura" style="width: 25%;text-align: center" filterBy="#{fac.numFactura}">
+                        <h:outputText value="#{fac.numFactura}" />
+                    </p:column>
+                    <p:column headerText="Fecha de Emisión" style="width: 15%;text-align: center" >
+                        <h:outputText  value="#{fac.fechaFactura}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Fecha de Factura" style="width: 15%;text-align: center" >
+                        <h:outputText  value="#{fac.fechaCaducidad}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="No Autorización" style="width: 35%;" >
+                        <h:outputText  value="#{fac.numAutorizacion}"/>
+                    </p:column>
+                    <p:column headerText="Acción" style="text-align: center; width: 10%">
+                        <p:commandLink actionListener="#{bienSolicitudRegistroView.closeSelectFactura(fac)}" title="Agregar"
+                                       process="@this" update="panelFactura,frmFact">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #66ff33;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Formulario Datos de Factura" widgetVar="dlgFacturas" width="40%"
+                  modal="true" resizable="false" showEffect="fade" hideEffect="fade" id="dlgFacturas">
+            <h:form prependId="false" id="frmFactura">
+                <p:growl id="msgss" showDetail="true"/>
+                <p:fieldset legend="Datos de la factura:" style="font-weight: bold" id="datosFacturaCambios">
+                    <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Número Factura" for="numFacturaCambio" style="width: 100%;"/>
+                            <p:inputText  id="numFacturaCambio" onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%"
+                                          value="#{bienSolicitudRegistroView.factura.numFactura}" class="panelInput" readonly="false" >
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Fecha de Emisión" style="width: 100%;"/>
+                            <p:calendar id="fecFactura" pattern="dd-MM-yyyy" mask="true" style="width: 100%" 
+                                        navigator="true" yearRange="c-100:c+100" locale="es"
+                                        value="#{bienSolicitudRegistroView.factura.fechaFactura}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Fecha de Caducidad" style="width: 100%;"/>
+                            <p:calendar id="fecFacturaCad" pattern="dd-MM-yyyy" mask="true" style="width: 100%"
+                                        navigator="true" yearRange="c-100:c+100" locale="es"
+                                        value="#{bienSolicitudRegistroView.factura.fechaCaducidad}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Número Autorización" for="numAut" style="width: 100%;"/>
+                            <p:inputText  id="numAut" onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%"
+                                          value="#{bienSolicitudRegistroView.factura.numAutorizacion}" class="panelInput">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="GUARDAR"
+                                     icon="ui-icon-save" style="width: 30%; margin: 20px"
+                                     actionListener="#{bienSolicitudRegistroView.guardarFactura()}"
+                                     process="@form" update="panelFactura,frmFact">
+                    </p:commandButton>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgComponentes" header="Formulario de Componentes" 
+                  widgetVar="dlgComponentes" width="45%"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmdlgComp" prependId="false">
+                <p:outputPanel id="outPanelComponentes" style="width: 100%;">
+                    <p:panelGrid columns="1" layout="grid" id="pgComponente" styleClass="ui-panelgrid-blank form-group">
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Descripción" for="descripcionComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="descripcionComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.descripcion}"
+                                              required="true" style="width: 100%;" onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput" >
+                                </p:inputText>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Código" for="codigoComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="codigoComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.codigoBien}"
+                                              onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%"
+                                              class="panelInput" readonly="false" disabled="true">
+                                </p:inputText>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Serie" for="serieComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="serieComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.serie1}" style="width: 100%"
+                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Marca" for="marcaComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="marcaComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.marca}" style="width: 100%"
+                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Modelo" for="modeloComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="modeloComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.modelo}" style="width: 100%"
+                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel  value="Cantidad" for="cantidadComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputText  id="cantidadComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.cantidad}" required="true" style="width: 100%" class="panelInput">
+                                    <p:keyFilter regEx="/[\d\-]/"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Estado del Componente" escape="false" style="font-weight: bold; width: 100%" for="estadoComp"/>
+                                <p:selectOneMenu id="estadoComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.estadoBien}" style="width: 100%"
+                                                 styleClass="custom-filter" converter="entityConverter" required="true">
+                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                    <f:selectItems value="#{bienSolicitudRegistroView.listEstadoBien}" var="estado" itemLabel="#{estado.texto}" itemValue="#{estado}"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Observación" for="observComp" style="width: 100%; font-weight: bold;"/> 
+                                <p:inputTextarea  id="observComp" value="#{bienSolicitudRegistroView.bienesItemComponentes.observacion}" style="width: 100%"
+                                                  onkeyup="javascript:this.value = this.value.toUpperCase();" rows="3" autoResize="false"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:panelGrid>
+                    <center>
+                        <p:commandLink title="Guardar" id="componenteSave-btn"  style="width: auto;"
+                                       actionListener="#{bienSolicitudRegistroView.saveComponenteOfBienItem()}"
+                                       styleClass="Fs16" update="frmdlgComp,gridComponentes">
+                            <p:graphicImage value="/resources/icons/disquet.png"
+                                            width="40" height="50" 
+                                            style="margin:auto;  width: auto; "/>
+                        </p:commandLink>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{bienSolicitudRegistroView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{bienSolicitudRegistroView.aprobacionPrcoeso(1)}"
+                                             style="width: 150px;margin: 10px"  rendered="#{bienSolicitudRegistroView.botonRechazado}"/>
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Rechazar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{bienSolicitudRegistroView.aprobacionPrcoeso(0)}"
+                                             style="width: 150px;margin: 10px"  rendered="#{bienSolicitudRegistroView.botonAprobaciones}"/>
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog widgetVar="dlgoBienesMostrar" modal="true" width="1200" >
+            <h:form id="fmDlogoMostrar">
+                <p:dataTable id="data" widgetVar="data" var="da" paginator="true" rows="5" rowsPerPageTemplate="5,10,15" 
+                             style="width: 100%;" paginatorPosition="bottom"  value="#{bienSolicitudRegistroView.listaBienes}">
+                    <p:column style="width:16px">
+                        <p:rowToggler />
+                    </p:column>
+                    <p:column headerText="Código">
+                        <p:outputLabel value="#{da.codigo}"/>
+                    </p:column>
+                    <p:column headerText="Item">
+                        <p:outputLabel value="#{da.itemBien.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Adqusición">
+                        <p:outputLabel value="#{da.adquisiciones.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Factura">
+                        <p:outputLabel value="#{da.factura.numFactura}"/>
+                    </p:column>
+                    <p:column headerText="Motivo Movimiento">
+                        <p:outputLabel value="#{da.motivoMovimiento.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Fecha Ingreso">
+                        <p:outputLabel value="#{da.fechaIngreso}">
+                            <f:convertDateTime pattern="yyyy-MM-dd"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:rowExpansion>
+                        <p:dataTable var="i" value="#{bienSolicitudRegistroView.encontrandoDetalle(da)}">
+                            <p:column headerText="Codigo del Bien">
+                                <p:outputLabel value="#{i.codigoBienAgrupado}"/>
+                            </p:column>
+                            <p:column headerText="Descripción">
+                                <p:outputLabel value="#{i.descripcion}"/>
+                            </p:column> 
+                            <p:column headerText="Cuenta Contable">
+                                <p:outputLabel value="#{i.cuentaContable.codigo} - #{i.cuentaContable.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Subgrupo">
+                                <p:outputLabel value="#{i.grupoPadre.codigoBien} - #{i.grupoPadre.descripcion}"/>
+                            </p:column>
+                            <p:column headerText="Marca">
+                                <p:outputLabel value="#{i.marca}"/>
+                            </p:column>
+                            <p:column headerText="Modelo">
+                                <p:outputLabel value="#{i.modelo}"/>
+                            </p:column>
+                            <p:column headerText="Color 1">
+                                <p:outputLabel value="#{i.color1}"/>
+                            </p:column>
+                            <p:column headerText="Costo">
+                                <p:outputLabel value="#{i.costoAdquisicion}"/>
+                            </p:column>
+                            <p:column headerText="Cantidad">
+                                <p:outputLabel value="#{i.cantidad}"/>
+                            </p:column>
+                            <p:column headerText="Valor Total">
+                                <p:outputLabel value="#{i.valorTotal}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:rowExpansion>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Aceptar" style="width: auto; margin-top: 2%;"
+                                     actionListener="#{bienSolicitudRegistroView.confirmarTerminoProcesos()}" update="btns"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

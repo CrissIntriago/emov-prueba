@@ -1,0 +1,221 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="GENERAR LIQUIDACIÓN ALCABALA RURAL" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+
+             
+                <h:form id="frmAlcPlus">
+                    <center>
+                        <!--Clave Anterior-->
+                        <h:panelGrid columns="2">
+                            <p:outputLabel value="Clave catastral"/>
+                            <p:outputLabel value="Consultar"/>
+
+                            <p:inputText value="#{alcabalaRuralMB.claveCatastral}" style="width: 150px;" onkeypress="validateIntegerValueAndFocusNext(event, 'frmAlcPlus:cmp:btn-find5')"/>
+                            <p:commandLink id="btn-find5" update=":frmRuralList" style="text-align: center;" actionListener="#{alcabalaRuralMB.openDlgRural()}">
+                                <i class="fa fa-fw fa-search" style="font-size: 3em"></i>
+                            </p:commandLink>
+
+                        </h:panelGrid>
+                    </center>
+                    <br/>
+                    <br/>
+                    <p:panel rendered="#{alcabalaRuralMB.rural != null}">
+                        <center>
+                            <p:panel header="Predio seleccionado" class="MarBot10">
+                                <h:panelGrid columns="6" style="width: 100%">
+                                    <p:outputLabel value="Avaluo municipal: " style="font-weight: bold !important;"/>
+                                    <p:inputText value="#{alcabalaRuralMB.rural.avaluoMunicipal}" readonly="true" >
+                                        <f:convertNumber type="number" pattern="###,##0.00" locale="EN" currencySymbol="$"/>
+                                    </p:inputText>
+                                    <p:outputLabel value="Clave catastral: " style="font-weight: bold !important;"/>
+                                    <p:outputLabel value="#{alcabalaRuralMB.rural.claveCat}" />
+                                    <p:outputLabel value="Ubicacion: " style="font-weight: bold !important;"/>
+                                    <p:outputLabel value="#{alcabalaRuralMB.rural.nombreEdificio}" />
+                                </h:panelGrid>
+                            </p:panel>
+                            <p:panel header="Informacion del vendedor y comprador" class="MarBot10">
+                                <h:panelGrid columns="4" style="width: 100%">
+                                    <p:fieldset legend="Vendedor" style="margin-bottom:20px">
+                                        <p:panelGrid style="width: 100%">
+                                            <p:column style="border-style: none !important; width: 15% !important;">
+                                                <p:outputLabel value="Identificacion: " style="font-weight: bold !important;"/>
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 15% !important;">
+                                                <p:inputText id="ven_id" value="#{alcabalaRuralMB.propietario.ciuCedRuc}"
+                                                             onkeypress="validateIntegerValueAndFocusNext(event, 'frmAlcPlus:btn_procesar')"/>
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 15% !important;">
+                                                <p:outputLabel id="ven_name" value="Vendedor:" style="font-weight: bold !important;"/>
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 55% !important;">
+                                                <p:inputText value="#{alcabalaRuralMB.propietario.nombresCompletos}" style="width: 98% !important;"
+                                                             onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')"/>
+                                            </p:column>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                    <p:fieldset legend="Comprador" style="margin-bottom:20px">
+                                        <p:panelGrid style="width: 100%">
+                                            <p:column style="border-style: none !important; width: 20% !important;">
+                                                <p:outputLabel value="Identificacion: " style="font-weight: bold !important;">
+                                                    <p:commandLink actionListener="#{alcabalaRuralMB.buscarEnte()}" >
+                                                        <p:ajax event="dialogReturn" listener="#{alcabalaRuralMB.seletComprador}" update="frmAlcPlus" />
+                                                        <p:graphicImage value="/css/homeIconsImages/buscar.png" width="25" height="25"/>
+                                                    </p:commandLink>
+                                                </p:outputLabel>
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 15% !important;">
+                                                <p:outputLabel value="#{alcabalaRuralMB.comprador.ciRuc}" />
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 15% !important;">
+                                                <p:outputLabel value="Comprador:" style="font-weight: bold !important;"/>
+                                            </p:column>
+                                            <p:column style="border-style: none !important;  width: 55% !important;">
+                                                <p:outputLabel value="#{alcabalaRuralMB.comprador.nombreCompleto}" />
+                                            </p:column>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                </h:panelGrid>
+                            </p:panel>
+
+                            <p:panel header="Detalle calculo de alcabala" class="MarBot10">
+                                <h:panelGrid columns="3" >
+                                    <!--                ALCABALAS -->
+                                    <h:panelGrid columns="4" rendered="#{alcabalaRuralMB.rural != null}" >
+
+                                        <p:outputLabel value="Cuantia: " />
+                                        <p:inputNumber id="a3" value="#{alcabalaRuralMB.liquidacion.cuantia}" onkeypress="focusNextOnEnter(event, 'frmAlcPlus:a4_input')">
+                                            <p:ajax listener="#{alcabalaRuralMB.calcularAlcabala()}"  update="dtRubros, t1, a5"/>
+                                        </p:inputNumber>
+                                        <p:outputLabel value="Descuento: " />
+                                        <p:inputNumber id="a4" value="#{alcabalaRuralMB.liquidacion.porcientoRebaja}" symbol="%" symbolPosition="p" maxValue="100" decimalPlaces="2"
+                                                       onkeypress="focusNextOnEnter(event, 'frmAlcPlus:btn_procesar')">
+                                            <p:ajax listener="#{alcabalaRuralMB.calcularAlcabala()}"  update="dtRubros, t1"/>
+                                        </p:inputNumber>
+                                        <p:outputLabel value="Base imponible: " />
+                                        <p:inputNumber id="a5" value="#{alcabalaRuralMB.liquidacion.valorComercial}" readonly="true">
+                                           <!--<p:ajax listener="#{alcabalaRuralMB.calcularAlcabala()}"  update="dtRubros, t1"/>-->
+                                        </p:inputNumber>
+                                        <p:outputLabel value="Solo cuantia ?"/>
+                                        <p:selectBooleanCheckbox id="checkExedente" value="#{alcabalaRuralMB.ventaPrimeraVez}" >
+                                            <p:ajax update="dtRubros, t1, a5" listener="#{alcabalaRuralMB.calcularAlcabala()}"/>
+                                        </p:selectBooleanCheckbox>
+                                    </h:panelGrid>
+
+                                    <p:spacer width="10"/>
+
+                                    <h:panelGroup rendered="#{alcabalaRuralMB.rural != null}">
+                                        <!--                    ALCABALA Y PLUSVALIA -->
+                                        <p:dataTable id="dtRubros" reflow="true" value="#{alcabalaRuralMB.rubrosLiquidacion}"
+                                                     var="rub" rowIndexVar="index" style="width: 100%;"  >
+                                            <p:column style="width: 5%">
+                                                <h:outputText value="#{index+1}" />
+                                            </p:column>
+                                            <p:column headerText="Descripción del Rubro" id="valorRubros">
+                                                <h:outputText value="#{rub.descripcion}" />
+                                            </p:column>
+                                            <p:column headerText="Valor a Cobrar por el Rubro" id="colValor" style="width: 25%; text-align: right">
+
+                                                <h:outputText value="#{rub.valorTotal}">
+                                                    <f:convertNumber pattern="¤#,##0.00" currencySymbol="$" />
+                                                </h:outputText>
+                                            </p:column>
+                                        </p:dataTable>
+
+                                        <br/>
+                                        <div align="center">
+                                            <p:outputLabel  value="Total a cancelar: " style="font-weight: bold;"/>
+                                            <p:outputLabel value="$ " style="font-weight: bold;"/>
+                                            <p:inputText id="t1" value="#{alcabalaRuralMB.liquidacion.totalPago}" readonly="true" >
+                                                <f:convertNumber maxFractionDigits="2" pattern="$ #,##0.00"  />
+                                            </p:inputText>
+                                        </div>
+                                    </h:panelGroup>
+
+                                </h:panelGrid>
+                            </p:panel>
+                        </center>
+                    </p:panel>
+                    <br/>
+                    <center>
+                        <p:commandButton value="Procesar" id="btn_procesar"
+                                         icon="ui-icon-gear" styleClass="btnStyle" iconPos="r" actionListener="#{alcabalaRuralMB.preProccess()}"
+                                         disabled="#{alcabalaRuralMB.rural == null}" >
+                            <p:confirm header="Advertencia" icon="ui-icon-info" message="¿Esta seguro de guardar los datos ingresados?" />
+                        </p:commandButton>
+                    </center>
+                </h:form>
+<!--                <dlg:dialogNumLiquidacion headerDialog="#{alcabalaRuralMB.liquidacion.tipoLiquidacion.nombreTransaccion}"
+                                          idLiq="#{alcabalaRuralMB.liquidacion.idLiquidacion}"
+                                          actionButton="#{alcabalaRuralMB.borrarDatos()}"
+                                          update="frmAlcPlus"
+                                          id="numLiquidacion"/>
+                 <dlg:observaciones actionButton="#{alcabalaRuralMB.procesar()}"
+                                   observaciones="#{alcabalaRuralMB.liquidacion.observacion}"
+                                   placeHolder="Observaciones de la Liquidacion, campo no obligatorio."
+                                   requerido="false"
+                                   />
+                <!-->
+                <p:dialog widgetVar="dlgConf" header="Información" height="100"
+                          width="250" modal="true" closeOnEscape="true" closable="true"
+                          position="center" positionType="absolute"
+                          resizable="false" responsive="true">
+
+                    <h:form id="conf">
+                        <p:outputLabel value="Desea continuar con la Alcabala"/>
+                        <br/>
+                        <br/>
+                        <center>
+                            <p:commandButton value="Si" actionListener="#{alcabalaRuralMB.llenarAlcalbala(true)}"
+                                             oncomplete="PF('dlgConf').hide()" styleClass="btnStyle" />
+                            <p:commandButton value="No" actionListener="#{alcabalaRuralMB.llenarAlcalbala(false)}"
+                                             oncomplete="PF('dlgConf').hide()" styleClass="btnStyle" />
+                        </center>
+                    </h:form>
+                </p:dialog>
+
+
+                <p:dialog widgetVar="dlgRural" header="Información" width="80%" modal="true" closeOnEscape="true" closable="true"
+                          position="center" positionType="absolute"
+                          resizable="true" responsive="true">
+                    <h:form id="frmRuralList">
+                        <p:dataTable var="predio" value="#{alcabalaRuralMB.prediosLazy}" paginator="true" rows="10"
+                                     paginatorTemplate="{RowsPerPageDropdown} {FirstPageLink} {PreviousPageLink} {CurrentPageReport} {NextPageLink} {LastPageLink}"
+                                     rowsPerPageTemplate="5,10,15" selectionMode="single" selection="#{alcabalaRuralMB.rural}" id="predioRural" lazy="true">
+                            <p:ajax event="rowSelect"  update="frmRuralList:btn_selecct, :frmAlcPlus" listener="#{alcabalaRuralMB.onRowSelectRural}"/>
+                            <p:ajax event="rowUnselect" update="frmRuralList:btn_selecct, :frmAlcPlus" listener="#{alcabalaRuralMB.onRowUnselectRural}"/>
+                            <p:column headerText="Clave catastral" filterBy="#{predio.claveCat}" width="20%">
+                                <h:outputText value="#{predio.claveCat}" />
+                            </p:column>
+                            <p:column headerText="Identificacion" filterBy="#{predio.codigoPredial}" width="20%">
+                                <h:outputText value="#{predio.codigoPredial}" />
+                            </p:column>
+                            <p:column headerText="Contribuyente" filterBy="#{predio.nombrePropietarios}" width="60%">
+                                <h:outputText value="#{predio.nombrePropietarios}" />
+                            </p:column>
+                            <p:column headerText="Ubicación" filterBy="#{predio.direccion}" width="60%">
+                                <h:outputText value="#{predio.direccion}" />
+                            </p:column>
+
+                        </p:dataTable>
+                        <center class="MarTop20">
+                            <p:commandButton value="Cerrar" oncomplete="PF('dlgRural').hide()" id="btn_selecct"
+                                             icon="ui-icon-gear" styleClass="btnStyle" iconPos="r" update=":frmAlcPlus"
+                                             disabled="#{alcabalaRuralMB.rural == null}" />
+                        </center>
+                    </h:form>
+                </p:dialog>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

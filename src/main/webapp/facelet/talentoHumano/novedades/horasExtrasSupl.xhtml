@@ -1,0 +1,292 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Horas Extras Suplementarias.
+    </ui:define>
+    <ui:param name="tittle" value="Registro de Horas Extras y Suplementarias" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-12">
+                    <p:graphicImage value="/resources/icons/reloj.png"  width="42" height="55"          
+                                    style="margin-left:10px ;  width: auto; float: right"/>
+                    <br/>
+                    <p:outputPanel id="fomInfo">                        
+                        <p:fieldset id="fieldsetDatosRol" legend="REGISTRO DE ROL" 
+                                    toggleable="true" toggleSpeed="500" collapsed="false"
+                                    style="width: 90%;margin-left: 5%">
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Periodo " for="periodo"/>
+                                    <p:selectOneMenu id="periodo" value="#{horaExtraView.busqueda.anio}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{horaExtraView.periodos}"
+                                                       var="p"
+                                                       itemLabel="#{p.anio}"
+                                                       itemValue="#{p.anio}"/>
+                                        <p:ajax listener="#{horaExtraView.mesesRoles()}" update="mes" process="@this"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Rol: " for="@next"/>
+                                    <p:selectOneMenu id="mes" value="#{horaExtraView.horaExtraSupl.tipoRol}"
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:100px"
+                                                     converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{horaExtraView.rolesMensuales}"
+                                                       var="m"
+                                                       itemLabel="#{m.descripcion}"
+                                                       itemValue="#{m}"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Estado Rol" for="tipoRol"/>
+                                    <p:inputText id="tipoRol" value="#{horaExtraView.horaExtraSupl.tipoRol.estadoAprobacion.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Mes Rol" for="mesRol"/>
+                                    <p:inputText id="mesRol" value="#{horaExtraView.horaExtraSupl.tipoRol.mes.descripcion}"
+                                                 readonly="true">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <center>
+
+                                <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+
+                                    <p:commandButton value="Buscar" id="buscar-btn" 
+                                                     update="dataTableHoraExt,fieldsetDatosRol,btn-grabar,btn-editar,panelHoraExt,dlgListServidor"
+                                                     actionListener="#{horaExtraView.buscar()}"
+                                                     icon="ui-icon-search"
+                                                     process="mes"
+                                                     styleClass="Fs16"
+                                                     style="width: 20%;float: right"/>
+                                </p:panelGrid>
+                            </center>
+                        </p:fieldset>
+                        <br/><br/>
+                        <h:panelGroup id="panelHoraExt">
+                            <p:commandButton value="Adicionar Servidor"                                             
+                                             process="mes"
+                                             disabled="#{horaExtraView.disabledbtnBiometrico or horaExtraView.tipoRol.horaExtSupl == true}"
+                                             icon="ui-icon-plus" actionListener="#{horaExtraView.addServidor()}"
+                                             style="width: auto; margin-bottom: 15px;margin-left: 5%"/>
+                            <p:commandButton id="btn-grabar" value="Grabar"                                             
+                                             process="mes"
+                                             disabled="#{horaExtraView.disabledbtnBiometrico}"
+                                             rendered="#{horaExtraView.tipoRol.horaExtSupl == false}"
+                                             icon="ui-icon-save"                                             
+                                             update="btn-editar,dataTableHoraExt,panelHoraExt,formMain"
+                                             actionListener="#{horaExtraView.grabarHoras(true)}"
+                                             style="width: auto;margin-right: 5%;float: right"/>
+                            <p:commandButton id="btn-editar" value="Editar"                                             
+                                             process="mes"
+                                             disabled="#{horaExtraView.disabledbtnBiometrico}"
+                                             rendered="#{horaExtraView.tipoRol.horaExtSupl == true}"
+                                             icon="ui-icon-add"
+                                             styleClass="amber-btn"
+                                             update="btn-grabar,dataTableHoraExt,panelHoraExt,formMain"
+                                             actionListener="#{horaExtraView.grabarHoras(false)}"
+                                             style="width: auto;margin-right: 5%;float: right"/>
+                            <p:dataTable id="dataTableHoraExt" widgetVar="dataTableHoraExt" var="hora" value="#{horaExtraView.lazy}" 
+                                         paginator="true" rows="15"
+                                         paginatorPosition="bottom"
+                                         filterEvent="enter"
+                                         lazy="true"
+                                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"                                         rowsPerPageTemplate="15,20,30,40,50,100" 
+                                         editable="true" editMode="cell"
+                                         emptyMessage="No existe criterio en la búsqueda especificada"
+                                         selection="#{horaExtraView.horaExtraSupl}" selectionMode="single" rowKey="#{hora.id}"
+                                         style="width: 90%;margin-left: 5%">
+                                <f:facet name="header">
+                                    #{horaExtraView.tipoRol.descripcion}
+                                </f:facet>
+                                <p:ajax event="cellEdit" listener="#{horaExtraView.guardar(hora)}" update="dataTableHoraExt" />
+                                <p:column headerText="Cédula Servidor" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{hora.servidor.persona.identificacion}"/>
+                                </p:column>                                
+                                <p:column headerText="Nombre Servidor" style="width: 10%">
+                                    <h:outputText value="#{hora.servidor.persona.nombreCompleto}"/>
+                                </p:column>                                
+                                <p:column headerText="Cargo" style="width: 8%">
+                                    <h:outputText value="#{hora.servidor.distributivo.cargo.nombreCargo}" />
+                                </p:column>
+                                <p:column headerText="Unidad Administrativa" style="width: 15%">
+                                    <h:outputText value="#{hora.servidor.distributivo.unidadAdministrativa.nombre}" />
+                                </p:column>
+                                <p:column headerText="Mes" style="text-align: center;width: 5%">
+                                    <h:outputText value="#{hora.mes}" />
+                                </p:column>
+                                <p:column headerText="Régimen" style="text-align: center;width: 10%">
+                                    <h:outputText value="#{hora.servidor.distributivo.regimen.nombre}" />
+                                </p:column>
+                                <p:column headerText="Horas 50%." style="text-align: center;width: 5%">
+                                    <p:cellEditor disabled="#{horaExtraView.disabledCellEdit()}">
+                                        <f:facet name="input" >
+                                            <p:inputNumber id="horaSupl"
+                                                           value="#{hora.horaSuplementaria}" style="width:100%;"
+                                                           inputStyle="float: center" decimalPlaces="0">
+                                            </p:inputNumber>
+                                        </f:facet>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{hora.horaSuplementaria}" style="text-align: center">
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>
+                                <p:column headerText="Horas 100%" style="text-align: center;width: 5%">
+                                    <p:cellEditor disabled="#{horaExtraView.disabledCellEdit()}">
+                                        <f:facet name="input" >
+                                            <p:inputNumber id="horaExt"
+                                                           value="#{hora.horaExtras}" style="width:100%;"
+                                                           inputStyle="float: center" decimalPlaces="0">
+                                            </p:inputNumber>
+                                        </f:facet>
+                                        <f:facet name="output">
+                                            <h:outputText value="#{hora.horaExtras}" style="text-align: center">
+                                            </h:outputText>
+                                        </f:facet>
+                                    </p:cellEditor>
+                                </p:column>                                
+                                <p:column headerText="Acciones" style="width: 5%;text-align: center"
+                                          rendered="#{horaExtraView.tipoRol.horaExtSupl ? 'false':'true'}">
+                                    <p:commandLink update="formMain" 
+                                                   actionListener="#{horaExtraView.openDlgMarcacion(hora)}"
+                                                   title="Ver información" process="@this">
+                                        <i class="fa fa-search newi" style="font-size: 18px"></i>
+                                    </p:commandLink>
+                                    <p:commandLink title="Eliminar"
+                                                   update="formMain"
+                                                   disabled="#{horaExtraView.disabledbtnBiometrico}"
+                                                   actionListener="#{horaExtraView.eliminar(hora)}"
+                                                   process="@this">
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                        <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar ?" icon="fa fa-exclamation-triangle" />
+                                    </p:commandLink>   
+                                </p:column> 
+                            </p:dataTable>
+                        </h:panelGroup>
+                    </p:outputPanel>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="dlgListServidor" closeOnEscape="true" header="Lista de Servidores" 
+                  widgetVar="dlgListServidor">
+            <h:form prependId="false">
+                <p:outputPanel id="formDlgServ" style="width: 100%;" >
+                    <p:pickList id="pickList" 
+                                styleClass="form-control"
+                                value="#{horaExtraView.listServidor}" var="serv" 
+                                itemLabel="#{serv.persona.nombreCompleto}" itemValue="#{serv}"
+                                converter="#{utilConverter}"
+                                showSourceControls="true" showTargetControls="true"
+                                showSourceFilter="true" showTargetFilter="true" filterMatchMode="contains"
+                                responsive="true">
+                        <f:facet name="sourceCaption">Lista de Servidores</f:facet>
+                        <f:facet name="targetCaption">Servidor Agregado</f:facet>
+                        <p:ajax event="transfer" listener="#{horaExtraView.onTransfer()}"/>
+                    </p:pickList>
+                    <center>
+                        <p:commandButton id="listBtn" value="Guardar"
+                                         icon="ui-icon-save"
+                                         update="formMain"
+                                         actionListener="#{horaExtraView.guardarServidores}"                                                 
+                                         style="margin-top:5px;width: 40%" 
+                                         styleClass="Fs16"/>
+                    </center>
+                </p:outputPanel>
+            </h:form>
+        </p:dialog>
+        <p:dialog id ="dlgMarcacionBiometrico" header="Detalle Marcaciones" 
+                  widgetVar="dlgMarcacionBiometrico" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="50%" >
+            <h:form prependId="false" id="frmMarcacion" style="width: auto;">
+                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="NOMBRE:" for="@next"/>
+                        <p:inputText id="nombreServ" value="#{horaExtraView.horaExt.servidor.persona.nombreCompleltoSql}"
+                                     readonly="true" style="width: 100%">
+                        </p:inputText>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="CARGO:" for="@next"/>
+                        <p:inputText id="cargoServ" value="#{horaExtraView.horaExt.servidor.distributivo.cargo.nombreCargo}"
+                                     readonly="true" style="width: 100%">
+                        </p:inputText>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:tabView>
+                    <p:tab title="Dias Laborados">
+                        <p:dataTable id="dataDetalle" widgetVar="dataDetalle" 
+                                     var="dt"
+                                     value="#{horaExtraView.listMarcacionModel}"
+                                     paginator="true" rows="10"
+                                     paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,20,30,40,50,100"
+                                     emptyMessage="No existe criterio de búsqueda especificado" >
+                            <f:facet name="header">
+                                MARCACIONES
+                            </f:facet>
+                            <p:column headerText="Fecha" style="text-align: center;width: 8%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.date}">
+                                    <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="INGRESO" style="text-align: center;width: 10%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.hora_ingreso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="SALIDA" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.hora_salida}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>   
+                            <p:column headerText="INGRESO DESCANSO" style="text-align: center;width: 10%"
+                                      filterBy="" filterMatchMode="contains">
+                                <h:outputText value="#{dt.ingreso_descanso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>                                
+                            <p:column headerText="SALIDA DESCANSO" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.salida_descanso}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="HORAS LABORADAS" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.horas_laboras}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>   
+                            <p:column headerText="HORAS EXTRAS" style="text-align: center;width: 10%">
+                                <h:outputText value="#{dt.horas_extras}">
+                                    <f:convertDateTime pattern="HH:mm"/>
+                                </h:outputText>
+                            </p:column>   
+                        </p:dataTable>
+                    </p:tab>                        
+                </p:tabView>             
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

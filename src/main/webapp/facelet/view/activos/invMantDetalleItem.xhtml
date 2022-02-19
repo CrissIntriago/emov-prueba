@@ -1,0 +1,347 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Ítems de Inventario 
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO ÍTEMS DE INVENTARIO"/>
+    <ui:define name="content">
+        <h:form id="frmMain" style="width: auto">
+            <h:panelGroup id="panelItem">
+                <p:commandButton value="REGISTRAR NUEVO ÍTEM"
+                                 update="frmItem" icon="fa fa-plus" process="@this"
+                                 actionListener="#{detalleItemView.form(null)}"
+                                 styleClass="Fs16" style="width: auto;">
+                </p:commandButton> 
+                <p:commandButton id="mostrarColumnas" type="button" value="COLUMNAS VISIBLES" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                <p:columnToggler datasource="dtItem" trigger="mostrarColumnas" />
+                <br/><br/>
+                <div style="width: 100% !important; display: inline-block">
+                    <div class="ui-g" style="float: right; width: 15% !important; text-align: right;">
+                        <div class="ui-g-12 ui-md-4 estado-normal"  >ACTIVO</div>
+                        <div class="ui-g-12 ui-md-4 estado-inactivo"  >INACTIVO</div>
+                    </div>
+                </div>
+                <p:dataTable id="dtItem" var="item" value="#{detalleItemView.lazyDetalleItem}" reflow="true" paginator="true" lazy="true" rows="25" 
+                             rowsPerPageTemplate="25,50,100" paginatorPosition="bottom" filterEvent="keyup" style="width: 100%" scrollWidth="100%"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowStyleClass="#{item.estado ? 'estado-normal':'estado-inactivo'}"
+                             emptyMessage="No se encontró ningun registro." currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}">
+                    <f:facet name="header">
+                        ITEM REGISTRADOS
+                    </f:facet>
+
+                    <p:column headerText="Código" width="6%" style="font-weight: bold;" filterBy="#{item.codigoAgrupado}" filterMatchMode="contains">
+                        <center><h:outputText value="#{item.codigoAgrupado}"/> </center>  
+                    </p:column>
+                    <p:column headerText="Descripción" width="16%" style="width: 120px" filterBy="#{item.descripcion}">
+                        <h:outputText value="#{item.descripcion}"/> 
+                    </p:column>
+                    <p:column headerText="Marca" width="6%">
+                        <h:outputText value="#{item.marca}"/>  
+                    </p:column>
+                    <p:column headerText="Tipo de Inventario" width="12%" filterMatchMode="contains" filterBy="#{item.tipoGasto.descripcion}">
+                        <h:outputText value="#{item.tipoGasto.descripcion}"/>  
+                    </p:column>
+                    <p:column headerText="Serie 1" width="6%">
+                        <h:outputText value="#{item.serie1 eq null ? 'N/A':item.serie1}"/>  
+                    </p:column>
+                    <p:column headerText="Área" width="7%" filterMatchMode="contains" filterBy="#{item.asignarGrupo.padre.padre.nombre}">
+                        <h:outputText value="#{item.asignarGrupo.padre.padre.nombre}"/>  
+                    </p:column>
+                    <p:column headerText="Grupo" width="7%" filterMatchMode="contains" filterBy="#{item.asignarGrupo.padre.nombre}">
+                        <h:outputText value="#{item.asignarGrupo.padre.nombre}"/>  
+                    </p:column>
+                    <p:column headerText="SubGrupo" width="7%" filterMatchMode="contains" filterBy="#{item.asignarGrupo.nombre}">
+                        <h:outputText value="#{item.asignarGrupo.nombre}"/>  
+                    </p:column>
+                    <p:column headerText="Stock Mínimo" width="4%" >
+                        <h:outputText value="#{item.stockMinimo}" style="float: right"/>  
+                    </p:column>
+                    <p:column headerText="Stock Total" width="4%" style="text-align: center">
+                        <h:outputText value="#{item.cantidadExistente}"/>  
+                    </p:column>
+                    <p:column headerText="Tipo de Medida" width="5%" style="text-align: center">
+                        <h:outputText value="#{item.tipoMedida.descripcion}"/>  
+                    </p:column>
+                    <p:column headerText="Acciones" style="font-weight: bold; width: 5%">
+                        <center>
+                            <p:commandLink title="Visualizar Ítem"  actionListener="#{detalleItemView.visualizar(item)}" update="frmItem">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                            </p:commandLink>    
+                            <p:commandLink title="Editar Ítem" disabled="#{!item.estado}" actionListener="#{detalleItemView.form(item)}" update="frmItem">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 5px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <!--                                            <p:commandLink title="Download Qr" actionListener="# {detalleItemView.downloadCodeQr(item)}">
+                                                                            <i class="fa fa-qrcode" style="font-size: 1.5em; margin-right: 8px;color: #0D47A1;"></i>
+                                                                        </p:commandLink>        -->
+                            <p:commandLink title="Inactivar item" disabled="#{!item.estado}" actionListener="#{detalleItemView.eliminar(item)}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; color: red;"></i>
+                                <p:confirm header="Confirmación de inactivación" message="¿Está seguro de inactivar el item?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>        
+                        </center>
+                    </p:column>
+                </p:dataTable>                       
+            </h:panelGroup>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog>
+        </h:form>
+
+        <p:dialog header="INGRESO DE ÍTEM"  widgetVar="dlgItems"  modal="true" width="65%" height="50%" 
+                  resizable="false" showEffect="fade" hideEffect="fade" id="dlgItems" closeOnEscape="true">
+            <h:form prependId="false" id="frmItem" style=" width: 100%;">           
+                <p:panel header="Información del Ítem" style="width: 100%;">
+                    <p:panelGrid columns="4" layout="grid" columnClasses="ui-g-3" style="width: 100%;" styleClass="ui-panelgrid-blank form-group">                                           
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Código" for="codigo" style="width: 100%; font-weight: bold;"/> <p:spacer width="10"/>
+                            <p:inputText  id="codigo" value="#{detalleItemView.detalleItem.codigoAgrupado}"
+                                          style="text-transform: uppercase; width: 90%;" 
+                                          class="panelInput" readonly="false" disabled="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="mef" value="Inventario MEF: " style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="mef" class="panelInput" style="width: 80%;" readonly="true" required="false" 
+                                         value="#{detalleItemView.detalleItem.catalogoExistencias.idExistencia}"/>
+                            <p:commandButton title="Listado del Catálogo Inventario" icon="fa fa-search" disabled="#{detalleItemView.adicional}"
+                                             actionListener="#{detalleItemView.openDlgInvMEF()}" process="mef">
+                                <p:ajax event="dialogReturn"  update="mef" listener="#{detalleItemView.selectDataCatalogo}"/>
+                            </p:commandButton>
+                        </h:panelGroup> 
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Descripción" for="descr" style="width: 100%; font-weight: bold;"/>
+                            <p:inputText   value="#{detalleItemView.detalleItem.descripcion}" id="descr" style="width: 90%;" 
+                                           required="true" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                           class="panelInput" readonly="#{detalleItemView.view}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%; font-weight: bold;" class="panelInput" >
+                            <p:outputLabel value="Marca" for="marca" style="width: 100%;"/>
+                            <p:inputText  id="marca" value="#{detalleItemView.detalleItem.marca}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                          style="width: 90%;" readonly="#{detalleItemView.view}" class="panelInput" required="true">
+                            </p:inputText>                                    
+                        </h:panelGroup> 
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="tipo_medida" value="Tipo de Medida" style="width: 100%; font-weight: bold;"></p:outputLabel>
+                            <p:selectOneMenu id="tipo_medida" style="width:90%;" value="#{detalleItemView.detalleItem.tipoMedida}" converter="entityConverter"
+                                             disabled="#{detalleItemView.view}" required="true">
+                                <f:selectItem itemLabel="Seleccione" itemValue="#{null}"/>
+                                <f:selectItems value="#{detalleItemView.listCatalogoMedida}" var="tipMedida"
+                                               itemLabel="#{tipMedida.descripcion}" itemValue="#{tipMedida}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%; font-weight: bold;" class="panelInput" >
+                            <p:outputLabel value="Serie 1" for="serie1" style="width: 100%;"/>
+                            <p:inputText  id="serie1" value="#{detalleItemView.detalleItem.serie1}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                          style="width: 90%;" readonly="#{detalleItemView.view}" class="panelInput" >
+                                <p:keyFilter regEx="/[a-z0-9_]/i"/>
+                            </p:inputText>                                    
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%; font-weight: bold;" class="panelInput" >
+                            <p:outputLabel value="Serie 2" for="serie2" style="width: 100%;"/>
+                            <p:inputText  id="serie2" value="#{detalleItemView.detalleItem.serie2}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                          style="width: 90%;" readonly="#{detalleItemView.view}" class="panelInput">
+                                <p:keyFilter regEx="/[a-z0-9_]/i"/>
+                            </p:inputText>                                    
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Color 1" for="color1" style="width: 100%; font-weight: bold;"/>
+                            <p:inputText  id="color1" value="#{detalleItemView.detalleItem.color1}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                          style="width: 90%; " readonly="#{detalleItemView.view}"
+                                          class="panelInput">
+                            </p:inputText>                                    
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Color 2" for="color2" style="width: 100%; font-weight: bold;"/>
+                            <p:inputText  id="color2" value="#{detalleItemView.detalleItem.color2}" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                          style="width: 90%;" readonly="#{detalleItemView.view}"
+                                          class="panelInput" >
+                            </p:inputText>                                    
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 90%;" class="panelInput" >
+                            <p:outputLabel value="Descripción Adicional" for="adicional" style="width: 100%; font-weight: bold;"/>
+                            <p:inputTextarea  id="adicional" rows="1" cols="40" autoResize="true" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                              style="width: 100%;" readonly="#{detalleItemView.adicional}"
+                                              class="panelInput" value="#{detalleItemView.detalleItem.descripcionAdicional}">
+                            </p:inputTextarea>    
+                        </h:panelGroup> 
+                        <h:panelGrid columns="2" style="width: 200%;" class="panelInput" >
+                            <p:outputLabel value="Observación" for="observacion" style="width: 100%; font-weight: bold;"/>
+                            <p:inputTextarea  id="observacion" rows="2" cols="50" autoResize="false" onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                              style="width: 100%; border: 1px solid #cccccc" value="#{detalleItemView.detalleItem.observacion}" readonly="#{detalleItemView.adicional}"
+                                              class="panelInput" >
+                            </p:inputTextarea>    
+                        </h:panelGrid> 
+                    </p:panelGrid>                   
+                </p:panel>
+                <br></br>
+                <p:panel header="EXISTENCIAS" style="width: 100%;" >
+                    <p:panelGrid columns="3" columnClasses="ui-g-4,ui-g-2,ui-g-6" layout="grid" style="width: 100%; " styleClass="ui-panelgrid-blank form-group">
+                        <p:fieldset legend="Ubicación" style="width: 90%;" >
+                            <p:panelGrid columns="2" layout="grid" columnClasses="ui-g-6" style="width: 100%; " styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Estante" for="estante" style="width: 100%; font-weight: bold;"/><br/>
+                                    <p:inputText  id="estante" value="#{detalleItemView.detalleItem.estante}"
+                                                  style="text-transform: uppercase; width: 70%;" 
+                                                  class="panelInput" readonly="false">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fila" for="fila" style="width: 100%; font-weight: bold;"/><br/>
+                                    <p:inputText  id="fila" value="#{detalleItemView.detalleItem.fila}"
+                                                  style="text-transform: uppercase; width: 70%;" 
+                                                  class="panelInput" readonly="false">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Columna" for="col" style="width: 100%; font-weight: bold;"/><br/>
+                                    <p:inputText  id="col" value="#{detalleItemView.detalleItem.columna}"
+                                                  style="text-transform: uppercase; width: 70%;" 
+                                                  class="panelInput" readonly="false">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Cajón" for="cajon" style="width: 100%; font-weight: bold;"/><br/>
+                                    <p:inputText  id="cajon" value="#{detalleItemView.detalleItem.cajon}"
+                                                  style="text-transform: uppercase; width: 70%;" 
+                                                  class="panelInput" readonly="false">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Cuadrante" for="cuadrante" style="width: 100%; font-weight: bold;"/><br/>
+                                    <p:inputText  id="cuadrante" value="#{detalleItemView.detalleItem.cuadrante}"
+                                                  style="text-transform: uppercase; width: 70%;" 
+                                                  class="panelInput" readonly="false">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Stock" style="width: 75%;">
+                            <p:panelGrid columns="1" layout="grid" style="width: 100%;" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Stock Máximo" for="max" style="width: 100%; font-weight: bold;"/>
+                                    <p:inputText  id="max" value="#{detalleItemView.detalleItem.stockMaximo}"
+                                                  style="text-transform: uppercase; width: 90%;"
+                                                  class="panelInput" readonly="#{detalleItemView.stock}">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Stock Mínimo" for="min" style="width: 100%; font-weight: bold;"/>
+                                    <p:inputText  id="min" value="#{detalleItemView.detalleItem.stockMinimo}"
+                                                  style="text-transform: uppercase; width: 90%;" 
+                                                  class="panelInput" readonly="#{detalleItemView.stock}">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Stock Crítico" for="crit" style="width: 100%; font-weight: bold;"/>
+                                    <p:inputText  id="crit" value="#{detalleItemView.detalleItem.stockCritico}"
+                                                  style="text-transform: uppercase; width: 90%;" 
+                                                  class="panelInput" readonly="#{detalleItemView.stock}">
+                                        <p:keyFilter regEx="/[\d]/"/>
+                                    </p:inputText>                                    
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+
+                        <p:fieldset legend="ASIGNACIÓN GRUPO NIVEL" style="width: 93%;" id="farea" widgetVar="farea">
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="grid" style="width: 100%;" class="panelInput" >
+                                    <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" >
+                                        <p:outputLabel for="area" value="Área: " style="font-weight: bold; width: 250px;float: left;"/>
+                                        <p:commandButton title="Listado de Áreas" icon="fa fa-search" style="float: right;"
+                                                         actionListener="#{detalleItemView.openDlg()}" process="@this" disabled="#{detalleItemView.view}">
+                                            <p:ajax event="dialogReturn"  update="farea" listener="#{detalleItemView.selectData}"/>
+                                        </p:commandButton>
+                                    </p:panelGrid>
+                                    <p:inputText id="area" class="panelInput" style="width: 250px; float: left" readonly="true" required="true" 
+                                                 value="#{detalleItemView.obtenerNombreSub(detalleItemView.detalleItem.asignarGrupo.padre).nombre}"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="grid" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="grupo" value="Grupo:" style="width: 90%; font-weight: bold"/>
+                                    <p:inputText id="grupo" class="panelInput" style="width: 92%;" readonly="true" required="true"
+                                                 value="#{detalleItemView.detalleItem.asignarGrupo.padre.nombre}">
+                                    </p:inputText>
+                                </h:panelGroup>
+                                <h:panelGroup layout="grid" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel for="subgrupo" value="Subgrupo:" style="width: 90%; font-weight: bold"/>
+                                    <p:inputText id="subgrupo" class="panelInput" style="width: 93%;" readonly="true" required="true"
+                                                 value="#{detalleItemView.detalleItem.asignarGrupo.nombre}">
+                                    </p:inputText>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </p:panelGrid>
+                </p:panel>
+                <!--</p:tab>-->
+                <!--                                <p:tab title="Imagen Ítem">
+                                                    <h:panelGrid columns="1" cellpadding="10">
+                                                        <p:fileUpload fileUploadListener="#{detalleItemView.handleFileUpload}" 
+                                                                      skinSimple="true" accept="image/*" mode="advanced" dragDropSupport="false" multiple="false" 
+                                                                      label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" update="tbDet:docItemInv:dtArchivosTramites"  />
+                                                        <u:documents entiti="#{detalleItemView.detalleItem}" id="docItemInv" showDelete="#{!detalleItemView.view}"/>
+                                                    </h:panelGrid>
+                                                </p:tab>
+                                                <p:tab title="Código Qr">
+                                                    <center>
+                                                        <h:outputText value="No existe un código Qr ☹️" 
+                                                                      style="font-weight: bold; font-size:20px;" rendered="#{detalleItemView.detalleItem.urlImagen == null}"/>
+                                                        <h:panelGrid columns="1" cellpadding="10">
+                                                            <p:graphicImage width="auto" value="#{detalleItemView.detalleItem.urlImagen}" />
+                                                        </h:panelGrid>
+                                                    </center>
+                                                </p:tab>-->
+                <!--</p:tabView>-->
+                <p:spacer height="5" />
+                <center>
+                    <p:commandButton value="GUARDAR" update="frmItem,frmMain:dtItem,messages" disabled="#{detalleItemView.view}"
+                                     rendered="#{detalleItemView.nuevo}" style="width: 18%"
+                                     icon="fa fa-save" 
+                                     actionListener="#{detalleItemView.saveItem}">
+                    </p:commandButton>
+                    <p:spacer width="10"  rendered="#{!detalleItemView.nuevo}" />
+                    <p:commandButton value="EDITAR" style="width: 18%"
+                                     rendered="#{!detalleItemView.nuevo}"
+                                     actionListener="#{detalleItemView.editar()}"
+                                     icon="fa fa-edit"
+                                     process="@form" update="frmItem,frmMain:dtItem">
+                    </p:commandButton>
+                    <p:spacer width="10"  rendered="#{!detalleItemView.nuevo}" />
+                    <p:commandButton value="CANCELAR" icon="ui-icon-clear" style="width: 18%; margin-left: 15px;"
+                                     onclick="PF('dlgItem').hide()" styleClass="red-btn"
+                                     rendered="#{!detalleItemView.nuevo}"
+                                     process="@this" update="frmItem"
+                                     actionListener="#{detalleItemView.limpiarVariable()}">
+
+                    </p:commandButton>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Información"  widgetVar="dlgInfo"  modal="true" width="20%" height="20%" closable="false"
+                  resizable="false" showEffect="fade" hideEffect="fade" id="dlgInfo" closeOnEscape="true">
+            <h:form id="idFormDlgInfo">
+                <center>
+                    <h2>Item: #{detalleItemView.detalleItem.codigoAgrupado}</h2>
+                    <h2> #{detalleItemView.detalleItem.descripcion}</h2>
+                    <p:commandButton value="Cerrar"  style="background: red" onclick="PF('dlgInfo').hide()" icon="fa fa-close" process="@this" />
+                </center>     
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
+

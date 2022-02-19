@@ -1,0 +1,534 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+    <ui:define name="title">
+        Mantenimiento de Bienes
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO DE BIENES"/>
+    <ui:define name="content">
+        <h:form id="frmMain" style="width: auto">
+            <p:commandButton id="mostrarColumnas" type="button" value="COLUMNAS VISIBLES" style="width: auto; float: left;" icon="fa fa-align-justify" />
+            <p:columnToggler datasource="dtBien" trigger="mostrarColumnas" />
+
+            <div style="width: 100% !important; display: block">
+                <div class="ui-g" style="float: right; width: 15% !important; text-align: right;">
+                    <div class="ui-g-12 ui-md-4 estado-normal">ACTIVO</div>
+                    <div class="ui-g-12 ui-md-4 estado-inactivo" style="cursor: pointer;" onclick="inactivos();">INACTIVO</div>
+                </div>
+            </div>
+            <br/><br/><br/><br/>
+            <p:dataTable id="dtBien"  widgetVar="dtBien" var="bien" value="#{bienMantenimientoView.lazyBienesItem}" reflow="true" 
+                         rowIndexVar="can" paginator="true" lazy="true" rows="50" rowsPerPageTemplate="50,75,100" paginatorPosition="bottom"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" filterEvent="keyup" style="width: 100%" scrollWidth="100%"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         rowStyleClass="#{bien.estado ? 'estado-normal':'estado-inactivo'}"
+                         emptyMessage="No se encontró ningun registro.">
+                <f:facet name="header">
+                    BIENES REGISTRADOS
+                </f:facet>
+                <p:column headerText="#" width="4%" style="text-align: center">
+                    <h:outputText value="#{can + 1}"/> 
+                </p:column>
+                <p:column headerText="Código" width="9%" style="font-weight: bold;" filterBy="#{bien.codigoBienAgrupado}" filterMatchMode="contains">
+                    <center><h:outputText value="#{bien.codigoBienAgrupado}"/> </center>  
+                </p:column>
+                <p:column headerText="Descripción" width="20%" style="width: 120px" filterBy="#{bien.descripcion}" filterMatchMode="contains">
+                    <h:outputText value="#{bien.descripcion}"/> 
+                </p:column>
+                <p:column headerText="Marca" width="8%" filterBy="#{bien.marca}" filterMatchMode="contains">
+                    <h:outputText value="#{bien.marca}"/>  
+                </p:column>
+                <p:column headerText="Tipo de Bien" width="12%" filterBy="#{bien.tipoBien}">
+                    <f:facet name="filter">
+                        <p:selectOneMenu onchange="PF('dtBien').filter()" styleClass="custom-filter" converter="entityConverter" style="width: 100%;">
+                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{bienMantenimientoView.listTipoBienFiltro}" var="b" itemLabel="#{b.texto}" 
+                                           itemValue="#{b}"/>
+                        </p:selectOneMenu>
+                    </f:facet>
+                    <h:outputText value="#{bien.tipoBien.texto}"/>  
+                </p:column>
+                <p:column headerText="Grupo (Cuenta)" width="12%" filterBy="#{bien.cuentaContable.descripcion}">
+                    <h:outputText value="#{bien.cuentaContable.descripcion}"/>  
+                </p:column>
+                <p:column headerText="Subgrupo" width="12%" filterBy="#{bien.grupoPadre.descripcion}" filterMatchMode="contains">
+                    <h:outputText value="#{bien.grupoPadre.descripcion}"/>  
+                </p:column>
+                <p:column headerText="No. Serie" width="8%" style="text-align: center" filterBy="#{bien.serie1}" filterMatchMode="contains">
+                    <h:outputText value="#{bien.serie1}"/>  
+                </p:column>
+                <p:column headerText="Precio" width="7%" style="text-align: center;">
+                    <h:outputLabel value="#{bien.costoAdquisicion}" style="float: right">
+                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                    </h:outputLabel>  
+                </p:column>
+                <p:column headerText="Acciones" width="8%" style="font-weight: bold;">
+                    <center>
+                        <p:commandLink title="Visualizar Bien" update="frmBien" actionListener="#{bienMantenimientoView.form(bien, true)}">
+                            <p:graphicImage value="/resources/icons/icono-bienes.png" width="20" height="19" style="margin-right: 8px;"/>
+                        </p:commandLink>
+                        <p:commandLink title="Visualizar Qr" update="frmBien"    rendered="#{bien.urlImagenQr ne null}" actionListener="#{bienMantenimientoView.openDialogImage(bien.urlImagenQr)}">
+                            <i class="fa fa-qrcode" style="font-size: 1.5em; color: #545b61; margin-right: 8px;"></i>
+                        </p:commandLink>
+                        <p:commandLink title="Editar Bien"  disabled="#{!bien.estado}" actionListener="#{bienMantenimientoView.form(bien, false)}" update="frmBien" >
+                            <i class="fa fa-edit" style="font-size: 1.5em; color: #00c5da; margin-right: 8px;"></i>
+                        </p:commandLink>
+                        <p:commandLink title="Inactivar"   actionListener="#{bienMantenimientoView.eliminar(bien)}" disabled="#{bien.bienesMovimiento.motivoMovimiento.orden == 1 ? false:true or !bien.estado}" update="frmMain,frmBien">
+                            <i class="fa fa-trash" style="font-size: 1.5em; color: red;"></i>
+                            <p:confirm header="Confirmación de Inactivación" message="Esta seguro de eliminar el registro?" icon="fa fa-exclamation-triangle" />
+                        </p:commandLink>        
+                    </center>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+        <p:dialog header="Datos del bien"
+                  widgetVar="dlgBien"
+                  modal="true" width="70%" height="500"
+                  resizable="false"
+                  showEffect="fade" 
+                  closeOnEscape="true"
+                  hideEffect="fade" 
+                  id="dlgBien">
+            <h:form prependId="false" id="frmBien" style=" width: 100%;" >
+                <p:fieldset legend="Datos">
+                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="codigoItemBien" value="Código" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="codigoItemBien" value="#{bienMantenimientoView.bienesItem.codigoBienAgrupado}" 
+                                         style="width: 100%;padding-top: 10px" readonly="true"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="mef" value="Bienes MEF: " style="font-weight: bold; width: 100%;"/>
+                            <div class="ui-inputgroup">
+                                <p:inputText id="mef" class="panelInput" style="width: 100%;" readonly="true" required="true" 
+                                             value="#{bienMantenimientoView.bienesItem.catalogoBienes.idBien}"/>
+                                <p:commandButton title="Listado del Catálogo de Bienes" icon="fa fa-search" 
+                                                 actionListener="#{bienMantenimientoView.openDlgBienMEF()}"
+                                                 disabled="#{bienMantenimientoView.view}"
+                                                 process="mef" 
+                                                 styleClass="button-group">
+                                    <p:ajax event="dialogReturn"  update="mef" listener="#{bienMantenimientoView.selectDataCatalogo}"/>  
+                                </p:commandButton>
+                            </div>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="descripcionBien" value="Descripción" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="descripcionBien" value="#{bienMantenimientoView.bienesItem.descripcion}"  
+                                         style="width: 100%" required="true" readonly="#{bienMantenimientoView.view}" 
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="movimiento" value="Registrado por:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="movimiento" value="#{bienMantenimientoView.bienesItem.bienesMovimiento.motivoMovimiento.texto}" 
+                                         style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="true"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="fechaMovimiento" value="Fecha Movimiento:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="fechaMovimiento" value="#{bienMantenimientoView.bienesItem.bienesMovimiento.fechaIngreso}" 
+                                         style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="true">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="marca" value="Marca:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="marca" value="#{bienMantenimientoView.bienesItem.marca}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="modelo" value="Modelo:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="modelo" value="#{bienMantenimientoView.bienesItem.modelo}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="color1" value="Color 1:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="color1" value="#{bienMantenimientoView.bienesItem.color1}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[a-z A-Z]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="color2" value="Color 2:" />
+                            <p:inputText id="color2" value="#{bienMantenimientoView.bienesItem.color2}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[a-z A-Z]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="serie1" value="Serie 1:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="serie1" value="#{bienMantenimientoView.bienesItem.serie1}" onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="serie2" value="Serie 2:" />
+                            <p:inputText id="serie2" value="#{bienMantenimientoView.bienesItem.serie2}" onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 100%" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="anioFab" value="Año de Fabricación:" />
+                            <p:inputText id="anioFab" value="#{bienMantenimientoView.bienesItem.anioFabricacion}"  maxlength="4" style="width: 100%" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[\d\-]/"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="materialBien" value="Material del Bien:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="materialBien" value="#{bienMantenimientoView.bienesItem.materialBien}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[a-z A-Z]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Estado del Bien:" escape="false" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="estado" value="#{bienMantenimientoView.bienesItem.estadoBien}" style="width: 100%" 
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="fechaAdq" value="Fecha de Adquisición:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="fechaAdq" value="#{bienMantenimientoView.bienesItem.fechaAdquisicion}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="costoAdq" value="Costo de Adquisición $:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputNumber id="costoAdq" value="#{bienMantenimientoView.bienesItem.costoAdquisicion}" style="width: 100%" 
+                                           onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[\d\-\.]/"/>
+                            </p:inputNumber>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="vidaUtil" value="Vida Útil:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="vidaUtil" value="#{bienMantenimientoView.bienesItem.vidaUtil}" style="width: 100%" 
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[\d\-]/" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{bienMantenimientoView.saldoInicial}">
+                            <p:outputLabel for="fechaDeprec" value="Fecha de Última Depreciación:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputText id="fechaDeprec" value="#{bienMantenimientoView.bienesItem.fechaUltimDepreciacion}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{bienMantenimientoView.saldoInicial}">
+                            <p:outputLabel for="deprecAcumulado" value="Depreciación Acumulado $:" style="font-weight: bold; width: 100%;"/>
+                            <p:inputNumber id="deprecAcumulado" value="#{bienMantenimientoView.bienesItem.depreciacionAcumulada}" style="width: 100%" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}">
+                                <p:keyFilter regEx="/[\d\-\.]/"/>
+                            </p:inputNumber>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Dato Adicional de: " escape="false" for="datosAdicBienes"/>
+                            <p:selectOneMenu id="datosAdicBienes" value="#{bienMantenimientoView.bienesItem.tipoDatoAdicional}" style="width: 100%"
+                                             disabled="#{bienMantenimientoView.view}"
+                                             styleClass="custom-filter" converter="entityConverter" filter="true" filterMatchMode="contains">
+                                <p:ajax update="frmBien" process="datosAdicBienes" listener="#{bienMantenimientoView.resetTipoDatoAdicional()}"/>
+                                <f:selectItem itemLabel="No aplica" itemValue="#{null}" noSelectionOption="true"/>
+                                <f:selectItems value="#{bienMantenimientoView.listDatosAdicionales}" var="adic" 
+                                               itemLabel="#{adic.texto}" itemValue="#{adic}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Datos adicionales" id="datosAdicionales" style="font-weight: bold; width: 100%;" 
+                            rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional eq null ? false:true}">
+                    <p:panelGrid  columns="4" styleClass="form-group ui-panelgrid-blank" layout="grid" >                        
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                      rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional eq null ? false:true}">
+                            <p:outputLabel for="placaCodigoCatastral" value="#{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'Placa:':null} #{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-PREDI'? 'Código Catastral:':null} #{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-EQCAM'? 'Placa:':null}" />
+                            <p:inputText id="placaCodigoCatastral" value="#{bienMantenimientoView.bienesItem.placaCodigocatastral}" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}"
+                                         onkeypress="focusNextOnEnter(event, 'chasis')" style="width: 100%">
+                                <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                      rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional eq null ? false:true}">
+                            <p:outputLabel for="chasis" value="#{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'No. Chasis:':null} #{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-PREDI' ? 'Ubicación:':null} #{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-EQCAM' ? 'Código Chasis:':null}"/>
+                            <p:inputText id="chasis" value="#{bienMantenimientoView.bienesItem.ubicacionNumchasis}" onkeyup="javascript:this.value = this.value.toUpperCase();" readonly="#{bienMantenimientoView.view}"
+                                         onkeypress="focusNextOnEnter(event, '')" style="width: 100%">
+                                <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                      rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional eq null ? false:(bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-PREDI' ? false:true)}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                          rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-PREDI' ? false:true}">
+                                <p:outputLabel for="motorUbicacion" value="#{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-VEHIC' ? 'No Serie Motor:':null} #{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-EQCAM' ? 'Código Motor:':null}" />
+                                <p:inputText id="motorUbicacion" value="#{bienMantenimientoView.bienesItem.serieMotor}"  
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                             onkeypress="focusNextOnEnter(event, '')" style="width: 100%"
+                                             readonly="#{bienMantenimientoView.view}">
+                                    <p:keyFilter regEx="/[a-z0-9_]/i" preventPaste="false"/>
+                                </p:inputText>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                      rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional eq null ? false:true}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                          rendered="#{bienMantenimientoView.bienesItem.tipoDatoAdicional.codigo eq 'AD-PREDI' ? true:false}">
+                                <p:outputLabel for="fechInscripcion" value="Fecha de Inscripción:" />
+                                <p:calendar pattern="dd-MM-yyyy" mask="true" id="fechInscripcion" locale="es"
+                                            value="#{bienMantenimientoView.bienesItem.fechaInscripcionPredio}" onkeypress="focusNextOnEnter(event, '')" navigator="true" readonly="#{bienMantenimientoView.view}"/>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Observación">
+                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="observacion" value="Observación:" />
+                            <p:inputTextarea id="observacion" value="#{bienMantenimientoView.bienesItem.observacion}" rows="3" 
+                                             autoResize="false" style="width: 100%; border: 1px solid #cccccc" 
+                                             onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                             readonly="#{bienMantenimientoView.view}"/>
+                        </h:panelGroup> 
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Datos adicionales">
+                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Tipo de Bien:" escape="false" style="font-weight:bold"/>
+                            <p:inputText id="tipoBien" value="#{bienMantenimientoView.bienesItem.tipoBien.texto}"  
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                         onkeypress="focusNextOnEnter(event, '')" style="width: 100%"
+                                         readonly="true"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel value="Clasificación:" escape="false" for="clasificacionCuenta" style="font-weight: bold"/>
+                            <p:inputText id="clasificacionCuenta" value="#{bienMantenimientoView.bienesItem.clasificTipoBien.descripcion}"  
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                         onkeypress="focusNextOnEnter(event, '')" style="width: 100%"
+                                         readonly="true"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="cuentaContableB" value="Cuenta Contable:" style="font-weight:bold"/>
+                            <p:inputText id="cuentaContableB" 
+                                         value="#{bienMantenimientoView.bienesItem.cuentaContable.codigo} - #{bienMantenimientoView.bienesItem.cuentaContable.descripcion}" 
+                                         onkeyup="javascript:this.value = this.value.toUpperCase();" 
+                                         onkeypress="focusNextOnEnter(event, '')" style="width: 100%"
+                                         readonly="true"/>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <!--                <p:fieldset legend="Etiqueta">
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="text-align: center">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{bienMantenimientoView.bienesItem.urlImagenQr==null}">
+                                            <h:outputText value="No existe un código QR ☹" style="font-weight: bold; font-size:20px;"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" 
+                                                      rendered="#{bienMantenimientoView.bienesItem.urlImagenQr!=null}">
+                                            <p:graphicImage value="#{bienMantenimientoView.image}" stream="false" />
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>-->
+                <p:fieldset legend="Componentes">
+                    <p:commandButton value="NUEVO COMPONENTE" rendered="#{!bienMantenimientoView.view}"
+                                     update="dtBienes,frmdlgComp" icon="fa fa-plus" process="@this"
+                                     actionListener="#{bienMantenimientoView.editComponentes(null)}"
+                                     styleClass="Fs16" style="width: auto; margin-bottom: 15px;">
+                    </p:commandButton>
+                    <p:dataTable style="padding-top: 3px" rendered="#{bienMantenimientoView.componente}"
+                                 emptyMessage="Ningún Componente para mostrar." rowsPerPageTemplate="10,20,50" paginatorPosition="bottom"
+                                 reflow="true" paginator="true"  rows="5" editable="true" editMode="cell"
+                                 id="dtBienes" rowIndexVar="can" value="#{bienMantenimientoView.listBienesComponentes}"
+                                 var="comp" widgetVar="dtBienes">
+                        <f:facet name="header" >
+                            COMPONENTES
+                        </f:facet>
+                        <p:column headerText="#" width="5%" >
+                            <h:outputText value="#{can +1 }"/>   
+                        </p:column>
+                        <p:column headerText="Código Bien" width="10%" style="text-align: center" >   
+                            <h:outputText value="#{comp.grupoPadre.codigoBien}-#{comp.codigoBien}"/>  
+                        </p:column>
+                        <p:column headerText="Descripción" width="15%">
+                            <h:outputText value="#{comp.descripcion}"/>  
+                        </p:column>
+                        <p:column headerText="Marca">
+                            <h:outputText value="#{comp.marca}"/>  
+                        </p:column>
+                        <p:column headerText="Modelo">
+                            <h:outputText value="#{comp.modelo}"/>  
+                        </p:column>
+                        <p:column headerText="Serie">
+                            <h:outputText value="#{comp.serie1}"/>  
+                        </p:column>
+                        <p:column headerText="Observación">
+                            <h:outputText value="#{comp.observacion}"/>  
+                        </p:column>
+                        <p:column headerText="Estado" width="7%" style="text-align: center" >
+                            <h:outputText  value="#{comp.estadoBien.texto}" />  
+                        </p:column>
+                        <p:column headerText="Acciones" style=" width: 80px">
+                            <center>
+                                <p:commandLink title="Editar Bien"  actionListener="#{bienMantenimientoView.editComponentes(comp)}" update="frmdlgComp" disabled="#{bienMantenimientoView.view}">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #00c5da;"></i>
+                                </p:commandLink>
+                            </center>
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="EDITAR" style="width: 15%"
+                                     rendered="#{!bienMantenimientoView.view}"
+                                     actionListener="#{bienMantenimientoView.editar()}"
+                                     icon="fa fa-edit"
+                                     process="@form" update="frmMain:dtBien">
+                    </p:commandButton>  
+                    <p:spacer  width="5px"/>
+                    <p:commandButton value="CANCELAR" icon="ui-icon-clear" style="width: 15%;"
+                                     onclick="PF('dlgItem').hide()" styleClass="red-btn"
+                                     rendered="#{!bienMantenimientoView.view}"
+                                     process="@this" update="frmBien"
+                                     actionListener="#{bienMantenimientoView.resetValues()}">
+                    </p:commandButton>
+                </center>
+
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgComponentes" header="Formulario de Componentes" 
+                  widgetVar="dlgComponentes" width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmdlgComp" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="outPanelComponentes" style="width: 100%">
+                                <p:fieldset legend="Datos de Componentes" rendered="#{bienMantenimientoView.bienesComponentes ne null}">
+                                    <center>
+                                        <p:panelGrid columns="2" layout="grid"  id="pgComponente" styleClass="ui-panelgrid-blank form-group">
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Código" for="codigoComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="codigoComp" value="#{bienMantenimientoView.bienesComponentes.codigoBien}"
+                                                              onkeyup="javascript:this.value = this.value.toUpperCase();" style="width: 50%"
+                                                              class="panelInput" readonly="false" disabled="true">
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:spacer width="1"/>
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Descripción" for="descripcionComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="descripcionComp" value="#{bienMantenimientoView.bienesComponentes.descripcion}"
+                                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput" >
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Serie" for="serieComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="serieComp" value="#{bienMantenimientoView.bienesComponentes.serie1}"
+                                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Marca" for="marcaComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="marcaComp" value="#{bienMantenimientoView.bienesComponentes.marca}"
+                                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Modelo" for="modeloComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="modeloComp" value="#{bienMantenimientoView.bienesComponentes.modelo}"
+                                                              onkeyup="javascript:this.value = this.value.toUpperCase();" class="panelInput"/>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1">
+                                                <p:outputLabel value="Cantidad" for="cantidadComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputText  id="cantidadComp" value="#{bienMantenimientoView.bienesComponentes.cantidad}" class="panelInput">
+                                                    <p:keyFilter regEx="/[\d\-]/"/>
+                                                </p:inputText>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                                <p:outputLabel value="Estado del Componente" escape="false" style="font-weight: bold; margin-right: 8px" for="estadoComp"/>
+                                                <p:selectOneMenu id="estadoComp" value="#{bienMantenimientoView.bienesComponentes.estadoBien}" style="width: 62%; margin-left: 5px"
+                                                                 styleClass="custom-filter" converter="entityConverter">
+                                                    <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true"/>
+                                                    <f:selectItems value="#{bienMantenimientoView.listEstadoBien}" var="estado" itemLabel="#{estado.texto}" itemValue="#{estado}"/>
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                            <p:panelGrid columns="1" style="margin-left: 46px">
+                                                <p:outputLabel value="Observación" for="observComp" style="width: 100%; font-weight: bold;"/> 
+                                                <p:inputTextarea  id="observComp" value="#{bienMantenimientoView.bienesComponentes.observacion}"
+                                                                  onkeyup="javascript:this.value = this.value.toUpperCase();" rows="3" autoResize="false" cols="35"
+                                                                  style="width: 385px; border: 1px solid #cccccc" />
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </center>
+                                    <center>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                                <p:commandLink title="Guardar" id="componenteSave-btn"  style="width: auto;" process="@form"
+                                                               actionListener="#{bienMantenimientoView.saveComponenteOfBienItem()}"
+                                                               styleClass="Fs16" update="frmBien,dtBienes">
+                                                    <p:graphicImage value="/resources/icons/disquet.png"
+                                                                    width="40" height="50" 
+                                                                    style="margin:auto;  width: auto; "/>
+                                                </p:commandLink>
+                                            </p:panelGrid>
+                                        </p:panelGrid>
+                                    </center>
+                                </p:fieldset>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog header="INGRESO DE CATALOGO BIEN"
+                  widgetVar="dlgCatalogoBien"
+                  modal="true" width="45%" height="420"
+                  resizable="false"
+                  showEffect="fade"
+                  hideEffect="fade"
+                  draggable="false"
+                  id="dlgCatalogoBien">
+            <h:form prependId="false" id="frmCatalogoBien" style=" width: 100%;">
+<!--                <p:graphicImage value="/resources/icons/bienes.png"
+                                width="40" height="40" 
+                                style="margin:auto;  width: auto; float: left"></p:graphicImage>
+                <h1 style="font-weight: bold; text-align: center">LISTA DE CATALOGO BIENES</h1>-->
+                <p:dataTable id="dtItem" 
+                             var="bien" value="#{bienMantenimientoView.lazyCatalogoBLD}"
+                             reflow="true" 
+                             paginator="true" scrollable="true"
+                             lazy="true" rows="15" 
+                             rowsPerPageTemplate="15,30,60"
+                             paginatorPosition="bottom"
+                             filterEvent="keyup"
+                             emptyMessage="No existe Catálogo.">
+                    <f:facet name="header">
+                        CATALOGO BIENES
+                    </f:facet>
+                    <p:column headerText="Código" style="font-weight: bold; width: 20%; text-align: center" filterBy="#{bien.idBien}">
+                        <h:outputText value="#{bien.idBien}"/>   
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 40%" filterBy="#{bien.descripcion}" filterMatchMode="contains">
+                        <h:outputText value="#{bien.descripcion}"/> 
+                    </p:column>
+                    <p:column headerText="Item Presupuestario" style="width: 20%" filterBy="#{bien.itemPresupuestario}">
+                        <h:outputText value="#{bien.itemPresupuestario}"/>  
+                    </p:column>
+                    <p:column headerText="Acciones" style="text-align: center; width: 10%">
+                        <center>
+                            <p:commandLink  update="mef" title="Seleccionar item y cerrar"
+                                            actionListener="#{bienMantenimientoView.selectDataCatalogo(bien)}">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgImages" header="QR del Bien" closeOnEscape="true" position="center center"  modal="true" showEffect="fade" hideEffect="fade" width="45%"  height="35%"
+                  widgetVar="dlgImages">
+            <h:form  prependId="false" id="frmShowDialog" style=" width: 100%;">
+                <h:outputText rendered="#{bienMantenimientoView.streamedContent eq null}" value="No existe un código QR ☹" style="font-weight: bold; font-size:20px;"/>
+                <p:graphicImage width="100%" height="100%" rendered="#{bienMantenimientoView.streamedContent ne null}" value="#{bienMantenimientoView.streamedContent}" stream="false" />
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

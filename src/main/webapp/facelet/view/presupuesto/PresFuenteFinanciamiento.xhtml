@@ -1,0 +1,126 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Fuente de Financiamiento
+    </ui:define>
+    <ui:param name="tittle" value="Fuente de Financiamiento"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Nuevo registro" process="@this"
+                                     icon="fa fa-plus" actionListener="#{presFuenteFinanciamientoView.form(null,false)}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" onclick="PF('fuenteFinanciamientoTable').clearFilters()" update="fuenteFinanciamientoTable"
+                                     styleClass="Fs16" style="width: auto; "/>
+                    <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                    <p:columnToggler datasource="fuenteFinanciamientoTable" trigger="mostrarColumnas" />
+                    <p:dataTable  id="fuenteFinanciamientoTable" widgetVar="fuenteFinanciamientoTable" var="fuente" value="#{presFuenteFinanciamientoView.presFuenteFinanciamientoLazy}" 
+                                  paginator="true" rows="25" style="width: 100%;margin-top: 15px" rowKey="#{fuente.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="25,50,75,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 10%;" filterBy="#{fuente.codFuente}">
+                            <h:outputText value="#{fuente.codFuente}" />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 10%;" filterBy="#{fuente.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{fuente.nombre}" />
+                        </p:column>
+                        <p:column headerText="Tipo de fuente" style="width: 10%;" filterBy="#{fuente.tipoFuente.texto}" filterMatchMode="contains">
+                            <h:outputText value="#{fuente.tipoFuente.texto}" />
+                        </p:column>
+                        <p:column headerText="Código" style="width: 10%;text-align: center">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('fuenteFinanciamientoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                    <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{fuente.estado?'ACTIVO':'INACTIVO'}" />
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                            <p:commandLink title="Ver" process="@this" actionListener="#{presFuenteFinanciamientoView.form(fuente,true)}"  
+                                           update="fuenteFinanciamientoForm">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{presFuenteFinanciamientoView.form(fuente,false)}"  
+                                           update="fuenteFinanciamientoForm">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Añadir" process="@this" actionListener="#{presFuenteFinanciamientoView.desactivarFuenteFinanciamiento(fuente)}"  
+                                           update="fuenteFinanciamientoForm" rendered="#{fuente.estado}">
+                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de desactivación" message="¿Esta seguro de desactivar el item?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="fuenteFinanciamientoDlg" widgetVar="fuenteFinanciamientoDlg" width="40%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Registrar fuente financiamiento">
+            <h:form prependId="false" id="fuenteFinanciamientoForm">
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">                        
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Activo:" style="font-weight: bold"/><br/>
+                            <p:selectBooleanCheckbox id="gobierno" value="#{presFuenteFinanciamientoView.presFuenteFinanciamiento.estado}" 
+                                                     disabled="#{presFuenteFinanciamientoView.editView}"/>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="groupCodigo">
+                            <p:outputLabel for="@next" value="Código:" style="font-weight: bold"/><br/>
+                            <p:inputText id="codigo" class="panelInput" style="width: 100%" 
+                                         value="#{presFuenteFinanciamientoView.presFuenteFinanciamiento.tipoFuente.orden}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'codigo')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Tipo:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="tipo" value="#{presFuenteFinanciamientoView.presFuenteFinanciamiento.tipoFuente}" converter="#{utilConverter}" 
+                                             filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{presFuenteFinanciamientoView.editView}"
+                                             panelStyle="width: 28rem">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{presFuenteFinanciamientoView.tipoFuenteList}" var="tipo" itemLabel="#{tipo.texto}" itemValue="#{tipo}"/>
+                                <p:ajax update="groupCodigo" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Descripción:" style="font-weight: bold"/><br/>
+                            <p:inputTextarea id="descripcion" class="panelInput" style="width: 100%" 
+                                             value="#{presFuenteFinanciamientoView.presFuenteFinanciamiento.nombre}" readonly="#{presFuenteFinanciamientoView.editView}">
+                            </p:inputTextarea>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton value="Guardar" update="fuenteFinanciamientoTable" rendered="#{!presFuenteFinanciamientoView.editView}"
+                                     icon="fa fa-save" actionListener="#{presFuenteFinanciamientoView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 5px"/>
+                    <p:commandButton value="Cerrar" update="fuenteFinanciamientoTable"
+                                     icon="fa fa-save" actionListener="#{presFuenteFinanciamientoView.closeForm(true)}"
+                                     styleClass="Fs16" style="width: auto;margin: 5px;background: #ff3333"/>
+                </center>
+            </h:form>        
+        </p:dialog>
+    </ui:define>
+</ui:composition>

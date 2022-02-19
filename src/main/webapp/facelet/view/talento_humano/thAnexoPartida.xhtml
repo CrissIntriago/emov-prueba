@@ -1,0 +1,157 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Distributivo Anexo
+    </ui:define>
+    <ui:param name="tittle" value="Distributivo Anexo"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:fieldset legend="Parametros" style="margin-bottom: 5px">
+                        <p:panelGrid columns="6" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Período:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="periodoSeleccionado" value="#{thDistributivoAnexoView.opcionBusqueda.anio}"
+                                                 filter="true" filterMatchMode="contains" style="width: 100%">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{thDistributivoAnexoView.listaPeriodo}" var="item" itemLabel="#{item}" itemValue="#{item}"/>
+                                    <p:ajax listener="#{thDistributivoAnexoView.updateDataTableView(true)}" update="thDistributivoAnexoTable"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <p:dataTable  id="thDistributivoAnexoTable" widgetVar="thDistributivoAnexoTable" var="thDistributivoAnexo" value="#{thDistributivoAnexoView.thCargoRubroViewLazyModel}" 
+                                  paginator="true" rows="30" style="width: 100%;margin-top: 15px" rowKey="#{thDistributivoAnexo.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="30,50,60,70,100" lazy="true" selectionMode="single" editable="#{thDistributivoAnexoView.editTable}" editMode="cell" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Nombre" style="width: 10%;" filterBy="#{thDistributivoAnexo.idRubro.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{thDistributivoAnexo.idRubro.nombre}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 10%;text-align: center" filterBy="#{thDistributivoAnexo.idRubro.ingreso}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thDistributivoAnexoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="INGRESO" itemValue="true" />
+                                    <f:selectItem itemLabel="EGRESO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{thDistributivoAnexo.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                        </p:column>      
+                        <p:column headerText="Cod. estructura" style="width: 10%;text-align: center">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{thDistributivoAnexo.idEstructura.codigo}"/>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:selectOneMenu value="#{thDistributivoAnexo.idEstructura}" style="width:100%" 
+                                                     panelStyle="width:25%" 
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" var="t">
+                                        <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                        <f:selectItems value="#{thDistributivoAnexoView.preEstructuraProgramaticaList}" var="estructura" 
+                                                       itemLabel="#{estructura.codigo} - #{estructura.descripcion}" itemValue="#{estructura}" />
+                                        <p:ajax update="thDistributivoAnexoTable" listener="#{thDistributivoAnexoView.generarPartida(thDistributivoAnexo)}"/>
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.nombre}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="Nom. estructura" style="width: 10%">
+                            <h:outputText value="#{thDistributivoAnexo.idEstructura.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Cod. presupuesto" style="width: 10%;text-align: center">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{thDistributivoAnexo.idPresupuesto.codigo}"/>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:selectOneMenu value="#{thDistributivoAnexo.idPresupuesto}" style="width:100%" 
+                                                     panelStyle="width:25%" 
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" var="t">
+                                        <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                        <f:selectItems value="#{thDistributivoAnexoView.preCatalogoPresupuestoList}" var="partida" 
+                                                       itemLabel="#{partida.codigo} - #{partida.descripcion}" itemValue="#{partida}" />
+                                        <p:ajax update="thDistributivoAnexoTable" listener="#{thDistributivoAnexoView.generarPartida(thDistributivoAnexo)}"/>
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="Nom. presupuesto" style="width: 10%">
+                            <h:outputText value="#{thDistributivoAnexo.idPresupuesto.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Cod. fuente" style="width: 10%;text-align: center">
+                            <p:cellEditor>
+                                <f:facet name="output">
+                                    <h:outputText value="#{thDistributivoAnexo.idFuente.codFuente}"/>
+                                </f:facet>
+                                <f:facet name="input">
+                                    <p:selectOneMenu value="#{thDistributivoAnexo.idFuente}" style="width:100%" 
+                                                     panelStyle="width:35%" 
+                                                     converter="#{utilConverter}"
+                                                     filter="true" filterMatchMode="contains" var="t">
+                                        <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                        <f:selectItems value="#{thDistributivoAnexoView.preFuenteList}" var="fuente" 
+                                                       itemLabel="#{fuente.nombre}" itemValue="#{fuente}" />
+                                        <p:ajax update="thDistributivoAnexoTable" listener="#{thDistributivoAnexoView.generarPartida(thDistributivoAnexo)}"/>
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.codFuente}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{t.nombre}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="Nom. fuente" style="width: 10%">
+                            <h:outputText value="#{thDistributivoAnexo.idFuente.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Partida" style="width: 10%;text-align: center">
+                            <h:outputText value="#{thDistributivoAnexo.partidaPresupuestaria}"/>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

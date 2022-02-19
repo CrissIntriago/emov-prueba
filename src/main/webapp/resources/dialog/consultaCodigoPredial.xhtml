@@ -1,0 +1,208 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:h="http://xmlns.jcp.org/jsf/html" >
+
+    <!-- INTERFACE -->
+    <cc:interface >
+        <cc:attribute name="contribuyenteConsulta" type="com.origami.sigef.common.entities.Cliente"  />
+        <cc:attribute name="tipoConsulta"  type="java.lang.Long" default="5"  />
+        <cc:attribute name="nombreComprador" />
+        <cc:attribute name="identificacion" />
+        <cc:attribute name="consultarEmisiones" method-signature="void listener()"/>
+        <cc:attribute name="consultaContDirecta" method-signature="void listener()"/>
+        <cc:attribute name="predioModel" type="com.gestionTributaria.models.CatPredioModel" required="true"/>
+        <cc:attribute name="updateConsulta"/>
+        <cc:attribute name="updateFrmSolicitante"/>
+        <cc:attribute name="changeRadio"  method-signature="void listener()"/>
+        <cc:attribute name="dlgSolicitante"/>
+        <cc:attribute name="renderConsultaDirecta" type="java.lang.Boolean" default="true"/>
+        <cc:attribute name="renderContribuyente" type="java.lang.Boolean" default="true"/>
+        <cc:attribute name="tipoPredio" type="java.lang.Boolean" default="true" shortDescription="true es urbano, false rural"/>
+        <cc:attribute name="esUrbano" type="java.lang.Long" default="1" shortDescription="2 es urbano, 3 rural"/>
+    </cc:interface>
+
+    <!-- IMPLEMENTATION # {cc.attrs.tipoPredio}"-->
+    <cc:implementation>
+        <h:panelGrid columns="2" style="width: 100%" columnClasses="ui-g-10 ui-md-8 ui-lg-9,ui-g-3 ui-md-2 ui-lg-3">
+            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                <!--<p:outputLabel value="TIPO DE CONSULTA: " style="font-size: 15px; font-weight: bolder;" />-->
+                <p:selectOneRadio value="#{cc.attrs.tipoConsulta}" valueChangeListener="#{cc.attrs.changeRadio}"
+                                  rendered="#{cc.attrs.renderContribuyente}" layout="grid" columns="5" 
+                                  style="font-size: 10px; font-weight: bolder;">
+                    <f:selectItem itemLabel="CÓDIGO CATASTRAL" itemValue="3" />
+                    <f:selectItem itemLabel="CÓDIGO ANTERIOR" itemValue="4" />
+<!--                    <f:selectItem itemLabel="CÓDIGO CATASTRAL" itemValue="5" />-->
+                    <f:selectItem itemLabel="CONTRIBUYENTE" itemValue="2" rendered="#{cc.attrs.renderContribuyente}"/>
+                    <f:selectItem itemLabel="CÓDIGO PREDIAL" itemValue="1" />
+                    <p:ajax update="#{cc.attrs.updateConsulta}" />
+                </p:selectOneRadio>
+                <p:selectOneRadio value="#{cc.attrs.tipoConsulta}" 
+                                  rendered="#{!cc.attrs.renderContribuyente}" layout="grid" 
+                                  columns="5" style="font-size: 10px; font-weight: bolder;">
+                    <f:selectItem itemLabel="CÓDIGO CATASTRAL" itemValue="3" />
+                    <f:selectItem itemLabel="CÓDIGO ANTERIOR" itemValue="5" />
+                    <f:selectItem itemLabel="CÓDIGO PREDIAL" itemValue="1" />
+                    <p:ajax update="#{cc.attrs.updateConsulta}" />
+                </p:selectOneRadio>
+                <p:panelGrid id="consulta" layout="grid" columns="1" >
+                    <h:panelGroup style="font-size: 13px;" rendered="#{cc.attrs.tipoConsulta eq 1}">
+                        <p:outputLabel value="CÓDIGO: " style="font-size: 13px; font-weight: bolder;"/>
+                        <p:inputText value="#{cc.attrs.predioModel.numPredio}" style="font-size: 13px; font-weight: bolder;"/>
+                    </h:panelGroup>
+                    <h:panelGroup style="font-size: 13px;" rendered="#{cc.attrs.tipoConsulta eq 2}">
+                        <h:panelGroup rendered="#{!cc.attrs.renderConsultaDirecta}">
+                            <p:outputLabel value="C.I./R.U.C.:" style="font-size: 13px; font-weight: bolder; width: 140px;"/>
+                            <p:outputLabel value="CONTRIBUYENTE:" style="font-size: 13px; font-weight: bolder;"/>
+                            <br/>
+                            <p:inputText value="#{cc.attrs.contribuyenteConsulta.identificacionCompleta}" style="font-size: 13px; font-weight: bolder;" size="15" readonly="false"/>
+                            <p:spacer width="10"/>
+                            <p:inputText value="#{cc.attrs.contribuyenteConsulta.nombreCompleltoSql}" style="font-size: 13px; font-weight: bolder;" readonly="false" size="50"/>
+                        </h:panelGroup>
+                        <h:panelGroup rendered="#{cc.attrs.renderConsultaDirecta}">
+                            <p:inputText value="#{cc.attrs.identificacion}" placeholder="CI/RUC" style="font-size: 13px; font-weight: bolder;" size="15" readonly="false"/>
+                            <p:spacer width="10"/>
+                            <p:inputText value="#{cc.attrs.nombreComprador}" size="50" style="font-size: 13px; font-weight: bolder;" placeholder="APELLIDOS NOMBRES"/>
+                            <p:commandButton value="CONSULTA DIRECTA" style="height: 30px" update="#{cc.attrs.updateConsulta}" rendered="false"/>
+                        </h:panelGroup>
+                    </h:panelGroup>
+                    <h:panelGroup style="font-size: 13px; width: 95%;" rendered="#{cc.attrs.tipoConsulta eq 3 and cc.attrs.esUrbano eq 2}">
+                        <p:panelGrid style="width: 95%;" styleClass="ui-responsive">
+                            <p:row styleClass="ui-responsive">
+                                <p:column><h:outputText value="PARROQ." style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="SECTOR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="MZ. " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="SOLAR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV1 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV2 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV3 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV4 " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="PHV " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="PHH " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            </p:row>
+                            <p:row styleClass="ui-responsive">
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.parroquia}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.sector}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.mz}" maxlength="4" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.solar}" maxlength="4" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div1}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div2}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div3}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText>
+                                </p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div4}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText>   </p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.phv}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.phh}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                            </p:row>
+                        </p:panelGrid>
+                    </h:panelGroup>
+                    <h:panelGroup style="font-size: 13px; width: 95%;" rendered="#{cc.attrs.tipoConsulta eq 3 and cc.attrs.esUrbano eq 3}">
+                        <p:panelGrid style="width: 95%;" styleClass="ui-responsive">
+                            <p:row styleClass="ui-responsive">
+                                <p:column><h:outputText value="PARROQ." style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="SECTOR " style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="CÓDIGO" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV1" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                                <p:column><h:outputText value="DIV2" style="font-size: 13px; font-weight: bolder;"/></p:column>
+                            </p:row>
+                            <p:row styleClass="ui-responsive">
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.parroquia}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.sector}" maxlength="3" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText></p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.numPredio}" maxlength="5" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText>
+                                </p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div1}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText>
+                                </p:column>
+                                <p:column>
+                                    <p:inputText value="#{cc.attrs.predioModel.div2}" maxlength="2" style="font-size: 13px; font-weight: bolder; width: 90%;">
+                                        <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                                    </p:inputText>
+                                </p:column>
+                            </p:row>
+                        </p:panelGrid>
+                    </h:panelGroup>
+                    <h:panelGroup style="font-size: 13px;" rendered="#{cc.attrs.tipoConsulta eq 4}">
+                        <p:outputLabel value="CÓDIGO PREDIAL ANTERIOR: " style="font-size: 13px; font-weight: bolder;"/><p:spacer width="15" />
+                        <p:inputText value="#{cc.attrs.predioModel.predialAnt}" maxlength="20" style="font-size: 13px; font-weight: bolder; width: 60%;">
+                            <p:keyFilter preventPaste="false" regEx="[0-9]"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup style="font-size: 13px; width: 80%;" rendered="#{cc.attrs.tipoConsulta eq 5}">
+                        <p:inputText value="#{cc.attrs.predioModel.claveCat}" style="font-size: 13px; font-weight: bolder; width: 50%"/>
+                    </h:panelGroup>
+                </p:panelGrid>
+            </p:panelGrid>
+            <h:panelGroup>
+                <p:selectOneRadio value="#{cc.attrs.esUrbano}" columns="1" layout="grid">
+                    <f:selectItem itemValue="2" itemLabel="URBANO" />
+                    <f:selectItem itemValue="3" itemLabel="RURAL" />
+                    <p:ajax process="@this" update="consulta" />
+                </p:selectOneRadio>
+                <br/>
+                <p:commandButton value="CONSULTAR" actionListener="#{cc.attrs.consultarEmisiones}" update="#{cc.attrs.updateConsulta}" style="font-size: 15px; font-weight: bolder;" styleClass="btnStyle" />
+            </h:panelGroup>
+        </h:panelGrid>
+        <h:panelGroup id="pnListPredios" rendered="#{not empty recaudacionMB.prediosConsulta and recaudacionMB.prediosConsulta.size()>1}">
+            <p:dataTable id="dataPrediosList" value="#{recaudacionMB.prediosConsulta}"
+                         var="p" selectionMode="single" selection="#{recaudacionMB.predioConsulta}" rowKey="#{p.id}"
+                         style="width: 100%;margin: 0 auto" reflow="true" scrollHeight="100"
+                         rendered="#{not empty recaudacionMB.prediosConsulta and recaudacionMB.prediosConsulta.size()>1}"
+                         scrollable="true">
+                <p:ajax event="rowSelect" listener="#{recaudacionMB.seleccionarPredio(recaudacionMB.predioConsulta.tipoPredio eq 'U' ? 1:2)}" update="mainForm" process="@this"/>
+                <!--                            <p:ajax event="rowDblselect" listener="# {pagoPrediales.seleccionarPredio(2)}" rendered="# {p.tipoPredio eq 'U' ? false:true}" update="mainForm:tvRecaudaciones:datos"/>-->
+                <p:column headerText="Tipo Predio" width="8%" ><h:outputText value="#{p.tipoPredio eq 'U' ? 'Urbano' : 'Rural'}"/></p:column>
+                <p:column headerText="No. Predio" sortBy="#{p.numPredio}" width="10%" filterBy="#{p.numPredio}" filterMatchMode="exact" filterStyle="width: 95%;"><h:outputText value="#{p.numPredio}"/></p:column>
+                <p:column headerText="Cód. Predial" width="8%" filterBy="#{p.claveCat}" filterMatchMode="contains" filterStyle="width: 90%;"><h:outputText value="#{p.claveCat}"/></p:column>
+                <p:column headerText="Propietario" width="34%" filterBy="#{p.nombrePropietarios}" filterMatchMode="contains"  filterStyle="width: 90%;"><h:outputText value="#{p.nombrePropietarios}"/></p:column>
+                <p:column headerText="Dirección"   width="31%" filterBy="#{p.direccion}" filterMatchMode="contains" filterStyle="width: 90%;">
+                    <h:outputText value="#{p.direccion}"/>
+                </p:column>
+                <p:column headerText="Mz" width="5%"><h:outputText value="#{p.mz}"/></p:column>
+                <p:column headerText="Sl" width="5%"><h:outputText value="#{p.solar}"/></p:column>
+            </p:dataTable>
+        </h:panelGroup>
+    </cc:implementation>
+</html>

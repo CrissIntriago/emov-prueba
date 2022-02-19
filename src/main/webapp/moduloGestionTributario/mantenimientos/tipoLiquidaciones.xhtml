@@ -1,0 +1,199 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Títulos de Reporte
+    </ui:define>
+    <ui:param name="tittle" value="Lista de Títulos de Reporte" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+
+
+                <h:form id="frmMain">
+
+                    <p:tabView id="tvTipoLiquid">
+
+                        <p:tab title="Vista en lista">
+                            <div align="center">
+                                <p:commandButton value="Nuevo título" icon="fa fa-plus"
+                                                 onclick="PF('dlgNew').show()"
+                                                 actionListener="#{transaccionView.nuevaTransaccion}" 
+                                                 styleClass="btnStyle" style="float: right; width: auto"/>
+                            </div>
+                            <br/><br/> <br/>
+                            <p:dataTable id="tableTr" 
+                                         value="#{transaccionView.tiposLiquidaciones}" 
+                                         filterEvent="enter" 
+                                         var="tr" paginator="true" rows="25" reflow="true" rowsPerPageTemplate="15, 25, 35, 50" 
+                                         paginatorPosition="bottom" emptyMessage="No tiene datos">
+                                <p:column headerText="id"  width="7%">
+                                    <center><h:outputText value="#{tr.id}"/></center>
+                                </p:column>
+                                <p:column headerText="Codigo" filterBy="#{tr.codigoTituloReporte}" filterMatchMode="contains" 
+                                          sortBy="#{tr.codigoTituloReporte}" width="10%">
+                                    <center><h:outputText value="#{tr.codigoTituloReporte}"/></center>
+                                </p:column>
+
+                                <p:column headerText="Título reporte" filterBy="#{tr.nombreTitulo}" width="25%" filterStyle="width: 80%;" filterMatchMode="contains" >
+                                    <h:outputText value="#{tr.nombreTitulo}"/>
+                                </p:column>
+                                <p:column headerText="Transacción" filterBy="#{tr.nombreTransaccion}" width="23%" filterStyle="width: 80%;" filterMatchMode="contains" >
+                                    <h:outputText value="#{tr.nombreTransaccion}"/>
+                                </p:column>
+                                <p:column headerText="Tipo" width="8%" >
+                                    <center><h:outputText value="Transacción" rendered="#{tr.transaccionPadre == 0}"/>
+                                        <h:outputText value="Subtransacción" rendered="#{tr.transaccionPadre != 0}"/></center>
+                                </p:column>
+                                <p:column headerText="Categoría" width="10%" rendered="false" filterBy="#{tr.tipoTransaccion.descripcion}" filterMatchMode="contains" >
+                                    <center><h:outputText value="#{tr.tipoTransaccion.descripcion}"/></center>
+                                </p:column>
+
+                            
+
+                                <p:column headerText="Acciones" width="10%">
+                                    <center>                                      
+                                        <p:commandLink title="Editar" actionListener="#{transaccionView.selTransaccionEdit(tr)}" 
+                                                       onclick="PF('dlgEdit').show()" update="frmEdit">
+                                            <i class="fa fa-edit"  style="font-size: 1.5em;color: #0066cc;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="Eliminar" actionListener="#{transaccionView.eliminarTitulo(tr)}" update="frmMain">
+                                            <i class="fa fa-fw fa-trash"  style="font-size: 1.5em;color: red;"></i>
+                                            <p:confirm header="Confirmación" message="Está seguro de Eliminar?" icon="ui-icon-alert" />
+                                        </p:commandLink>
+                                    </center>
+                                </p:column>
+                            </p:dataTable>
+                        </p:tab>
+
+                        <p:tab title="Vista en árbol">
+                            <div  style="width: 70%; margin: auto;">
+                                <p:tree value="#{transaccionView.root}" var="node">
+                                    <p:treeNode>
+                                        <h:outputText value="#{node.codigoTituloReporte} - #{node.nombreTransaccion}"/>
+                                    </p:treeNode>
+                                </p:tree>
+                            </div>
+                        </p:tab>
+                    </p:tabView>
+                </h:form>
+
+            </div>
+        </div>
+
+        <p:dialog id="dlgAdd" widgetVar="dlgAdd"  header="Agregar transacciones" appendTo="@(body)" modal="true" width="500" resizable="false" closable="true" closeOnEscape="true" position="center">
+            <h:form id="frmAdd">
+                <p:accordionPanel>
+                    <p:tab title="Transacciones hijas">
+                        <p:panel id="dtTrsPadre">
+                            <p:dataTable rows="5" paginator="true" var="tr" value="#{transaccionView.tipoLiqHijos}" reflow="true" 
+                                         paginatorPosition="top" emptyMessage="No tiene datos" style="width: 450px; margin-top: 10px;" >
+                                <f:facet name="header">
+                                    Subtransacciones de la transacción: #{transaccionView.transaccionPadre.nombreTransaccion}
+                                </f:facet>
+                                <p:column headerText="Descripción" filterBy="#{tr.nombreTransaccion}" width="38%">
+                                    <center><h:outputText value="#{tr.nombreTransaccion}"/></center>
+                                </p:column>
+                                <p:column headerText="Tipo" width="38%">
+                                    <center><h:outputText value="#{tr.tipoTransaccion.descripcion}"/></center>
+                                </p:column>
+                                <p:column headerText="Acción">
+                                    <center><p:commandButton value="Eliminar" actionListener="#{transaccionView.eliminarTransaccion(tr)}" update="frmAdd"/></center>
+                                </p:column>
+                            </p:dataTable>
+
+                        </p:panel>
+                    </p:tab>
+                    <p:tab title="Lista de transacciones">
+                        <p:panel id="dtTrs">
+                            <center>
+                                <p:dataTable rows="5" paginator="true" var="tr" value="#{transaccionView.tiposLazy}" reflow="true" lazy="true" rowKey="#{tr.id}"
+                                             paginatorPosition="top" emptyMessage="No tiene datos" style="width: 450px; margin-top: 10px;" selection="#{transaccionView.tipoLiqSel}">
+                                    <f:facet name="header">
+                                        Seleccione las transacciones
+                                    </f:facet>
+                                    <p:column selectionMode="multiple" style="width:35px;text-align:center"/>
+                                    <p:column headerText="Descripción" filterBy="#{tr.nombreTransaccion}" width="38%">
+                                        <center><h:outputText value="#{tr.nombreTransaccion}"/></center>
+                                    </p:column>
+                                    <p:column headerText="Tipo" width="38%">
+                                        <center><h:outputText value="#{tr.tipoTransaccion.descripcion}"/></center>
+                                    </p:column>
+                                </p:dataTable>
+                            </center>
+                        </p:panel>
+                    </p:tab>
+                </p:accordionPanel>
+                <center style="margin-top: 10px;">
+                    <p:commandButton value="Guardar" styleClass="btnStyle" actionListener="#{transaccionView.guardarTransaccionesHijas()}" onclick="PF('dlgAdd').hide()" update="frmMain"/>
+                    <p:commandButton value="Cancelar" styleClass="btnStyle" onclick="PF('dlgAdd').hide()"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+        <p:dialog id="dlgNew" widgetVar="dlgNew"  header="Nuevo título de reporte" appendTo="@(body)" modal="true" width="500" resizable="false" closable="true" closeOnEscape="true">
+            <h:form id="frmNew">
+                <center>
+                    <p:panelGrid columns="2">
+                        <h:outputText value="Nombre título: "/>
+                        <p:inputText value="#{transaccionView.transaccion.nombreTitulo}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Prefijo: "/>
+                        <p:inputText value="#{transaccionView.transaccion.prefijo}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Nombre transacción: "/>
+                        <p:inputText value="#{transaccionView.transaccion.nombreTransaccion}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Tipo de transacción:"/>
+                        <p:selectOneMenu value="#{transaccionView.transaccion.tipoTransaccion}" converter="entityConverter" style="width: 200px;">
+                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                            <f:selectItems value="#{transaccionView.tiposTransaccion}" var="tipo" itemLabel="#{tipo.descripcion}" itemValue="#{tipo}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </center>
+
+                <center style="margin-top: 10px;">
+                    <p:commandButton value="Guardar" styleClass="btnStyle"  icon="fa fa-save"
+                                     actionListener="#{transaccionView.guardarNuevoTitulo()}" 
+                                     oncomplete="PF('dlgNew').hide()" update="frmMain:tvTipoLiquid"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" icon="fa fa-close" styleClass="btnStyle" onclick="PF('dlgNew').hide()"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgEdit" widgetVar="dlgEdit"  header="Editar transacción/subtransacción" appendTo="@(body)" modal="true" width="500" resizable="false" closable="true" closeOnEscape="true">
+            <h:form id="frmEdit">
+                <center>
+                    <p:panelGrid columns="2">
+                        <h:outputText value="Nombre título: "/>
+                        <p:inputText value="#{transaccionView.transaccion.nombreTitulo}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Prefijo: "/>
+                        <p:inputText value="#{transaccionView.transaccion.prefijo}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Nombre transacción: "/>
+                        <p:inputText value="#{transaccionView.transaccion.nombreTransaccion}" style="width: 200px; text-transform: uppercase;" />
+                        <h:outputText value="Tipo de transacción:"/>
+                        <p:selectOneMenu value="#{transaccionView.transaccion.tipoTransaccion}" converter="entityConverter" style="width: 200px;">
+                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" />
+                            <f:selectItems value="#{transaccionView.tiposTransaccion}" var="tipo" itemLabel="#{tipo.descripcion}" itemValue="#{tipo}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                </center>
+
+                <center style="margin-top: 10px;">
+                    <p:commandButton value="Guardar" styleClass="btnStyle"  icon="fa fa-save"
+                                     actionListener="#{transaccionView.guardarEdicionTransaccion()}" 
+                                     onclick="PF('dlgEdit').hide()" update="frmMain"/>
+                    <p:spacer width="10"/>
+                    <p:commandButton value="Cancelar" styleClass="btnStyle" icon="fa fa-close" onclick="PF('dlgEdit').hide()"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+        </p:confirmDialog>
+    </ui:define>
+</ui:composition>

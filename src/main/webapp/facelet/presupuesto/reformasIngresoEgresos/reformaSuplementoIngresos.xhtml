@@ -1,0 +1,393 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                template="/WEB-INF/template/template.xhtml">
+
+    <f:view encoding="UTF-8"></f:view>
+
+
+    <ui:define name="title">Reformas Suplemento Ingresos</ui:define> 
+    <ui:define name="content">
+        <style>
+
+            #btnReformas,#btnregistranuevo{
+                width: 170px;
+                height: 30px;
+                border: 2px solid;
+                border-radius: 10px 0px 10px 0px;
+            }
+
+            #btnReformas:hover,#btnregistranuevo:hover{
+                border-color:#FFC107;
+
+            }
+            .animated .ui-progressbar-value { 
+                background-image: url("#{resource['demo/images/pbar-ani.gif']}"); 
+            }
+        </style>
+        <style type="text/css">
+
+        </style>
+
+
+        <div class="ui-g ui-fluid">         
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{suplementosIngresoView.tarea}" tramite="#{suplementosIngresoView.tramite}" />
+                </div>
+            </div>
+            
+            <div class="ui-g-12">
+                <p:fieldset legend="Opciones" >
+                    <h:form prependId="false" id="formNuevosRegistros">
+                        <p:commandButton id="btnReformas" disabled="#{suplementosIngresoView.enabledReformas}" value="Reformas"  actionListener="#{suplementosIngresoView.showPaneles()}"
+                                         icon="fa fa-check"  update="formNuevosRegistros,fmreformas1,fminformacion,fornGeneral,formButton"/> 
+
+                        <p:spacer width="10"/>
+
+                        <p:commandButton id="btnregistranuevo" disabled="#{suplementosIngresoView.ensabledNuevo}" rendered="#{suplementosIngresoView.verificadorSolicitud}" value="Registrar Nueva Reforma" 
+                                         actionListener="#{suplementosIngresoView.registraSolicitudNuevo()}"
+                                         icon="fa fa-plus"  update="formNuevosRegistros,fmreformas1,fminformacion,fornGeneral,formButton"/> 
+
+                        <p:spacer width="10"/>
+
+                    </h:form>
+                </p:fieldset>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fmreformas1">
+                    <p:panel  rendered="#{suplementosIngresoView.panel1}">
+                        <p:commandButton value="Limpiar Filtros" style="width: auto;margin-bottom: 1%;" icon="fa fa-eraser"
+                                         onclick="PF('datareformas').clearFilters()" 
+                                         actionListener="#{suplementosIngresoView.clearAllFilters}"
+                                         update="datareformas">
+                            <p:resetInput target="datareformas" />
+                        </p:commandButton>
+                        <p:dataTable id="datareformas" widgetVar="datareformas" var="item" paginator="true" rows="15"  paginatorPosition="bottom"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="15,20,30,40,50,100" value="#{suplementosIngresoView.lazyReformas}" lazy="true" style="background: #FFFFFF"
+                                     emptyMessage="No existen datos con el criterio de busqueda especificado" rowIndexVar="index" selectionMode="single" rowKey="#{item.id}" >
+
+                            <f:facet name="header">
+                                <h2 style="font-weight: bold; font-size: 12px">REFORMAS</h2>
+                            </f:facet>
+                            <p:column headerText="No.REFORMA" style="text-align: center; padding: 10px 10px 10px 10px;">
+                                <p:outputLabel value="#{item.numeracion}"/>   
+                            </p:column>
+                            <p:column headerText="FECHA REGISTRO"  style="text-align: center;">
+                                <p:outputLabel value="#{item.fechaOficioReforma}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="TIPO" style="text-align: center;">
+                                <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />   
+                            </p:column>
+                            <p:column headerText="SUPLEMENTO"  style="text-align: center;">
+                                <p:outputLabel  value="#{suplementosIngresoView.totalSuplemento(item)}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="PERIODO" style="text-align: center;" filterBy="#{item.periodo}" filterMatchMode="contains">
+                                <p:outputLabel   value="#{item.periodo}"/>
+                            </p:column>
+                            <p:column headerText="ESTADO" filterBy="#{item.estado.id}" style="text-align: center;">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('datareformas').filter()" styleClass="custom-filter" style="width: 90% !important;">
+                                        <f:selectItem itemLabel="Todas" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{suplementosIngresoView.estadoFiltros}" var="c" itemLabel="#{c.texto}" itemValue="#{c.id}"/>
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <p:outputLabel value="#{item.estado.texto}"/>   
+                            </p:column>
+                            <p:column headerText="ACCIONES" style="width: 5%">
+                                <p:commandLink disabled="#{item.estado.codigo=='APRO'?true:false}" title="Editar" process="@this" actionListener="#{suplementosIngresoView.editarReforma(item)}" 
+                                               update="formNuevosRegistros,fmreformas1,fminformacion,fornGeneral,formButton">
+                                    <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; "></i>
+                                </p:commandLink>
+
+                                <p:commandLink  rendered="#{item.estado.codigo=='APRO'?false:true}" title="ENVIAR" process="@this"  actionListener="#{suplementosIngresoView.abriDlogo(item)}" >
+                                    <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </p:panel>
+                </h:form>
+            </div>
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fminformacion">
+                    <p:commandButton rendered="#{suplementosIngresoView.panel2}" icon="fa fa-plus"  value="Nuevo" 
+                                     disabled="#{suplementosIngresoView.verificadorSolicitud==true?false:true}"
+                                     style="width: auto; position: absolute; right: 0; margin-right: 20px; margin-bottom: 5%;" 
+                                     actionListener="#{suplementosIngresoView.nuevoRegistro()}" update="fminformacion,fornGeneral,formButton"/>
+
+                    <p:fieldset legend="Información" toggleable="true" rendered="#{suplementosIngresoView.panel2}">
+                        <p:panelGrid columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value="N. OFICIO:"/>
+                                <p:inputText readonly="true" value="#{suplementosIngresoView.suplementoIngreso.numeracion}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value="N. AUTORIZACION:"/>
+                                <p:inputText readonly="true" value="#{suplementosIngresoView.suplementoIngreso.codigo}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value="FECHA OFICIO:"/>
+                                <p:calendar disabled="true" navigator="true" locale="es" yearRange="c-50:c+50" value="#{suplementosIngresoView.suplementoIngreso.fechaOficioReforma}" pattern="yyyy-MM-dd" mask="true" >
+                                    <p:ajax event="blur"/>
+                                </p:calendar>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value="TIPO"/>
+                                <p:inputText readonly="true" value="#{suplementosIngresoView.suplementoIngreso.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}"/>
+                            </p:panelGrid>
+
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:outputLabel value="PERIODO:"/>
+                                <p:inputText readonly="true"   value="#{suplementosIngresoView.suplementoIngreso.periodo}"/>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                <p:commandButton icon="fa fa-search" disabled="#{suplementosIngresoView.verificadorSolicitud==true?false:true}" title="Cargar Proforma Ingresos"
+                                                 value="Consultar" style="width: 150px;" actionListener="#{suplementosIngresoView.cargarDataTabla()}" update="fornGeneral"/>
+                                <p:commandButton icon="fa fa-edit" disabled="#{suplementosIngresoView.verificadorSolicitud==true?false:true}" title="Editar Fuente Financiamiento" 
+                                                 value="Editar Fuente" style="width: 150px;" class="blue-grey-btn" actionListener="#{suplementosIngresoView.verificarfuente()}" update="fornGeneral"/>
+                                <!--                                
+                                                                <p:commandButton value="Prueba" style="width: 150px;" class="blue-grey-btn" onclick="filtro()" update="fornGeneral"/>-->
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+                </h:form>
+            </div>
+            <div class="ui-g-12">
+                <h:form prependId="false" id="fornGeneral">
+                    <p:commandButton  rendered="#{suplementosIngresoView.panel2}"  value="Limpiar Filtros" style="width: auto;margin-bottom: 1%;" icon="fa fa-eraser"
+                                      onclick="PF('cuentas').clearFilters()" 
+                                      actionListener="#{suplementosIngresoView.clearAllFilters(1)}"
+                                      update="cuentas">
+                        <p:resetInput target="cuentas" />
+                    </p:commandButton>
+                    <!--{suplementosIngresoView.panel2}-->
+                    <p:commandButton  rendered="false" id="mostrarColumnas" type="button" value="Columnas visibles" style="float: right; width: auto; margin-bottom: 15px; " icon="fa fa-align-justify" />
+                    <p:columnToggler rendered="#{suplementosIngresoView.panel2}"  datasource="cuentas" trigger="mostrarColumnas"/>
+                    <p:dataTable rendered="#{suplementosIngresoView.panel2}" id="cuentas" widgetVar="cuentas" var="pl" value="#{suplementosIngresoView.listaItemReforma}" paginator="true" rows="15"
+                                 style="width: 100%;" paginatorPosition="bottom"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="15,20,30,40,50,100" editable="true" editMode="cell"  rowIndexVar="index"
+                                 emptyMessage="No existen datos con el criterio de busqueda especificado" >                
+                        <f:facet name="header">                           
+                            <h2 style="font-weight: bold; font-size: 12px">Lista de Item #{suplementosIngresoView.suplementoIngreso.periodo}</h2>
+                        </f:facet>
+
+                        <p:column headerText="No." style="width: 20px;">
+                          #{index+1}
+                        </p:column>
+
+                        <p:column headerText="Código" style="width: 5%; font-weight: bold;" filterBy="#{pl.proformaIngreso.item.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{pl.proformaIngreso.item.codigo}"/>
+                        </p:column>
+                        <p:column headerText="Fuente" style="width: 15%;" filterBy="#{pl.proformaIngreso.fuente.nombre}" filterMatchMode="contains">                                
+                            <h:outputText value="#{pl.proformaIngreso.fuente.nombre.toUpperCase()}" /> 
+                        </p:column>
+                        <p:column headerText="Descripción" style="text-align: justify; width: 20%" filterBy="#{pl.proformaIngreso.item.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{pl.proformaIngreso.item.descripcion.toUpperCase()}" />
+                        </p:column>
+                        <p:column headerText="Nivel" style="width: 80px; text-align: center;" filterBy="#{pl.proformaIngreso.item.confId.nivel}"  filterMatchMode="contains">
+<!--                            <f:facet name="filter">
+                                <p:selectOneMenu   effect="fade" panelStyle="width:180px" filter="true" filterMatchMode="startsWith" label="Nivel" onchange="PF('cuentas').filter()">
+                                    <f:selectItem itemLabel="Seleccione" itemValue="" />
+                                    <f:selectItems value="#{suplementosIngresoView.listaFiltroNivel}" var="i" itemLabel="#{i.orden}" itemValue="#{i.orden}" />
+                                </p:selectOneMenu>
+                            </f:facet>-->
+                            <h:outputText value="#{pl.proformaIngreso.item.confId.nivel}" />
+                        </p:column>
+                        <p:column filterBy="#{pl.proformaIngreso.item.clasificacion.texto}" headerText="Clasificación"  style="width: 16%;" filterMatchMode="contains">
+                            <f:facet name="filter">
+                                <p:selectOneMenu  label="Clasificación" onchange="PF('cuentas').filter()" effect="fade" panelStyle="width:180px" filter="true" filterMatchMode="startsWith">
+                                    <f:selectItem itemLabel="Seleccione" itemValue="" />
+                                    <f:selectItems value="#{suplementosIngresoView.listaFiltroItem}" var="i" itemLabel="#{i.texto}" itemValue="#{i.texto}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{pl.proformaIngreso.item.clasificacion.texto.toUpperCase()}" />
+                        </p:column>
+                        <p:column headerText="Tipo Item" filterBy="#{pl.proformaIngreso.item.movimiento}"  filterMatchMode="exact" style="width: 6%;text-align: center;">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('cuentas').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="A" itemValue="false" />
+                                    <f:selectItem itemLabel="M" itemValue="true" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{pl.proformaIngreso.item.movimiento ? 'M':'A' }" />
+                        </p:column>
+                        <p:column headerText="Presupuesto Codificado" filterMatchMode="contains" filterBy="#{pl.catalogoPresupuesto.presupuestoCodificado}">
+                            <h:outputText value="#{pl.proformaIngreso.presupuestoCodificado}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>                        
+                        <p:column headerText="Suplemento" filterBy="#{pl.suplemento}" filterMatchMode="contains">
+                            <p:cellEditor disabled="#{!pl.proformaIngreso.item.movimiento }">
+                                <f:facet name="input">
+                                    <p:inputNumber id="valorSuplemnto" value="#{pl.suplemento}" style="width:100%;">
+                                        <p:ajax event="change" listener="#{suplementosIngresoView.cellEdicion(pl)}" update="fornGeneral" />
+                                    </p:inputNumber>
+                                </f:facet>
+                                <f:facet name="output"> 
+                                    <h:outputText value="#{pl.suplemento}" style="float: right">
+                                        <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                    </h:outputText>
+                                </f:facet>
+                            </p:cellEditor>
+                        </p:column>
+                        <p:column headerText="Presupuesto Reformado" filterBy="#{pl.codificado}" filterMatchMode="contains">
+                            <h:outputText value="#{pl.codificado}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:columnGroup type="footer">
+                            <p:row>
+                                <p:column colspan="7" style="text-align:right;font-weight: bold; font-size: 14px;" footerText="Suma:" />
+                                <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{suplementosIngresoView.totalPresupuestoInicial}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+                                <p:column rendered="#{suplementosIngresoView.columnaSuplementaria}" style="text-align: right;font-weight: bold; font-size: 14px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{suplementosIngresoView.totalSuplemeto}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+                                <p:column style="text-align: right;font-weight: bold; font-size: 14px;">
+                                    <f:facet name="footer">
+                                        <h:outputText value="#{suplementosIngresoView.totalCodificado}">
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </f:facet>
+                                </p:column>
+
+                            </p:row>
+                        </p:columnGroup>
+                    </p:dataTable>
+                </h:form>
+            </div>
+
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formButton">
+                    <center>
+                        <p:commandButton rendered="#{suplementosIngresoView.panel2}" icon="fa fa-save" style="width: 10%;" id="btnregitroReforma" widgetVar="btnregitroReforma"
+                                         value="Registrar Reforma" process="fminformacion,fornGeneral" disabled="#{suplementosIngresoView.btnRegistrar}"
+                                         actionListener="#{suplementosIngresoView.saveReofomaSuplmento()}" 
+                                         update="btnregitroReforma,formNuevosRegistros,fmreformas1,fminformacion,fornGeneral,formButton"/>
+                        <p:spacer width="10"/>
+                        <p:commandButton rendered="#{suplementosIngresoView.panel2}" icon="fa fa-remove" style="width: 10%; background: red;" disabled="#{suplementosIngresoView.btnRegistrar}"
+                                         value="Cancelar" process="fminformacion"  
+                                         actionListener="#{suplementosIngresoView.cancelar()}" update="formNuevosRegistros,fminformacion,fornGeneral,formButton"/>
+                    </center>
+
+
+                </h:form>
+            </div>
+        </div>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{suplementosIngresoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                              actionListener="#{suplementosIngresoView.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+        <p:dialog id="dlgFuente" widgetVar="dlgFuente" modal="true" width="1100" height="500" >
+            <h:form id="frmDlgoFuente" prependId="false">
+
+                <p:dataTable id="cuentaPresupuesto" widgetVar="cuentaPresupuesto" var="item" value="#{suplementosIngresoView.listaPresupuestoIngreso}" paginator="true" rows="15"
+                             style="width: 100%;" paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="15,20,30,40,50,100" editable="true" editMode="cell"
+                             emptyMessage="No existen datos con el criterio de busqueda especificado" >                
+                    <f:facet name="header">                           
+                        <h2 style="font-weight: bold; font-size: 12px">Lista de Item #{suplementosIngresoView.suplementoIngreso.periodo}</h2>
+                    </f:facet>
+                    <p:column headerText="Código" style="width: 5%; font-weight: bold; " filterBy="#{item.item.codigo}" filterMatchMode="contains" id="codigo">
+                        <h:outputText value="#{item.item.codigo}"/>
+                    </p:column>
+                    <p:column headerText="Fuente" style="width: 10%;" filterBy="#{item.fuente.nombre}">
+                        <p:cellEditor >
+                            <f:facet name="output"><h:outputText value="#{item.fuente.nombre}" /></f:facet>
+                            <f:facet name="input">
+                                <p:selectOneMenu value="#{item.fuente}" converter="#{utilConverter}">
+                                    <p:ajax event="change" listener="#{suplementosIngresoView.editarFuente(item)}" update="frmDlgoFuente"/>
+                                    <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{suplementosIngresoView.tipoFuente}" var="ft" itemLabel="#{ft.tipoFuente.orden} - #{ft.nombre}" itemValue="#{ft}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                        </p:cellEditor>
+
+                    </p:column>
+                    <p:column headerText="Descripción" style="width: 150px; " filterMatchMode="contains" >
+                        <h:outputText value="#{item.item.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Nivel" filterBy="#{item.confId.nivel}" style="width: 6%; text-align: center" filterMatchMode="contains">
+                        <h:outputText value="#{item.item.confId.nivel}" />
+                    </p:column>
+                    <p:column headerText="Clasificación" style="width: 10%;" filterBy="#{item.item.clasificacion.texto}" filterMatchMode="contains">
+                        <h:outputText value="#{item.item.clasificacion.texto}" />
+                    </p:column>
+                    <p:column headerText="Tipo Item" filterBy="#{item.item.movimiento}" style="width: 6%; text-align: center;">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('cuentaPresupuesto').filter()" styleClass="custom-filter">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="A" itemValue="false" />
+                                <f:selectItem itemLabel="M" itemValue="true" />
+                            </p:selectOneMenu>
+                        </f:facet> 
+                        <h:outputText value="#{item.item.movimiento ? 'M':'A' }" />
+                    </p:column>
+                    <p:column headerText="Presupuesto Inicial" style="width: 10%;" filterMatchMode="contains">
+                        <h:outputText value="#{item.presupuestoCodificado}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="Periodo" style="width: 5%;text-align: center;" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.periodo}"/>
+                    </p:column>
+
+                </p:dataTable>
+
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

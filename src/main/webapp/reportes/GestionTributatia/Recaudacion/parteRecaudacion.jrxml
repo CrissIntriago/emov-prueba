@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd" name="parteRecaudacion" language="groovy" pageWidth="595" pageHeight="842" whenNoDataType="AllSectionsNoDetail" columnWidth="555" leftMargin="20" rightMargin="20" topMargin="20" bottomMargin="20" uuid="0894b053-8f4d-4fb0-a8f3-0114845a57f4">
+	<property name="ireport.zoom" value="1.0"/>
+	<property name="ireport.x" value="0"/>
+	<property name="ireport.y" value="0"/>
+	<parameter name="DESDE" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="HASTA" class="java.lang.String">
+		<defaultValueExpression><![CDATA[]]></defaultValueExpression>
+	</parameter>
+	<parameter name="SUBREPORT_DIR" class="java.lang.String" isForPrompting="false">
+		<defaultValueExpression><![CDATA["C:\\PROYECTOSORIGAMI\\GAD_DURAN\\origamigt_unf\\origamigt_unf\\origamigt\\src\\main\\webapp\\reportes\\"]]></defaultValueExpression>
+	</parameter>
+	<parameter name="USER" class="java.lang.String"/>
+	<parameter name="PERIODO" class="java.lang.String"/>
+	<queryString>
+		<![CDATA[select
+cj.usuario,rl.descripcion,rl.porcentaje,
+case when EXTRACT(YEAR FROM now())::integer = l.anio THEN ctaAct.codigo else ctaAnt.codigo end as cta,
+case when EXTRACT(YEAR FROM now())::integer = l.anio THEN prAct.codigo else prAnt.codigo end as partida,
+sum(dl.valor) valor,sum(dl.valor_recaudado) valor_recaudaco
+from asgard.fina_ren_pago rp
+inner join comprobantes_electronicos.cajero cj ON cj.id = rp.cajero
+inner join asgard.fina_ren_det_liquidacion dl ON dl.liquidacion = rp.liquidacion
+inner join asgard.fina_ren_liquidacion l ON l.id = rp.liquidacion
+inner join asgard.fina_ren_rubros_liquidacion rl ON rl.id = dl.rubro
+left outer join contabilidad.cont_cuentas ctaAct ON rl.cont_cc = ctaAct.id
+left outer join contabilidad.cont_cuentas ctaAnt ON rl.cont_cp = ctaAnt.id
+left outer join presupuesto.pres_catalogo_presupuestario prAct ON rl.partida = prAct.id
+left outer join presupuesto.pres_catalogo_presupuestario prAnt ON rl.partida_cart = prAnt.id
+WHERE to_char(rp.fecha_pago, 'yyyy-MM-dd')::date BETWEEN $P{DESDE}::date AND $P{HASTA}::date AND rl.rubro_del_municipio
+GROUP BY 1,2,3,4,5
+UNION ALL
+select
+cj.usuario,rl.descripcion||' '||rl.porcentaje||'%' descripcion,rl.porcentaje,
+ctaAct.codigo cta,
+null::text partida,
+round((sum(dl.valor)*rl.porcentaje/100)::DECIMAL,2) valor,sum(dl.valor_recaudado) valor_recaudaco
+from asgard.fina_ren_pago rp
+inner join comprobantes_electronicos.cajero cj ON cj.id = rp.cajero
+inner join asgard.fina_ren_det_liquidacion dl ON dl.liquidacion = rp.liquidacion
+inner join asgard.fina_ren_liquidacion l ON l.id = rp.liquidacion
+inner join asgard.fina_ren_rubros_liquidacion rl ON rl.id = dl.rubro
+left outer join contabilidad.cont_cuentas ctaAct ON rl.cont_cc = ctaAct.id
+left outer join contabilidad.cont_cuentas ctaAnt ON rl.cont_cp = ctaAnt.id
+left outer join presupuesto.pres_catalogo_presupuestario prAct ON rl.partida = prAct.id
+left outer join presupuesto.pres_catalogo_presupuestario prAnt ON rl.partida_cart = prAnt.id
+WHERE to_char(rp.fecha_pago, 'yyyy-MM-dd')::date BETWEEN $P{DESDE}::date AND $P{HASTA}::date AND rl.rubro_del_municipio = false
+AND rl.porcentaje is not null
+GROUP BY 1,2,3,4,5
+UNION ALL
+SELECT
+cj.usuario,prAct.descripcion descripcion,(100-rl.porcentaje) porcentaje,
+ctaAct.codigo cta,
+prAct.codigo partida,
+round((sum(dl.valor)*(100-rl.porcentaje)/100)::DECIMAL,2) valor,sum(dl.valor_recaudado) valor_recaudaco
+from asgard.fina_ren_pago rp
+inner join comprobantes_electronicos.cajero cj ON cj.id = rp.cajero
+inner join asgard.fina_ren_det_liquidacion dl ON dl.liquidacion = rp.liquidacion
+inner join asgard.fina_ren_liquidacion l ON l.id = rp.liquidacion
+inner join asgard.fina_ren_rubros_liquidacion rl ON rl.id = dl.rubro
+left outer join contabilidad.cont_cuentas ctaAct ON rl.cta_debe_cart = ctaAct.id
+left outer join contabilidad.cont_cuentas ctaAnt ON rl.cta_orden_deudor = ctaAnt.id
+left outer join presupuesto.pres_catalogo_presupuestario prAct ON rl.partida_cart = prAct.id
+WHERE to_char(rp.fecha_pago, 'yyyy-MM-dd')::date BETWEEN $P{DESDE}::date AND $P{HASTA}::date AND rl.rubro_del_municipio = false
+AND rl.porcentaje is not null
+GROUP BY 1,2,3,4,5;]]>
+	</queryString>
+	<field name="usuario" class="java.lang.String"/>
+	<field name="descripcion" class="java.lang.String"/>
+	<field name="porcentaje" class="java.math.BigDecimal"/>
+	<field name="cta" class="java.lang.String"/>
+	<field name="partida" class="java.lang.String"/>
+	<field name="valor" class="java.math.BigDecimal"/>
+	<field name="valor_recaudaco" class="java.math.BigDecimal"/>
+	<variable name="valor_1" class="java.math.BigDecimal" calculation="Sum">
+		<variableExpression><![CDATA[$F{valor}]]></variableExpression>
+	</variable>
+	<background>
+		<band splitType="Stretch"/>
+	</background>
+	<pageHeader>
+		<band height="120" splitType="Stretch">
+			<subreport>
+				<reportElement x="0" y="0" width="555" height="100" uuid="e43212ac-c1f0-48ba-a584-a390ff73fc1d"/>
+				<subreportParameter name="NOMBRE_REPORTE">
+					<subreportParameterExpression><![CDATA["PARTE RECAUDACIONES"]]></subreportParameterExpression>
+				</subreportParameter>
+				<subreportParameter name="PERIODO">
+					<subreportParameterExpression><![CDATA[$P{PERIODO}]]></subreportParameterExpression>
+				</subreportParameter>
+				<connectionExpression><![CDATA[$P{REPORT_CONNECTION}]]></connectionExpression>
+				<subreportExpression><![CDATA[$P{SUBREPORT_DIR} + "titleV.jasper"]]></subreportExpression>
+			</subreport>
+			<textField>
+				<reportElement x="162" y="100" width="120" height="20" uuid="72e5af93-5aa3-4b63-bb2e-a7777bcb27f9"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["DESDE: "+$P{DESDE}]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="282" y="100" width="113" height="20" uuid="89522162-461e-486b-9ac0-ab3e269c9a4e"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["HASTA: "+$P{HASTA}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageHeader>
+	<columnHeader>
+		<band height="20" splitType="Stretch">
+			<staticText>
+				<reportElement mode="Opaque" x="0" y="0" width="75" height="20" backcolor="#CCCCCC" uuid="7f106ad3-fea6-4794-8f2f-82d99400e199"/>
+				<box>
+					<topPen lineWidth="0.5" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.5" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.5" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.5" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[CTA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="75" y="0" width="75" height="20" backcolor="#CCCCCC" uuid="a2a99853-a75d-4997-9785-c615c9051c3a"/>
+				<box>
+					<topPen lineWidth="0.5" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.5" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.5" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.5" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[PARTIDA]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="150" y="0" width="289" height="20" backcolor="#CCCCCC" uuid="7ad9a14b-133e-48e1-b5c8-63b477c3f3d9"/>
+				<box>
+					<topPen lineWidth="0.5" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.5" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.5" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.5" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[DESCRIPCION]]></text>
+			</staticText>
+			<staticText>
+				<reportElement mode="Opaque" x="439" y="0" width="116" height="20" backcolor="#CCCCCC" uuid="e6369acb-2e17-4a94-bbb8-879fb6dd4555"/>
+				<box>
+					<topPen lineWidth="0.5" lineStyle="Dotted"/>
+					<leftPen lineWidth="0.5" lineStyle="Dotted"/>
+					<bottomPen lineWidth="0.5" lineStyle="Dotted"/>
+					<rightPen lineWidth="0.5" lineStyle="Dotted"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle"/>
+				<text><![CDATA[VALOR]]></text>
+			</staticText>
+		</band>
+	</columnHeader>
+	<detail>
+		<band height="20" splitType="Stretch">
+			<textField isBlankWhenNull="true">
+				<reportElement x="0" y="0" width="75" height="20" uuid="01a1e699-06d7-42d7-9042-efad232955dc"/>
+				<box>
+					<topPen lineWidth="0.3"/>
+					<leftPen lineWidth="0.3"/>
+					<bottomPen lineWidth="0.3"/>
+					<rightPen lineWidth="0.3"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{cta}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="75" y="0" width="75" height="20" uuid="206cebc4-430e-4470-9d0d-ab811ed50eab"/>
+				<box>
+					<topPen lineWidth="0.3"/>
+					<leftPen lineWidth="0.3"/>
+					<bottomPen lineWidth="0.3"/>
+					<rightPen lineWidth="0.3"/>
+				</box>
+				<textElement textAlignment="Center" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{partida}]]></textFieldExpression>
+			</textField>
+			<textField isBlankWhenNull="true">
+				<reportElement x="150" y="0" width="289" height="20" uuid="09de50a0-1b94-4d4a-9f2e-c34103f97914"/>
+				<box leftPadding="5">
+					<topPen lineWidth="0.3"/>
+					<leftPen lineWidth="0.3"/>
+					<bottomPen lineWidth="0.3"/>
+					<rightPen lineWidth="0.3"/>
+				</box>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{descripcion}]]></textFieldExpression>
+			</textField>
+			<textField pattern="¤ #,##0.00" isBlankWhenNull="true">
+				<reportElement x="439" y="0" width="116" height="20" uuid="9f737bcc-f5a4-4b00-91ea-b28916f00fe3"/>
+				<box rightPadding="5">
+					<topPen lineWidth="0.3"/>
+					<leftPen lineWidth="0.3"/>
+					<bottomPen lineWidth="0.3"/>
+					<rightPen lineWidth="0.3"/>
+				</box>
+				<textElement textAlignment="Right" verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA[$F{valor}]]></textFieldExpression>
+			</textField>
+		</band>
+	</detail>
+	<pageFooter>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement x="246" y="0" width="80" height="20" uuid="d29a3dcc-d742-492b-b74c-aeebb4553b86"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Página "+$V{PAGE_NUMBER}+" de"]]></textFieldExpression>
+			</textField>
+			<textField evaluationTime="Report">
+				<reportElement x="326" y="0" width="40" height="20" uuid="4fbea24d-41c8-4c62-939a-1d73238bfb77"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[" " + $V{PAGE_NUMBER}]]></textFieldExpression>
+			</textField>
+			<textField pattern="dd/MM/yyyy">
+				<reportElement x="0" y="0" width="150" height="20" uuid="ab43dc02-90fd-4d45-90f4-b95f77e8bc5b"/>
+				<textElement verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA["Fecha: "+new java.util.Date()]]></textFieldExpression>
+			</textField>
+			<textField>
+				<reportElement x="439" y="0" width="116" height="20" uuid="03d33f1b-af27-43fe-8387-b45d818ee460"/>
+				<textElement verticalAlignment="Middle">
+					<font size="8"/>
+				</textElement>
+				<textFieldExpression><![CDATA["USUARIO: "+$P{USER}]]></textFieldExpression>
+			</textField>
+		</band>
+	</pageFooter>
+	<summary>
+		<band height="20" splitType="Stretch">
+			<textField>
+				<reportElement mode="Opaque" x="439" y="0" width="116" height="20" backcolor="#CCCCCC" uuid="b6b9602b-b0bd-4207-8cbd-617095dec618"/>
+				<box rightPadding="5"/>
+				<textElement textAlignment="Right" verticalAlignment="Middle"/>
+				<textFieldExpression><![CDATA[$V{valor_1}]]></textFieldExpression>
+			</textField>
+		</band>
+	</summary>
+</jasperReport>

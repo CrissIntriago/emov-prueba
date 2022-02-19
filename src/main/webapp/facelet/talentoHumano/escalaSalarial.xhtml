@@ -1,0 +1,132 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">
+        Mantenimiento Escala Salarial de Servidores Públicos
+    </ui:define>
+    <ui:param name="tittle" value="Escala Salarial" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="car card-w-title">
+
+                            <h:panelGroup id="panelescala" layout="block">
+                                <p:commandButton value="Adicionar Cargo Ocupacional"
+                                                 icon="ui-icon-plus" actionListener="#{escalaSalarialView.form(null)}" update="formEscala"
+                                                 styleClass="Fs16" style="width: auto; margin-bottom: 15px;" class="red-btn"/>
+                                <p:commandButton value="Imprimir"
+                                                 icon="ui-icon-print"
+                                                 actionListener="#{escalaSalarialView.printReport()}"
+                                                 process="@this"
+                                                 styleClass="Fs16" style="width: auto;margin-left: 15px; margin-bottom: 15px;"/>
+                                <p:dataTable id="dtEscala" widgetVar="dtEscala" var="escala" style="width: 100%;text-align:center"
+                                             reflow="true" paginator="true" lazy="true" rows="25" rowsPerPageTemplate="25,50,100"
+                                             paginatorPosition="bottom"
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+                                             value="#{escalaSalarialView.escalaLazy}" emptyMessage="No se encontró ninguna Escala Salarial."
+                                             selection="#{escalaSalarialView.escalasalarial}" rowKey="#{escala.id}" selectionMode="single"
+                                             >
+                                    <f:facet name="header">
+                                        Listado de Escala Salarial
+                                    </f:facet>
+                                    <p:column headerText="Grupo Ocupacional" filterBy="#{escala.grupoOrganizacional}" filterMatchMode="contains" style="text-align: left" >
+                                        <h:outputText value="#{escala.grupoOrganizacional}"/>
+                                    </p:column>
+                                    <p:column headerText="Grado" style="width: 10%;" filterBy="#{escala.grado}" filterMatchMode="contains">
+                                        <h:outputText value="#{escala.grado}"/>
+                                    </p:column>
+                                    <p:column headerText="Remuneración Básica Unificada" style="width: 10%;" filterBy="#{escala.remuneracionDolares}" filterMatchMode="contains">
+                                        <h:outputText value="#{escala.remuneracionDolares}"   />
+                                    </p:column>
+                                    <p:column headerText="Vigencia Desde" style="width: 10%; ">
+                                        <h:outputText value="#{escala.desde}">
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Vigencia Hasta" style="width: 10%; ">
+                                        <h:outputText value="#{escala.hasta == null?'NO HAY FECHA DE CADUCIDAD': escala.hasta}">
+                                            <f:convertDateTime pattern="dd-MM-yyyy" />
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="text-align: center; width: 8%;">
+                                        <p:commandLink title="Editar Escala Salarial" actionListener="#{escalaSalarialView.form(escala)}" process="@this" update="formMain:panelescala">
+                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="Eliminar Escala Salarial" actionListener="#{escalaSalarialView.eliminarEscala(escala)}" process="@this" update="formMain:panelescala">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de Eliminación" message="¿Está seguro de eliminar el Cargo Ocupacional?"
+                                                       icon="fa fa-eexclamation-triangle"/>
+                                            <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la Escala Salarial #{escala.grupoOrganizacional} ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                                </p:confirmDialog>
+                            </h:panelGroup>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+        <p:dialog id="escalaSalarialDialog" header="Formulario Escala Salarial" widgetVar="escalaSalarialDialog" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formEscala" style="width: 100%;">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:outputLabel for="grupoo" value="Grupo ocupacional: " style="width: 100%;"/>
+                                        <p:inputText id="grupoo" value="#{escalaSalarialView.escalasalarial.grupoOrganizacional}" required="true" onkeyup="javascript:this.value = this.value.toUpperCase();"></p:inputText>
+
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="grado" value="Grado: " style="width: 100%;"/>
+                                        <p:inputText id="grado" class="panelInput" readonly="false" required="true"
+                                                     maxlength="10" value="#{escalaSalarialView.escalasalarial.grado}" >
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputText>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="remuneracion" value="Remuneración Básica Unificada:" style="width: 100%;"/>
+                                        <p:inputNumber id="remuneracion" class="panelInput" readonly="false" required="true" decimalSeparator="." thousandSeparator=","
+                                                       maxlength="10" value="#{escalaSalarialView.escalasalarial.remuneracionDolares}">
+                                            <p:keyFilter regEx="/[\d]/"/>
+                                        </p:inputNumber>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank"  layout="grid">
+                                        <p:outputLabel for="@next" value="Vigencia Desde:"  style="width: 100%;"/>
+                                        <p:calendar required="true" id="fecha-desde" value="#{escalaSalarialView.escalasalarial.desde}" navigator="true" locale="de" pattern="dd-MM-yyyy" mask="true" />
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank"  layout="grid">
+                                        <p:outputLabel for="@next" value="Vigencia Hasta:"  style="width: 100%;" />
+                                        <p:calendar required="false" id="fecha-hasta" value="#{escalaSalarialView.escalasalarial.hasta}" navigator="true" locale="de" pattern="dd-MM-yyyy" mask="true" />
+                                    </p:panelGrid>
+
+
+                                </p:panelGrid>
+                                <center>
+                                    <p:commandButton value="Guardar" id="guardar" update="formEscala"
+                                                     icon="ui-icon-save"  actionListener="#{escalaSalarialView.guardarEscala()}"
+                                                     styleClass="Fs16"  />
+                                </center>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>
+

@@ -1,0 +1,206 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:dialog="http://java.sun.com/jsf/composite/dialog">
+    <ui:define name="head">
+        <style type="text/css">
+            body .ui-inputfield {
+                border-width: 1px 1px 1px 1px;
+            }
+            body .ui-inputfield.ui-state-focus {
+                border-width: 1px 1px 1px 1px;
+            }
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.5em;
+                font-size: 1em;
+            }
+            .ui-panelgrid .ui-panelgrid-cell{
+                border-style: hidden;
+            }
+            body .ui-fieldset {
+                padding: 0.5em;
+            }
+            .ui-panelgrid {
+                border-collapse: inherit;
+            }
+            body .ui-panelgrid .ui-panelgrid-cell {
+                border: none;
+                padding: 0.1px 0.1px 0.1px 0.1px;
+                font-size: 1em;
+            }
+        </style>
+    </ui:define>
+    <ui:define name="title">Recaudaciones</ui:define>    
+    <ui:define name="content">
+        <h:form id="mainForm">
+            <p:tabView id="tvRecaudaciones">
+                <p:ajax event="tabChange" listener="#{recaudacionGeneralMB.onChanngeTab}"/>
+                <p:tab id="tituloCredito" title="Titulos de Credito Generales">
+                    <p:dataTable id="dataTitulosGenerados" widgetVar="dataTitulosGenerados" reflow="true"
+                                 value="#{recaudacionGeneralMB.lazyTitulosGenerados}" var="liq"
+                                 lazy="true" paginator="true" rows="10" emptyMessage="No se encontraron resultados solicitado..."
+                                 rowsPerPageTemplate="10,20,50,100,200" filterEvent="enter" selectionMode="single"
+                                 rowKey="#{liq.id}" selection="#{recaudacionGeneralMB.liquidacion}">
+                        <p:ajax event="rowSelect" update="mainForm:tvRecaudaciones:opLiquidaciones" />
+                        <p:column headerText="Tipo Liquidación" width="7%" field="tipoLiquidacion" style="text-align: center"
+                                  filterBy="#{liq.tipoLiquidacion.nombreTitulo}" filterStyle="width: 95%">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('dataTitulosGenerados').filter()" converter="#{utilConverter}">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{recaudacionGeneralMB.tipoLiquidacionList}" var="tp" itemLabel="#{tp.prefijo} - #{tp.nombreTitulo}" itemValue="#{tp}" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{liq.tipoLiquidacion.prefijo}"/>
+                        </p:column>
+                        <p:column headerText="Año" width="5%" filterBy="#{liq.anio}">
+                            <p:outputLabel value="#{liq.anio}" />
+                        </p:column>
+                        <p:column headerText="ID Liquidacion" width="5%" filterBy="#{liq.idLiquidacion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{liq.idLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Fecha" width="10%" style="text-align: center">
+                            <p:outputLabel value="#{liq.fechaIngreso}">
+                                <f:convertDateTime pattern="yyyy-MM-dd" />
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Codigo" width="10%" filterBy="#{liq.codigoLocal}" filterMatchMode="contains" >
+                            <p:outputLabel value="#{liq.codigoLocal}" />
+                        </p:column>
+                        <p:column headerText="Identificación" width="10%" filterBy="#{liq.identificacion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{liq.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Solicitante" width="15%" filterBy="#{liq.nombreComprador}" filterMatchMode="contains">
+                            <p:outputLabel value="#{liq.nombreComprador}" />
+                        </p:column>
+                        <p:column headerText="Valor" width="4%" style="text-align: right">
+                            <p:outputLabel value="#{liq.totalPago != null ? liq.totalPago:0.00}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Saldo" width="4%" style="text-align: right">
+                            <p:outputLabel value="#{liq.saldo != null ? liq.saldo:0.00}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Interese" width="4%" style="text-align: right">
+                            <p:outputLabel value="#{recaudacionGeneralMB.interes(liq)}" >
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Coactiva" width="4%" style="text-align: right"></p:column>
+                        <p:column headerText="Total Pago" width="4%" style="text-align: right">
+                            <p:outputLabel value="#{recaudacionGeneralMB.interes(liq)+liq.totalPago}">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </p:outputLabel>
+                        </p:column>
+                    </p:dataTable>
+                    <p:contextMenu id="opLiquidaciones" for="tituloCredito">
+                        <p:menuitem value="Detalle" oncomplete="PF('dlgDetalle').show();" update="formDetEmision" process="@this"  />
+                        <p:menuitem value="Procesar" oncomplete="PF('dlgProcesar').show();" update="formProcesar" process="@this" actionListener="#{recaudacionGeneralMB.procesarPago()}"/>
+                    </p:contextMenu>
+                </p:tab>
+                <p:tab id="convenios" title="Convenios de Pago" rendered="false">
+
+                </p:tab>
+                <p:tab id="convenioTerminado" title="Convenios Finalizados" rendered="false">
+
+                </p:tab>
+                <p:tab id="tituloCreditoPagado" title="Titulos de Credito - Pagados" >
+                    <p:dataTable id="dataTitulosPagados" widgetVar="dataTitulosPagados" reflow="true"
+                                 value="#{recaudacionGeneralMB.lazyTitulosPagados}" var="recaudado"
+                                 lazy="true" paginator="true" rows="10" emptyMessage="No se encontraron resultados solicitado..."
+                                 rowsPerPageTemplate="10,20,50,100,200" filterEvent="enter">
+                        <p:column headerText="N° Liquidación" width="5%" filterBy="#{recaudado.idLiquidacion}">
+                            <p:outputLabel value="#{recaudado.idLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Año" width="5%" filterBy="#{recaudado.anio}">
+                            <p:outputLabel value="#{recaudado.anio}" />
+                        </p:column>
+                        <p:column headerText="N° Comprobante" width="5%" filterBy="#{recaudado.numComprobante}">
+                            <p:outputLabel value="#{recaudado.numComprobante}" />
+                        </p:column>
+                        <p:column headerText="Codigo" width="5%" filterBy="#{recaudado.codigoLocal}" filterMatchMode="contains">
+                            <p:outputLabel value="#{recaudado.codigoLocal}" />
+                        </p:column>
+                        <p:column headerText="Identificación" width="5%" filterBy="#{recaudado.identificacion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{recaudado.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Solicitante" width="15%" filterBy="#{recaudado.nombreComprador}" filterMatchMode="contains">
+                            <p:outputLabel value="#{recaudado.nombreComprador}" />
+                        </p:column>
+                        <p:column headerText="Valor" width="5%">
+                            <p:outputLabel value="#{recaudado.totalPago}" />
+                        </p:column>
+                        <p:column headerText="Estado" width="10%" style="text-align: center">
+                            <p:outputLabel value="#{recaudado.estadoLiquidacion.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Acción" width="10%">
+
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab id="tituloCreditoAnulado" title="Titulos de Credito Anulados">
+                    <p:dataTable id="dataTitulosAnulados" widgetVar="dataTitulosAnulados" reflow="true"
+                                 value="#{recaudacionGeneralMB.lazyTitulosAnulados}" var="anulado"
+                                 lazy="true" paginator="true" rows="10" emptyMessage="No se encontraron resultados solicitado..."
+                                 rowsPerPageTemplate="10,20,50,100,200" filterEvent="enter">
+                        <p:column headerText="N° Liquidación" width="5%" filterBy="#{anulado.idLiquidacion}">
+                            <p:outputLabel value="#{anulado.idLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Año" width="5%" filterBy="#{anulado.anio}">
+                            <p:outputLabel value="#{anulado.anio}" />
+                        </p:column>
+                        <p:column headerText="N° Comprobante" width="5%" filterBy="#{anulado.numComprobante}">
+                            <p:outputLabel value="#{anulado.numComprobante}" />
+                        </p:column>
+                        <p:column headerText="Codigo" width="5%" filterBy="#{anulado.codigoLocal}" filterMatchMode="contains">
+                            <p:outputLabel value="#{anulado.codigoLocal}" />
+                        </p:column>
+                        <p:column headerText="Identificación" width="5%" filterBy="#{anulado.identificacion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{anulado.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Solicitante" width="15%" filterBy="#{anulado.nombreComprador}" filterMatchMode="contains">
+                            <p:outputLabel value="#{anulado.nombreComprador}" />
+                        </p:column>
+                        <p:column headerText="Valor" width="5%">
+                            <p:outputLabel value="#{anulado.totalPago}" />
+                        </p:column>
+                        <p:column headerText="Estado" width="10%" style="text-align: center" >
+                            <p:outputLabel value="#{anulado.estadoLiquidacion.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Acción" width="10%">
+
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+            </p:tabView>
+        </h:form>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false"
+                  closeOnEscape="true" modal="true" width="50%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{recaudacionGeneralMB.liquidacion}"/>
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <!--DIALOGO PARA PODER PROCESAR EL PAGO DE OTROS RUBROS-->
+        <p:dialog id="dlgProcesarPagoCobroGeneral" header="Procesar Pago" widgetVar="dlgProcesar"
+                  resizable="false" closeOnEscape="true" modal="true" width="70%" height="6%" position="center">
+            <h:form id="formProcesar" prependId="false">
+                <dialog:procesarPago id="processPagoDialog"  liquidacion="#{recaudacionGeneralMB.liquidacion}"
+                                     procesarPago="#{recaudacionGeneralMB.pago}" updateComponent="processPagoDialog" isCuotaConvenio="false"
+                                     modelPago="#{recaudacionGeneralMB.modelPago}" isList="false" variosPagos="false"
+                                     oncompleteClose="PF('dlgProcesar').hide();" isAgua="false"/>
+
+            </h:form>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

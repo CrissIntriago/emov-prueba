@@ -1,0 +1,350 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Asignación de cargos a servidor
+    </ui:define>
+    <ui:param name="tittle" value="Asignación de cargos a servidor"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Cargar repositorio" process="@this" rendered="false"
+                                     icon="fa fa-plus" actionListener="#{thServidorCargoView.fs_tempo()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:dataTable  id="thServidorTable" widgetVar="thServidorTable" var="servidor" value="#{thServidorCargoView.thServidorLazy}" 
+                                  paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{servidor.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <f:facet name="header">
+                            Listado de servidores registrados
+                        </f:facet>
+                        <p:column headerText="Identificación" style="width: 10%;text-align: center" filterBy="#{servidor.persona.identificacion}" filterMatchMode="contains">
+                            <h:outputText value="#{servidor.persona.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Nombres y apellido" style="width: 20%;" filterBy="#{servidor.persona.nombreCompleltoSql}" filterMatchMode="contains">
+                            <h:outputText value="#{servidor.persona.nombreCompleltoSql}" />
+                        </p:column>
+                        <p:column headerText="Fecha de ingreso" style="width: 10%;text-align: center" sortBy="#{servidor.fechaIngreso}">
+                            <h:outputText value="#{servidor.fechaIngreso}" >
+                                <f:convertDateTime pattern="dd-MM-yyyy"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column headerText="Teléfono" style="width: 10%;text-align: center" filterBy="#{servidor.persona.telefono}" filterMatchMode="contains">
+                            <h:outputText value="#{servidor.persona.telefono}" />
+                        </p:column>
+                        <p:column headerText="Cod.biometrico" style="width: 10%;text-align: center" filterBy="#{servidor.persona.codBiometrico}" filterMatchMode="contains">
+                            <h:outputText value="#{servidor.codBiometrico}" />
+                        </p:column>
+                        <p:column headerText="Correo" style="width: 20%;" filterBy="#{servidor.emailInstitucion}" filterMatchMode="contains">
+                            <h:outputText value="#{servidor.emailInstitucion}" />
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 20%;text-align: center">
+                            <p:commandLink title="Asignar cargo" process="@this" actionListener="#{thServidorCargoView.openDlgServidor(servidor)}"  
+                                           update="formMain" rendered="#{!servidor.cargoAsignado}">
+                                <i class="fa fa-sitemap" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{thServidorCargoView.editar(servidor)}" rendered="#{servidor.cargoAsignado}"
+                                           update="formMain">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Liberar asignación" process="@this" actionListener="#{thServidorCargoView.quitar(servidor)}" rendered="#{servidor.cargoAsignado}"
+                                           update="formMain">
+                                <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                            </p:commandLink> 
+                            <p:commandLink title="Cargo PDF" process="@this" actionListener="#{thServidorCargoView.printDocument('pdf',false,servidor)}" rendered="#{servidor.cargoAsignado}"
+                                           update="formMain">
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                            </p:commandLink> 
+                            <p:commandLink title="Cargo EXCEL" process="@this" actionListener="#{thServidorCargoView.printDocument('xlsx',false,servidor)}" rendered="#{servidor.cargoAsignado}"
+                                           update="formMain">
+                                <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink> 
+                            <p:commandLink title="Historico PDF" process="@this" actionListener="#{thServidorCargoView.printDocument('pdf',true,servidor)}" 
+                                           update="formMain">
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                            </p:commandLink> 
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="thServidorDlg" widgetVar="thServidorDlg" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Asignación de cargo">
+            <h:form prependId="false" id="thServidorForm">
+                <p:fieldset legend="Datos del servidor">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacion" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidor.persona.identificacion}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'identificacion')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                            <p:inputText id="nombres" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidor.persona.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombres')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="apellidos" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidor.persona.apellido}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'apellidos')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Cargo" id="fieldsetCargo" style="margin-bottom: 10px">
+                    <p:commandButton value="Buscar cargo" process="@this"
+                                     icon="fa fa-search" actionListener="#{thServidorCargoView.openDlgCargo()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre de cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoNombre" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.nombreCargo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoNombre')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Cod. Cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoCodigo" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.codigo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoCodigo')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Unidad administrativa:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoUnidadAdministrativa" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idUnidad.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoUnidadAdministrativa')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Regimén laboral:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoRegimenLaboral" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idRegimen.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoRegimenLaboral')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Grupo organizacional:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoOrganizacional" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idGrupo.grupoOrganizacional}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoOrganizacional')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Tipo de cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoTipo" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idCatalogoItem.texto}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoTipo')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha de Asignación:" style="font-weight: bold"/>
+                            <p:calendar id="thCargoFechaAsignacion"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                        onkeypress="focusNextOnEnter(event, 'thCargoFechaAsignacion')" readonlyInput="true" 
+                                        value="#{thServidorCargoView.thServidorCargo.fechaAsignacion}" style="width: 100%">
+                                <p:ajax event="dateSelect"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  paginator="false"  paginatorPosition="bottom"
+                              rowsPerPageTemplate="10,20" lazy="true"
+                              reflow="true"  rows="100" rowIndexVar="can"
+                              emptyMessage="No existen datos" scrollable="true" scrollHeight="400"
+                              id="thCargoRubroTable" value="#{thServidorCargoView.thCargoRubroList}" var="thCRubroCargo"
+                              widgetVar="thCargoRubroTable" rowKey="#{thCRubroCargo.id}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                    <p:column headerText="Rubro" style="width: 30%">
+                        <h:outputText value="#{thCRubroCargo.idRubro.nombre}" />
+                    </p:column>
+                    <p:column headerText="Tipo" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column>
+                    <p:column headerText="Tipo Presupuesto" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idRubro.origen == null?'':(thCRubroCargo.idRubro.origen?'DISTIBUTIVO':'ANEXO')}" />
+                    </p:column>
+                    <p:column headerText="Cod. Cta. Contable" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idCuenta.codigo}" />
+                    </p:column>
+                    <p:column headerText="Cod. estructura" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idEstructura.codigo}" />
+                    </p:column>
+                    <p:column headerText="Cod. presupuesto" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idPresupuesto.codigo}" />
+                    </p:column>
+                    <p:column headerText="Cod. fuente" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.idFuente.codFuente}" />
+                    </p:column>
+                    <p:column headerText="Partida presupuestaria" style="width: 10%;text-align: center">
+                        <h:outputText value="#{thCRubroCargo.partidaPresupuestaria}" />
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Guardar" update="thServidorTable" rendered="#{thServidorCargoView.view}"
+                                     icon="fa fa-save" actionListener="#{thServidorCargoView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px">
+                        <p:confirm header="Confirmación de guardado" message="¿Está seguro de asignar a esta persona el cargo #{thServidorCargoView.thServidorCargo.idCargo.nombreCargo}?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                    <p:commandButton value="Editar" update="thServidorTable" rendered="#{!thServidorCargoView.view}"
+                                     icon="fa fa-save" actionListener="#{thServidorCargoView.edit()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px">
+                        <p:confirm header="Confirmación de editado" message="¿Está seguro de asignar a esta persona el cargo #{thServidorCargoView.thServidorCargo.idCargo.nombreCargo}?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog> 
+            </h:form>       
+        </p:dialog>
+        <p:dialog id="thCargoDlg" widgetVar="thCargoDlg" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Asignación de cargo">
+            <h:form prependId="false" id="thCargoForm">
+                <p:dataTable  paginator="false"  paginatorPosition="bottom"
+                              rowsPerPageTemplate="10,20" lazy="true"
+                              reflow="true"  rows="20000" rowIndexVar="can"
+                              emptyMessage="No existen datos" scrollable="true" scrollHeight="400"
+                              id="thCargoTable" value="#{thServidorCargoView.thCargoLazy}" var="thCargo"
+                              widgetVar="thCargoTable" rowKey="#{thCargo.id}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                    <p:column headerText="Cod. cargo" style="width: 20%;text-align: center" filterBy="#{thCargo.codigo}" filterMatchMode="contains">
+                        <h:outputText value="#{thCargo.codigo}" />
+                    </p:column>
+                    <p:column headerText="Nom. Cargo" style="width: 70%;" filterBy="#{thCargo.nombreCargo}" filterMatchMode="contains">
+                        <h:outputText value="#{thCargo.nombreCargo}" />
+                    </p:column>
+                    <p:column headerText="Unidad Administrativa" style="width: 70%;" filterBy="#{thCargo.idUnidad.nombre}" filterMatchMode="contains">
+                        <h:outputText value="#{thCargo.idUnidad.nombre}" />
+                    </p:column>
+                    <p:column headerText="Tipo Unidad" style="width: 30%;" filterBy="#{thCargo.idUnidad.tipoUnidad.texto}" filterMatchMode="contains">
+                        <h:outputText value="#{thCargo.idUnidad.tipoUnidad.texto}" />
+                    </p:column>
+                    <p:column headerText="Acción" style="width: 10%;text-align: center">
+                        <p:commandLink title="Añadir" process="@this" actionListener="#{thServidorCargoView.closeDlgCargo(thCargo)}">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>       
+        </p:dialog>
+        <p:dialog id="thServidorQuitarDlg" widgetVar="thServidorQuitarDlg" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Servidor - Cargo">
+            <h:form prependId="false" id="thServidorQuitarForm">
+                <p:fieldset legend="Datos del servidor">
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Identificación:" style="font-weight: bold"/>
+                            <p:inputText id="identificacionQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idServidor.persona.identificacion}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'identificacionQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombres:" style="font-weight: bold"/>
+                            <p:inputText id="nombresQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idServidor.persona.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'nombresQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Apellidos:" style="font-weight: bold"/>
+                            <p:inputText id="apellidosQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idServidor.persona.apellido}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'apellidosQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:fieldset legend="Datos del Cargo">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre de cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoNombreQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.nombreCargo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoNombreQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Cod. Cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoCodigoQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.codigo}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoCodigoQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Unidad administrativa:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoUnidadAdministrativaQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idUnidad.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoUnidadAdministrativaQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Regimén laboral:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoRegimenLaboralQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idRegimen.nombre}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoRegimenLaboralQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Grupo organizacional:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoOrganizacionalQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idGrupo.grupoOrganizacional}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoOrganizacionalQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Tipo de cargo:" style="font-weight: bold"/>
+                            <p:inputText id="thCargoTipoQuit" class="panelInput" style="width: 100%" 
+                                         value="#{thServidorCargoView.thServidorCargo.idCargo.idCatalogoItem.texto}" 
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'thCargoTipoQuit')">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha de Asignación:" style="font-weight: bold"/>
+                            <p:calendar id="thCargoFechaAsignacionQuit"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                        onkeypress="focusNextOnEnter(event, 'thCargoFechaAsignacionQuit')" readonlyInput="true" disabled="true"
+                                        value="#{thServidorCargoView.thServidorCargo.fechaAsignacion}" style="width: 100%">
+                                <p:ajax event="dateSelect"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Fecha de Finalización:" style="font-weight: bold"/>
+                            <p:calendar id="thCargoFechaFinalizacionQuit"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" locale="es"
+                                        onkeypress="focusNextOnEnter(event, 'thCargoFechaFinalizacionQuit')" readonlyInput="true"
+                                        value="#{thServidorCargoView.thServidorCargo.fechaFinalizacion}" style="width: 100%">
+                                <p:ajax event="dateSelect"/>
+                            </p:calendar> 
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="Guardar" update="thServidorTable"
+                                     icon="fa fa-save" actionListener="#{thServidorCargoView.quitarCargo()}"
+                                     styleClass="Fs16" style="width: auto;margin: 15px">
+                        <p:confirm header="Confirmación de guardado" message="¿Está seguro de quitar a esta persona el cargo #{thServidorCargoView.thServidorCargo.idCargo.nombreCargo}?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog> 
+            </h:form>       
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,362 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://java.sun.com/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">Trámites ingresados</ui:define>
+    <ui:param name="tittle" value="Trámites Ingresado" />
+    <ui:define name="content">
+        <style type="text/css">
+            .old {
+                background-color: #E7D0E7 !important;
+                background-image: none !important;
+                color: #000000 !important;
+            }
+        </style>
+        <h:form id="formMain" prependId="false">
+            <div class="ui-g" style="float: right; width: 25% !important;margin-bottom: 15px">
+                <div class="ui-inputgroup" style="width: 100% !important;">
+                    <p:selectOneMenu value="#{seguimientoPermisos.opcionBusqueda.anio}"  style="width: 100%;">
+                        <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar-" itemDisabled="true"/>
+                        <f:selectItems value="#{seguimientoPermisos.listaPeriodo}" var="p" itemLabel="Período - #{p.anio}" itemValue="#{p.anio}"/>
+                        <p:ajax listener="#{seguimientoPermisos.actualizarTabla()}" update="taskGrid"/> 
+                    </p:selectOneMenu>
+                    <p:commandButton icon="fa fa-paint-brush" onclick="PF('taskGrid').clearFilters()" 
+                                     actionListener="#{seguimientoPermisos.lazy.filterss.clear()}" 
+                                     style="border-radius: 0px;width: 50px" update="taskGrid" title="Limpiar Filtro">
+                        <p:resetInput target="dataSolciitudesReserva" />
+                    </p:commandButton>
+                </div> 
+            </div>
+            <div style="width: 100% !important; display: inline-block">
+                <div class="ui-g" style="float: left; width: 25% !important; text-align: center;">
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="finalizados();">FINALIZADO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="inactivos();">INACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="activos();">ACTIVO</div>
+                    <div class="ui-g-12 ui-md-6 ui-lg-3 estado-normal" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="todos();">TODOS</div>
+                </div>
+            </div>
+            <p:remoteCommand actionListener="#{seguimientoPermisos.filterByEstado(1)}" name="inactivos" update="taskGrid" />
+            <p:remoteCommand actionListener="#{seguimientoPermisos.filterByEstado(2)}" name="activos" update="taskGrid" />
+            <p:remoteCommand actionListener="#{seguimientoPermisos.filterByEstado(3)}" name="finalizados" update="taskGrid" />
+            <p:remoteCommand actionListener="#{seguimientoPermisos.filterByEstado(-1)}" name="todos" update="taskGrid" />
+
+            <p:dataTable var="ht1" widgetVar="taskGrid" id="taskGrid" paginator="true" rows="30" value="#{seguimientoPermisos.lazy}" paginatorPosition="bottom"
+                         paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                         currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" lazy="true" filterEvent="enter" 
+                         rowStyleClass="#{ht1.deleteReason ne null ? 'estado-inactivo' : (ht1.endTime ne null? 'estado-activo' : 'estado-normal')}"> 
+
+                <p:column headerText="Instancia" filterBy="#{ht1.procInstId}" width="5%" class="TexAlRight" >
+                    <p:outputLabel value="#{ht1.procInstId}" />
+                </p:column>
+                <p:column headerText="Trámite" filterBy="#{ht1.numTramite}" width="5%" class="TexAlRight" >
+                    <p:outputLabel value="#{ht1.numTramite}" />
+                </p:column>
+                <p:column headerText="Fecha Ingreso" filterBy="#{ht1.tramite.fechaIngreso}" width="12%" class="TexAlCenter" >
+                    <f:facet name="filter">
+                        <p:calendar navigator="true" pattern="yyyy-MM-dd" >
+                            <p:ajax event="dateSelect" update="taskGrid" oncomplete="PF('taskGrid').filter()" />
+                        </p:calendar>
+                    </f:facet>
+                    <p:outputLabel value="#{ht1.tramite.fechaIngreso}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Fecha Finalización" width="12%" class="TexAlCenter" filterBy="#{ht1.endTime}">
+                    <f:facet name="filter">
+                        <p:calendar navigator="true" pattern="yyyy-MM-dd" >
+                            <p:ajax event="dateSelect" update="taskGrid" oncomplete="PF('taskGrid').filter()" />
+                        </p:calendar>
+                    </f:facet>
+                    <p:outputLabel value="#{ht1.endTime}" >
+                        <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                    </p:outputLabel>
+                </p:column>
+                <p:column headerText="Referencia" filterBy="#{ht1.tramite.nombreBeneficiario}" >
+                    <p:outputLabel value="#{ht1.tramite.nombrePropietario}" />
+                </p:column>
+                <p:column headerText="Tipo Trámite" filterBy="#{ht1.tramite.tipoTramite.descripcion}" width="20%" class="TexAlCenter" filterMatchMode="contains" >
+                    <p:outputLabel value="#{ht1.tramite.tipoTramite.descripcion}" />
+                </p:column>
+                <p:column headerText="Período" style="width: 8%;text-align: center">
+                    <p:outputLabel value="#{ht1.periodo}" />
+                </p:column>
+                <p:column headerText="Acciones" width="5%" class="TexAlCenter">
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{seguimientoPermisos.viewProcess(ht1)}"
+                                   title="Ver detalle del trámite" class="ver" process="@this" >
+                        <i class="fa fa-folder newi" style="font-size: 20px"></i>
+                    </p:commandLink>
+<!--                    <p:spacer width="3" />
+                    <p:commandLink update="editPrioridadTraDlg, formEditPrioridadTra" title="Actualizar Prioridad"  class="prioridad"
+                                   actionListener="#{seguimientoPermisos.changePriority(ht1)}" disabled="#{ht1.endTime ne null}" process="@this" >
+                        <i class="fa fa-bullhorn delete" style="font-size: 20px"></i>
+                    </p:commandLink>
+                    <p:spacer width="3" />
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{seguimientoPermisos.reasignarProcess(ht1)}"
+                                   title="Reasignar" disabled="#{ht1.endTime ne null}" class="reasignar" process="@this" >
+                        <i class="fa fa-users newi" style="font-size: 20px"></i>
+                    </p:commandLink>
+                    <p:spacer width="3" />
+                    <p:commandLink update="taskGrid, dlgTramite" actionListener="#{seguimientoPermisos.deleteProcess(ht1)}" process="@this"
+                                   title="Elimar instancio de proceso" disabled="#{ht1.endTime ne null}" class="eliminar" >
+                        <i class="fa fa-trash delete" style="font-size: 20px"></i>
+                        <p:confirm header="Confirmación" message="Esta seguro de eliminar el trámite # #{ht1.numTramite}?" icon="ui-icon-alert" />
+                    </p:commandLink>-->
+                </p:column>
+            </p:dataTable>
+        </h:form>
+
+        <p:dialog modal="true" closeOnEscape="true" closable="true" height="450" width="70%" id="dlgTramite" minHeight="250"
+                  widgetVar="dlgTramite" header="Detalle del trámite numero: #{seguimientoPermisos.instTramite.numTramiteCom}">
+            <h:form id="frmDetalleTarea">
+                <p:panelGrid columns="4" style="width: 100%; padding: 5px;" styleClass="ui-panelgrid-blank">
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Tipo de Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{seguimientoPermisos.instTramite.tramite.tipoTramite.descripcion}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Instancia Trámite:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{seguimientoPermisos.instTramite.procInstId}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                    <!--                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                                            <p:outputLabel value="Solicitante:" style="width: 100% !important;" class="FontBold" />
+                                            <p:inputText value="# {seguimientoPermisos.instTramite.tramite.nombrePropietario}" readonly="true" style="width: 100%;" />
+                                        </h:panelGroup>-->
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Ingreso:" style="width: 100% !important;" class="FontBold" />
+                        <br/>
+                        <p:calendar id="fechaIngreso"  pattern="dd/MM/yyyy" navigator="true" yearRange="c-100:c+100" 
+                                    onkeypress="focusNextOnEnter(event, 'clase')" readonlyInput="true"
+                                    value="#{seguimientoPermisos.instTramite.tramite.fechaIngreso}" style="width: 100%">
+                            <p:ajax event="dateSelect" process="@this" update="formMain" listener="#{seguimientoPermisos.editarFechaInicio()}" />
+                        </p:calendar>
+                        <!--                        <p:inputText value="# {seguimientoPermisos.instTramite.tramite.fechaIngreso}" 
+                        readonly="true" style="width: 100%;" >
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                                </p:inputText>-->
+                    </h:panelGroup>
+
+                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                        <p:outputLabel value="Fecha Finalizacion:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{seguimientoPermisos.instTramite.endTime}" readonly="true" style="width: 100%;" >
+                            <f:convertDateTime pattern="yyyy-MM-dd HH:mm"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <!--                    <h:panelGroup style="width: 100%; display: block" layout="block" >
+                                            <p:outputLabel value="Duracion:" style="width: 100% !important;" class="FontBold" />
+                                            <p:inputText value="# {seguimientoPermisos.instTramite.duration}" readonly="true" style="width: 100%;" />
+                                        </h:panelGroup>-->
+                    <h:panelGroup style="width: 100%; display: block" layout="block" rendered="#{seguimientoPermisos.instTramite.deleteReason ne null}" >
+                        <p:outputLabel value="Razon de Eliminación:" style="width: 100% !important;" class="FontBold" />
+                        <p:inputText value="#{seguimientoPermisos.instTramite.deleteReason}" readonly="true" style="width: 100%;" />
+                    </h:panelGroup>
+                </p:panelGrid><br/>
+                <p:tabView id="tbDetalletramite">
+                    <p:tab title="Tarea">
+                        <p:dataTable value="#{seguimientoPermisos.tasks}" emptyMessage="El trámite no ha sido ingresado."
+                                     var="trm1" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Nombre Tarea">
+                                <p:outputLabel value="#{trm1.name}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="20%">
+                                <p:outputLabel value="#{trm1.assignee}" rendered="#{trm1.assignee ne null}"/>
+                            </p:column>
+                            <p:column headerText="Fech.Inicio" width="15%">
+                                <p:outputLabel value="#{trm1.createTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                            <p:column headerText="Fech.Fin" width="15%">
+                                <p:outputLabel value="#{trm1.endTime}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy HH:mm:ss"    />
+                                </p:outputLabel>
+                            </p:column>
+                            <!--                            <p:column headerText="Duracion" width="10%" style="text-align: center;">
+                                                            <p:outputLabel value="# {trm1.durationInMillis}" >
+                                                                <f:convertDateTime pattern="HH:mm:ss" type="time"   />
+                                                            </p:outputLabel>
+                                                        </p:column>-->
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Observaciones">
+                        <p:dataTable value="#{seguimientoPermisos.instTramite.tramite.observaciones}" emptyMessage="Sin elementos..."
+                                     var="obs" scrollable="true" scrollHeight="350" style="text-align: center;width: 99%">
+                            <p:column headerText="Tarea" width="150">
+                                <p:outputLabel value="#{obs.tarea}"/>
+                            </p:column>
+                            <p:column headerText="Observacion">
+                                <p:outputLabel value="#{obs.observacion}"/>
+                            </p:column>
+                            <p:column headerText="Usuario" width="100">
+                                <p:outputLabel value="#{obs.userCre}"/>
+                            </p:column>
+                            <p:column headerText="Fecha" width="14%">
+                                <p:outputLabel value="#{obs.fecCre}">
+                                    <f:convertDateTime pattern="yyyy-MM-dd HH:mm:ss" />
+                                </p:outputLabel>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Flujo">
+                        <p:graphicImage value="#{seguimientoPermisos.imageProcessInstance}" stream="false" width="100%"   />
+                    </p:tab>
+                    <p:tab title="Documentos">
+                        <p:dataTable id="dtRequisitos" value="#{seguimientoPermisos.requisitosTramite}" rows="5"
+                                     var="item" rowStyleClass="#{item.requisitos.obligatorio ? 'old' : null}" paginator="true"
+                                     paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rendered="#{userSession.hasRole('admin') and not empty seguimientoPermisos.requisitosTramite}" emptyMessage="No existen requisitos">
+                            <p:column headerText="Nombre Requisito" style="width: 60%">
+                                <p:outputLabel value="#{item.requisitos.idRequisito.nombre}"/>
+                            </p:column>
+                            <!--                            <p:column headerText="Nombre Archivo" style="width: 25%;text-align: center;">
+                                                            <p:outputLabel value="#{item.file.fileName}"/>
+                                                        </p:column>-->
+                            <p:column  headerText="Acciones" style="width: 40%; text-align: center;">
+<!--                                <p:commandLink actionListener="#{procesoBienView.abrirDlgArchivos(item)}" title="Buscar Archivo">
+                                    <i class="fa fa-upload blue1 Fs20" />
+                                </p:commandLink>-->
+                                <p:fileUpload fileUploadListener="#{seguimientoPermisos.handleFileUpload}"  style="width: 100%" accept=".jpeg,.jpg,.gif,.png,.pdf"
+                                              skinSimple="true" allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                              label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60" onstart="#{seguimientoPermisos.addReqTramite(item)}" 
+                                              update="dtRequisitos, frmDetalleTarea:tbDetalletramite:docTramite:dtArchivosTramites" />
+
+                                <!--                                <p:commandLink actionListener="# {item.setFile(null)}" update="dtRequisitos" disabled="# {item.file eq null}" title="Borrar Archivo">
+                                                                    <i class="fa fa-trash delete Fs20" />
+                                                                    <p:confirm message="Esta seguro de eliminar el archivo" />
+                                                                </p:commandLink>
+                                                                <p:commandLink actionListener="# {seguimientoPermisos.viewFile(item)}" update="dlgView, frmView" 
+                                                                               disabled="# {item.file eq null}" oncomplete="PF('dlgView').show();" title="Visualizar Archivo" >
+                                                                    <i class="fa fa-eye blue2 Fs20" />
+                                                                </p:commandLink>-->
+                            </p:column>
+                        </p:dataTable>
+                        <p:spacer height="15" rendered="#{userSession.hasRole('admin') and not empty seguimientoPermisos.requisitosTramite}" />
+                        <comp:documents entiti="#{seguimientoPermisos.instTramite.tramite}" showDelete="#{userSession.hasRole('admin')}" id="docTramite" />
+                    </p:tab>
+                    <p:tab title="Referencia">
+                        <p:outputLabel value="#{seguimientoPermisos.instTramite.tramite.nombreBeneficiario}" escape="false" />
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Editar Prioridad de Trámite #{seguimientoPermisos.instTramite.numTramite}" widgetVar="editPrioridadTraDlg" 
+                  modal="true" resizable="false" id="editPrioridadTraDlg" >
+            <h:form id="formEditPrioridadTra">
+                <p:outputLabel value="No Proceso: #{seguimientoPermisos.instTramite.procInstId}" style="font-weight: bold;"/>
+                <p:selectOneRadio value="#{seguimientoPermisos.prioridad}" layout="pageDirection">
+                    <f:selectItem itemLabel="Alta" itemValue="100"/>
+                    <f:selectItem itemLabel="Normal" itemValue="50"/>
+                    <f:selectItem itemLabel="Baja" itemValue="20"/>
+                </p:selectOneRadio>
+                <center>
+                    <p:commandButton value="Guardar" styleClass="btnStyle" actionListener="#{seguimientoPermisos.actualizarPrioridad()}">
+                        <p:confirm header="Confirmación" message="Cambiar prioridad de Trámite #{seguimientoPermisos.instTramite.numTramite}?" icon="ui-icon-alert" />
+                    </p:commandButton>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Eliminar Trámite #{seguimientoPermisos.instTramite.numTramite}" widgetVar="eliminarTraDlg" 
+                  modal="true" resizable="false" id="eliminarTraDlg" >
+            <h:form id="formEliminarTra">
+                <p:outputLabel value="Razon de la Eliminación *"  style="font-weight: bold"/><br/>
+                <p:inputTextarea value="#{seguimientoPermisos.deleteReason}" 
+                                 rows="7" cols="50" style="border: 1px solid; border-radius: 5px 5px 5px 5px;font-weight: bold"/>
+                <br/>
+                <br/>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{seguimientoPermisos.delete()}" update="formMain" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Modificar Fecha de Trámite #{seguimientoPermisos.instTramite.numTramiteCom}" widgetVar="modificarFechaDlg" 
+                  modal="true" resizable="false" id="modificarFechaDlg" >
+            <h:form id="formModificarFecha">
+                <p:outputLabel value="Razón de la Modificación *"   /><br/>
+                <p:inputTextarea value="#{seguimientoPermisos.reasondatemodif}" rows="7" cols="70"/>
+                <br/>
+                <br/>
+                <center>
+                    <p:commandButton value="Guardar" icon="fa fa-save" actionListener="#{seguimientoPermisos.modificarFecha()}" update="formMain" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Reasignar Trámite #{seguimientoPermisos.instTramite.numTramite}" widgetVar="reasignarTraDlg" 
+                  modal="true" resizable="false" id="reasignarTraDlg" width="50%" >
+            <h:form id="formReasignarTra">
+                <h:panelGroup rendered="#{empty seguimientoPermisos.tareas}" >
+                    <p:panelGrid columns="3" rendered="#{seguimientoPermisos.tarea ne null}">
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Tarea Actual:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{seguimientoPermisos.tarea.name}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Usuario Actual:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{seguimientoPermisos.tarea.assignee}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                        <h:panelGroup style="width: 100%; display: block" layout="block" >
+                            <p:outputLabel value="Prioridad:" style="width: 100% !important;" class="FontBold" />
+                            <p:inputText value="#{seguimientoPermisos.tarea.priority}" readonly="true" style="width: 100%;" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <br/>
+                    <p:dataTable value="#{seguimientoPermisos.usuarios}" emptyMessage="Sin elementos..." scrollHeight="350" scrollable="true"
+                                 var="usr1" style="text-align: center;">
+                        <p:column headerText="Usuario" filterBy="#{usr1.usuario}">
+                            <p:outputLabel value="#{usr1.usuario}"/>
+                        </p:column>
+                        <p:column headerText="Nombre" filterBy="#{usr1.funcionario.persona.apellido}" >
+                            <p:outputLabel value="#{usr1.funcionario.persona.nombreCompleto}"/>
+                        </p:column>
+                        <p:column headerText="Selec." width="50">
+                            <p:commandLink actionListener="#{seguimientoPermisos.reasignar(usr1)}" title="Reasignar">
+                                <i class="fa fa-arrow-right new" style="font-size: 20px;"/>
+                                <p:confirm header="Confirmación" message="Esta seguro de Reasignar tarea al usuario #{usr1.usuario}?" icon="ui-icon-alert"/>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty seguimientoPermisos.tareas}" >
+                    <p:dataTable value="#{seguimientoPermisos.tareas}" emptyMessage="Sin elementos..." scrollHeight="350" scrollable="true"
+                                 var="task1" style="text-align: center;width: 100%">
+                        <p:column headerText="Tarea" filterBy="#{task1.name}" style="text-align: center;width: 40%">
+                            <p:outputLabel value="#{task1.name}"/>
+                        </p:column>
+                        <p:column headerText="Usuario Actual" filterBy="#{task1.assignee}" style="text-align: center;width: 25%">
+                            <p:outputLabel value="#{task1.assignee}"/>
+                        </p:column>
+                        <p:column headerText="Prioridad" style="text-align: center;width: 15%">
+                            <p:outputLabel value="#{task1.priority}"/>
+                        </p:column>
+                        <p:column headerText="Usuario" style="text-align: center;width: 20%">
+                            <p:selectOneMenu value="#{seguimientoPermisos.usuario}" converter="#{utilConverter}" style="width: 100%" 
+                                             filter="true" filterMatchMode="contains">
+                                <f:selectItem itemLabel="-Seleccionar-" noSelectionOption="true"/>
+                                <f:selectItems value="#{seguimientoPermisos.usuarios}" var="usr2" itemLabel="#{usr2.usuario}" itemValue="#{usr2}" />
+                                <p:ajax event="change" listener="#{seguimientoPermisos.reasignar(seguimientoPermisos.usuario, task1)}" />
+                            </p:selectOneMenu>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgView" header="Documentos" widgetVar="dlgView" modal="true" showEffect="fade" hideEffect="fade" resizable="false"  closable="true" height="470" width="50%" >
+            <h:form prependId="false" id="frmView">
+                <p:outputLabel value="Archivo: #{procesoBienView.requisitosObjeto.file.fileName}" /><br/>
+                <h:panelGroup rendered="#{procesoBienView.requisitosObjeto.file ne null}" style="text-align: center;" >
+                    <h:panelGroup style="text-align: center;" >
+                        <iframe src="#{request.contextPath}/ViewDocs" align="center" frameBorder="0" style="text-align: center !important; width: 46vw; height: 46vw; align-content: center;" />
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

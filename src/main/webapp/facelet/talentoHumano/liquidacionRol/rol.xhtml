@@ -1,0 +1,408 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">Liquidación de Rol</ui:define>
+    <ui:param name="tittle" value="Liquidación de Rol" />
+    <ui:define name="content">
+        <h:form id="formMain">
+            <div class="ui-g ui-fluid">
+                <div class="ui-g-8" style="margin-left: 15%">
+                    <p:outputPanel id="fomInfo">
+                        <p:fieldset legend="Cabecera del Rol" id="fieldsetRol" >
+                            <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1">
+                                    <p:outputLabel value="Periodo" for="periodo" />
+                                    <p:selectOneMenu id="periodo" style="width: 100px;"
+                                                     value="#{liquidacionView.busqueda.anio}">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" 
+                                                      noSelectionOption="true" />
+                                        <f:selectItems value="#{liquidacionView.periodos}"
+                                                       var="periodo"
+                                                       itemLabel="#{periodo.anio}"
+                                                       itemValue="#{periodo.anio}"/>
+                                        <p:ajax  listener="#{liquidacionView.actulizarRoles()}" update="rolSeleccionado"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">                                   
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Rol: " for="@next"/>
+                                    <p:selectOneMenu id="rolSeleccionado" value="#{liquidacionView.rolSeleccionado}"
+                                                     converter="#{utilConverter}" 
+                                                     filter="true" filterMatchMode="contains"
+                                                     style="width: 100%;" panelStyle="width:250px">
+                                        <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{liquidacionView.listaRol}"
+                                                       var="m"
+                                                       itemLabel="#{m.descripcion}"
+                                                       itemValue="#{m}"/>
+                                        <p:ajax update="tipoRol,estadoRol,mesRol,formMain" listener="#{liquidacionView.liquidarRol()}"
+                                                process="@this"/>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Tipo Rol" for="tipoRol"/>
+                                    <p:inputText id="tipoRol" value="#{liquidacionView.rolSeleccionado.descripcion}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'mesRol')">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Mes Rol" for="mesRol"/>
+                                    <p:inputText id="mesRol" value="#{liquidacionView.rolSeleccionado.mes.descripcion}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'estadoRol')">
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel value="Estado Rol" for="estadoRol"/>
+                                    <p:inputText id="estadoRol" value="#{liquidacionView.rolSeleccionado.estadoAprobacion.texto}"
+                                                 readonly="true" onkeypress="focusNextOnEnter(event, 'cedula')">
+                                    </p:inputText>
+                                </p:panelGrid>
+                            </p:panelGrid> 
+                            <p:outputPanel style="margin-top: 10px;">
+                                <center>
+                                    <!--                                <p:commandButton value="Guardar" 
+                                                                                     id="btnGuardar"
+                                                                                     disabled="# {liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                                                                 liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol' or 
+                                                                                                 liquidacionView.rolSeleccionado.id == null}"
+                                                                                     actionListener="# {liquidacionView.guardar()}"
+                                                                                     icon="ui-icon-save" style="width: auto; margin-bottom: 15px;"
+                                                                                     styleClass="Fs16" update="formMain"
+                                                                                     process="@form"/>-->
+
+                                    <p:commandButton value="Rol Resumido"
+                                                     icon="ui-icon-print"
+                                                     actionListener="#{liquidacionView.impresionResumenRol()}"
+                                                     process="@this"
+                                                     styleClass="Fs16" style="width: auto;margin-left: 15px; margin-bottom: 15px;"/>
+                                    <p:commandButton value="Reporte Rol"
+                                                     icon="ui-icon-print"
+                                                     process="@this"
+                                                     actionListener="#{liquidacionView.impresionDetalleRol()}"
+                                                     styleClass="Fs16" style="width: auto;margin-left: 15px; margin-bottom: 15px;"/>
+                                    <p:commandButton value="Rol General"
+                                                     icon="ui-icon-print"
+                                                     process="@this"
+                                                     actionListener="#{liquidacionView.impresionRoGenerall()}"
+                                                     styleClass="Fs16" style="width: auto;margin-left: 15px; margin-bottom: 15px;"/>
+                                </center>
+                            </p:outputPanel>
+                        </p:fieldset>
+                    </p:outputPanel>
+                    <br></br>
+                    <p:outputPanel>
+                        <p:commandButton value="Actualizar Registros" 
+                                         disabled="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                     liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol' or 
+                                                     liquidacionView.rolSeleccionado.id == null}"
+                                         style="width: auto;"
+                                         id="aprobar"
+                                         actionListener="#{liquidacionView.eliminarRegistro()}"
+                                         icon="fa fa-refresh"
+                                         styleClass="Fs16" update="formMain"
+                                         process="@this">
+                            <p:confirm header="Confirmación de Actualizar Datos"
+                                       message="Esta seguro(a) de Actualizar los Datos del Rol, una vez Aceptada la confirmación se Eliminaran los datos actuales?"
+                                       icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                        <p:commandButton value="Aprobar Rol" 
+                                         disabled="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                     liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol' or
+                                                     liquidacionView.rolSeleccionado.id == null}"
+                                         style="width: auto"
+                                         id="actulizar"
+                                         actionListener="#{liquidacionView.aprobarRol()}"
+                                         icon="ui-icon-save"
+                                         styleClass="Fs16" update="formMain"
+                                         process="@this">
+                            <p:confirm header="Aprobar Rol"
+                                       message="Esta seguro(a) de Aprobar el ROL"
+                                       icon="fa fa-exclamation-triangle" />
+                        </p:commandButton>
+                        <p:dataTable id="dtLiquidacion" widgetVar="dtLiquidacion" var="liq"
+                                     value="#{liquidacionView.lazy}"
+                                     editable="true" lazy="true"
+                                     selection="#{liquidacionView.liquidacionRol}" selectionMode="single" rowKey="#{liq.id}"
+
+                                     paginator="true"
+                                     rowsPerPageTemplate="10,15,20,60,100"
+                                     paginatorPosition="bottom"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                                     rows="10" emptyMessage="No existe criterio de búsqueda especificado">
+                            <f:facet  name="header"> 
+                                Roles de Pago
+                            </f:facet>
+                            <p:column headerText="C.I Servidor" style="width: 10%;  font-size: 12px;text-align: center" filterBy="#{liq.rolPago.servidor.persona.identificacion}">
+                                <h:outputText value="#{liq.rolPago.servidor.persona.identificacion}" style="text-align: center"/>
+                            </p:column>
+                            <p:column headerText="Apellidos Servidor" style="width: 17.5%;  font-size: 12px;" filterBy="#{liq.rolPago.servidor.persona.apellido}" filterMatchMode="contains">
+                                <h:outputText value="#{liq.rolPago.servidor.persona.apellido}"/>
+                            </p:column>
+                            <p:column headerText="Nombres Servidor" style="width: 17.5%;  font-size: 12px;" filterBy="#{liq.rolPago.servidor.persona.nombre}"  filterMatchMode="contains">
+                                <h:outputText value="#{liq.rolPago.servidor.persona.nombre}"/>
+                            </p:column>
+                            <p:column headerText="Total Ingreso" style="width: 8%;  font-size: 12px">
+                                <h:outputText value="#{liq.totalIngreso}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Total Egreso" style="width: 8%;  font-size: 12px">
+                                <h:outputText value="#{liq.totalEgreso*-1}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Neto a Recibir" style="width: 8%;  font-size: 12px;font-weight: bold">
+                                <h:outputText value="#{liq.netoRecibir}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                                <!--                                <p:commandLink update="formMain" 
+                                                                               actionListener="# {liquidacionView.editar(liq)}"
+                                                                               title="Ver información del Rol" process="@this">
+                                                                    <i class="fa fa-search newi" style="font-size: 20px"></i>
+                                                                </p:commandLink>-->
+                                <p:commandLink update="formMain" 
+                                               actionListener="#{liquidacionView.openDialogRol(liq)}"
+                                               title="Ver información del Rol" process="@this">
+                                    <i class="fa fa-search newi" style="font-size: 18px"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Eliminar"
+                                               actionListener="#{liquidacionView.eliminar(liq)}"
+                                               rendered="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='registrado-rol'}"
+                                               update="formMain"
+                                               process="@this">
+                                    <i class="fa fa-trash" style="font-size: 15px; margin-right: 8px; color: red;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:commandLink title="Impresión de Rol"
+                                               actionListener="#{liquidacionView.impresionRoles(liq)}"
+                                               process="@form">
+                                    <i class="fa fa-fw fa-file-pdf-o" style="font-size: 13px; margin-right: 8px; color: red;"></i>
+                                </p:commandLink>
+                                <p:commandLink title="Actualizar"
+                                               rendered="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='registrado-rol'}"
+                                               actionListener="#{liquidacionView.actualizarLiquidacion(liq)}"
+                                               update="formMain"
+                                               process="@form">
+                                    <i class="fa fa-refresh" style="font-size: 15px; margin-right: 8px;"></i>
+                                    <p:confirm header="Confirmar Actualización" message="Esta seguro(a) de Actualizar los Datos" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column> 
+                            <p:columnGroup type="footer">
+                                <p:row>
+                                    <p:column colspan="3" style="text-align:right;font-weight: bold;font-size: 12px" footerText="Total:" />
+                                    <p:column footerText="#{liquidacionView.totalIngreso}" style="text-align: right; font-weight: bold;font-size: 12px"/>
+                                    <p:column footerText="#{liquidacionView.totalEgreso}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    <p:column footerText="#{liquidacionView.totalNeto}" style="text-align: right;font-weight: bold;font-size: 12px"/>
+                                    <p:column footerText="" style="text-align: right"/>
+                                </p:row>
+                            </p:columnGroup>
+                        </p:dataTable> 
+                    </p:outputPanel>
+                </div>
+            </div>
+            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+            </p:confirmDialog>
+        </h:form>
+        <p:dialog id ="dlgRubroAne" header="Fomulario de Rubros Anexo" widgetVar="dlgRubroAne" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="350" >
+            <h:form prependId="false" id="frmRubroA" style="width: 100%;">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formBanco" >                                
+                                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:selectOneMenu id="rubroAnexo" value="#{liquidacionView.rubroAnexoSeleccionado}"
+                                                         converter="#{utilConverter}"
+                                                         filter="true" filterMatchMode="contains"
+                                                         style="width: 100%;" panelStyle="width:22%">
+                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{liquidacionView.listaValoresRolesAnexos}"
+                                                           var="va"
+                                                           itemLabel="#{va.valorParametrizable.nombre}"
+                                                           itemValue="#{va}"/>
+                                            <p:ajax update="formBanco"/>
+                                        </p:selectOneMenu>
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                                        <p:outputLabel for="nombreRub" value="Cuenta Contable " style="width: 100%;"/>
+                                        <p:inputText id="nombreRub" value="#{liquidacionView.rubroAnexoSeleccionado.cuentaContable.codigo != null ? liquidacionView.rubroAnexoSeleccionado.cuentaContable.codigo:'NO POSEE CUENTA CONTABLE ASOCIADA'}" style="width: 100%"
+                                                     readonly="true" onkeyup="javascript:this..value = this.value.toUpperCase();"></p:inputText>
+                                    </p:panelGrid>  
+
+                                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                        <p:outputLabel for="montoRubro" value="Monto " style="width: 100%;"/>
+                                        <p:inputNumber id="montoRubro" class="panelInput"  required="true" inputStyle="width: 100%"
+                                                       maxlength="15" value="#{liquidacionView.liquidacionDAO.valorRubro}" style="width: 100%"
+                                                       decimalSeparator="." thousandSeparator=",">
+                                        </p:inputNumber>
+                                    </p:panelGrid>
+
+                                </p:panelGrid>                               
+                            </p:outputPanel>
+
+                            <center>
+                                <p:commandButton value="Guardar"
+                                                 actionListener="#{liquidacionView.guardarRubro()}"
+                                                 icon="ui-icon-save" 
+                                                 style="width: auto; margin-bottom: 15px;"
+                                                 styleClass="Fs16" 
+                                                 update="frmRubroA"
+                                                 process="@form"/>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+
+        </p:dialog>
+        <p:dialog id ="dlgDetalle" header="Detalle de Rol Funcionario" widgetVar="dlgDetalle" modal="true"
+                  showEffect="fade" hideEffect="fade" resizable="false" width="auto" >
+            <h:form prependId="false" id="frmDetalleRol" style="width: 100%;">
+                <p:fieldset legend="Datos del Funcionario" id="fieldsetDatos" >                                        
+                    <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                        <p:panelGrid id="panelInform" columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <h:panelGroup layout="block" class="panelInput" >
+                                <p:outputLabel value="Cédula " for="cedula" style="font-weight: bold;"/>
+                                <div class="ui-inputgroup">
+<!--                                                <p:inputText id="cedula" value="#{liquidacionView.cedula}" class="panelInput"
+                                                 readonly="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol'}">
+                           <p:ajax update="cedula" />
+                       </p:inputText>-->
+                                    <p:inputText id="cedula" value="#{liquidacionView.cedula}" class="panelInput"
+                                                 readonly="true">
+                                        <p:ajax update="cedula" />
+                                    </p:inputText>
+                                    <!--                                                <p:commandButton title="Buscar Servidor" icon="fa fa-search"
+                                                                                                     disabled="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol'}"
+                                    actionListener="#{liquidacionView.buscarServidor()}"
+                                    process="@form"
+                                    update="formMain"
+                                    styleClass="green-button button-group" >
+                       <p:ajax event="dialogReturn" listener="#{liquidacionView.selectData}" update="formMain:dtLiquidacion" />
+                   </p:commandButton>-->
+                                </div>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Nombre" for="nombre"/>
+                            <p:inputText id="nombre" value="#{liquidacionView.liquidacionRol.rolPago.servidor.persona.nombreCompleto}"
+                                         readonly="true"
+                                         onkeypress="focusNextOnEnter(event, 'sueldo_input')">
+                            </p:inputText>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Sueldo Base" for="sueldo"/>
+                            <p:inputNumber id="sueldo"  decimalSeparator="." thousandSeparator=","
+                                           value="#{liquidacionView.liquidacionRol.rmu.remuneracionDolares}" 
+                                           inputStyle="text-align:right" readonly="true" onkeypress="focusNextOnEnter(event, 'cargo')">
+                            </p:inputNumber>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Cargo" for="cargo"/>
+                            <p:inputText id="cargo" value="#{liquidacionView.liquidacionRol.rolPago.servidor.distributivo.cargo.nombreCargo}"
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'tipo')">
+                            </p:inputText>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Tipo: " for="tipo"/>
+                            <p:inputText id="tipo" value="#{liquidacionView.liquidacionRol.rolPago.servidor.distributivo.regimen.nombre}"
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'dependencia')">
+                            </p:inputText>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Dependencia: " for="dependencia"/>
+                            <p:inputText id="dependencia" value="#{liquidacionView.liquidacionRol.rolPago.servidor.distributivo.unidadAdministrativa.nombre}"
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'fechaContranto')">
+                            </p:inputText>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Fecha de Contrato: " for="fechaContranto"/>
+                            <p:inputText id="fechaContranto" value="#{liquidacionView.liquidacionRol.rolPago.servidor.fechaIngreso}"
+                                         readonly="true" onkeypress="focusNextOnEnter(event, 'sueldoNeto')">
+                                <f:convertDateTime pattern="yyyy/MM/dd" />
+                            </p:inputText>
+                        </p:panelGrid>
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                            <p:outputLabel value="Neto a Recibir" for="sueldoNeto"/>
+                            <p:inputNumber id="sueldoNeto"  decimalSeparator="." thousandSeparator=","
+                                           value="#{liquidacionView.liquidacionRol.netoRecibir}" 
+                                           inputStyle="text-align:right;;font-weight: bold;font-size: 12px" readonly="true" onkeypress="focusNextOnEnter(event, 'cargo')">
+                            </p:inputNumber>
+                        </p:panelGrid>
+                    </p:panelGrid>                                        
+                </p:fieldset>
+                <p:fieldset legend="Rubros Asociados al Funcionario" id="fieldsetdataTable">
+                    <p:commandButton value="Agregar Rubro" 
+                                     style="width: auto"
+                                     actionListener="#{liquidacionView.agregarRubroAnexo()}"
+                                     disabled="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                 liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol' or 
+                                                 liquidacionView.rolSeleccionado.id == null}"
+                                     id="agregarRubro"
+                                     icon="ui-icon-plus"
+                                     styleClass="Fs16" update="frmRubroA"
+                                     process="@form"/>
+                    <p:dataTable id="dtRubro" widgetVar="dtRubro" var="rubro"
+                                 paginator="true"
+                                 rowsPerPageTemplate="10,15,20,60,100"
+                                 value="#{liquidacionView.listaLiquidarDAO}"
+                                 editable="true" editMode="cell"
+                                 paginatorPosition="bottom"
+                                 tableStyle="table-layout:auto"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rows="10" emptyMessage="No existe criterio de búsqueda especificado">
+                        <p:column headerText="Detalle" style="width: 20%;  font-size: 10px;">
+                            <h:outputText value="#{rubro.valorAsignacion.valorParametrizable.tipo.texto}"/>
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 10%;  font-size: 12px;text-align: center">
+                            <h:outputText value="#{rubro.valorAsignacion.valorParametrizable.clasificacion.texto}"/>
+                        </p:column>
+                        <p:column headerText="Partida" style="width: 10%;  font-size: 12px;text-align: center">
+                            <h:outputText value="#{rubro.valorAsignacion.partidaAp}"/>
+                        </p:column>
+                        <p:column headerText="Cuenta Contable" style="width: 30%;  font-size: 12px;">
+                            <h:outputText value="#{rubro.valorAsignacion.cuentaContable.codigo}.-#{rubro.valorAsignacion.cuentaContable.nombre}"/>
+                        </p:column>
+                        <p:column headerText="Monto" style="width: 10%;  font-size: 12px;">
+                            <h:outputText value="#{rubro.valorAsignacion.valorParametrizable.clasificacion.codigo eq 'I' ? rubro.valorRubro : rubro.valorRubro*-1}" style="float: right">
+                                <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                            </h:outputText>
+                        </p:column>
+                    </p:dataTable> 
+                </p:fieldset>  
+                <center>
+                    <p:commandButton value="Guardar" 
+                                     id="btnGuardar"
+                                     disabled="#{liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='aprobado-rol' or
+                                                 liquidacionView.rolSeleccionado.estadoAprobacion.codigo=='pagado-rol' or 
+                                                 liquidacionView.rolSeleccionado.id == null}"
+                                     actionListener="#{liquidacionView.guardar()}"
+                                     icon="ui-icon-save" style="width: auto; margin-bottom: 15px;"
+                                     styleClass="Fs16" update="formMain"
+                                     process="@form"/>
+                    <p:commandButton value="Cancelar/Cerrar" 
+                                     actionListener="#{liquidacionView.cancelar()}"
+                                     icon="ui-icon-clear"
+                                     style="width: auto; margin-left: 15px;" process="@this"
+                                     styleClass="red-btn" update="formMain"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,267 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+    <ui:define name="title">
+        Ordenes Emitidas
+    </ui:define>  
+    <ui:param name="tittle" value="ORDENES EMITIDAS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <h:panelGroup id="dataTable" layout="block">
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <p:fieldset legend="Parametros de Búsqueda y Acciones:">
+                                <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Meses:" style="font-weight: bold"/>
+                                        <p:selectOneMenu id="meses" value="#{ordenesEmitidasView.mesSeleccionado}" converter="#{utilConverter}" 
+                                                         filter="true" filterMatchMode="startsWith" style="width: 100%">
+                                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{ordenesEmitidasView.mesList}" var="clase" itemLabel="#{mes.texto}" itemValue="#{mes}" />
+                                        </p:selectOneMenu>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:outputLabel for="@next" value="Periodo:" style="font-weight: bold"/>    
+                                        <p:inputText id="periodo" class="panelInput" style="width: 100%" maxlength="4"
+                                                     value="#{ordenesEmitidasView.anioSeleccionado}"
+                                                     onkeypress="focusNextOnEnter(event, 'periodo')">
+                                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                                        </p:inputText>
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:commandButton value="Buscar" icon="ui-icon-search" actionListener="#{ordenesEmitidasView.parametroFiltro()}"
+                                                         styleClass="Fs16" style="width: 150px;" update="ordenesEmitidasTable,parametrosActuales"/>
+                                    </h:panelGroup>
+                                </p:panelGrid>
+                            </p:fieldset>
+                            <p:fieldset legend="Parametros Actuales:">
+                                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="parametrosActuales">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel value="MES: #{ordenesEmitidasView.mesPresente}" style="font-weight: bold;font-size: 20px;"/>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:outputLabel value="PERÍODO: #{ordenesEmitidasView.anioSeleccionado}" style="font-weight: bold;font-size: 20px;"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:fieldset>
+                        </p:panelGrid>
+
+                        <p:commandButton value="Limpiar filtros" process="@this" 
+                                         icon="ui-icon-refresh" onclick="PF('ordenesEmitidasTable').clearFilters()" update="ordenesEmitidasTable"
+                                         styleClass="Fs16" style="width: 150px;"/>
+                        <p:commandButton value="Imprimir Mes" icon="fa fa-print" actionListener="#{ordenesEmitidasView.openDlgReporte(true)}" update="formMain"
+                                         style="width: 150px;" title="Imprimir"/>
+                        <p:commandButton value="Imprimir General" icon="fa fa-print" actionListener="#{ordenesEmitidasView.openDlgReporte(false)}" update="formMain"
+                                         style="width: 150px;" title="Imprimir"/>
+                        <p:commandButton value="Imprimir Contabilidad" icon="fa fa-print" actionListener="#{ordenesEmitidasView.openDlgReporteContabilidad()}" update="formMain" rendered="false"
+                                         style="width: 150px;" title="Imprimir"/>
+                        <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: 150px; " icon="fa fa-align-justify" />
+                        <p:columnToggler datasource="ordenesEmitidasTable" trigger="mostrarColumnas" />
+                        <br/>            
+                        <p:dataTable  id="ordenesEmitidasTable" widgetVar="ordenesEmitidasTable" var="ordenesEmitidas" 
+                                      value="#{ordenesEmitidasView.ordenesEmitidasLazyModel}" 
+                                      paginator="true" rows="50" style="width: 100%;" rowKey="#{ordenesEmitidas.id}"
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                      emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <p:column headerText="No. Local" style="width: 5%;text-align: center" filterBy="#{ordenesEmitidas.idArrendamiento.local.numeroLocal}">
+                                <h:outputText value="#{ordenesEmitidas.idArrendamiento.local.numeroLocal}" />
+                            </p:column>
+                            <p:column headerText="Mercado" style="width: 10%;text-align: center" filterBy="#{ordenesEmitidas.idArrendamiento.local.mercado.nombre}">
+                                <h:outputText value="#{ordenesEmitidas.idArrendamiento.local.mercado.nombre}" />
+                            </p:column>
+                            <p:column headerText="Tarifa" style="width: 6%;text-align: center" filterBy="#{ordenesEmitidas.idArrendamiento.local.idTarifa.codigo}" >
+                                <h:outputText value="#{ordenesEmitidas.liquidacion.idLiquidacion}"/>
+                            </p:column>
+                            <p:column headerText="Anden / Nivel" style="width: 11%;text-align: center" filterBy="#{ordenesEmitidas.idArrendamiento.local.andenNivel}">
+                                <h:outputText value="#{ordenesEmitidas.idArrendamiento.local.andenNivel}"/>
+                            </p:column>
+                            <p:column headerText="Fecha de Suscripción" style="width: 8%;text-align: center">
+                                <h:outputText value="#{ordenesEmitidas.idArrendamiento.fechaSuscripcion}">
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="RUC" style="width: 10%;text-align: center" filterBy="#{ordenesEmitidas.idArrendatario.persona.identificacionCompleta}">
+                                <h:outputText value="#{ordenesEmitidas.idArrendatario.persona.identificacionCompleta}" />
+                            </p:column>
+                            <p:column headerText="Operador" style="width: 20%;" filterBy="#{ordenesEmitidas.idArrendatario.persona.nombreCompleltoSql}">
+                                <h:outputText value="#{ordenesEmitidas.idArrendatario.persona.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Monto a Pagar" style="width: 8%;" >
+                                <h:outputText value="#{ordenesEmitidas.montoPagar}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha de Emisión" style="width: 8%;text-align: center">
+                                <h:outputText value="#{ordenesEmitidas.fechaEmision}" >
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Estado" style="width: 8%;text-align: center" filterBy="#{ordenesEmitidas.ordenPagada}">
+                                <f:facet name="filter">
+                                    <p:selectOneMenu onchange="PF('ordenesEmitidasTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                        <f:converter converterId="javax.faces.Boolean" />
+                                        <f:selectItem itemLabel="Todos" itemValue="" />
+                                        <f:selectItem itemLabel="PAGADO" itemValue="true" />
+                                        <f:selectItem itemLabel="NO PAGADO" itemValue="false" />
+                                    </p:selectOneMenu>
+                                </f:facet>
+                                <h:outputText value="#{ordenesEmitidas.ordenPagada ? 'PAGADO':'NO PAGADO'}" >
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha de Emisión" style="width: 8%;text-align: center">
+                                <h:outputText value="#{ordenesEmitidas.fechaEmision}" >
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="No. de Solicitud" style="width: 6%;text-align: center">
+                                <h:outputText value="#{ordenesEmitidas.idSolicitud}" />
+                            </p:column>
+<!--                            <p:column headerText="Fecha de Pago" style="width: 8%;text-align: center" sortBy="# {ordenesEmitidas.fechaPago}">
+                                <h:outputText value="# {ordenesEmitidas.fechaPago}" >
+                                    <f:convertDateTime pattern="dd/MM/yyyy"/>
+                                </h:outputText>
+                            </p:column>-->
+                            <p:column headerText="Accion" style="width: 10%;text-align: center">
+                                <p:commandLink actionListener="#{ordenesEmitidasView.generarOrden(ordenesEmitidas)}" title="Volver a Generar" process="@this"  
+                                               update="ordenesEmitidasTable" rendered="#{!ordenesEmitidas.ordenPagada}">
+                                    <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 8px; color: #00ff33;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{ordenesEmitidasView.visualizarArchivo(ordenesEmitidas)}" title="Ver Archivo" process="@this"  
+                                               update="ordenesEmitidasTable,viewDocumentoForm" rendered="false">
+                                    <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{ordenesEmitidasView.subirRecibo(ordenesEmitidas)}" title="Subir Archivo" process="@this"  
+                                               update="ordenesEmitidasTable" rendered="false">
+                                    <i class="fa fa-upload" style="font-size: 1.5em; margin-right: 8px; color: #512da8;"></i>
+                                </p:commandLink>
+                                <p:commandLink actionListener="#{ordenesEmitidasView.anularOrdenDePago(ordenesEmitidas)}" title="Eliminar" process="@this"  
+                                               update="ordenesEmitidasTable" rendered="#{!ordenesEmitidas.ordenPagada}">
+                                    <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: #F44336;"></i>
+                                    <p:confirm header="Confirmación de eliminación" message="¿Esta seguro de eliminar el arriendo?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                            </p:column>
+                        </p:dataTable>
+                    </h:panelGroup>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="viewDocumentoDlg" header="Documento Adjuntado" widgetVar="viewDocumentoDlg" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="80%">
+            <p:ajax event="close" update="viewDocumentoForm" listener="#{ordenesEmitidasView.handleClose}" />
+            <h:form prependId="false">
+                <p:outputPanel id="viewDocumentoForm" style="width: 100%;">
+                    <u:documents id="docArriendo" entiti="#{ordenesEmitidasView.ordenesEmitidas}" /> 
+                </p:outputPanel>
+
+            </h:form>
+        </p:dialog>
+        <p:dialog id="subirDocDialog" header="Adjuntar Documentos" widgetVar="subirDocDialog" position="top" style="margin-top: 150px"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form prependId="false">
+                <p:outputPanel id="subirDocForm" style="width: 100%;">
+                    <p:fieldset legend="Valores Adicionales:">
+                        <p:panelGrid  columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                            <h:panelGroup>
+                                <p:outputLabel for="@next" value="Abono Total:" style="font-weight: bold"/>
+                                <br/>
+                                <p:selectBooleanCheckbox id="abonoTotal" value="#{ordenesEmitidasView.abonoTotal}">
+                                    <p:ajax update="valor" process="@this"/>
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                            <h:panelGroup>
+                                <p:outputLabel for="@next" value="Valor de Abono:" style="font-weight: bold"/>
+                                <br/>
+                                <p:inputNumber id="valor" class="panelInput" style="width: 100%"
+                                               value="#{ordenesEmitidasView.montoAbonado}" readonly="#{ordenesEmitidasView.abonoTotal}"
+                                               decimalSeparator="," thousandSeparator="." symbol="$"
+                                               onkeypress="focusNextOnEnter(event, 'valor')">
+                                </p:inputNumber>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </p:fieldset>
+                    <br/>
+                    <p:fileUpload fileUploadListener="#{ordenesEmitidasView.cargarArchivo}" id="fileUpload"
+                                  uploadLabel="Subir" cancelLabel="Eliminar" label="Seleccionar" process="abonoTotal"
+                                  mode="advanced" dragDropSupport="false" update="messages" />
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+        <p:dialog id="parametrosReporteDLG" header="" widgetVar="parametrosReporteDLG" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="20%">
+            <h:form prependId="false">
+                <p:outputPanel id="parametrosReporteForm" style="width: 100%;">
+                    <p:fieldset legend="Parámetros del Reporte:">
+                        <p:selectOneRadio id="customRadio" value="#{ordenesEmitidasView.codigoParametro}" layout="custom">
+                            <f:selectItem itemLabel="TODOS" itemValue="#{1}" />
+                            <f:selectItem itemLabel="PAGADOS" itemValue="#{2}" />
+                            <f:selectItem itemLabel="NO PAGADOS" itemValue="#{3}" />
+                        </p:selectOneRadio>
+                        <h:panelGrid columns="2">
+                            <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt1" value="TODOS" />
+                            <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt2" value="PAGADOS" />
+                            <p:radioButton id="opt3" for="customRadio" itemIndex="2" />
+                            <h:outputLabel for="opt3" value="NO PAGADOS" />
+                        </h:panelGrid>
+                    </p:fieldset>
+                    <br/>
+                    <center>
+                        <p:commandButton value="Generar" icon="fa fa-print" actionListener="#{ordenesEmitidasView.imprimirReportes()}" update="formMain"
+                                         style="width: 150px;" title="Imprimir"/>
+                    </center>
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+        <p:dialog id="reporteContabilizado" header="" widgetVar="reporteContabilizado" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="20%">
+            <h:form prependId="false">
+                <p:outputPanel id="reporteContabilizadoForm" style="width: 100%;">
+                    <p:fieldset legend="Parámetros del Reporte:">
+                        <p:selectOneRadio id="_customRadio" value="#{ordenesEmitidasView.codigoReporte}" layout="custom">
+                            <f:selectItem itemLabel="ARRIENDO(COBROS) CONTABILIZADOS" itemValue="#{1}" />
+                            <f:selectItem itemLabel="ARRIENDO(INGRESOS) CONTABILIZADOS" itemValue="#{2}" />
+                            <f:selectItem itemLabel="ARRIENDO(COBROS) NO CONTABILIZADOS" itemValue="#{3}" />
+                            <f:selectItem itemLabel="ARRIENDO(INGRESOS) NO CONTABILIZADOS" itemValue="#{4}" />
+                            <f:selectItem itemLabel="PAGADOS DEL SISTEMA EXTERNO" itemValue="#{5}" />
+                            <f:selectItem itemLabel="NO PAGADOS DEL SISTEMA EXTERNO" itemValue="#{6}" />
+                        </p:selectOneRadio>
+                        <h:panelGrid columns="2">
+                            <p:radioButton id="opt21" for="_customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt21" value="ARRIENDO(COBROS)" />
+                            <p:radioButton id="opt31" for="_customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt31" value="ARRIENDO(INGRESOS)" />
+                            <p:radioButton id="opt41" for="_customRadio" itemIndex="2" />
+                            <h:outputLabel for="opt41" value="ARRIENDO(COBROS) NO CONTABILIZADOS" />
+                            <p:radioButton id="opt51" for="_customRadio" itemIndex="3" />
+                            <h:outputLabel for="opt51" value="ARRIENDO(INGRESOS) NO CONTABILIZADOS" />
+                             <p:radioButton id="opt61" for="_customRadio" itemIndex="4" />
+                            <h:outputLabel for="opt61" value="PAGADOS DEL SISTEMA EXTERNO" />
+                             <p:radioButton id="opt71" for="_customRadio" itemIndex="5" />
+                            <h:outputLabel for="opt71" value="NO PAGADOS DEL SISTEMA EXTERNO" />
+                        </h:panelGrid>
+                    </p:fieldset>
+                    <br/>
+                    <center>
+                        <p:commandButton value="Generar" icon="fa fa-print" actionListener="#{ordenesEmitidasView.imprimirReporteContabilizado()}" update="formMain"
+                                         style="width: 150px;" title="Imprimir"/>
+                    </center>
+                </p:outputPanel>
+            </h:form> 
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

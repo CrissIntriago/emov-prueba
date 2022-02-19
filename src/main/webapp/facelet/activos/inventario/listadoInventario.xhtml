@@ -1,0 +1,206 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Listado Inventario
+    </ui:define>
+    <ui:param name="tittle" value="Listado Inventario"/>
+
+    <ui:define name="content">
+        <h:form id="formMain" >
+            <center>
+                <p:fieldset style=" font-weight: bold; width: 85%;" title="Parametros" >
+                    <h:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" >
+                        <p:outputLabel value="Tipo Listado" for="tipo" />
+                        <p:selectOneRadio id="tipo" value="#{listadoInventarioController.showCuentaContable}" style="width: 90%">
+                            <f:selectItem itemLabel="Por Cuenta Contable" itemValue="tipo-contable"/>
+                            <f:selectItem itemLabel="Por Existencias" itemValue="tipo-existencia"/>
+                            <p:ajax update="@form" event="change" listener="#{listadoInventarioController.loadCuentasContables()}"/>
+                        </p:selectOneRadio>
+                    </h:panelGrid>
+                    <p:panelGrid  columns="3" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                        <h:panelGroup id="panelArea" style="width: 100%" styleClass="form-group ui-panelgrid-blank" rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-existencia'}">
+                            <p:outputLabel value="Área:"  />
+                            <p:selectOneMenu  value="#{listadoInventarioController.areaSelect}" filter="true" filterMatchMode="contains" 
+                                              style="width: 100%" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}"/>
+                                <f:selectItems value="#{listadoInventarioController.listAreas}" var="area" itemLabel="#{area.codigo} - #{area.descripcion}" itemValue="#{area}"/>
+                                <p:ajax event="change" update="panelGrupo,panelSubgrupo, panelItems " 
+                                        process="panelArea"  listener="#{listadoInventarioController.loadGrupos()}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup id="panelGrupo" style="width: 90%" styleClass="form-group ui-panelgrid-blank"  rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-existencia'}">
+                            <p:outputLabel value="Grupo:"  />
+                            <p:selectOneMenu value="#{listadoInventarioController.grupoSelect}" filter="true" filterMatchMode="contains"
+                                             style="width: 100%;" converter="#{utilConverter}" >
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" />
+                                <f:selectItems value="#{listadoInventarioController.listGrupos}" var="grupo" itemLabel="#{grupo.codigo} - #{grupo.descripcion}" itemValue="#{grupo}"/>
+                                <p:ajax event="change" update="panelSubgrupo, panelItems " 
+                                        process="panelGrupo"  listener="#{listadoInventarioController.loadSubgrupos()}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup id="panelSubgrupo"  style="width: 90%;" styleClass="form-group ui-panelgrid-blank"  rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-existencia'}">
+                            <p:outputLabel value="Subgrupo:"  />
+                            <p:selectOneMenu value="#{listadoInventarioController.subgrupoSelect}" filter="true" filterMatchMode="contains"
+                                             style="width: 100%;" converter="#{utilConverter}" >
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" />
+                                <f:selectItems value="#{listadoInventarioController.listSubgrupos}" var="subgrupo" itemLabel="#{subgrupo.codigo} - #{subgrupo.descripcion}" itemValue="#{subgrupo}"/>
+                                <p:ajax event="change" update=" panelItems " 
+                                        process="panelSubgrupo"  listener="#{listadoInventarioController.loadItems()}" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup id="panelItems"  styleClass="form-group ui-panelgrid-blank"  rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-existencia'}">
+                            <p:outputLabel value="Item:"  />
+                            <p:selectOneMenu  value="#{listadoInventarioController.itemSelect}" filter="true" filterMatchMode="contains"
+                                              style="width: 100%;" converter="#{utilConverter}" >
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" />
+                                <f:selectItems value="#{listadoInventarioController.listItems}" var="item" itemLabel="#{item.descripcion}" itemValue="#{item}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup id="panelCuentas" styleClass="form-group ui-panelgrid-blank"  rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-contable'}">
+                            <p:outputLabel value="Cuenta Contable:"  />
+                            <p:selectOneMenu  filter="true" value="#{listadoInventarioController.cuentaSelect }" converter="#{utilConverter}" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}"/>
+                                <f:selectItems value="#{listadoInventarioController.listContCuentas}" var="cuenta" itemLabel="#{cuenta.codigo} - #{cuenta.descripcion}" itemValue="#{cuenta}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup styleClass="form-group ui-panelgrid-blank" >
+                            <p:outputLabel value="Cantidad Existente:" />
+                            <p:selectOneMenu style="width: 100%;" value="#{listadoInventarioController.cantidadExistente}">
+                                <f:selectItem itemLabel="Todos" itemValue="can-todos"/>
+                                <f:selectItem itemLabel="existencia" itemValue="can-existencia"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup  rendered="true" style="width: 100%;" styleClass="form-group ui-panelgrid-blank"  >
+                            <p:outputLabel value="Fecha Hasta:" for="hasta" />
+                            <p:calendar id="hasta" style="width: 100%;"  value="#{listadoInventarioController.fechaHasta}"
+                                        navigator="true" locale="de" pattern="dd-MM-yyyy" mask="true" />
+                        </h:panelGroup>
+                    </p:panelGrid> 
+                    <br/>
+                    <p:commandButton value="Generar" icon="fa fa-refresh" 
+                                     process="@form" actionListener="#{listadoInventarioController.generar()}" update="@form">
+                    </p:commandButton>
+                    <p:spacer width="5px"/>
+                    <p:commandButton value="Limpiar" icon="fa fa-repeat" 
+                                     process="@form" actionListener="#{listadoInventarioController.clean()}" update="@form">
+                    </p:commandButton>
+                    <br/>
+                    <br/>
+                    <p:commandButton rendered="#{listadoInventarioController.listItemsInventario ne null}" value="Exportar Pdf" icon="fa fa-file-pdf-o" style="background: red"
+                                     process="@form" actionListener="#{listadoInventarioController.generarReporte(true)}">
+                    </p:commandButton>
+                    <p:spacer width="5px"/>
+                    <p:commandButton rendered="#{listadoInventarioController.listItemsInventario ne null}" value="Exportar Excel"  icon="fa fa-file-excel-o" style="background: green"
+                                     process="@form" actionListener="#{listadoInventarioController.generarReporte(false)}"> 
+                    </p:commandButton>
+                </p:fieldset>
+                <br/> 
+                <!--CONTABLE-->
+                <p:dataTable rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-contable'}" id="idDataTableItemsContable" 
+                             style="width: 86%; text-align: center" value="#{listadoInventarioController.listItemsInventario}" 
+                             lazy="false" var="itemCon" rows="20" emptyMessage="No existe Cuenta Contable." rowsPerPageTemplate="20,40,100"
+                             paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             paginatorPosition="bottom"  paginator="true" >
+                    <p:column headerText="Cuenta Contable" width ="7%" groupRow="true">
+                        <h:outputText value="#{itemCon.cuentaContable}" />   
+                    </p:column>
+                    <p:column headerText="Descripción Cuenta" width ="7%" groupRow="true">
+                        <h:outputText value="#{itemCon.nombreCuenta}" />   
+                    </p:column>
+                    <p:column headerText="Código" width ="8%" >
+                        <h:outputText value="#{itemCon.codigoAgrupado}" />   
+                    </p:column>
+                    <p:column headerText="Descripción" width ="27%" >
+                        <h:outputText value="#{itemCon.descripcion}"/>   
+                    </p:column>
+                    <p:column headerText="Tipo de Medida" width ="7%" >
+                        <h:outputText value="#{itemCon.medida}"/>   
+                    </p:column>
+                    <p:column headerText="Stock"  width ="4%">
+                        <h:outputText value="#{itemCon.cantidad}"/>   
+                    </p:column>
+                    <p:column headerText="P.U" width ="5%"  >
+                        <h:outputText value="#{itemCon.precio}"/>   
+                    </p:column>
+                    <p:column headerText="Total" width ="7%" >
+                        <h:outputText value="#{itemCon.total}"/>   
+                    </p:column>
+                    <p:column headerText="Estante" width ="3%" >
+                        <h:outputText value="#{itemCon.estante}" />   
+                    </p:column>
+                    <p:column headerText="Fila" width ="3%">
+                        <h:outputText value="#{itemCon.fila}" />   
+                    </p:column>
+                    <p:column headerText="Columna"  width ="4%">
+                        <h:outputText value="#{itemCon.columna}" />   
+                    </p:column>
+                    <p:column headerText="Cajón"  width =" 4%">
+                        <h:outputText value="#{itemCon.cajon}"/>   
+                    </p:column>
+                    <p:column headerText="Cuadrante" width ="4%" >
+                        <h:outputText value="#{itemCon.cuadrante}"/>   
+                    </p:column>
+                </p:dataTable>
+
+                <!--EXISTENCIA-->
+                <p:dataTable rendered="#{listadoInventarioController.showCuentaContable eq 'tipo-existencia'}" id="idDataTableItems" 
+                             style="width: 86%; text-align: center"  value="#{listadoInventarioController.listItemsInventario}" 
+                             lazy="false" var="item" rows="20" emptyMessage="No existe Cuenta Contable." rowsPerPageTemplate="20,40,100"
+                             paginatorTemplate="{CurrentPageReport}  {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                             paginatorPosition="bottom"  paginator="true" >
+                    <p:column headerText="Área" width ="7%" groupRow="true">
+                        <h:outputText value="#{item.area}" />   
+                    </p:column>
+                    <p:column headerText="Grupo" width ="7%" groupRow="true">
+                        <h:outputText value="#{item.grupo}" />   
+                    </p:column>
+                    <p:column headerText="Subgrupo" width ="7%" groupRow="true">
+                        <h:outputText value="#{item.subgrupo}" />   
+                    </p:column>
+                    <p:column headerText="Código" width ="7%" >
+                        <h:outputText value="#{item.codigoAgrupado}" />   
+                    </p:column>
+                    <p:column headerText="Descripción" width ="27%" >
+                        <h:outputText value="#{item.descripcion}"/>   
+                    </p:column>
+                    <p:column headerText="Tipo de Medida" width ="7%" >
+                        <h:outputText value="#{item.medida }"/>   
+                    </p:column>
+                    <p:column headerText="Stock"  width ="4%">
+                        <h:outputText value="#{item.cantidad }"/>   
+                    </p:column>
+                    <p:column headerText="P.U" width ="5%"  >
+                        <h:outputText value="#{item.precio }"/>   
+                    </p:column>
+                    <p:column headerText="Total" width ="7%" >
+                        <h:outputText value="#{item.total}"/>   
+                    </p:column>
+                    <p:column headerText="Estante" width ="4%" >
+                        <h:outputText value="#{item.estante}" />   
+                    </p:column>
+                    <p:column headerText="Fila" width ="4%">
+                        <h:outputText value="#{item.fila}" />   
+                    </p:column>
+                    <p:column headerText="Columna"  width ="4%">
+                        <h:outputText value="#{item.columna}" />   
+                    </p:column>
+                    <p:column headerText="Cajón"  width =" 4%">
+                        <h:outputText value="#{item.cajon}"/>   
+                    </p:column>
+                    <p:column headerText="Cuadrante" width ="5%" >
+                        <h:outputText value="#{item.cuadrante}"/>   
+                    </p:column>
+                </p:dataTable>
+
+            </center>
+        </h:form>
+    </ui:define>
+</ui:composition>

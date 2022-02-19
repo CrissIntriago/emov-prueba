@@ -1,0 +1,182 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">Comprobantes Electrónicos - Administración</ui:define>
+    <ui:param name="tittle" value="COMPROBANTES ELECTRÓNICOS"/>
+    <ui:define name="content">
+        <h:form id="formMain" prependId="false">
+            <div class="ui-fluid">
+                <p:tabView id="tabComprobantes" style="font-size: 11px" >
+                    <p:tab title="Búsqueda General" >
+                        <br></br>
+                        <p:panelGrid columns="4" styleClass="ui-panelgrid-blank" style="width: 100%">
+                            <h:panelGrid columns="1" cellpadding="2">
+                                <p:outputLabel value="Fecha inicio:" style="font-weight: bolder"/>
+                                <p:calendar value="#{comprobanteElectronicoView.desde}" pattern="dd/MM/yyyy" 
+                                            locale="es" navigator="true"
+                                            style="font-size: 11px; width: 500px"/>
+
+                                <p:outputLabel value="Identificación:" style="font-weight: bolder"/>
+                                <p:inputText style="font-size: 11px;width: 500px" value="#{comprobanteElectronicoView.identificacion}"/>
+
+                                <p:outputLabel value="Estado Liquidación:" style="font-weight: bolder"/>
+                                <p:selectOneMenu value="#{comprobanteElectronicoView.idEstadoLiquidacion}" 
+                                                 style="font-size: 11px;width: 500px">
+                                    <f:selectItem itemLabel="TODOS" itemValue="#{null}"/>
+                                    <f:selectItems value="#{comprobanteElectronicoView.estadosLiquidaciones}"
+                                                   var="estadosL"
+                                                   itemValue="#{estadosL.id}"
+                                                   itemLabel="#{estadosL.descripcion}" />
+                                </p:selectOneMenu>
+                            </h:panelGrid>
+                            <h:panelGrid columns="1" cellpadding="2" >
+                                <p:outputLabel value="Fecha fin:" style="font-weight: bolder"/>
+                                <p:calendar value="#{comprobanteElectronicoView.hasta}" pattern="dd/MM/yyyy" 
+                                            locale="es" navigator="true"
+                                            style="font-size: 11px;width: 500px"/>
+
+                                <p:outputLabel for="@next" value="Comprobante:" style="font-weight: bolder"/>
+                                <p:selectOneMenu id="comprobanteSele" value="#{comprobanteElectronicoView.comprobante}" 
+                                                 style="font-size: 11px;width: 500px"
+                                                 converter="#{utilConverter}">
+                                    <f:selectItem itemLabel="TODOS..." itemValue="#{null}"/>
+                                    <f:selectItems value="#{comprobanteElectronicoView.comprobantes}"
+                                                   var="comprobante"
+                                                   itemValue="#{comprobante}"
+                                                   itemLabel="#{comprobante.descripcion}" />
+                                </p:selectOneMenu>
+                                <br></br>
+                                <br></br>
+                                <br></br>
+                            </h:panelGrid>
+                        </p:panelGrid>
+                        <br></br>
+                    </p:tab>
+                    <p:tab title="Por Autorización">
+                        <br></br>
+
+                        <h:panelGrid columns="2" cellpadding="5">
+                            <p:outputLabel value="Número de autorización:" style="font-weight: bolder"/>
+                            <p:inputText value="#{comprobanteElectronicoView.numeroAutorizacion}" />
+                        </h:panelGrid>
+                        <br></br>
+                    </p:tab>
+
+                </p:tabView>
+                <br/>
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank" style="width: 100%">
+                    <p:commandButton value="Limpiar" actionListener="#{comprobanteElectronicoView.loadModel()}" 
+                                     icon="fa fa-trash" style="width: auto" process="@this"
+                                     onclick="PF('datatableLiquidacion').clearFilters()" update="formMain"/>
+                    <p:commandButton value="Consultar" actionListener="#{comprobanteElectronicoView.consultar()}" 
+                                     update="datatableLiquidacion"
+                                     icon="ui-icon-search" style="width: auto"/>
+                </p:panelGrid> 
+                <br/>
+                <p:dataTable  id="datatableLiquidacion"
+                              widgetVar="datatableLiquidacion"
+                              reflow="true" 
+                              paginator="true" 
+                              lazy="true" rows="35"
+                              var="ce"
+                              value="#{comprobanteElectronicoView.facturaLazy}"
+                              rowsPerPageTemplate="35,70,105" 
+                              paginatorPosition="bottom"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" 
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              emptyMessage="No se encontraron resultados"
+                              style="font-size: 10px">
+                    <p:column headerText="F. Emisión" style="text-align: center;width: 5%" sortBy="#{ce.fechaEmision}">
+                        <h:outputText value="#{ce.fechaEmision}" >
+                            <f:convertDateTime pattern="dd/MM/yyyy"/>
+                        </h:outputText>
+                    </p:column>
+                    <!--                    <p:column headerText="Diario" style="text-align: center;width: 3%" filterBy="# {ce.diarioGeneral.numeroTransaccion}">
+                                            <h:outputText value="# {ce.diarioGeneral.numeroTransaccion}"/>
+                                        </p:column>
+                    -->
+                    <p:column headerText="Tipo de Comprobante" style="width: 12%">
+                        <h:outputText value="#{ce.comprobante.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="No. Comprobante" style="text-align: center;width: 8%" filterBy="#{ce.codigoComprobante}" >
+                        <h:outputText value="#{ce.codigoComprobante}" />
+                    </p:column>
+                    <p:column headerText="Identificación" style="text-align: center;width: 7%" 
+                              filterBy="#{ce.proveedor.cliente.identificacionCompleta}">
+                        <h:outputText value="#{ce.proveedor.cliente.identificacionCompleta}" />
+                    </p:column>
+                    <p:column headerText="Razón Social" filterBy="#{ce.proveedor.cliente.nombreCompleltoSql}" filterMatchMode="contains" style="width: 9%">
+                        <h:outputText value="#{ce.proveedor.cliente.nombreCompleto}" />
+                    </p:column>
+                    <p:column headerText="Clave de Acceso (CA) / Nro. Autorización (NA)	" filterBy="#{ce.claveAcceso}" style="width: 23%">
+                        <h:outputText value="#{ce.claveAcceso} / #{ce.numeroAutorizacion}" />
+                    </p:column>
+                    <p:column headerText="Estado" style="text-align: center;width: 5%" filterBy="#{ce.estadoLiquidacion.texto}">
+                        <h:outputText value="#{ce.estadoLiquidacion.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Respuesta" style="width: 9%" filterMatchMode="contains" filterBy="#{ce.estadoWs}">
+                        <h:outputText value="#{ce.estadoWs}" />
+                    </p:column>
+                    <p:column headerText="Mensaje" style="width: 8%">
+                        <h:outputText value="#{ce.mensajeWs}" />
+                    </p:column>
+                    <p:column headerText="Acciones" style="width: 6%">
+                        <center>
+                            <p:commandLink title="Editar" process="@this" rendered="#{(ce.comprobante.descripcion == 'COMPPROBANTE_RETENCION' and ce.estadoWs=='RECIBIDA;AUTORIZADO') ? false:ce.estadoLiquidacion.id eq 110 ? false:true}"
+                                           actionListener="#{comprobanteElectronicoView.editarVisualizar(ce, true)}">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                <p:confirm header="Confirmación de Edición"
+                                           message="¿Está seguro de editar el comprobante?,
+                                           El comprobante se anulará."
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>    
+                            <p:commandLink title="Reenviar" process="@this" 
+                                           rendered="#{ce.estadoWs eq 'RECIBIDA;AUTORIZADO' ? false:ce.estadoLiquidacion.id eq 110 ? false:true}"
+                                           actionListener="#{comprobanteElectronicoView.reenviarComprobante(ce)}">
+                                <i class="fa fa-undo" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de Reenvío"
+                                           message="¿Está seguro de reenviar el comprobante?"
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>    
+                            <p:commandLink title="Visualizar" process="@this" rendered="#{ce.comprobante.descripcion == 'COMPPROBANTE_RETENCION'}"
+                                           actionListener="#{comprobanteElectronicoView.editarVisualizar(ce, false)}">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 5px;"></i>
+                            </p:commandLink>     
+                            <p:commandLink title="Eliminar" process="@this" update="datatableLiquidacion"
+                                           actionListener="#{comprobanteElectronicoView.eliminarComprobante(ce)}" 
+                                           rendered="#{ce.estado ? true:(ce.estadoLiquidacion.codigo =='anulada'?false:true)}">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                <p:confirm header="Eliminar"
+                                           message="¿Está seguro de eliminar el comprobante?,
+                                           Una vez eliminado no se podrá recuperar."
+                                           icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+<!--                            <p:commandLink title="Actualizar" process="@this" rendered="# {comprobanteElectronicoView.determinarActualizacion(ce)}"
+                                           actionListener="# {comprobanteElectronicoView.actualizarRespuesta(ce)}" update="datatableLiquidacion">
+                                <i class="fa fa-refresh" style="font-size: 1.5em; margin-right: 5px;"></i>
+                            </p:commandLink>  -->
+                        </center>
+                    </p:column>
+                    <p:column headerText="Documentos" style="width: 5%">
+                        <center>
+                            <p:commandLink title="RIDE" process="@this" actionListener="#{comprobanteElectronicoView.downloadFile(ce, false)}"
+                                           rendered="#{ce.estadoWs eq 'RECIBIDA;AUTORIZADO' ? true:false}">
+                                <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>    
+                            <p:commandLink title="XML" process="@this" actionListener="#{comprobanteElectronicoView.downloadFile(ce, true)}"
+                                           rendered="#{not empty ce.estadoWs}">
+                                <p:graphicImage value="/resources/icons/xml.png"
+                                                width="16" height="15"/>   
+                            </p:commandLink>    
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </div>
+        </h:form>
+
+    </ui:define>
+
+</ui:composition>

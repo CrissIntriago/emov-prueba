@@ -1,0 +1,687 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:sc="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                xmlns:poue="http://primefaces.org/ui/extensions"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Mantenimiento de Tablas de Auth
+    </ui:define>
+    <ui:param name="tittle" value="Usuarios, Roles y Módulos" />
+    <ui:define name="content">
+        <h:form id="frmMain" prependId="false">
+            <div style="width: 100% !important; display: inline-block;margin: 10px 0px">
+                <p:commandButton value="Limpiar filtros"  process="@this" icon="ui-icon-refresh" update="tbMain:dtUsers, tbMain:dtRoles, tbMain:dtModulos"
+                                 onclick="PF('usersTable').clearFilters(); PF('dtRoles').clearFilters(); PF('menusModulo').clearFilters()" 
+                                 styleClass="Fs16" style="width: auto; margin-left: 5px 0px;"/>
+            </div>
+            <p:remoteCommand actionListener="#{menuUsuarioAppBean.filtroActivosInactivos(1)}" name="activos" />
+            <p:remoteCommand actionListener="#{menuUsuarioAppBean.filtroActivosInactivos(2)}" name="inactivos" />
+            <p:remoteCommand actionListener="#{menuUsuarioAppBean.filtroActivosInactivos(3)}" name="todos" />
+            <p:accordionPanel id="tbMain" >
+                <p:tab title="Usuarios">
+                    <div style="width: 100% !important; display: inline-block;">
+                        <div class="ui-g" style="width: 25% !important; text-align: center;margin-bottom: 10px">
+                            <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="activos();">ACTIVO</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="inactivos();">INACTIVO</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3 " style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="todos();">TODOS</div>
+                        </div>
+                    </div>
+                    <p:dataTable id="dtUsers" reflow="true" paginator="true" lazy="true" rows="20" rowsPerPageTemplate="20,50,100" filterEvent="enter"
+                                 value="#{menuUsuarioAppBean.usersLazy}" var="usr1" emptyMessage="No se encontró ningún información" style="text-align: center;"
+                                 paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowStyleClass="#{usr1.estado? 'estado-activo' : 'estado-inactivo' }" widgetVar="usersTable" >
+                        <f:facet name="header" >
+                            <div style="text-align: left">
+                                <p:commandLink id="cbNuevoUsuario" title="Nuevo Usuario" actionListener="#{menuUsuarioAppBean.nuevoUsuario(null)}" 
+                                                process="@this" class="btnColorWhite nuevo" action="#{menuUsuarioAppBean.setVer(false)}" style="color: #5180ce">
+                                    <i class="fa fa-user-plus red Fs18" />
+                                </p:commandLink>
+                                <p:commandLink title="Reporte de acceso en pdf" actionListener="#{menuUsuarioAppBean.reporteAceso('pdf')}" 
+                                               style="color: #5180ce" process="@this" >
+                                    <i class="fa fa-file-pdf-o blue1 Fs18" />
+                                </p:commandLink>
+                                <p:commandLink title="Reporte de acceso en excel" actionListener="#{menuUsuarioAppBean.reporteAceso('xlsx')}" 
+                                               style="color: #5180ce" process="@this" >
+                                    <i class="fa fa-file-excel-o blue2 Fs18" />
+                                </p:commandLink>
+                                <p:commandLink title="Reporte de acceso en word" actionListener="#{menuUsuarioAppBean.reporteAceso('docx')}" 
+                                               style="color: #5180ce" process="@this" >
+                                    <i class="fa fa-file-word-o blue3 Fs18" />
+                                </p:commandLink>
+                            </div>
+                        </f:facet>
+                        <p:column headerText="Usuario" filterBy="#{usr1.usuario}" filterMatchMode="contains" style="width: 10%">
+                            <p:outputLabel value="#{usr1.usuario}" />
+                        </p:column>
+                        <p:column headerText="Identificación" filterBy="#{usr1.funcionario.persona.identificacion}" filterMatchMode="contains" style="width: 10%">
+                            <p:outputLabel value="#{usr1.funcionario.persona.identificacion}" />
+                        </p:column>
+                        <p:column headerText="Nombre Funcionario" style="width: 35%" filterBy="#{usr1.funcionario.persona.nombreCompleto}" filterMatchMode="contains">
+                            <p:outputLabel value="#{usr1.funcionario.persona.nombreCompleto}" />
+                        </p:column>
+                        <p:column headerText="Fecha Ingreso" filterBy="#{usr1.fechaIngreso}" filterMatchMode="gte" style="width: 10%">
+                            <f:facet name="filter">
+                                <p:calendar  label="Ids" onselect="PF('usersTable').filter()" styleClass="custom-filter" navigator="true" pattern="yyyy-MM-dd" locale="es">
+                                    <p:ajax event="dateSelect" update="dtUsers" oncomplete="PF('usersTable').filter()" />
+                                </p:calendar>
+                            </f:facet>
+                            <p:outputLabel value="#{usr1.fechaIngreso}"  ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Fecha Ingreso" filterBy="#{usr1.fechaCaducidad}" filterMatchMode="gte" style="width: 10%">
+                            <f:facet name="filter">
+                                <p:calendar  label="Ids" onselect="PF('usersTable').filter()" styleClass="custom-filter" navigator="true" pattern="yyyy-MM-dd" locale="es">
+                                    <p:ajax event="dateSelect" update="dtUsers" oncomplete="PF('usersTable').filter()" />
+                                </p:calendar>
+                            </f:facet>
+                            <p:outputLabel value="#{usr1.fechaCaducidad}"  ><f:convertDateTime pattern="yyyy-MM-dd" /></p:outputLabel>
+                        </p:column>
+                        <p:column headerText="Caduca clave" style="width: 10%">
+                            <p:outputLabel value="#{usr1.caducarClave?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Opciones" style="width: 15%">
+                            <p:commandLink title="Editar usuario" class="btnTranparent editar" process="@this" 
+                                           actionListener="#{menuUsuarioAppBean.nuevoUsuario(usr1)}" update="frmUsuario" action="#{menuUsuarioAppBean.setVer(false)}" >
+                                <i class="fa fa-edit blue1 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Ver Datos de usuario" class="btnTranparent ver" process="@this" 
+                                           actionListener="#{menuUsuarioAppBean.nuevoUsuario(usr1)}" update="frmUsuario" action="#{menuUsuarioAppBean.setVer(true)}" >
+                                <i class="fa fa-eye blue2 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Deshabilitar" class="btnTranparent eliminar" disabled="#{!usr1.estado}"
+                                           actionListener="#{menuUsuarioAppBean.deshabilitarUsuario(usr1)}" update="frmUsuario" process="@this"  >
+                                <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el Usuario: #{usr1.usuario}" />
+                                <i class="fa fa-trash delete Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Cambiar Clave" class="btnTranparent actualizarClave" disabled="#{!usr1.estado}"
+                                           actionListener="#{menuUsuarioAppBean.cambiarClaveUsuario(usr1)}" update="frmCambioClave" process="@this"  >
+                                <i class="fa fa-refresh blue3 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Generar Reporte de Usuario" actionListener="#{menuUsuarioAppBean.reporteUsuario(usr1)}" process="@this" >
+                                <i class="fa fa-file-pdf-o blue3 Fs18" />
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="Roles">
+                    <div style="width: 100% !important; display: inline-block;">
+                        <div class="ui-g" style="width: 25% !important; text-align: center;margin-bottom: 10px">
+                            <div class="ui-g-12 ui-md-6 ui-lg-3 estado-activo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="activos();">ACTIVO</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3 estado-inactivo" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="inactivos();">INACTIVO</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px" onclick="todos();">TODOS</div>
+                        </div>
+                    </div>
+                    <p:dataTable id="dtRoles" reflow="true" paginator="true" lazy="true" rows="20" rowsPerPageTemplate="20,50,100" filterEvent="enter"
+                                 value="#{menuUsuarioAppBean.rolesLazy}" var="rol1" emptyMessage="No se encontró ningún Item." style="text-align: left;"
+                                 paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowStyleClass="#{rol1.estado? 'estado-activo' : 'estado-inactivo' }" widgetVar="dtRoles" >
+                        <f:facet name="header" >
+                            <div style="text-align: left">
+                                <p:commandLink title="Nuevo Rol" actionListener="#{menuUsuarioAppBean.nuevoRol(null)}" update="frmRol"  style="color: #5180ce"
+                                               class="btnColorWhite nuevo" process="@this" action="#{menuUsuarioAppBean.setVer(false)}" >
+                                    <i class="fa fa-plus-circle blue Fs24" />
+                                </p:commandLink>
+                            </div>
+                        </f:facet>
+                        <p:column headerText="Unidad Administrativa" style="width: 35%" filterBy="#{rol1.unidadAdministrativa}">
+                            <f:facet name="filter">
+                                <p:selectCheckboxMenu label="Unidades Administrativas" onchange="PF('dtRoles').filter()" style="width: 100%"
+                                                      styleClass="custom-filter" converter="#{utilConverter}">
+                                    <f:selectItems value="#{catalogoApp.allUnidadesAdministrativas}" var="ud1" itemLabel="#{ud1.nombre}" itemValue="#{ud1}" />
+                                </p:selectCheckboxMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{rol1.unidadAdministrativa.nombre}" />
+                        </p:column>
+                        <p:column headerText="Descripción" filterBy="#{rol1.nombre}" style="text-align: center;width: 25%">
+                            <p:outputLabel value="#{rol1.nombre}" />
+                        </p:column>
+                        <p:column headerText="Categoría" filterBy="#{rol1.categoria.texto}" style="text-align: center;width: 25%">
+                            <p:outputLabel value="#{rol1.categoria.texto}" />
+                        </p:column>
+                        <p:column headerText="Opciones" style="text-align: center;width: 15%">
+                            <p:commandLink title="Editar" process="@this" actionListener="#{menuUsuarioAppBean.nuevoRol(rol1)}" 
+                                           update="frmRol"  >
+                                <i class="fa fa-edit blue1 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Deshabilitar" process="@this" actionListener="#{menuUsuarioAppBean.deshabilitar(rol1)}" 
+                                           update="tbMain:dtRoles" disabled="#{!rol1.estado}" action="#{menuUsuarioAppBean.setVer(false)}" >
+                                <i class="fa fa-trash delete Fs18" />
+                                <p:confirm icon="fa fa-warning delete" message="Esta seguro de eliminar el Rol: #{rol1.nombre}" />
+                            </p:commandLink>
+                            <p:commandLink title="Asignar Rol a Menú" process="@this" actionListener="#{menuUsuarioAppBean.asignarMenu(rol1)}" 
+                                           update="frmDlgAsiganacionMenu" disabled="#{!rol1.estado}" >
+                                <i class="fa fa-list ver blue2 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Asignar Rol a Usuarios" process="@this" actionListener="#{menuUsuarioAppBean.asignarUsuario(rol1)}" 
+                                           update="frmDlgAsiganacionUsuario" disabled="#{!rol1.estado}" >
+                                <i class="fa fa-users blue3 Fs18" />
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </p:tab>
+                <p:tab title="Módulos">
+                    <poue:remoteCommand name="executeMenu"  process="@this" actionListener="#{menuUsuarioAppBean.editMenu}" update="frmMenu" >
+                        <poue:methodSignature parameters="java.lang.Long, java.lang.Boolean" />
+                        <poue:methodParam name="idMenu"  />
+                        <poue:methodParam name="ver"  />
+                    </poue:remoteCommand>
+                    <p:dataTable id="dtModulos" reflow="true" paginator="true" lazy="true" rows="15" rowsPerPageTemplate="15,30,50,100" filterEvent="enter"
+                                 value="#{menuUsuarioAppBean.modulos}" var="mod1" emptyMessage="No se encontró ningún Item." widgetVar="dtModulos"
+                                 paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}">
+                        <f:facet name="header" >
+                            <div style="text-align: left">
+                                <p:commandLink title="Nuevo Módulo" actionListener="#{menuUsuarioAppBean.nuevoModulo(null)}" update="frmModulo" style="color: #5180ce"
+                                               class="btnColorWhite nuevo" process="@this" action="#{menuUsuarioAppBean.setVer(false)}" >
+                                    <i class="fa fa-plus blue Fs24" />
+                                </p:commandLink>
+                                <p:spacer width="5" />
+                                <p:commandLink title="Recargar Menú" actionListener="#{menuUsuarioAppBean.reloadMenus()}" style="color: #5180ce"
+                                               class="btnColorWhite actualizarMenu">
+                                    <i class="fa fa-refresh blue Fs24" />
+                                </p:commandLink>
+                            </div>
+                        </f:facet>
+                        <p:ajax event="rowToggle" listener="#{menuUsuarioAppBean.initMenus(mod1)}" update="menusModulo" /> 
+                        <p:column style="width:16px">
+                            <p:rowToggler  />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 26%">
+                            <i class="#{mod1.icono}" style="font-size: 1.5em; margin-right: 5px; color: #00b0ff;" />
+                            <p:outputLabel value="#{mod1.nombre}" title="Codigo: #{mod1.id}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 32%">
+                            <p:outputLabel value="#{mod1.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Posición" style="text-align: center;width: 32%">
+                            <p:outputLabel value="#{mod1.orden}" />
+                        </p:column>
+                        <p:column headerText="Opciones"  style="text-align: center;width: 10%">
+                            <p:commandLink title="Editar Menú" class="btnTranparent editar" process="@this" 
+                                           actionListener="#{menuUsuarioAppBean.nuevoModulo(mod1)}" update="frmModulo" action="#{menuUsuarioAppBean.setVer(false)}">
+                                <i class="fa fa-edit blue2 Fs18" />
+                            </p:commandLink>
+                            <p:commandLink title="Nuevo Menú" actionListener="#{menuUsuarioAppBean.nuevoMenu(mod1, null)}"
+                                           update="frmMenu" class="btnTranparent nuevo" process="@this"  action="#{menuUsuarioAppBean.setVer(false)}" >
+                                <i class="fa fa-plus-circle blue1 Fs18" />
+                            </p:commandLink>
+                        </p:column>
+                        <p:rowExpansion  >
+                            <p:treeTable value="#{mod1.nodeMenus}" var="menu1" id="menusModulo" paginator="true" rows="15" rowsPerPageTemplate="15,20,30,50"
+                                         paginatorAlwaysVisible="false" paginatorPosition="top" filterEvent="enter" expandMode="children"  widgetVar="menusModulo" >
+                                <p:column headerText="Descripción" filterBy="#{menu1.prettyPattern}" filterMatchMode="contains" style="width: 26%">
+                                    <i class="#{menu1.icono}" style="font-size: 1.5em; margin-right: 5px; color: black;" />
+                                    <h:outputText value="#{menu1.id}: #{menu1.descripcion}" title="Codigo: #{menu1.id}" />
+                                </p:column>
+                                <p:column headerText="Url a mostrar" style="width: 32%" filterBy="#{menu1.prettyPattern}" filterMatchMode="contains">
+                                    <h:outputText value="#{menu1.prettyPattern}" />
+                                </p:column>
+                                <p:column headerText="Url de la página" filterMatchMode="contains" style="width: 32%" filterBy="#{menu1.hrefUrl}">
+                                    <h:outputText value="#{menu1.hrefUrl}" />
+                                </p:column>
+                                <p:column style="width: 10%;text-align: center;" headerText="Acciones" >
+                                    <p:commandLink title="Editar Menú" class="btnTranparen" process="@this" 
+                                                   update="frmMenu" onclick="executeMenu(#{menu1.id}, false)"  >
+                                        <i class="fa fa-edit blue2 Fs18" />
+                                    </p:commandLink>
+                                    <p:commandLink title="Ver Menú" class="btnTranparent ver" process="@this"
+                                                   onclick="executeMenu(#{menu1.id}, true)"  update="frmMenu" >
+                                        <i class="fa fa-eye blue1 Fs18" />
+                                    </p:commandLink>
+                                    <p:commandLink title="Duplicar Menú" class="btnTranparent duplicar" process="@this"
+                                                   actionListener="#{menuUsuarioAppBean.duplicarMenu(menu1)}"  update="frmMenu" >
+                                        <i class="fa fa-copy blue3 Fs18" />
+                                    </p:commandLink>
+                                    <p:commandLink title="Eliminar Menú" class="btnTranparent eliminar" process="@this"
+                                                   actionListener="#{menuUsuarioAppBean.eliminarMenu(menu1)}"  update="tbMain:dtModulos" >
+                                        <i class="fa fa-trash delete Fs18" />
+                                        <p:confirm header="Advertencia" message="Está seguro de eliminar el módulo #{menu1.descripcion}?" />
+                                    </p:commandLink>
+                                </p:column>
+                            </p:treeTable>
+                        </p:rowExpansion>
+                    </p:dataTable>
+                </p:tab>
+            </p:accordionPanel> 
+        </h:form>
+
+        <p:dialog header="Información de Menú" modal="true" widgetVar="dlgMenu" width="45%" closable="false" dynamic="true" >
+            <h:form id="frmMenu" style="width: 100%;" prependId="false"  >
+                <p:tabView cache="false" id="tvMenu" >
+                    <p:tab title="Información de Menú">
+                        <p:panel style="width: 100%">
+                            <h:panelGrid columns="2" style="margin-bottom:10px" cellpadding="5">
+                                <p:outputLabel for="menuItem" value="Tipo de Menú: " />
+                                <p:selectOneRadio id="menuItem" value="#{menuUsuarioAppBean.esSubMenu}" unselectable="true" >
+                                    <f:selectItem itemLabel="Sub Menú" itemValue="#{true}" />
+                                    <f:selectItem itemLabel="Menú Item" itemValue="#{false}" />
+                                    <p:ajax update="pngDatosMenu, frmMenu" />
+                                </p:selectOneRadio>
+                            </h:panelGrid>
+                            <p:panelGrid id="pngDatosMenu" columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 98%;" class="panelInput" rendered="#{menuUsuarioAppBean.menu.id eq null}" >
+                                    <p:outputLabel value="Sub menú" style="width: 100%; padding-bottom: 5px;" />
+                                    <p:selectOneMenu value="#{menuUsuarioAppBean.menu.menuPadre}" converter="#{utilConverter}" style="width: 100%" >
+                                        <f:selectItem itemLabel="Seleccion" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{menuUsuarioAppBean.menu.modulo.menuList}" var="sm1" itemLabel="#{sm1.descripcion} #{sm1.prettyPattern}" itemValue="#{sm1}" itemDisabled="#{sm1.prettyPattern ne null}"  />
+                                        <p:ajax listener="#{menuUsuarioAppBean.setOrderItem()}" update="pngDatosMenu" />
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <u:text label="Nombre" value="#{menuUsuarioAppBean.menu.descripcion}" readonly="#{menuUsuarioAppBean.ver}"   />
+                                <h:panelGroup layout="block" style="width: 98%;" class="panelInput" >
+                                    <p:outputLabel value="Icono" class="Wid100" />
+                                    <p:selectOneMenu value="#{menuUsuarioAppBean.menu.icono}" rendered="#{!menuUsuarioAppBean.ver}"
+                                                     effect="fade" var="fc2" style="width: 100%" filter="true" filterMatchMode="contains">
+                                        <f:selectItems value="#{iconService.faIcons}" var="fc1" itemLabel="#{fc1.name}" itemValue="#{fc1.name}" />
+                                        <p:column>
+                                            <i class="#{fc2}" style="font-size: 1.5em; margin-right: 5px; color: black;" />
+                                            <h:outputText value="#{fc2}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                    <h:panelGroup rendered="#{menuUsuarioAppBean.ver}"><br/>
+                                        <i class="#{menuUsuarioAppBean.menu.icono}" style="font-size: 1.5em; margin-right: 5px; color: black;" />
+                                        <p:inputText readonly="true" value="#{menuUsuarioAppBean.menu.icono}" class="Wid100" />
+                                    </h:panelGroup>
+                                </h:panelGroup>
+                                <u:text label="Url Página" value="#{menuUsuarioAppBean.menu.hrefUrl}" readonly="#{menuUsuarioAppBean.ver}" rendered="#{!menuUsuarioAppBean.esSubMenu}" />
+                                <u:text label="Url a mostrar" value="#{menuUsuarioAppBean.menu.prettyPattern}" readonly="#{menuUsuarioAppBean.ver}" rendered="#{!menuUsuarioAppBean.esSubMenu}" />
+                                <h:panelGrid columns="2" style="margin-bottom:10px; width: 100%; " cellpadding="5">
+                                    <h:panelGroup layout="block" class="panelInput Wid100" >
+                                        <p:outputLabel value="Orden" style="width: 100%" />
+                                        <p:spinner value="#{menuUsuarioAppBean.menu.orden}" style="width: 100%" stepFactor="1" id="orderMenu"  />
+                                    </h:panelGroup>
+                                    <h:panelGroup layout="block" class="panelInput Wid100" >
+                                        <p:outputLabel for="esPublico" value="Menú Público: " />
+                                        <p:selectOneRadio id="esPublico" value="#{menuUsuarioAppBean.menu.esPublico}" unselectable="true" >
+                                            <f:selectItem itemLabel="Si" itemValue="#{true}" />
+                                            <f:selectItem itemLabel="No" itemValue="#{false}" />
+                                        </p:selectOneRadio>
+                                    </h:panelGroup>
+                                </h:panelGrid>
+                            </p:panelGrid>
+                        </p:panel>
+                    </p:tab>
+                    <p:tab title="Acciones del Menú" rendered="#{!menuUsuarioAppBean.esSubMenu and !menuUsuarioAppBean.ver}">
+                        <p:panelGrid columns="2" class="Wid100" id="pngAccionesMenu" layout="grid">
+                            <p:panelGrid layout="grid" styleClass="ui-panelgrid-blank form-group" columns="1">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput"  >
+                                    <p:outputLabel value="Tipo" style="width: 100%" />
+                                    <p:selectOneMenu value="#{menuUsuarioAppBean.datoAccion.type}" effect="fade" style="width: 100%" >
+                                        <f:selectItem itemLabel="Id Componente" itemValue="id" />
+                                        <f:selectItem itemLabel="Class" itemValue="class" />
+                                        <f:selectItem itemLabel="Nombre" itemValue="value" />
+                                    </p:selectOneMenu>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" class="panelInput Wid100"  >
+                                    <p:outputLabel value="Nombre Componente" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioAppBean.datoAccion.name}" style="width: 100%"  />
+                                </h:panelGroup>
+                                <p:commandButton value="Agregar" style="width: 100%; " actionListener="#{menuUsuarioAppBean.agregarAcciones()}" process="@this, pngAccionesMenu" update="pngAccionesMenu" />
+                            </p:panelGrid>
+                            <p:dataList value="#{menuUsuarioAppBean.permisos}" var="acc1" type="ordered" id="accioneMenu">
+                                <f:facet name="header">
+                                    Acciones
+                                </f:facet>
+                                #{acc1.type}, #{acc1.name}
+                            </p:dataList>
+                        </p:panelGrid>
+                    </p:tab>
+                    <p:tab title="Roles" rendered="#{!menuUsuarioAppBean.esSubMenu}">
+                        <p:panel id="pnRolesMenu" header="Roles" class="Wid100">
+                            <p:panelGrid columns="2" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                         id="pngDatosRol" rendered="#{!menuUsuarioAppBean.ver}">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="pngRolesMenu">
+                                    <p:outputLabel value="Rol" style="width: 100%"  />
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:selectOneMenu value="#{menuUsuarioAppBean.rol}" converter="#{utilConverter}"
+                                                         effect="fade" style="width: 70%" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{menuUsuarioAppBean.roles}" var="rl2" itemLabel="#{rl2.nombre}" itemValue="#{rl2}" />
+                                        </p:selectOneMenu>
+                                        <p:commandButton title="Agregar" icon="fa fa-plus-square" class="blue1-button button-group" 
+                                                         actionListener="#{menuUsuarioAppBean.agregarMenuRol()}" update="tdRolesMenu, pnRolesMenu"  />
+                                    </h:panelGroup>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" class="panelInput Wid100" >
+                                    <!--<p:outputLabel value="Unidad Administrativa" class="Wid100"  />
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="" rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre eq null}" readonly="true" />
+                                        <p:inputText value="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre}" style="width: 80%"
+                                                     rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre ne null}" readonly="true"  />
+                                        <p:commandButton title="Buscar Unidad Administrativa" icon="fa fa-search" styleClass="blue-button button-group"
+                                                         actionListener="#{menuUsuarioAppBean.buscarUnidad()}" process="@this"  >
+                                            <p:ajax event="dialogReturn" listener="#{menuUsuarioAppBean.selectUnidad}" update="pngDatosRol"/>
+                                        </p:commandButton>
+                                    </div>-->
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:dataTable value="#{menuUsuarioAppBean.menuRols}" var="mr1" paginator="true" rows="5" 
+                                         paginatorPosition="top" paginatorAlwaysVisible="false" id="tdRolesMenu"
+                                         rowKey="#{mr1.id}" rowIndexVar="indexM" >
+                                <p:column headerText="Nombre" >
+                                    <p:outputLabel value="#{mr1.rol.nombre}" title="#{mr1.rol.unidadAdministrativa.nombre}" />
+                                </p:column>
+                                <p:column headerText="Acciones menu" rendered="#{!menuUsuarioAppBean.ver}" width="67%" >
+                                    <p:selectManyButton value="#{mr1.permisos}" converter="#{menuUsuarioAppBean.docConverter}"  >
+                                        <f:selectItems value="#{menuUsuarioAppBean.permisos}" var="acc1" itemLabel="#{acc1.name}" itemValue="#{acc1}" />
+                                    </p:selectManyButton>
+                                </p:column>
+                                <p:column headerText="***" width="8%" rendered="#{!menuUsuarioAppBean.ver}" >
+                                    <p:commandButton title="Eliminar rol"  icon="fa fa-trash delete" update="tdRolesMenu"
+                                                     actionListener="#{menuUsuarioAppBean.elimarRolMenu(mr1, indexM)}" />
+                                </p:column>
+                            </p:dataTable>
+                        </p:panel>
+                    </p:tab>
+                </p:tabView>
+                <center>
+                    <p:commandButton title="Guardar Módulo" icon="fa fa-save" actionListener="#{menuUsuarioAppBean.guardarMenu()}" rendered="#{!menuUsuarioAppBean.ver}"/>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" oncomplete="PF('dlgMenu').hide();" process="@this" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Información del rol" modal="true" widgetVar="dlgRol" closable="false" >
+            <h:form id="frmRol" style="width: 100%;" >
+                <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="datosUnidadAdm" >
+                        <p:outputLabel value="Unidad Administrativa" style="width: 100%" for="itUnidadAdm" />
+                        <div class="ui-inputgroup">
+                            <p:inputText value="" rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.id eq null}" />
+                            <p:inputText value="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre}" style="width: 80%" id="itUnidadAdm" 
+                                         rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.id ne null}"  />
+                            <p:commandButton title="Buscar Unidad Administrativa" icon="fa fa-search" styleClass="green-button button-group"
+                                             actionListener="#{menuUsuarioAppBean.buscarUnidad()}" process="@this"  >
+                                <p:ajax event="dialogReturn" listener="#{menuUsuarioAppBean.selectUnidad}" update="datosUnidadAdm"/>
+                            </p:commandButton>
+                        </div>
+                    </h:panelGroup>
+                    <u:text label="Nombre" value="#{menuUsuarioAppBean.rol.nombre}" readonly="#{menuUsuarioAppBean.ver}" />
+                    <u:items label="Categoría" value="#{menuUsuarioAppBean.rol.categoria}" catalogo="ROL-CATEGORIA" />
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Esta Activo" style="width: 100%" /><p:spacer width="20" />
+                        <p:selectBooleanButton value="#{menuUsuarioAppBean.rol.estado}" onLabel="Si" offLabel="No" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Es Director" style="width: 100%" /><p:spacer width="20" />
+                        <p:selectBooleanButton value="#{menuUsuarioAppBean.rol.isDirector}" onLabel="Si" offLabel="No" />
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton title="Guardar Rol" icon="fa fa-save" actionListener="#{menuUsuarioAppBean.guardarRol()}" update="tbMain:dtRoles"
+                                     rendered="#{!menuUsuarioAppBean.ver}"/>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" oncomplete="PF('dlgRol').hide();" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Información del Módulo" modal="true" widgetVar="dlgModulo" closable="false" >
+            <h:form id="frmModulo" style="width: 100%;" >
+                <p:panelGrid columns="1" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+
+                    <u:text label="Nombre" value="#{menuUsuarioAppBean.modulo.nombre}" readonly="#{menuUsuarioAppBean.ver}" />
+                    <u:text label="Descripción Módulo" value="#{menuUsuarioAppBean.modulo.descripcion}" readonly="#{menuUsuarioAppBean.ver}" />
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Icono" style="width: 100%"  />
+                        <p:selectOneMenu id="advanced" value="#{menuUsuarioAppBean.modulo.icono}"
+                                         effect="fade" var="ic2" style="width: 100%" filter="true" filterMatchMode="contains">
+                            <f:selectItems value="#{iconService.faIcons}" var="ic1" itemLabel="#{ic1.type}" itemValue="#{ic1.name}" />
+
+                            <p:column>
+                                <i class="#{ic2}" style="font-size: 1.5em; margin-right: 5px; color: black;" />
+                                <h:outputText value="#{ic2}" />
+                            </p:column>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <u:text label="Variable de menú" value="#{menuUsuarioAppBean.modulo.widgetVar}" readonly="#{menuUsuarioAppBean.ver}" />
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Orden" style="width: 100%" />
+                        <p:spinner value="#{menuUsuarioAppBean.modulo.orden}" style="width: 100%" stepFactor="1"  />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Visualizar" style="width: 100%" for="selVisualizar"  />
+                        <p:selectOneMenu id="selVisualizar" value="#{menuUsuarioAppBean.modulo.visualizar}" effect="fade" style="width: 100%" 
+                                         title="indica si debe mostrarse en el menú, solo para en mascarar las urls de los procesos" >
+                            <f:selectItem itemLabel="Si" itemValue="#{true}" />
+                            <f:selectItem itemLabel="No" itemValue="#{false}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <center>
+                    <p:commandButton title="Guardar Módulo" icon="fa fa-save" actionListener="#{menuUsuarioAppBean.guardarModulo()}" update="tbMain:dtModulos"
+                                     rendered="#{!menuUsuarioAppBean.ver}" />
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" actionListener="#{menuUsuarioAppBean.cerrarDialogo()}" oncomplete="PF('dlgModulo').hide();" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Información del Usuario" modal="true" widgetVar="dlgUsuario" width="80%" height="500" closable="false" >
+            <h:form id="frmUsuario" prependId="false" >
+                <p:panelGrid columns="2" style="width: 100% !important;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup>
+                        <p:fieldset legend="Datos de Funcionario Público" style="font-weight: bold">
+                            <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="No. Documento:" style="width: 100%" />
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="#{menuUsuarioAppBean.usuario.funcionario.persona.identificacion}" 
+                                                     readonly="#{menuUsuarioAppBean.usuario.id ne null}" style="width: 80%" 
+                                                     maxlength="15" id="docUser" />
+                                        <p:commandButton title="Buscar Funcionario Público" icon="fa fa-search" styleClass="green-button button-group"
+                                                         process="@form, @(.input-custom-app)" actionListener="#{menuUsuarioAppBean.buscarFuncionario()}"
+                                                         update="@form, @(.input-custom-app)" rendered="#{menuUsuarioAppBean.usuario.id eq null}" >
+                                            <p:ajax event="dialogReturn" listener="#{menuUsuarioAppBean.listener}" update="@form" />
+                                        </p:commandButton>
+                                    </div>
+                                </h:panelGroup>
+                                <u:text label="Apellidos y Nombres:" value="#{menuUsuarioAppBean.usuario.funcionario.persona.nombreCompleto}" readonly="true" />
+                                <u:text label="Dirección:" value="#{menuUsuarioAppBean.usuario.funcionario.persona.direccion}" readonly="true" />
+                                <u:text label="Teléfono:" value="#{menuUsuarioAppBean.usuario.funcionario.persona.telefono}" readonly="true" />
+                                <u:text label="Correo:" value="#{menuUsuarioAppBean.usuario.funcionario.persona.email}" readonly="true" />
+                                <u:text label="Fecha de Ingreso:" value="#{menuUsuarioAppBean.usuario.funcionario.fechaIngreso}" readonly="true" typeInput="date" />
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <p:fieldset legend="Datos Para el usuario" style="font-weight: bold">
+                            <p:panelGrid columns="3" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" id="pngDatosUsuario">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Usuario:" style="width: 100%" />
+                                    <p:inputText value="#{menuUsuarioAppBean.usuario.usuario}" style="width: 100%"/>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Fecha de Caducidad:" style="width: 100%" />
+                                    <p:calendar id="fechaCaducidad" pattern="yyyy-MM-dd" navigator="true" yearRange="c-100:c+100" locale="es"
+                                                readonlyInput="true" readonly="#{menuUsuarioAppBean.ver}"
+                                                value="#{menuUsuarioAppBean.usuario.fechaCaducidad}" style="width: 100%">
+                                        <p:ajax event="dateSelect"/>
+                                    </p:calendar> 
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                    <p:outputLabel value="Caduca Clave:" style="width: 100%" />
+                                    <p:selectBooleanCheckbox value="#{menuUsuarioAppBean.usuario.caducarClave}" style="width: 100%"  >
+                                        <p:ajax update="pngDatosUsuario" process="pngDatosUsuario" />
+                                    </p:selectBooleanCheckbox>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{!menuUsuarioAppBean.usuario.estado and menuUsuarioAppBean.usuario.id ne null}"  >
+                                    <p:outputLabel value="Activar Usuario" style="width: 100%" />
+                                    <p:selectBooleanCheckbox value="#{menuUsuarioAppBean.usuario.estado}" style="width: 100%" >
+                                        <p:ajax process="@this" />
+                                    </p:selectBooleanCheckbox>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioAppBean.usuario.caducarClave}" id="pngDiasCaducidad" >
+                                    <p:outputLabel for="diasCaducidad" value="Dias Caducidad Clave" style="width: 100%" />
+                                    <p:spinner id="diasCaducidad" value="#{menuUsuarioAppBean.usuario.diasCaducidad}" min="0" max="365" stepFactor="1" style="width: 100%" decimalPlaces="0" />
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioAppBean.usuario.id eq null}" >
+                                    <p:outputLabel value="Contraseña" style="width: 100%" />
+                                    <p:password value="#{menuUsuarioAppBean.pass1}" style="width: 100%" readonly="#{menuUsuarioAppBean.sendMail}" feedback="true" 
+                                                goodLabel="Buena" promptLabel="Ingrese Contraseña" strongLabel="Fuerte" weakLabel="Débil" id="pass1" 
+                                                placeholder="#{menuUsuarioAppBean.sendMail? 'Contraseña sera enviada al correo' : 'Ingresar Contraseña'}" >
+                                        <p:ajax process="@this, pass2" listener="#{menuUsuarioAppBean.validarPass()}" />
+                                    </p:password>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{menuUsuarioAppBean.sendMail or menuUsuarioAppBean.usuario.id eq null}" >
+                                    <p:outputLabel value="Confirmar Contraseña" style="width: 100%" />
+                                    <p:password value="#{menuUsuarioAppBean.pass2}" style="width: 100%" readonly="false" placeholder="Confirme Contraseña" 
+                                                feedback="true" goodLabel="Buena" strongLabel="Fuerte" weakLabel="Débil" id="pass2" >
+                                        <p:ajax process="@this, pass1" listener="#{menuUsuarioAppBean.validarPass()}" />
+                                    </p:password>
+                                </h:panelGroup>
+                            </p:panelGrid>
+                        </p:fieldset>
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:fieldset legend="Roles" style="font-weight: bold" id="pngRolesUsuarios">
+                            <p:panelGrid columns="2" style="width: 100%;" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                         rendered="#{!menuUsuarioAppBean.ver}" id="pngUsuarioRolAdm">
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="pngRolesUser">
+                                    <p:outputLabel value="Rol" style="width: 100%" />
+                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                        <p:selectOneMenu id="listRolesUnA" value="#{menuUsuarioAppBean.rol}" converter="#{utilConverter}"
+                                                         effect="fade" style="width: 70%;margin-top: 8px" filter="true" filterMatchMode="contains">
+                                            <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{menuUsuarioAppBean.roles}" var="rl2" itemLabel="#{rl2.nombre}" itemValue="#{rl2}" />
+                                        </p:selectOneMenu>
+                                        <p:commandButton title="Agregar" icon="fa fa-plus-square" class="green-button button-group" 
+                                                         actionListener="#{menuUsuarioAppBean.agregarRol()}" update="pngRolesUsuarios"  />
+                                    </h:panelGroup>
+                                </h:panelGroup>
+                                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="datosUnidadAdmRol" >
+                                    <!--<p:outputLabel value="Unidad Administrativa" style="width: 100%"  />
+                                    <div class="ui-inputgroup">
+                                        <p:inputText value="" rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre eq null}" readonly="true" />
+                                        <p:inputText value="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre}" style="width: 80%"
+                                                     rendered="#{menuUsuarioAppBean.rol.unidadAdministrativa.nombre ne null}" readonly="true"  />
+                                        <p:commandButton title="Buscar Unidad Administrativa" icon="fa fa-search" styleClass="green-button button-group"
+                                                         actionListener="#{menuUsuarioAppBean.buscarUnidad()}">
+                                            <p:ajax event="dialogReturn" listener="#{menuUsuarioAppBean.selectUnidad}" update="pngRolesUsuarios"/>
+                                        </p:commandButton>
+                                    </div>-->
+                                </h:panelGroup>
+                            </p:panelGrid>
+                            <p:dataTable value="#{menuUsuarioAppBean.usuario.roles}" var="rl1" paginator="true" rows="8" 
+                                         paginatorPosition="top" paginatorAlwaysVisible="false" id="tdRolesUsuario"
+                                         rowKey="#{rl1.id}" rowIndexVar="index" filterBy="#{rl1.eliminado}">
+                                <p:column headerText="Unidad Administrativa" style="width: 30%">
+                                    <h:outputText value="#{rl1.rol.unidadAdministrativa.nombre}" />
+                                </p:column>
+                                <p:column headerText="Nombre" style="width: 30%">
+                                    <p:outputLabel value="#{rl1.rol.nombre}" />
+                                </p:column>
+                                <p:column headerText="Categoría" style="width: 30%;text-align: center">
+                                    <p:outputLabel value="#{rl1.rol.categoria.texto}" />
+                                </p:column>
+                                <p:column headerText="Acción" style="width: 10%;text-align: center" rendered="#{!menuUsuarioAppBean.ver}">
+                                    <p:commandLink title="Eliminar rol" update="tdRolesUsuario"
+                                                   actionListener="#{menuUsuarioAppBean.elimarRolUsuario(rl1, index)}" >
+                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                    </p:commandLink>
+                                </p:column>
+                            </p:dataTable>
+                        </p:fieldset>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:fileUpload fileUploadListener="#{menuUsuarioAppBean.handleFileUpload}" rendered="#{!menuUsuarioAppBean.ver}"
+                              skinSimple="true" accept="image/*" mode="advanced" dragDropSupport="false" 
+                              label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar"  />
+                <u:documents entiti="#{menuUsuarioAppBean.usuario}"/>
+                <center>
+                    <p:commandButton title="Guardar Rol-User" icon="fa fa-save" actionListener="#{menuUsuarioAppBean.saveUser()}" update="tbMain:dtUsers" 
+                                     rendered="#{!menuUsuarioAppBean.ver}" process="@this">
+                    </p:commandButton>
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" oncomplete="PF('dlgUsuario').hide();" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="Cambio de Clave" modal="true" widgetVar="dlgCambioClave" onHide="#{menuUsuarioAppBean.cerrarDialogo()}" closable="false" >
+            <h:form id="frmCambioClave" style="width: 100%;" >
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <u:text label="Apellidos y Nombres" value="#{menuUsuarioAppBean.usuario.funcionario.persona.nombreCompleto}" readonly="true" />
+                    <u:text label="Usuario" value="#{menuUsuarioAppBean.usuario.usuario}" readonly="true" />
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Contraseña" style="width: 100%" />
+                        <p:password value="#{menuUsuarioAppBean.pass1}" style="width: 100%"
+                                    placeholder="Ingresar Contraseña" />
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel value="Confirmar Contraseña" style="width: 100%" />
+                        <p:password value="#{menuUsuarioAppBean.pass2}" style="width: 100%" readonly="false" placeholder="Confirme Contraseña" />
+                    </h:panelGroup>
+                </p:panelGrid>
+                <br/>
+                <br/>
+                <center>
+                    <p:commandButton title="Guardar Rol" icon="fa fa-save" actionListener="#{menuUsuarioAppBean.actualizarClave()}" update="tbMain:dtUsers" 
+                                     rendered="#{!menuUsuarioAppBean.ver}"/> 
+                    <p:spacer width="10" />
+                    <p:commandButton title="Cerrar" icon="fa fa-close edit" onclick="PF('dlgCambioClave').hide();" /> 
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog header="ASIGNACIÓN DE ROL A MENÚ" id="dlgAsiganacionMenu"                   
+                  widgetVar="dlgAsiganacionMenu" width="80%" draggable="false"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form id="frmDlgAsiganacionMenu" prependId="false">
+                <p:outputPanel style="width: 100%;" >
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" 
+                                     styleClass="Fs16" style="width: auto;margin-bottom: 5px"/>
+                    <p:dataTable  id="datatableModulosRol" widgetVar="datatableModulosRol" var="mn1" value="#{menuUsuarioAppBean.menuLazy}" 
+                                  scrollable="true" scrollHeight="350" lazy="true" rows="20000" style="width: 100%" 
+                                  rowKey="#{mn1.id}" selection="#{menuUsuarioAppBean.menuSeleccionados}"
+                                  emptyMessage="No existen información con el criterio de búsqueda especificado">
+                        <p:column selectionMode="multiple" style="width:5%;text-align:center"/>
+                        <p:column headerText="Módulo" style="width: 20%" filterBy="#{mn1.modulo.nombre}" filterMatchMode="contains">
+                            <p:outputLabel value="#{mn1.modulo.nombre}" rendered="#{not empty mn1.modulo.id}" />
+                            <p:outputLabel value="SubMenú >>" rendered="#{empty mn1.modulo.id}" />
+                        </p:column>
+                        <p:column headerText="Sub Menú" style="width: 20%" filterBy="#{mn1.menuPadre.descripcion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{mn1.menuPadre.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Nombre Menú" filterBy="#{mn1.descripcion}" filterMatchMode="contains" style="width: 20%">
+                            <p:outputLabel value="#{mn1.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Url" filterBy="#{mn1.prettyPattern}" filterMatchMode="contains" style="width: 35%">
+                            <p:outputLabel value="#{mn1.prettyPattern}" />
+                        </p:column>
+                    </p:dataTable> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+
+        <p:dialog header="Asignación de rol a usuario en grupo" modal="true" widgetVar="dlgAsiganacionUsuario" closable="true" width="70%" height="480" >
+            <h:form id="frmDlgAsiganacionUsuario" prependId="false" style="width: 100%;" >
+                <p:panelGrid layout="grid" columns="3">
+                    <u:text label="Rol" value="#{menuUsuarioAppBean.rol.nombre}" readonly="true" styleClass="Wid100" />
+                    <u:text label="Categoría Rol" value="#{menuUsuarioAppBean.rol.categoria.texto}" readonly="true" />
+                    <p:commandButton value="Asginar" icon="fa fa-plus" title="agregar rol a usuarios seleccionados"
+                                     actionListener="#{menuUsuarioAppBean.asignarMasivaUsuario()}"/>
+                </p:panelGrid>
+                <p:dataTable value="#{menuUsuarioAppBean.usuariosLazy}" var="usr2" lazy="true"
+                             paginator="true" rowsPerPageTemplate="15,30,50" rows="15" reflow="true"
+                             rowKey="#{usr2.id}" selection="#{menuUsuarioAppBean.usuariosSeleccionados}">
+                    <p:column selectionMode="multiple" style="width:16px;text-align:center"/>
+                    <p:column headerText="Usuario" width="25%" filterBy="#{usr2.usuario}" filterMatchMode="contains">
+                        <p:outputLabel value="#{usr2.usuario}" />
+                    </p:column>
+                    <p:column headerText="Nombres" filterBy="#{usr2.funcionario.persona.nombreCompleto}" filterMatchMode="contains"  >
+                        <p:outputLabel value="#{usr2.funcionario.persona.nombreCompleto}" />
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

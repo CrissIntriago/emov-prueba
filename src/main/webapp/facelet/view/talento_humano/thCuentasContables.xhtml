@@ -1,0 +1,318 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Asignación de cuentas
+    </ui:define>
+    <ui:param name="tittle" value="Asignación de cuentas"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Asignación general" process="@this"
+                                     icon="fa fa-plus" actionListener="#{thCuentasContablesView.openDlgParametros()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:dataTable  id="thCargoTable" widgetVar="thCargoTable" var="cargo" value="#{thCuentasContablesView.thServidorCargoLazyModel}" 
+                                  paginator="true" rows="30" style="width: 100%;margin-top: 15px" rowKey="#{cargo.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="30,50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 10%;text-align: center" filterBy="#{cargo.idCargo.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idCargo.codigo}" />
+                        </p:column>
+                        <p:column headerText="Nombre" style="width: 20%;" filterBy="#{cargo.idCargo.nombreCargo}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idCargo.nombreCargo}" />
+                        </p:column>                                                              
+                        <p:column headerText="Unidad administrativa" style="width: 13%;" filterBy="#{cargo.idCargo.idUnidad.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idCargo.idUnidad.nombre}" />
+                        </p:column>                                      
+                        <p:column headerText="Regimen laboral" style="width: 13%;" filterBy="#{cargo.idCargo.idRegimen.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idCargo.idRegimen.nombre}" />
+                        </p:column>                                      
+                        <p:column headerText="Contrato" style="width: 13%;" filterBy="#{cargo.idCargo.idContrato.texto}" filterMatchMode="contains">
+                            <h:outputText value="#{cargo.idCargo.idContrato.texto}" />
+                        </p:column>
+                        <p:column headerText="Tipo" style="width: 7%;text-align: center" filterBy="#{cargo.idCargo.idCatalogoItem}">
+                            <h:outputText value="#{cargo.idCargo.idCatalogoItem.texto}" />
+                        </p:column>
+                        <p:column headerText="Activo" style="width: 7%;text-align: center" filterBy="#{cargo.idCargo.activo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thCargoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cargo.idCargo.activo?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Asignado" style="width: 7%;text-align: center" filterBy="#{cargo.idCargo.asignado}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('thCargoTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cargo.idCargo.asignado?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Acción" style="width: 10%;text-align: center">
+                            <p:commandLink title="Editar" process="@this" actionListener="#{thCuentasContablesView.loadCargo(cargo)}"  
+                                           update="cargoForm">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="cargoDlg" widgetVar="cargoDlg" width="60%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Cargo">
+            <h:form prependId="false" id="cargoForm">
+                <p:fieldset legend="Detalle del cargo" style="margin-bottom: 10px">
+                    <p:panelGrid columns="4" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Seleccionar período:" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{thCuentasContablesView.opcionBusqueda.anio}"  style="width: 100%;">
+                                <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                                <f:selectItems value="#{thCuentasContablesView.listaPeriodo}" var="p" itemLabel="#{p}" itemValue="#{p}"/>
+                                <p:ajax update="thCargosRubroTable" listener="#{thCuentasContablesView.rubrosXanio()}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre:" style="font-weight: bold"/>
+                            <p:inputText id="nombreCargo" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'nombreCargo')"
+                                         value="#{thCuentasContablesView.thServidorCargo.idCargo.nombreCargo}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Regímen laboral:" style="font-weight: bold"/>
+                            <p:inputText id="idRegimen" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idRegimen')"
+                                         value="#{thCuentasContablesView.thServidorCargo.idCargo.idRegimen.nombre}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Unidad administrativa:" style="font-weight: bold"/>
+                            <p:inputText id="idUnidad" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idUnidad')"
+                                         value="#{thCuentasContablesView.thServidorCargo.idCargo.idUnidad.nombre}" readonly="true">
+                            </p:inputText>
+                        </h:panelGroup>                       
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Grado de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="grado" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'grado')"
+                                         readonly="true" value="#{thCuentasContablesView.thServidorCargo.idCargo.idGrupo.grado}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Remuneración de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="remuneracionDolares" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'remuneracionDolares')"
+                                         readonly="true"  value="$#{thCuentasContablesView.thServidorCargo.idCargo.idGrupo.remuneracionDolares}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Nombre de escala salarial:" style="font-weight: bold"/>
+                            <p:inputText id="grupoOrganizacional" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'grupoOrganizacional')"
+                                         readonly="true"  value="#{thCuentasContablesView.thServidorCargo.idCargo.idGrupo.grupoOrganizacional}">
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                            <p:inputText id="idCatalogoItem" class="panelInput" style="width: 100%"  onkeypress="focusNextOnEnter(event, 'idCatalogoItem')"
+                                         readonly="true"  value="#{thCuentasContablesView.thServidorCargo.idCargo.idCatalogoItem.texto}">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:dataTable  id="thCargosRubroTable" widgetVar="thCargosRubroTable" var="thCargosRubro" value="#{thCuentasContablesView.thCargoRubrosList}" 
+                              scrollable="true" scrollHeight="200" lazy="false" rows="200000" style="width: 100%" rowKey="#{thCargosRubro.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado" editable="true" editMode="cell" rowIndexVar="irowIndexVarndex">
+                    <p:column headerText="Rubro" filterBy="#{thCargosRubro.idRubro.nombre}"  style="width: 30%" filterMatchMode="contains">
+                        <h:outputText value="#{thCargosRubro.idRubro.nombre}" />
+                    </p:column> 
+                    <p:column headerText="Tipo" style="width: 20%;text-align: center" filterBy="#{thCargosRubro.idRubro.ingreso}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('thCargosRubroTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="Ingreso" itemValue="true" />
+                                <f:selectItem itemLabel="Egreso" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{thCargosRubro.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column> 
+                    <p:column headerText="Cod. cta. Contable" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thCargosRubro.idCuenta.codigo}"/>
+                    </p:column>
+                    <p:column headerText="Nom. cta. Contable" style="width: 30%">
+                        <h:outputText value="#{thCargosRubro.idCuenta.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Acción" style="width: 10%;text-align: center">
+                        <p:commandLink title="Cuenta contable" process="@this" actionListener="#{thCuentasContablesView.openDlgCuenta(thCargosRubro)}"  >
+                            <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="parametrosDlg" widgetVar="parametrosDlg" width="80%" position="top" style="margin-top: 80px"  
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Asignación de cuentas">
+            <h:form prependId="false" id="parametrosForm">
+                <p:fieldset legend="Parametros" style="margin-bottom: 10px">
+                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group"  id="gridBusqueda">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                            <p:outputLabel for="@next" value="Seleccionar período:" style="font-weight: bold"/>
+                            <p:selectOneMenu value="#{thCuentasContablesView.opcionBusqueda.anio}"  style="width: 100%;">
+                                <f:selectItem itemValue="#{null}" itemLabel="-Seleccionar Periodo" itemDisabled="true"/>
+                                <f:selectItems value="#{thCuentasContablesView.listaPeriodo}" var="p" itemLabel="#{p}" itemValue="#{p}"/>
+                                <p:ajax process="@this"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Tipo de contrato:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="filtroContrato" value="#{thCuentasContablesView.contrato}" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thCuentasContablesView.contratoList}" var="item" itemLabel="#{item.texto}" itemValue="#{item}"/>
+                                <p:ajax process="filtroContrato" update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="filtroClasificacion" value="#{thCuentasContablesView.clasificacion}" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thCuentasContablesView.clasificacionList}" var="item" itemLabel="#{item.texto}" itemValue="#{item}"/>
+                                <p:ajax process="filtroClasificacion"  update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:outputLabel for="@next" value="Regimen laboral:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="filtroregimen" value="#{thCuentasContablesView.regimen}" converter="#{utilConverter}"
+                                             filter="true" filterMatchMode="contains" style="width: 100%">
+                                <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{thCuentasContablesView.regimenList}" var="item" itemLabel="#{item.nombre}" itemValue="#{item}"/>
+                                <p:ajax process="filtroClasificacion"  update="thCargoTable"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <p:commandButton value="Agregar rubro" process="@this"
+                                     icon="fa fa-plus" actionListener="#{thCuentasContablesView.openDlgRubro()}"
+                                     styleClass="Fs16" style="width: auto;margin-bottom: 10px"/>
+                <p:dataTable  id="thRubroEgresoTable" widgetVar="thRubroEgresoTable" var="thCargosRubro" value="#{thCuentasContablesView.thRubrosList}" 
+                              scrollable="true" scrollHeight="200" lazy="false" rows="200000" style="width: 100%" rowIndexVar="index"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado" editable="true" editMode="cell">
+                    <p:column headerText="Rubro" filterBy="#{thCargosRubro.idRubro.nombre}"  style="width: 30%" filterMatchMode="contains">
+                        <h:outputText value="#{thCargosRubro.idRubro.nombre}" />
+                    </p:column> 
+                    <p:column headerText="Tipo" style="width: 20%;text-align: center" filterBy="#{thCargosRubro.idRubro.ingreso}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('thRubroEgresoTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="Ingreso" itemValue="true" />
+                                <f:selectItem itemLabel="Egreso" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{thCargosRubro.idRubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column> 
+                    <p:column headerText="Cod. cta. Contable" style="width: 20%;text-align: center">
+                        <h:outputText value="#{thCargosRubro.idCuenta.codigo}"/>
+                    </p:column>
+                    <p:column headerText="Nom. cta. Contable" style="width: 30%">
+                        <h:outputText value="#{thCargosRubro.idCuenta.descripcion}"/>
+                    </p:column>
+                    <p:column headerText="Acción" style="width: 10%;text-align: center">
+                        <p:commandLink title="Cuenta contable" process="@this" actionListener="#{thCuentasContablesView.openDlgCuenta(thCargosRubro)}"  >
+                            <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px"></i>
+                        </p:commandLink>
+                        <p:commandLink title="Quitar" process="@this" actionListener="#{thCuentasContablesView.deleteRubro(index)}">
+                            <i class="fa fa-minus-circle" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+                <center>
+                    <p:commandButton value="Generar" update="formMain"
+                                     icon="fa fa-save" actionListener="#{thCuentasContablesView.actualizarCuenta()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px">
+                        <p:confirm header="Confirmación de cargar datos" message="¿Esta seguro de generar estas relaciones rubro - cuenta contable?" icon="fa fa-exclamation-triangle" />
+                    </p:commandButton>
+                </center>
+                <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                    <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                    <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                </p:confirmDialog>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="dlgCuentaContable" widgetVar="dlgCuentaContable" width="40%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de Cta. Contable">
+            <h:form prependId="false" id="dlgCuentaContableForm">
+                <p:commandButton value="Mostrar todo el plan de cuentas" id="btnCuentasFiltro" style="background: green;margin-bottom: 20px" 
+                                 update="contCuentasTable,dlgCuentaContableForm" icon="fa fa-refresh"
+                                 actionListener="#{thCuentasContablesView.updateContCuentas(false)}" styleClass="Fs16" >
+                </p:commandButton>
+                <p:dataTable  id="contCuentasTable" widgetVar="contCuentasTable" var="contCuentas" 
+                              value="#{thCuentasContablesView.contCuentasLazy}"
+                              paginator="true" rows="15" paginatorPosition="bottom" 
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="15,30,40,50,100"
+                              scrollable="true" scrollHeight="auto" lazy="true" style="width: 100%" rowKey="#{contCuentas.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Cta. Contable
+                    </f:facet>
+                    <p:column headerText="Código" filterBy="#{contCuentas.codigo}" filterMatchMode="contains" style="width: 15%;text-align: center">
+                        <h:outputText value="#{contCuentas.codigo}" />
+                    </p:column> 
+                    <p:column headerText="Nombre" filterBy="#{contCuentas.descripcion}" filterMatchMode="contains" style="width: 70%;">
+                        <h:outputText value="#{contCuentas.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{thCuentasContablesView.closeDlgCuenta(contCuentas)}" title="Seleccionar" process="@this">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>                                
+                </p:dataTable>
+            </h:form>          
+        </p:dialog>
+        <p:dialog id="rubrosDlg" widgetVar="rubrosDlg" width="50%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado rubro">
+            <h:form prependId="false" id="rubrosForm">
+                <p:dataTable  id="rubroTable" widgetVar="rubroTable" var="rubro" value="#{thCuentasContablesView.thRubroLazyModel}" 
+                              scrollable="true" scrollHeight="250" lazy="true" rows="20000" style="width: 100%" rowKey="#{rubro.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <p:column headerText="Nombre" filterBy="#{rubro.nombre}"  style="width: 35%" filterMatchMode="contains">
+                        <h:outputText value="#{rubro.nombre}" />
+                    </p:column> 
+                    <p:column headerText="Clasificación" filterBy="#{rubro.clasificacion.texto}"  style="width: 35%" filterMatchMode="contains">
+                        <h:outputText value="#{rubro.clasificacion.texto}" />
+                    </p:column>
+                    <p:column headerText="Tipo" style="width: 10%;text-align: center" filterBy="#{rubro.ingreso}">
+                        <f:facet name="filter">
+                            <p:selectOneMenu onchange="PF('rubroTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                <f:converter converterId="javax.faces.Boolean" />
+                                <f:selectItem itemLabel="Todos" itemValue=""/>
+                                <f:selectItem itemLabel="INGRESO" itemValue="true" />
+                                <f:selectItem itemLabel="EGRESO" itemValue="false" />
+                            </p:selectOneMenu>
+                        </f:facet>
+                        <h:outputText value="#{rubro.ingreso?'INGRESO':'EGRESO'}" />
+                    </p:column>     
+                    <p:column headerText="Seleccionar" style="width: 10%;text-align: center">
+                        <p:commandLink actionListener="#{thCuentasContablesView.closeDlgRubro(rubro)}" title="Seleccionar" process="@this">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </h:form>       
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title"> Ejecución De Reforma</ui:define> 
+    <ui:define name="content">
+        <style>
+            span{
+                font-weight: bold;
+            }
+            #nota{
+                font-family: 'PT Sans';
+                width: 98%;
+                text-align: justify;
+                font-size: 16px;
+                margin: auto;
+            }
+            p{
+                font-style: oblique;
+            }
+        </style>
+
+        <div class="ui-g ui-fluid">  
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{ejecucionReduccionReformaview.tarea}" tramite="#{ejecucionReduccionReformaview.tramite}" />
+                </div>
+            </div>
+
+
+
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formGeneralEjecucion">
+
+
+                    <p:dataTable var="item" value="#{ejecucionReduccionReformaview.lazyReforma}" rows="20"
+                                 paginator="true" lazy="true" id="dataList" widgetVar="dataList" paginatorPosition="bottom"
+                                 paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"  selectionMode="single" rowKey="#{item.id}"
+                                 rowsPerPageTemplate="20,30,40,50,100">
+
+                        <f:facet name="header">
+                            REFORMAS
+                        </f:facet>
+
+
+                        <p:column headerText="No.REFORMA" style="text-align: center;">
+                            <p:outputLabel value="#{item.numeracion}"/>   
+                        </p:column>
+
+                        <p:column headerText="No.APROBACIÓN" style="text-align: center;">
+                            <p:outputLabel value="#{item.codigo}"/>   
+                        </p:column>
+
+
+                        <p:column headerText="FECHA APROBACIÓN" style="text-align: center;">
+                            <p:outputLabel value="#{item.fechaAprobacion}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </p:outputLabel>
+                        </p:column>
+
+
+
+                        <p:column headerText="FECHA REGISTRO" style="text-align: center;">
+                            <p:outputLabel value="#{item.fechaOficioReforma}">
+                                <f:convertDateTime pattern="yyyy-MM-dd"/>
+                            </p:outputLabel>
+                        </p:column>
+
+
+
+                        <p:column headerText="TIPO" filterBy="#{item.tipo}" style="text-align: center;">
+
+                            <f:facet name="filter">
+
+                                <p:selectOneMenu onchange="PF('dataList').filter()" styleClass="custom-filter" >
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="TODOS" itemValue=""/>
+                                    <f:selectItem itemLabel="SUPLEMENTO CRÉDITOS" itemValue="true"/>
+                                    <f:selectItem itemLabel="REDUCCIÓN CRÉDITOS" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <p:outputLabel value="#{item.tipo==true?'SUPLEMENTO CRÉDITOS':'REDUCCIÓN CRÉDITOS'}" />    
+                        </p:column>
+                        <p:column headerText="PERIODO" filterBy="#{item.periodo}" filterMatchMode="contains" style="text-align: center;">
+                            <p:outputLabel value="#{item.periodo}"/>
+                        </p:column>
+
+                        <p:column headerText="ESTADO" style="text-align: center;">
+                            <p:outputLabel value="#{item.estado.texto}"/>
+                        </p:column>
+
+                        <p:column headerText="ACCIONES" style="width: 10%; text-align: center;">
+                            <p:commandLink disabled="#{item.ejecutado==true}"  title="Ejecutar"  actionListener="#{ejecucionReduccionReformaview.abriDlogo(item)}" update="dataList">
+                                <i class="fa fa-send-o" style="font-size: 1.5em; margin-right: 8px;" ></i>
+                                <p:confirm header="Confirmación de la Ejecucion de la reforma" message="Esta Seguro de ejecutar la reforma No.#{item.numeracion} ?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+
+                            <p:commandButton rendered="false" actionListener="#{ejecucionReduccionReformaview.pruebas(item)}" update="dataList" icon="fa fa-print"/>
+
+
+                        </p:column>
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </h:form>
+            </div>
+            <div id="nota">
+                <p> 
+                    <span>Nota:</span> 
+                    En el caso de que su reforma no sea ejecutada, se deberá porque en el mismo momento se realizó una reforma de reducción, 
+                    por ende será rechazada para que no haya ningún tipo de conflicto y pueda verificar los montos a reducir, por ello tendrá 
+                    que revisar de nuevo su reforma...!
+                </p>
+
+            </div>
+        </div>
+        
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{ejecucionReduccionReformaview.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{ejecucionReduccionReformaview.completarTarea()}" style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-remove" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

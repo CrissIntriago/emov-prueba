@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:param name="tittle" value="CÁLCULOS ANUALES - PREDIOS URBANOS"/>
+    <ui:define name="content">
+        <h:form id="formCalculos">
+            <div class="ui-g ui-fluid">
+                <div lass="ui-g-6">
+                    <p:dataTable id="dtObras" reflow="true" paginator="true" lazy="true" rows="20" rowsPerPageTemplate="20,50,100" paginatorPosition="bottom" 
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{calculosAnualesPredios.obras}" var="obra" emptyMessage="No se encontró ningún Item.">
+                        <f:facet name="header">
+                            OBRAS POR UBICACION
+                        </f:facet>
+                        <p:column headerText="Nombre de la Obra" style="text-align: center;">
+                            <p:outputLabel value="#{obra.concepto}"/>
+                        </p:column>
+                        <p:column headerText="Tipo de Obra" style="text-align: center;" filterBy="#{obra.tipoObra.descripcion}" sortBy="#{obra.tipoObra.descripcion}">
+                            <p:outputLabel value="#{obra.tipoObra.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Año" style="text-align: center;" filterBy="#{obra.anio}" sortBy="#{obra.anio}">
+                            <p:outputLabel value="#{obra.anio}"/>
+                        </p:column>
+                        <p:column headerText="Fecha Conclusión"   style="height: 100%" filterMatchMode="exact">
+                            <p:outputLabel value="#{obra.fechaConclusionObra}"/>
+                        </p:column>
+                        <p:column headerText="Base Legal" style="text-align: center;">
+                            <p:outputLabel value="#{obra.baseLegal}"/>
+                        </p:column>
+                        <p:column headerText="Costo Total" style="text-align: center;">
+                            <p:outputLabel value="#{obra.costoTotal}"/>
+                        </p:column>
+                        <p:column headerText="Rubro" style="text-align: center;">
+                            <p:outputLabel value="#{obra.rubro.descripcion}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="text-align: center;">
+                            <p:outputLabel value="#{obra.estado eq true?'ACTIVO':'INACTIVO'}"/>
+                        </p:column>
+                        <p:column headerText="Opciones" style="text-align: center;">
+                            <p:commandButton style="margin-right: 10px" icon="fa fa-plus-square" title="Añadir o Eliminar Ubicación"  update="EditarUbicacion"
+                                             oncomplete="PF('EditarUbicacion').show();" actionListener="#{calculosAnualesPredios.cargarUbicacionesPorObra(obra)}"/>
+                        </p:column>
+                    </p:dataTable> 
+                </div> 
+            </div>
+        </h:form>
+        <p:dialog header="Detalle de Ubicaciones por Obra" widgetVar="EditarUbicacion" id="EditarUbicacion"
+                  closable="false" fitViewport="true" modal="true" responsive="true" width="50%" resizable="false" position="center">
+            <h:form id="formNuevo">
+                <h:panelGrid  columns="2" styleClass="ui-panelgrid-blank" >
+                    <p:selectOneMenu  value="#{calculosAnualesPredios.ciudadela}" converter="#{utilConverter}" filterMatchMode="contains"   filter="true">
+                        <f:selectItem itemLabel="Todos las Ciudadelas" itemValue="#{null}"/>
+                        <f:selectItems  value="#{calculosAnualesPredios.ciudadelas}" var="p1" itemLabel="#{p1.codigo}-#{p1.nombre}" itemValue="#{p1}"  />
+                        <p:ajax listener="#{calculosAnualesPredios.anadirUbiacion()}" update="formNuevo:detalleObra"/>
+                    </p:selectOneMenu>
+                    <p:commandButton style="margin-left: 5rem" value="Todo Durán" icon="fa fa-home" update="formNuevo:detalleObra"
+                                     actionListener="#{calculosAnualesPredios.anadirUbiacionTodoDuran()}"/>
+                </h:panelGrid>
+                <h:panelGrid  columns="1" styleClass="ui-panelgrid-blank" id="detalleObra">
+                    <p:dataTable id="dtObras" reflow="true" paginator="true" lazy="false" rows="20" rowsPerPageTemplate="20,50,100" paginatorPosition="bottom" filterEvent="keyup"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}" 
+                                 value="#{calculosAnualesPredios.ubicaciones}" var="ubicacion" emptyMessage="No se encontró ningún Item.">
+                        <f:facet name="header">
+                            Ubicaciones
+                        </f:facet>
+                        <p:column headerText="Codigo Ciudadela" style="text-align: center;" filterBy="#{ubicacion.ciudadela.codigo}">
+                            <p:outputLabel value="#{ubicacion.ciudadela.codigo}"/>
+                        </p:column>
+                        <p:column headerText="Nombre de la Obra" style="text-align: center;" filterBy="#{ubicacion.nombre}">
+                            <p:outputLabel value="#{ubicacion.nombre}"/>
+                        </p:column>
+
+                        <p:column headerText="Opciones" style="text-align: center;">
+                            <center>
+                                <p:commandButton value="Eliminar"  actionListener="#{calculosAnualesPredios.eliminarUbicacion(ubicacion)}" update="dtObras"
+                                                 icon="fa fa-times"/>
+                            </center>
+                        </p:column>
+                    </p:dataTable>
+                </h:panelGrid>
+                <center>
+                    <p:commandButton icon="fa fa-times" oncomplete="PF('EditarUbicacion').hide();" title="CERRAR" value="Cerrar"/>
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,178 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:define name="title">
+        Asignar Delegado
+    </ui:define>
+
+    <ui:define name="content">
+        <div class="ui-g-12">
+            <div class="car card-w-title" style="background: #00796b;">
+                  <u:ventaComisaria solicitudVentanilla="#{asignacionDelegadoMB.solicitud}" task="#{asignacionDelegadoMB.tarea}" tramite="#{asignacionDelegadoMB.tramite}"/>
+            </div>
+        </div>
+        <h:form id="mainForm" prependId="false">
+            <center>
+                <!--<h1 style="color: #00a2d3">COMISARIA # {asignacionDelegadoMB.comisariaSelect}</h1>-->
+            </center>
+            <div style="width: 100%; margin: auto;">
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank" columnClasses="ui-g-6,ui-g-6" layout="grid">
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <h:panelGroup  layout="block" style="width: 100%;" >
+                            <p:outputLabel value="Seleccionar Delegado:" class="FontBold Fs14" />
+                            <p:selectOneMenu style="width: 40%;" value="#{asignacionDelegadoMB.clienteSelect}" filter="true" filterMatchMode="contains" converter="#{utilConverter}">
+                                <f:selectItem itemLabel="Seleccionar..." itemValue="#{null}"/>
+                                <f:selectItems value="#{asignacionDelegadoMB.listClientes}"  var="u" itemValue="#{u}" itemLabel="#{u.funcionario.persona.nombreCompleto}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <br/>
+                        <u:documents id="listDocumentos" entiti="#{asignacionDelegadoMB.tramite}"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:dataTable  id="data" widgetVar="data" var="item" 
+                                      value="#{asignacionDelegadoMB.lazyInspeccion}" paginator="true" rows="5" style="width: 100%;margin-top: 15px" 
+                                      paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                      paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                      rowsPerPageTemplate="5,40,50,100" lazy="true" 
+                                      emptyMessage="No existen datos con el criterio de busqueda especificado">
+                            <f:facet name="header">
+                                INSPECCIONES
+                            </f:facet>
+                            <p:column headerText="Num. Solciitud" style="width: 5%;text-align: center">
+                                <h:outputText value="#{item.noSolicitud}" />
+                            </p:column>
+                            <p:column headerText="Comisario" >
+                                <h:outputText value="#{item.comisariaUser.usuario}" />
+                            </p:column>
+                            <p:column headerText="Fecha" style="text-align: center">
+                                <h:outputText value="#{item.fecha}" />
+                            </p:column>
+                            <p:column headerText="Motivo" style="text-align: center">
+                                <h:outputText value="#{item.motivo}" />
+                            </p:column>
+                            <p:column headerText="Observacion" style="text-align: center">
+                                <h:outputText value="#{item.observacion}" />
+                            </p:column>
+                            <p:column headerText="Lugar" style="text-align: center">
+                                <h:outputText value="#{item.lugar}" />
+                            </p:column>
+                            <p:column headerText="****" style="width: 5%;">
+                                <p:commandButton icon="fa fa-search" oncomplete="PF('dlgoInspeccion').show()" update="fmInpeccion"
+                                                 actionListener="#{asignacionDelegadoMB.generarSolciitud(item)}" />
+                            </p:column>
+
+                        </p:dataTable>
+                    </p:panelGrid>
+
+                </p:panelGrid>
+
+            </div>
+            <center>
+                <p:commandButton value="Completar Tarea" actionListener="#{asignacionDelegadoMB.opendlg()}"
+                                 icon="fa fa-send" style="width: auto;margin-top: 20px;" process="@form" />
+
+            </center>
+        </h:form>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="25%" position="center" draggable="false" header="Observación" height="150"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{asignacionDelegadoMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aceptar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{asignacionDelegadoMB.completarTarea()}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+
+
+        <p:dialog id="dlgoInspeccion" widgetVar="dlgoInspeccion"  position="center" draggable="false" header="Formulario de Inspección " width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="550" >
+            <h:form id="fmInpeccion" prependId="false">
+                            
+                <p:panelGrid columns="2" styleClass="ui-panelgrid-blank form-group" layout="grid">
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Clave Catastral:" class="FontBold"/>
+                        <p:inputText readonly="true" id="clave_predio" value="#{asignacionDelegadoMB.predio.claveCat}"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Tipo Predio:" class="FontBold"/>
+                        <p:inputText  style="width: 100%;" value="#{asignacionDelegadoMB.predio.tipoPredio eq null?'':(asignacionDelegadoMB.predio.tipoPredio eq 'U'?'URBABNO':'RURAL')}" 
+                                      readonly="true"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="num Predio:" class="FontBold"/>
+                        <p:inputText   style="width: 100%;" value="#{asignacionDelegadoMB.predio.numPredio}" readonly="true"/>
+                    </p:panelGrid>
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Fecha:" class="FontBold"/>
+                        <p:calendar readonly="true" value="#{asignacionDelegadoMB.inspeccion.fecha}" navigator="true" locale="es" pattern="MM/dd/yyyy HH:mm:ss"/>
+                    </p:panelGrid>
+
+
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Delegado de Inpección:" class="FontBold"/>   
+                        <h:panelGroup>
+                            <p:inputText readonly="true" style="width: 80%;" value="#{asignacionDelegadoMB.inspeccion.delegado.nombreCompleto}"/>
+                            <p:commandLink disabled="true" process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"
+                                           style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Comisario:" class="FontBold"/>
+                        <h:panelGroup>
+                            <p:inputText readonly="true" style="width: 80%;" value="#{asignacionDelegadoMB.inspeccion.comisariaUser.usuario}"/>
+                            <p:commandLink disabled="true"  process="@this" oncomplete="PF('dlogoServidores').show()" update="fmrServidores"  actionListener="#{asignacionDelegadoMB.cargarLazyServidor(1)}" style="width: auto;">
+                                <i class="fa fa-search" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Lugar:" class="FontBold"/>
+                        <p:inputText readonly="true" value="#{asignacionDelegadoMB.inspeccion.lugar}" style="width: 100%;"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+                <p:panelGrid columns="1" styleClass="ui-panelgrid-blank form-group" layout="grid">
+
+                    <p:panelGrid columns="1" style="width: 100%">
+                        <p:outputLabel value="Motivo:" class="FontBold"/>                    
+                        <p:inputTextarea readonly="true" rows="5" cols="8" value="#{asignacionDelegadoMB.inspeccion.motivo}" style="width: 100%;"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" style="width: 100%" rendered="false">
+                        <p:outputLabel value="Observación:" class="FontBold"/>
+                        <p:inputTextarea readonly="true" rows="5" cols="8" value="#{asignacionDelegadoMB.inspeccion.observacion}" style="width: 100%;"/>
+                    </p:panelGrid>
+
+                </p:panelGrid>
+                <br/>
+                <center>
+
+                    <p:commandButton value="Aceptar" icon="fa fa-save" oncomplete="PF('dlgoInspeccion').hide()" update="fmInpeccion,mainForm"
+                                     style="width: auto;" />
+                </center>
+            </h:form>           
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

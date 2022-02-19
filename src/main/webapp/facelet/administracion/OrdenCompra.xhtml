@@ -1,0 +1,1048 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Orden de Compra
+    </ui:define>
+    <ui:param name="tittle" value="ORDEN COMPRA" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{ordenCompraView.tarea}" tramite="#{ordenCompraView.tramite}" />
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <div class="ui-g-12">
+                        <p:commandButton icon="fa fa-fw fa-trash"  actionListener="#{ordenCompraView.openDlgObservacion(0)}" process="@this"
+                                         rendered="#{!ordenCompraView.anularTramite()}"
+                                         style="width: 150px;background: red;margin: 15px 2px" value="Anular Tramite" />
+                        <p:commandButton icon="fa fa-fw fa-refresh" actionListener="#{ordenCompraView.openDlgObservacion(2)}" process="@this"
+                                         rendered="#{!ordenCompraView.consultar()}"
+                                         style="width: 150px;background: red;margin: 15px 2px" value="Retornar Tramite"/>
+                        <p:tabView id="wzDetalleOrden">
+                            <p:tab title="Detalle Orden Compra">
+                                <p:wizard backLabel="Regresar" nextLabel="Siguiente" id="ordenCompraWizard" flowListener="#{ordenCompraView.onFlowProcess}"
+                                          showNavBar="true" showStepStatus="true" widgetVar="wiz">
+                                    <p:tab id="tabInicio" title="Datos Generales" titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset id="panelDt" legend="Datos" style="margin-bottom: 20px;font-weight: bold">
+                                                <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank" style="border: none">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Orden de compra N°" for="@next" style="font-weight: bold;"/>
+                                                        <p:inputText  id="codigo" readonly="true" onkeypress="focusNextOnEnter(event, 'fechaElab')"
+                                                                      value="#{ordenCompraView.codigo}"
+                                                                      class="panelInput" placeholder="Generado por el Sistema"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Tipo de Proceso:" for="@next" style="font-weight: bold;"/>
+                                                        <p:selectOneMenu id="tipoProceso" value="#{ordenCompraView.adquisicion.tipoProceso}"
+
+                                                                         converter="#{utilConverter}" required="true"
+                                                                         filter="true" filterMatchMode="contains"
+                                                                         style="width: 100%;" panelStyle="width:100px">
+                                                            <!--disabled="#{ordenCompraView.consultar()}"-->
+                                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{ordenCompraView.tiposProcesos}"
+                                                                           var="tp"
+                                                                           itemLabel="#{tp.texto}"
+                                                                           itemValue="#{tp}"/>
+                                                            <p:ajax update="formMain" listener="#{ordenCompraView.tipoCompraList()}"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Tipo de Compra:" for="@next" style="font-weight: bold;"/>
+                                                        <p:selectOneMenu id="tipoCompra" value="#{ordenCompraView.adquisicion.tipoAdquisicion}"
+                                                                         converter="#{utilConverter}" required="true"
+                                                                         filter="true" filterMatchMode="contains"
+                                                                         style="width: 100%;" panelStyle="width:100px">
+                                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{ordenCompraView.tipoCompraList}"
+                                                                           var="to"
+                                                                           itemLabel="#{to.texto}"
+                                                                           itemValue="#{to}"/>
+                                                            <p:ajax update="tipoBien" listener="#{ordenCompraView.caracteristicas_metodologia()}"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Fecha Elaboración:" for="@next" style="font-weight: bold;"/>
+                                                        <p:calendar id="fechaElab"  onkeypress="focusNextOnEnter(event, 'fechaAcep')"
+                                                                    value="#{ordenCompraView.ordenCompra.fechaElaboracion}" required="true"
+                                                                    style="font-size: 18px; width: 100%; text-align: right;"
+                                                                    locale="es" pattern="dd-MM-yyyy" mask="true"  timeZone="America/Bogota" navigator="true">
+                                                            <p:ajax event="dateSelect" update="fechaElab"/>
+                                                        </p:calendar>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                                                  rendered="#{ordenCompraView.adquisicion.tipoProceso.codigo eq 'tipo_proceso_catalogo'}">
+                                                        <p:outputLabel value="Fecha Aceptación:" for="@next" style="font-weight: bold;"/>
+                                                        <p:calendar id="fechaAcep" onkeypress="focusNextOnEnter(event, 'tipoCompra')"
+                                                                    value="#{ordenCompraView.ordenCompra.fechaAceptacion}" required="true"
+                                                                    style="font-size: 18px; width: 100%; text-align: right;"
+                                                                    locale="es" pattern="dd-MM-yyyy" mask="true"  timeZone="America/Bogota" navigator="true">
+                                                        </p:calendar>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                                                  rendered="#{ordenCompraView.adquisicion.tipoProceso.codigo eq 'tipo_proceso_catalogo'}">
+                                                        <p:outputLabel value="Código de Proceso" for="@next" style="font-weight: bold;"/>
+                                                        <p:inputText  id="codigoProceso" readonly="false" onkeypress="focusNextOnEnter(event, 'codigo')"
+                                                                      value="#{ordenCompraView.ordenCompra.codigoProceso}"
+                                                                      class="panelInput"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Tipo Bien:" for="@next" style="font-weight: bold;"/>
+                                                        <p:selectOneMenu id="tipoBien" value="#{ordenCompraView.adquisicion.subTipoAdquisicion}"
+                                                                         disabled="#{ordenCompraView.adquisicion.tipoAdquisicion.codigo == 'tipo_adquisicion_bienes' ? false:true}"
+                                                                         converter="#{utilConverter}"
+                                                                         filter="true" filterMatchMode="contains"
+                                                                         style="width: 100%;" panelStyle="width:100px">
+                                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{ordenCompraView.subTiposAdquisicion}"
+                                                                           var="ta"
+                                                                           itemLabel="#{ta.texto}"
+                                                                           itemValue="#{ta}"/>
+                                                            <p:ajax update="tipoBien"/>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Unidad Requirente: " for="@next" style="font-weight: bold;" />
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="unidad" value="#{ordenCompraView.ordenCompra.unidad.nombre}"
+                                                                         onkeypress="focusNextOnEnter(event, 'proveedor')"
+                                                                         required="false"
+                                                                         class="panelInput" style="width: 100%" readonly="true" >
+                                                                <p:ajax update="unidad" />
+                                                            </p:inputText>
+                                                            <p:commandButton title="Buscar Unidad" icon="fa fa-search" id="btnBuscarUnid"
+                                                                             process="@this"
+                                                                             update="unidad"
+                                                                             actionListener="#{ordenCompraView.openDialogUnidad()}"
+                                                                             styleClass="green-button button-group" >
+                                                                <p:ajax event="dialogReturn" listener="#{ordenCompraView.selectUnidad}" update="unidad"/>
+                                                            </p:commandButton>
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Proveedor: " for="@next" style="font-weight: bold;"/>
+                                                        <div class="ui-inputgroup">
+                                                            <p:inputText id="proveedor" value="#{ordenCompraView.adquisicion.proveedor.cliente.nombreCompleto}"
+                                                                         class="panelInput" style="width: 100%" required="false"
+                                                                         onkeypress="focusNextOnEnter(event, 'dirProveedor')">
+                                                                <p:ajax update="proveedor" />
+                                                            </p:inputText>
+                                                            <p:commandButton title="Buscar Proveedor" icon="fa fa-search" id="btnBuscarProvee"
+                                                                             actionListener="#{ordenCompraView.openDialogoProveedor()}"
+                                                                             process="@this"
+                                                                             update="proveedor,dirProveedor"
+                                                                             styleClass="green-button button-group" >
+                                                                <p:ajax event="dialogReturn" listener="#{ordenCompraView.selectProveedor}" update="proveedor,dirProveedor,emailProveedor"/>
+                                                            </p:commandButton>
+                                                        </div>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Dirección del Proveedor:" for="@next" style="width: 100%;font-weight: bold;"/>
+                                                        <p:inputText id="dirProveedor" required="true"
+                                                                     readonly="true"
+                                                                     value="#{ordenCompraView.adquisicion.proveedor.cliente.direccion}"
+                                                                     style="width: 100%"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="E-mail del Proveedor:" for="@next" style="width: 100%;font-weight: bold;"/>
+                                                        <p:inputText id="emailProveedor" required="true"
+                                                                     readonly="true" onkeypress="focusNextOnEnter(event, 'nCotizacion')"
+                                                                     value="#{ordenCompraView.adquisicion.proveedor.cliente.email}"
+                                                                     style="width: 100%"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                                        <p:outputLabel value="N° Cotización" for="@next" style="font-weight: bold;"/>
+                                                        <p:inputText  id="nCotizacion"  onkeypress="focusNextOnEnter(event, 'objContratacion')"
+                                                                      value="#{ordenCompraView.ordenCompra.numCotizacion}"
+                                                                      class="panelInput"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Objeto de Contratación" for="@next" style="width: 100%;font-weight: bold;" />
+                                                        <p:inputTextarea id="objContratacion" required="true" style="width: 100%;border: 1px solid black"
+                                                                         rows="5" onkeypress="focusNextOnEnter(event, 'textConsideraciones')"
+                                                                         value="#{ordenCompraView.ordenCompra.objetoContratacion}" cols="40" autoResize="true" />
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <!--                                                <center>
+                                                                                                    <p:commandButton value="Generar Descripción" actionListener="# {ordenCompraView.textoInicial()}"
+                                                                                                                     icon="fa fa-fw fa-save"
+                                                                                                                     process="@form"
+                                                                                                                     update="formMain"
+                                                                                                                     style="width: 150px;margin: 10px"/>
+                                                                                                </center>-->
+                                            </p:fieldset>
+
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px;margin: 20px"/>
+                                        </center>
+                                    </p:tab>
+                                    <p:tab id="item123" title="Especificaciones o Características" titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank"  >
+                                            <p:fieldset id="panelCaracte" legend="1.- Especificaciones o Características Técnicas Según Corresponda"
+                                                        style="height: 320px;font-weight: bold" rendered="false" >
+                                                <p:commandButton value="Agregar" actionListener="#{ordenCompraView.dlgCaracteristica()}"
+                                                                 id="addCaracteristica"
+                                                                 update="dtCaracteristica"
+                                                                 icon="fa fa-plus"
+                                                                 process="@this"
+
+                                                                 style="width: 150px;margin: 10px 0px"/>
+                                                <p:dataTable var="caract" rowIndexVar="rowIndex"
+                                                             id="dtCaracteristica" widgetVar="dtCaracteristica"
+                                                             value="#{ordenCompraView.caracteristicasList}"
+                                                             emptyMessage="No existen criterio de busqueda especificado">
+                                                    <p:column headerText="Caracteristica" style="width: 40%">
+                                                        <h:outputText value="#{caract.caracteristica}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Descripción" style="width: 40%">
+                                                        <h:outputText value="#{caract.descripcion}"/>
+                                                    </p:column>
+                                                    <p:column headerText="Acciones " style="width: 20%;text-align: center">
+                                                        <p:commandLink actionListener="#{ordenCompraView.editarCaracteristicas(caract)}"
+                                                                       title="Editar" process="@this" update="formMain">
+                                                            <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 5px; color: blue;"></i>
+                                                        </p:commandLink>
+                                                        <p:commandLink actionListener="#{ordenCompraView.eliminarCaracteristica(caract,rowIndex)}"
+                                                                       title="Eliminar" process="@this" update="formMain">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?"
+                                                                       icon="fa fa-exclamation-triangle"/>
+
+                                                        </p:commandLink>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:fieldset>
+                                            <p:fieldset legend="2.- Valor Adjudicado" style="height: 300px;font-weight: bold" id="fldValorCompra">
+                                                <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Valor:" for="@next"/>
+                                                        <p:inputNumber style="width: 100%;text-align: right" decimalPlaces="4"
+                                                                       decimalSeparator="," thousandSeparator="." symbol="$"
+                                                                       id="valorSubtotal" placeholder="Subtotal"
+                                                                       value="#{ordenCompraView.ordenCompra.valorSubtotal}"
+                                                                       inputStyle="text-align: right" requiredMessage="Debe ingresar el valor de adjudicación">
+                                                            <p:ajax update="valorSubtotal,valorAdj" listener="#{ordenCompraView.modifyValorAdjudicado()}" />
+                                                        </p:inputNumber>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="¿Aplica IVA? " style="font-weight: bold"/>
+                                                        <p:selectBooleanCheckbox id="aplicaIva" value="#{ordenCompraView.ordenCompra.aplicaIva}">
+                                                            <p:ajax update="valorAdj" listener="#{ordenCompraView.modifyValorAdjudicado()}" />
+                                                        </p:selectBooleanCheckbox>
+                                                    </h:panelGroup>
+
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="¿Aplica Impuesto Adicional? " style="font-weight: bold"/>
+                                                        <p:selectBooleanCheckbox id="aplicaImpuesto" value="#{ordenCompraView.ordenCompra.aplicaImpuesto}">
+                                                            <p:ajax update="impAdic,valorAdj,fldValorCompra" listener="#{ordenCompraView.modifyValorAdjudicado()}" />
+                                                        </p:selectBooleanCheckbox>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{ordenCompraView.ordenCompra.aplicaImpuesto}">
+                                                        <p:outputLabel value="Impuesto(%):" for="@next"/>
+                                                        <p:inputNumber style="width: 100%;text-align: right" decimalPlaces="0" decimalSeparator="," thousandSeparator="." symbol="%"
+                                                                       id="impAdic" placeholder="Impuesto" value="#{ordenCompraView.ordenCompra.valorImpuesto}"
+                                                                       inputStyle="text-align: right" requiredMessage="Debe ingresar el valor de impuesto">
+                                                            <p:ajax update="valorAdj" listener="#{ordenCompraView.modifyValorAdjudicado()}" />
+                                                        </p:inputNumber>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Valor:" for="@next"/>
+                                                        <p:inputNumber style="width: 100%;text-align: right" decimalPlaces="4"
+                                                                       decimalSeparator="," thousandSeparator="." symbol="$"
+                                                                       id="valorAdj" placeholder="Valor adjudicado"
+                                                                       value="#{ordenCompraView.adquisicion.valorContratado}"
+                                                                       inputStyle="text-align: right" requiredMessage="Debe ingresar el valor de adjudicación"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:commandButton value="Agregar Valor"
+                                                                         actionListener="#{ordenCompraView.addValorAbjudicado()}"
+                                                                         icon="fa fa-plus"
+                                                                         update="textValorAdj"
+                                                                         process="valorAdj"
+                                                                         style="width: 100%"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Descripción:" for="@next"/>
+                                                        <p:inputTextarea id="textValorAdj" rows="5" value="#{ordenCompraView.ordenCompra.detalleValorAdjudicado}"
+                                                                         cols="30" autoResize="true" style="width: 100%;border: 1px solid black"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                            <p:fieldset legend="Detalle / Especificaciones Técnicas" style="font-weight: bold">
+                                                <p:commandButton value="Agregar"
+                                                                 actionListener="#{ordenCompraView.dlgEspecificacionesTecn()}"
+                                                                 process="@this"
+                                                                 icon="fa fa-plus"
+                                                                 style="width: 150px;margin: 10px"/>
+                                                <p:dataTable var="esp" value="#{ordenCompraView.especificacionesList}"
+                                                             id="dtDetalleItem4" widgetVar="dtDetalleItem4" style="margin: 10px"
+                                                             emptyMessage="No existen criterio de busqueda especificado">
+                                                    <p:column headerText="Item" style="width: 12%;text-align: center">
+                                                        <h:outputText value="#{esp.item}" />
+                                                    </p:column>
+                                                    <p:column headerText="Detalle" style="width: 25%">
+                                                        <h:outputText value="#{esp.detalle}" />
+                                                    </p:column>
+                                                    <p:column headerText="Cantidad Requerida" style="width: 13%;text-align: center" >
+                                                        <h:outputText value="#{esp.cantidad}" />
+                                                    </p:column>
+                                                    <p:column headerText="Unidad" style="width: 12%;text-align: center" >
+                                                        <h:outputText value="#{esp.unidad.descripcion}" />
+                                                    </p:column>
+                                                    <p:column headerText="Caracteristica" style="width: 25%;" >
+                                                        <h:outputText value="#{esp.caracteristicas}" />
+                                                    </p:column>
+                                                    <p:column headerText="Acciones " style="width: 13%;text-align: center">
+                                                        <p:commandLink actionListener="#{ordenCompraView.editarEspecificacion(esp)}"
+                                                                       title="Editar" process="@this" update="formMain">
+                                                            <p:graphicImage value="/resources/icons/editar.png"
+                                                                            width="16" height="15"
+                                                                            style="margin-right: 5px;"/>
+                                                        </p:commandLink>
+                                                        <p:commandLink actionListener="#{ordenCompraView.eliminarEspecificaciones(esp)}"
+                                                                       title="Eliminar" process="@this" update="formMain">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?"
+                                                                       icon="fa fa-exclamation-triangle"/>
+
+                                                        </p:commandLink>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:fieldset>
+                                            <p:fieldset legend="Nueva Metodología" style="height: 320px;font-weight: bold" rendered="false" >
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Nuevo Concepto:" for="@next"/>
+                                                        <p:inputText id="newConcepto" value="#{ordenCompraView.ordenCompra.nuevoConcepto}"
+                                                                     readonly="#{!(ordenCompraView.tipo eq 0 and !ordenCompraView.caracteristicas_metodologia())}"
+                                                                     required="#{(ordenCompraView.tipo eq 0 and !ordenCompraView.caracteristicas_metodologia())}"
+                                                                     style="text-transform: uppercase;width: 100%;"
+                                                                     class="panelInput" onkeypress="focusNextOnEnter(event, 'detalleMt')"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Detalle:" for="@next" style="width: 100%" />
+                                                        <p:inputTextarea id="detalleMt" rows="16"
+                                                                         readonly="#{!(ordenCompraView.tipo eq 0 and !ordenCompraView.caracteristicas_metodologia())}"
+                                                                         required="#{(ordenCompraView.tipo eq 0 and !ordenCompraView.caracteristicas_metodologia())}"
+                                                                         value="#{ordenCompraView.ordenCompra.detalleConcepto}" cols="40"
+                                                                         autoResize="true" style="width: 100%;border: 1px solid black"/>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <!--rendered="# {ordenCompraView.caracteristicas_metodologia()}"-->
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="Observaciones" style="margin-bottom: 15px;color: #00b0ff;font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea id="textConsideraciones" rows="10" value="#{ordenCompraView.ordenCompra.detalleConsideracion}"
+                                                                     autoResize="true" style="width: 100%;border: 1px solid black" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px;margin: 20px"/>
+                                        </center>
+                                    </p:tab>
+                                    <p:tab id="tabPresupuesto" title="Certificación Presupuestaria" titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="Certificación Presupuestaria" style="font-weight: bold">
+                                                <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                                        <p:outputLabel value="Presupuesto:" for="@next" style="font-weight: bold;"/><br/>
+                                                        <p:selectOneMenu id="reservaCompro" value="#{ordenCompraView.ordenCompra.reservaCompromiso}"
+                                                                         converter="#{utilConverter}" var="t" style="width: 100%" panelStyle="width:175px"
+                                                                         filter="true" filterMatchMode="contains" autoWidth="true" >
+                                                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{ordenCompraView.reservaList}"
+                                                                           var="rc"
+                                                                           itemLabel="CERTIFICACIÓN PRESUPUESTARIA NO. #{rc.secuancialForFilter}"
+                                                                           itemValue="#{rc}"/>
+                                                            <p:ajax update="formMain" listener="#{ordenCompraView.detallePresupueto()}" process="reservaCompro"/>
+                                                            <p:column style="width:20%" >
+                                                                <f:facet name="header">
+                                                                    <h:outputText value="Código"/>
+                                                                </f:facet>
+                                                                <h:outputText value="#{t.secuancialForFilter}" style="font-weight: bold;" />
+                                                            </p:column>
+                                                            <p:column style="width: 50%;">
+                                                                <f:facet name="header">
+                                                                    <h:outputText value="Descripción"/>
+                                                                </f:facet>
+                                                                <h:outputText value="#{t.descripcion}" />
+                                                            </p:column>
+                                                            <p:column style="width:30%" >
+                                                                <f:facet name="header">
+                                                                    <h:outputText value="Unidad"/>
+                                                                </f:facet>
+                                                                <h:outputText value="#{t.unidadRequiriente.nombre}" style="font-weight: bold;" />
+                                                            </p:column>
+                                                        </p:selectOneMenu>
+                                                    </h:panelGroup>
+                                                </p:panelGrid>
+                                                <p:dataTable var="dtRe" value="#{ordenCompraView.detalleReservaList}"
+                                                             id="dtDetalleReserva" widgetVar="dtDetalleReserva" style="margin: 15px"
+                                                             emptyMessage="No existen criterio de busqueda especificado">
+                                                    <p:column headerText="Codigo" style="text-align: center;width: 25%">
+                                                        <h:outputLabel value="#{dtRe.actividadProducto.codigoPresupuestario} #{dtRe.presupuesto.partida}" />
+                                                    </p:column>
+                                                    <p:column headerText="Item" style="width: 50%">
+                                                        <h:outputLabel value="#{ordenCompraView.itemConcepto(dtRe)}" />
+                                                    </p:column>
+                                                    <p:column headerText="Valor" style="width: 25%">
+                                                        <h:outputLabel value="#{dtRe.montoSolicitado}" style="float: right">
+                                                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                        </h:outputLabel>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank" rendered="false">
+                                            <p:fieldset legend="5.-Certificación Presupuestaria" style="font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleCertificacion}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     rows="15" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                            <p:fieldset legend="6.-Presupuesto Referencia" style="font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detallePresupuesto}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     rows="15" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px;margin: 20px"/>
+                                        </center>
+                                    </p:tab>
+
+                                    <!--rendered="# {ordenCompraView.adquisicion.tipoProceso.codigo eq 'tipo_proceso_infima'}"-->
+                                    <p:tab id="tabPlazo" title="Lugar y plazo de entrega" titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <br/><br/>
+                                        <center>
+                                            <p:panelGrid id="plazoTipo">
+                                                <p:outputLabel value="Plazo:" for="@next"/>
+                                                <p:spacer width="15" height="10"/>
+                                                <p:inputText style="width: 10%;text-align: right" required="true"
+                                                             value="#{ordenCompraView.ordenCompra.diaPlazo}">
+                                                    <p:keyFilter regEx="/[\d\-]/" />
+                                                </p:inputText>
+                                                <p:spacer width="15" height="10"/>
+                                                <p:selectOneMenu id="tipoPlazo" value="#{ordenCompraView.ordenCompra.tipoPlazo}"
+                                                                 converter="#{utilConverter}"
+                                                                 required="true"
+                                                                 filter="true" filterMatchMode="contains"
+                                                                 style="width: 15%;" panelStyle="width:10%">
+                                                    <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                    <f:selectItems value="#{ordenCompraView.tipoPagoPlazo}"
+                                                                   var="pl"
+                                                                   itemLabel="#{pl.texto}"
+                                                                   itemValue="#{pl}"/>
+                                                    <p:ajax listener="#{ordenCompraView.plazoPago()}" update="wzDetalleOrden:pngPlazoPago" process="plazoTipo"/>
+                                                </p:selectOneMenu>
+                                            </p:panelGrid>
+                                        </center>
+                                        <br/><br/>
+                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank" id="pngPlazoPago">
+                                            <p:fieldset legend="7.-Plazo de Entrega" style="font-weight: bold;height: 375px">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                        <p:inputTextarea rows="10" value="#{ordenCompraView.ordenCompra.plazoEntrerga}"
+                                                                         required="true" style="width: 100%;border: 1px solid black"
+                                                                         cols="40" autoResize="true" />
+                                                    </p:panelGrid>
+                                                    <p:fieldset legend="Forma y Condiciones de Pago" style="border: none">
+                                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                            <p:inputTextarea rows="10" value="#{ordenCompraView.ordenCompra.condicionPlazo}"
+                                                                             required="true" style="width: 100%;border: 1px solid black"
+                                                                             cols="40" autoResize="true"/>
+                                                        </p:panelGrid>
+                                                    </p:fieldset>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                            <p:fieldset legend="8.-Lugar de Entrega" style="font-weight: bold;height: 375px">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea rows="25" value="#{ordenCompraView.ordenCompra.detalleEntrega}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px"/>
+                                        </center>
+                                    </p:tab>
+                                    <p:tab id="garantiaObligacion" title="Garantías y Multa" titleStyle="border-right: 2px solid white;font-size:12px"
+                                           rendered="#{ordenCompraView.adquisicion.tipoProceso.codigo eq 'tipo_proceso_infima'}">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="9.-Garantías" style="font-weight: bold">
+                                                <p:panelGrid id="panelGarantia">
+                                                    <p:outputLabel value="APLICA:" for="@next" style="margin: 8px"/>
+                                                    <p:spacer width="15" height="5"/>
+                                                    <p:selectBooleanButton value="#{ordenCompraView.adquisicion.garantia}"
+                                                                           onLabel="Si" offLabel="No" style="width:100px;" >
+                                                        <p:ajax listener="#{ordenCompraView.garantiaObligacion()}" update="fieldsetMulta" />
+                                                    </p:selectBooleanButton>
+                                                </p:panelGrid>
+                                                <p:panelGrid id="panelDisPartidasDetGarantia" columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleGarantia}"
+                                                                     style="width: 100%;border: 1px solid black"
+                                                                     rows="5" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                            <p:fieldset legend="10.-Obligaciones Del Contratista" style="font-weight: bold">
+                                                <h:panelGroup>
+                                                    <p:outputLabel value="APLICA:" for="@next" style="margin: 8px"/>
+                                                    <p:selectBooleanButton value="#{ordenCompraView.ordenCompra.obligaciones}"
+                                                                           onLabel="Si" offLabel="No" style="width:100px;" >
+
+                                                    </p:selectBooleanButton>
+                                                </h:panelGroup>
+
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleObligacion}"
+                                                                     style="width: 100%;border: 1px solid black"
+                                                                     rows="5" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset id="fieldsetMulta" legend="11.-Multa" style="font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.multa}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     rows="5" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px"/>
+                                        </center>
+                                    </p:tab>
+                                    <p:tab id="responsableObligacion" title="Administrador " titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="12.-Responsable de la Orden de Compra" style="font-weight: bold">
+                                                <p:commandButton value="Añadir Responsable" id="añadirResponsable"
+                                                                 actionListener="#{ordenCompraView.openDialogServidor()}"
+                                                                 process="@this"
+                                                                 icon="fa fa-user-plus"
+                                                                 style="width: auto" styleClass="Fs16">
+                                                    <p:ajax event="dialogReturn" listener="#{ordenCompraView.selectResponsable}" update="dtResponsable"/>
+                                                </p:commandButton>
+                                                <p:dataTable style="text-align: center; margin: 10px 0px" rows="3"
+                                                             editable="true" editMode="cell"
+                                                             value="#{ordenCompraView.responsableList}"
+                                                             emptyMessage="No existe criterio de Busqueda"
+                                                             id="dtResponsable"
+                                                             var="resp" widgetVar="dtResponsable">
+                                                    <p:column headerText="Identificación" style="width: 20%; height: 1vw;text-align: center">
+                                                        <h:outputText value="#{resp.responsable.persona.identificacion}" />
+                                                    </p:column>
+                                                    <p:column headerText="Nombre" style="width: 50%;text-align: center">
+                                                        <h:outputText value="#{resp.responsable.persona.nombreCompleto}" />
+                                                    </p:column>
+                                                    <p:column headerText="Fecha asignación" style="width: 20%;text-align: center">
+                                                        <p:cellEditor>
+                                                            <f:facet name="output">
+                                                                <h:outputText value="#{resp.fechaAsignacion}" >
+                                                                    <f:convertDateTime pattern="dd-MM-yyyy" locale="es" />
+                                                                </h:outputText>
+                                                            </f:facet>
+                                                            <f:facet name="input">
+                                                                <p:calendar value="#{resp.fechaAsignacion}" style="width:100%"/>
+                                                            </f:facet>
+                                                        </p:cellEditor>
+                                                    </p:column>
+                                                    <p:column headerText="Accion" style="width: 10%;text-align: center">
+                                                        <p:commandLink actionListener="#{ordenCompraView.eliminarResponsable(resp)}"
+                                                                       title="Eliminar" process="@this" update="formMain">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?"
+                                                                       icon="fa fa-exclamation-triangle"/>
+
+                                                        </p:commandLink>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:fieldset>
+                                            <p:fieldset legend="13.-Obligaciones Responsable de la Orden de Compra" style="font-weight: bold"
+                                                        rendered="#{ordenCompraView.tipo eq 0}">
+                                                <p:commandButton value="Añadir Obligaciones" id="addObligacionesResp" widgetVar="addObligacionesResp"
+                                                                 actionListener="#{ordenCompraView.dlgObligacion()}"
+                                                                 process="@this"
+                                                                 icon="fa fa-plus"
+                                                                 style="width: auto" styleClass="Fs16"/>
+                                                <p:dataTable  style="text-align: center; margin: 10px 0px" rows="10"
+                                                              emptyMessage="No existe criterio de Busqueda"
+                                                              id="dtDetalleObligacion"
+                                                              value="#{ordenCompraView.obligacionRespList}"
+                                                              var="oblig" widgetVar="dtDetalleObligacion"
+                                                              rowIndexVar="nmb"
+                                                              paginator="false"
+                                                              paginatorPosition="bottom"
+                                                              rowsPerPageTemplate="10,15,20,60,100">
+                                                    <p:column headerText="Nº" style="width: 25%">
+                                                        <h:outputText value="#{nmb+1}" />
+                                                    </p:column>
+                                                    <p:column headerText="Detalle de Obligaciones de Responsable " style="width: 60%;">
+                                                        <h:outputText value="#{oblig.descripcion}" />
+                                                    </p:column>
+                                                    <p:column headerText="Acciones " style="width: 15%;text-align: center">
+                                                        <p:commandLink actionListener="#{ordenCompraView.editarObligacion(oblig)}"
+                                                                       title="Editar" process="@this" update="formMain">
+                                                            <p:graphicImage value="/resources/icons/editar.png"
+                                                                            width="16" height="15"
+                                                                            style="margin-right: 5px;"/>
+                                                        </p:commandLink>
+                                                        <p:commandLink actionListener="#{ordenCompraView.eliminarObligaciones(oblig)}"
+                                                                       title="Eliminar" process="@this" update="formMain">
+                                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?"
+                                                                       icon="fa fa-exclamation-triangle"/>
+
+                                                        </p:commandLink>
+                                                    </p:column>
+                                                </p:dataTable>
+                                            </p:fieldset>
+                                            <p:fieldset legend="14.-Vigencia" style="font-weight: bold"
+                                                        rendered="#{ordenCompraView.tipo eq 0}">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleVigencia}"
+                                                                     required="true"
+                                                                     rows="3" cols="40" autoResize="true" style="width: 100%"/>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <center>
+                                            <p:commandButton value="Guardar"
+                                                             actionListener="#{ordenCompraView.guardar(false)}"
+                                                             icon="fa fa-fw fa-save"
+                                                             process="@form"
+                                                             update="formMain"
+                                                             style="width: 150px;margin: 20px"/>
+                                        </center>
+                                    </p:tab>
+                                    <p:tab id="notificacionAcepta" title="Solución y Notificación" titleStyle="border-right: 2px solid white;font-size:12px">
+                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="15.-Solución de Controversias" rendered="#{ordenCompraView.tipo eq 0}"
+                                                        style="font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleControversia}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     rows="10" cols="40" autoResize="true" />
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                            <p:fieldset legend="16.-Terminación Orden de Compra" rendered="#{ordenCompraView.tipo eq 0}"
+                                                        style="font-weight: bold">
+                                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                    <p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleTerminacionOrden}"
+                                                                     required="true" style="width: 100%;border: 1px solid black"
+                                                                     rows="10" cols="2" autoResize="true"/>
+                                                </p:panelGrid>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:fieldset legend="17.-Notificación y Aceptación" style="font-weight: bold">
+                                                <p:panelGrid>
+                                                    <center><p:inputTextarea value="#{ordenCompraView.ordenCompra.detalleNotificacion}"
+                                                                             required="true" rendered="#{ordenCompraView.tipo eq 1}"
+                                                                             rows="5" cols="2" style="width: 90%;"/></center>
+                                                </p:panelGrid>
+                                                <p:panel style="border: #000000">
+                                                    <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                                <p:outputLabel value="Razon Social del Oferente:" for="@next"/>
+                                                                <p:inputText id="razonSocial" value="#{ordenCompraView.adquisicion.proveedor.cliente.nombreCompleto}"
+                                                                             readonly="true" style="width: 100%"/>
+                                                            </p:panelGrid>
+                                                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                                <p:outputLabel value="RUC:" for="@next"/>
+                                                                <p:inputText id="rucOferente" value="#{ordenCompraView.adquisicion.proveedor.cliente.identificacionCompleta}"
+                                                                             readonly="true" style="width: 100%"/>
+                                                            </p:panelGrid>
+                                                        </p:panelGrid>
+                                                        <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                                <h:panelGroup layout="block" class="panelInput" >
+                                                                    <p:outputLabel value="Autorizador:" for="@next"/>
+                                                                    <br/><br/>
+                                                                    <div class="ui-inputgroup">
+                                                                        <p:inputText id="autorizaGasto" value="#{ordenCompraView.ordenCompra.autorizador.persona.nombreCompleto}"
+                                                                                     required="true"
+                                                                                     class="panelInput" style="width: 100%" readonly="true" >
+                                                                            <p:ajax update="autorizaGasto" />
+                                                                        </p:inputText>
+                                                                        <p:commandButton title="Buscar" icon="fa fa-search" id="btnAutorizar"
+                                                                                         process="@this"
+                                                                                         update="autorizaGasto"
+                                                                                         actionListener="#{ordenCompraView.openDialogoAutorizador()}"
+                                                                                         styleClass="green-button button-group" >
+                                                                            <p:ajax event="dialogReturn" listener="#{ordenCompraView.selectAutorizador}" update="formMain"/>
+                                                                        </p:commandButton>
+                                                                    </div>
+                                                                </h:panelGroup>
+                                                            </p:panelGrid>
+                                                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                                <p:outputLabel value="RUC/CI:" for="@next"/>
+                                                                <p:inputText id="rucAut" value="#{ordenCompraView.ordenCompra.autorizador.persona.identificacionCompleta}" readonly="true" style="width: 100%"/>
+                                                            </p:panelGrid>
+                                                        </p:panelGrid>
+                                                    </p:panelGrid>
+
+                                                    <p:panelGrid columns="4" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                        </p:panelGrid>
+                                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                            <p:outputLabel value="Elaborado por:" for="@next"/>
+                                                            <p:inputText id="elaborado" value="#{ordenCompraView.ordenCompra.elaboracionDoc}" readonly="true" style="width: 100%"/>
+                                                        </p:panelGrid>
+                                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                                            <p:outputLabel value="Aprobado por:" for="@next"/>
+                                                            <p:inputText id="aprobadoP" value="#{ordenCompraView.ordenCompra.autorizador.persona.nombreCompleto}" readonly="true" style="width: 100%"/>
+                                                        </p:panelGrid>
+                                                    </p:panelGrid>
+                                                    <center>
+                                                        <p:commandButton value="Guardar"
+                                                                         actionListener="#{ordenCompraView.guardar(true)}"
+                                                                         oncomplete="wiz.loadStep(wiz.cfg.steps[0], true)"
+                                                                         icon="fa fa-fw fa-save"
+                                                                         process="@form"
+                                                                         update="formMain"
+                                                                         style="width: 150px"/>
+                                                        <p:commandButton value="ENVIAR"
+                                                                         rendered="#{!ordenCompraView.btnCompletarTarea}"
+                                                                         disabled="#{ordenCompraView.ordenCompra.id == null}"
+                                                                         actionListener="#{ordenCompraView.openDlgObservacion(1)}"
+                                                                         icon="fa fa-fw fa-send"
+                                                                         process="@form"
+                                                                         update="formMain"
+                                                                         style="width: 150px"/>
+                                                        <p:commandButton value="Cancelar"
+                                                                         actionListener="#{ordenCompraView.resetValue()}"
+                                                                         icon="fa fa-fw fa-close"
+                                                                         process="@form"
+                                                                         update="formMain"
+                                                                         style="width: 150px"/>
+                                                    </center>
+                                                </p:panel>
+                                            </p:fieldset>
+                                        </p:panelGrid>
+                                    </p:tab>
+                                </p:wizard>
+                            </p:tab>
+                            <p:tab id="tabDoc" title="Adjunta de Documentos">
+                                <p:commandButton value="Adjuntar Documento" actionListener="#{ordenCompraView.adjuntarDucumento()}"
+                                                 icon="fa fa-fw fa-upload"
+                                                 process="@this"
+                                                 update="doc"
+                                                 style="width: 150px;margin: 15px 0px"/>
+                                <u:documents entiti="#{ordenCompraView.tramite}" showDelete="true" id="doc"/>
+                            </p:tab>
+                        </p:tabView>
+
+                        <p:fieldset legend="3.- Objeto de la Contratación" style="margin-bottom: 20px;font-weight: bold">
+                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:inputTextarea rows="5" required="true" value="#{ordenCompraView.ordenCompra.objetoContratacion}"
+                                                 cols="30" autoResize="true" style="width: 100%" readonly="true" />
+                            </p:panelGrid>
+                        </p:fieldset>
+                        <!--</p:panel>-->
+                        <br/><br/>
+                        <p:outputPanel>
+                            <center>
+                                <p:dataTable id="dtSolicitud" widgetVar="dtSolicitud"
+                                             var="sol" style="width: 75%"
+                                             value="#{ordenCompraView.lazySolicitud}"
+                                             emptyMessage="No existe criterio de Busqueda"
+                                             lazy="true" rows="15" paginatorPosition="bottom">
+                                    <p:column headerText="Codigo" style="width: 10%">
+                                        <h:outputText value="#{sol.codigoOrden}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 25%">
+                                        <h:outputText value="#{sol.adquisicion.descripcion}" />
+                                    </p:column>
+                                    <p:column headerText="Estado" style="width: 10%">
+                                        <h:outputText value="#{sol.estadoProceso}" />
+                                    </p:column>
+                                    <p:column headerText="Autorizador" style="width: 10%">
+                                        <h:outputText value="#{sol.autorizador.persona.nombreCompleto}" />
+                                    </p:column>
+                                    <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                                        <p:commandLink title="ENVIAR " process="@this" update="formMain"
+                                                       rendered="#{!ordenCompraView.btnCompletarTarea}"
+                                                       actionListener="#{ordenCompraView.continuarTarea(sol)}">
+                                            <i class="fa fa-fw fa-send" style="font-size: 1.5em; margin-right: 5px;"/>
+                                        </p:commandLink>
+                                        <p:commandLink title="Editar " process="@this" update="formMain"
+                                                       rendered="#{!sol.procesado}"
+                                                       actionListener="#{ordenCompraView.editar(sol)}">
+                                            <p:graphicImage value="/resources/icons/editar.png"
+                                                            width="16" height="15"
+                                                            style="margin-right: 8px;"/>
+                                        </p:commandLink>
+                                        <p:commandLink title="Orden Compra" process="@this" update="formMain"
+                                                       actionListener="#{ordenCompraView.generalSolicitud(sol)}">
+                                            <i class="fa fa-fw fa-file-pdf-o" style="font-size: 1.5em; margin-right: 5px;"/>
+                                        </p:commandLink>
+                                        <p:commandLink actionListener="#{ordenCompraView.eliminarSol(sol)}"
+                                                       title="Eliminar" process="@this" update="formMain">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de Eliminación" message="¿Esta seguro de eliminar?"
+                                                       icon="fa fa-exclamation-triangle"/>
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+                                <p:commandButton value="Completar Tarea" actionListener="#{ordenCompraView.openDlgObservacion(1)}"
+                                                 rendered="#{ordenCompraView.consultar()}"
+                                                 icon="fa fa-external-link" process="@this" style="width: 150px; background: #0081cb; margin-top: 2%;"/>
+                            </center>
+                        </p:outputPanel>
+                    </div>
+                </h:form>
+            </div>
+        </div>
+
+        <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+            <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+            <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+        </p:confirmDialog>
+
+        <p:dialog id="dlgCaracteristica" header="Agregar Caracteristica Técnicas" widgetVar="dlgCaracteristica"
+                  position="center" modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="30%">
+            <div class="ui-g-12" >
+                <h:form id="formCaract" prependId="false">
+                    <p:outputPanel id="formPanel" style="width: 100%;" >
+                        <p:panelGrid  columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel  value="Caracteristica:" for="@next" style="width: 100%;"/>
+                                <p:inputText id="caratTecnica" value="#{ordenCompraView.caracteristicaString}"
+                                             class="panelInput" style="width: 100%"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel  value="Descripción:" for="@next" style="width: 100%;"/>
+                                <p:inputTextarea id="destCarat" value="#{ordenCompraView.caracteristicaTecnica.descripcion}"
+                                                 required="false" style="width: 100%;border: 1px solid black"
+                                                 rows="10" cols="30" autoResize="true" />
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton value="Agregar" id="addCarat" actionListener="#{ordenCompraView.addCaracteristicas()}"
+                                             icon="fa fa-plus"  process="@form" style="width: 150px"/>
+                        </center>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </p:dialog>
+
+        <p:dialog id="dlgItem4" header="Especificaciones Técnicas" widgetVar="dlgItem4" width="450"
+                  position="center" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formItem4" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="panelItem4" style="width: 100%;" >
+                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;margin-bottom: 15px" class="panelInput">
+                                            <p:outputLabel value="Opciones de detalle: " style="margin-right: 10px"/>
+                                            <p:selectBooleanButton onLabel="Selecionar" offLabel="Ingresar" value="#{ordenCompraView.btnDetalle}"
+                                                                   onIcon="fa fa-check" offIcon="fa fa-times" style="width:30%" >
+                                                <p:ajax update="idDetalle"/>
+                                            </p:selectBooleanButton>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" id="idDetalle">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{ordenCompraView.btnDetalle}">
+                                            <p:outputLabel value="Detalle" for="@next" />
+                                            <p:autoComplete id="dd" rendered="#{!ordenCompraView.completeTextRendered}"
+                                                            dropdown="true" value="#{ordenCompraView.detalleBien}" completeMethod="#{ordenCompraView.completeText}"
+                                                            var="item1" itemLabel="#{item1.descripcion}   #{item1.codigo}  #{item1.bien != null ? '(BIEN)':'' or item1.inv !=null ? '(INVENTARIO)':''}" itemValue="#{item1}"
+                                                            converter="#{ordenCompraView.bienesConverter}"
+                                                            forceSelection="true" panelStyle="width:150px"
+                                                            scrollHeight="250" moreText="Mas registros" maxResults="100" class="Wid100"
+                                                            inputStyleClass="Wid90"/>
+
+                                            <p:autoComplete id="ddd" rendered="#{ordenCompraView.completeTextRendered}"
+                                                            dropdown="true" value="#{ordenCompraView.detalleInventario}"
+                                                            completeMethod="#{ordenCompraView.completeTextInventario}"
+                                                            var="item2" itemLabel="#{item2.descripcion}  #{item2.codigo}  #{item2.bien != null ? '(BIEN)':'' or item2.inv !=null ? '(INVENTARIO)':''}" itemValue="#{item2}"
+                                                            converter="#{ordenCompraView.bienesConverter}" forceSelection="true" panelStyle="width:150px"
+                                                            scrollHeight="250" moreText="Mas registros" maxResults="100" class="Wid100"
+                                                            inputStyleClass="Wid90"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{!ordenCompraView.btnDetalle}">
+                                            <p:outputLabel value="Detalle" for="@next" />
+                                            <p:inputTextarea id="det" value="#{ordenCompraView.especificacionTecnica.detalle}"
+                                                             style="border: 1px solid; border-radius: 5px 5px 5px 5px;font-weight: bold;width: 100%"
+                                                             required="true" rows="4"  autoResize="true"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank" >
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{ordenCompraView.tipo eq 1}">
+                                            <p:outputLabel  value="Orden de Compra:" for="@next" style="width: 100%;"/>
+                                            <p:inputText id="ordenCompra" value="#{ordenCompraView.especificacionTecnica.codigoOrdenCompra}"
+                                                         class="panelInput" style="width: 100%"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel  value="Item:" for="@next" style="width: 100%;"/>
+                                            <p:inputText id="itemCod" value="#{ordenCompraView.numEspecificacion}"
+                                                         class="panelInput" readonly="true" style="width: 100%"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel  value="Cantidad" for="@next" style="width: 100%;"/>
+                                            <p:inputNumber id="cantidad4" value="#{ordenCompraView.especificacionTecnica.cantidad}"
+                                                           required="true" style="width: 100%" />
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel  value="Precio Unitario" for="@next" style="width: 100%;"/>
+                                            <p:inputNumber id="precioUnit" decimalPlaces="4"
+                                                           required="true" value="#{ordenCompraView.especificacionTecnica.precioUnitario}"
+                                                           style="width: 100%">
+                                                <p:ajax rendered="#{ordenCompraView.tipo eq 1}" event="blur" update="totalEspe" listener="#{ordenCompraView.calcularValorTotal()}" process="cantidad4"/>
+                                            </p:inputNumber>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{ordenCompraView.tipo eq 1}">
+                                            <p:outputLabel  value="Total" for="@next" style="width: 100%;"/><br/>
+                                            <p:inputNumber id="totalEspe" decimalPlaces="4"
+                                                           readonly="true" value="#{ordenCompraView.especificacionTecnica.precioTotal}"
+                                                           style="width: 100%"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                            <p:outputLabel  value="Unidad" for="@next" style="width: 100%;"/>
+                                            <p:selectOneMenu id="unidadSelect" value="#{ordenCompraView.especificacionTecnica.unidad}"
+                                                             converter="#{utilConverter}"
+                                                             required="true"
+                                                             filter="true" filterMatchMode="contains"
+                                                             style="width: 100%;" panelStyle="width:10%">
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{ordenCompraView.tipoMedidaList}"
+                                                               var="um"
+                                                               itemLabel="#{um.descripcion}"
+                                                               itemValue="#{um}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid  columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel  value="Caracteristica" for="@next" style="width: 100%;"/>
+                                            <p:inputTextarea id="caracteristica4"
+                                                             value="#{ordenCompraView.especificacionTecnica.caracteristicas}"
+                                                             required="true" rows="5" cols="30" autoResize="true"
+                                                             style="border: 1px solid; border-radius: 5px 5px 5px 5px;font-weight: bold;width: 100%"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <center>
+                    <p:commandButton value="Agregar"
+                                     id="addEspc"
+                                     actionListener="#{ordenCompraView.addEspecificacion()}"
+                                     icon="fa fa-plus"
+                                     process="@form"
+                                     style="width: 150px;margin-bottom: 15px"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObligacion" header="Obligacion de Responsable" widgetVar="dlgObligacion"
+                  position="center" modal="true" showEffect="fade" hideEffect="fade" resizable="false">
+            <h:form id="formOblResp" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:outputPanel id="formPanelOblResp" style="width: 100%;" >
+                                <p:panelGrid  columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" >
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:outputLabel  value="Descripción:" for="@next" style="width: 100%;"/>
+                                        <p:inputTextarea id="descOblResp" value="#{ordenCompraView.obligacionResponsable.descripcion}"
+                                                         required="true"
+                                                         rows="5" cols="30" autoResize="true" style="width: 100%"/>
+                                    </p:panelGrid>
+                                </p:panelGrid>
+                            </p:outputPanel>
+                        </div>
+                    </div>
+                </div>
+                <center>
+                    <p:commandButton value="Agregar"
+                                     actionListener="#{ordenCompraView.addObligacion()}"
+                                     icon="fa fa-plus"
+                                     process="@form"
+                                     style="width: auto"/>
+                </center>
+            </h:form>
+        </p:dialog>
+        <p:dialog id="requisitoDialog" header="Adjuntar archivos de requitos" widgetVar="requisitoDialog" position="center"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" width="40%">
+            <h:form id="requisitoDialogForm" prependId="false">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:fileUpload fileUploadListener="#{ordenCompraView.handleFileUpload}"
+                                          uploadLabel="Subir" cancelLabel="Eliminar" fileLimitMessage="Solo puede subir 1" label="Seleccionar"
+                                          mode="advanced" dragDropSupport="false"
+                                          update="messages"/>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        <p:dialog widgetVar="dlgObservaciones" modal="true">
+            <h:form id="frmDlgObser">
+                <p:outputLabel value="Observaciones" indicateRequired="true" style="font-weight: bold"/><br/>
+                <p:inputTextarea required="true" value="#{ordenCompraView.observacion.observacion}"  onkeyup="javascript:this.value = this.value.toUpperCase();"
+                                 rows="7" cols="50" style="border: 1px solid; border-radius: 5px 5px 5px 5px;font-weight: bold"/>
+                <br/>
+                <br/>
+                <center>
+                    <p:commandButton icon="fa fa-thumbs-o-up" value="Aceptar"  title="Auotrizar Gastos" process="frmDlgObser" update="frmDlgObser"
+                                     actionListener="#{ordenCompraView.continuarTarea()}" style="width: auto;"  />
+                    <p:spacer width="10" />
+                    <p:commandButton icon="fa fa-thumbs-o-down" value="Cerrar" onclick="PF('dlgObservaciones').hide()" style="background: red; width: auto;" />
+                </center>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

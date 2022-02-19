@@ -1,0 +1,350 @@
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://java.sun.com/jsf/html"
+                xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:ui="http://java.sun.com/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                template="/WEB-INF/template/template.xhtml">
+
+
+    <ui:define name="title">Cajeros</ui:define>
+    <ui:param name="tittle" value="CAJEROS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="frmMain" prependId="false" enctype="multipart/form-data">
+                    <p:outputPanel>
+                        <p:outputPanel id="regresar" style="width: 5%">
+                            <p:commandLink title="Regresar" immediate="true" action="administracion.xhtml?faces-redirect=true">
+                                <p:graphicImage value="/resources/icons/regresar.png"
+                                                width="30" height="30" 
+                                                style="margin-right: 5px !important"/>
+                            </p:commandLink>
+                        </p:outputPanel>
+                        <p:panelGrid  columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <p:fieldset legend="Cajeros y Firmas Electrónicas" style="margin-bottom:40px; font-weight: bold">
+                                <p:outputPanel  style="width: 100%">
+                                    <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:dataTable id="dtCajeras" 
+                                                     value="#{cajerosView.cajeros}"
+                                                     var="cajero" 
+                                                     reflow="true" 
+                                                     paginator="true" 
+                                                     lazy="true" rows="10" 
+                                                     rowsPerPageTemplate="10,50,100" 
+                                                     paginatorPosition="bottom"
+                                                     filterEvent="enter"
+                                                     emptyMessage="No se encontró ningún cajero para mostrar."
+                                                     style="font-size: 11px">
+                                            <p:column headerText="Pto. de Emisión" style="font-weight: 500;" >
+                                                <center>
+                                                    <h:outputText value="#{cajero.puntoEmision}"/>   
+                                                </center>
+                                            </p:column>
+                                            <p:column headerText="Establecimiento" style="font-weight: 500;" >
+                                                <center>
+                                                    <h:outputText value="#{cajero.entidad.nombreEntidad}"/>   
+                                                </center>
+                                            </p:column>
+                                            <p:column headerText="Usuario" style="font-weight: 500">
+                                                <center>
+                                                    <h:outputText value="#{cajero.usuario}"/>   
+                                                </center>
+                                            </p:column>
+
+                                            <p:column headerText="Acciones" style="font-weight: 500;">
+                                                <center>
+                                                    <p:commandLink title="Editar Datos" process="@this" 
+                                                                   actionListener="#{cajerosView.editarCajero(cajero)}"
+                                                                   update="dtCajeras, datosCajero, entidad">
+                                                        <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                                    </p:commandLink>    
+                                                    <p:commandLink title="Eliminar" process="@this" 
+                                                                   update="dtCajeras, datosCajero"
+                                                                   actionListener="#{cajerosView.eliminarCajero(cajero)}">
+                                                        <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                                        <p:confirm header="Confirmación de eliminación"
+                                                                   message="Esta seguro de eliminar el Cajero?"
+                                                                   icon="fa fa-exclamation-triangle" />
+                                                    </p:commandLink>        
+                                                </center>
+                                            </p:column>
+                                        </p:dataTable>
+                                        <br></br>
+                                        <br></br>
+                                        <p:graphicImage value="/resources/icons/cajera.png"
+                                                        width="100" height="100" style="margin-right: 5px !important"/>
+                                    </p:panelGrid>
+                                </p:outputPanel>
+
+                            </p:fieldset>
+                            <p:fieldset legend="Datos de Cajeros y Firmas Electronicas" style="margin-bottom:40px; font-weight: bold;">
+                                <p:outputPanel id="datosCajero" style="width: 100%">                                                        
+                                    <p:panelGrid columns="1"  layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup>
+                                            <p:outputLabel value="Entidad" for="entidad" style="width: 100%;"/><br></br><br></br>
+                                            <p:selectOneMenu id="entidad" style="width: 500px" panelStyle="width:250px"
+                                                             value="#{cajerosView.idEntidad}" >
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" itemDisabled="true" />
+                                                <f:selectItems value="#{cajerosView.entidades}"
+                                                               var="e2"
+                                                               itemLabel="#{e2.nombreEntidad}"
+                                                               itemValue="#{e2.id}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid columns="2"  layout="grid" 
+                                                 styleClass="ui-panelgrid-blank form-group"   >
+                                        <h:panelGroup rendered="#{cajerosView.cajero.id!=null ? true:false}">
+                                            <p:outputLabel value="Usuario"  for="usuarioCarga" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="usuarioCarga" 
+                                                          readonly="true" onkeypress="focusNextOnEnter(event, 'datosPersonales')"
+                                                          value="#{cajerosView.cajero.usuario}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup rendered="#{cajerosView.cajero.id!=null ? false:true}">
+                                            <p:outputLabel value="Usuario"  for="idUsuario" style="width: 100%;"/><br></br><br></br>
+                                            <p:selectOneMenu id="idUsuario" filter="true"
+                                                             value="#{cajerosView.cajero.usuario}" >
+                                                <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" itemDisabled="true"/>
+                                                <f:selectItems value="#{cajerosView.usuariosList}"
+                                                               var="e3"
+                                                               itemLabel="#{e3.usuario}"
+                                                               itemValue="#{e3.usuario}"/>
+                                                <p:ajax listener="#{cajerosView.usuarioSeleccionado}" 
+                                                        update="datosPersonales" />
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup id="panelDatosPersonales">
+                                            <p:outputLabel value="Datos Personales" for="datosPersonales" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="datosPersonales" 
+                                                          readonly="true" onkeypress="focusNextOnEnter(event, 'ptoEmision')"
+                                                          value="#{cajerosView.usuario.funcionario.persona.nombreCompleto}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput">
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup>
+                                            <p:outputLabel value="Pto. Emisión" for="ptoEmision" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="ptoEmision" 
+                                                          maxlength="3" onkeypress="focusNextOnEnter(event, 'factura')"
+                                                          required="true"
+                                                          value="#{cajerosView.cajero.puntoEmision}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup>
+                                            <p:outputLabel value="V.S. Factura" for="factura" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="factura" onkeypress="focusNextOnEnter(event, 'notaCredito')"
+                                                          placeholder="SECUENCIA_FACTURA_X"
+                                                          required="true"
+                                                          value="#{cajerosView.cajero.variableSecuenciaFacturas}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                        <h:panelGroup>
+                                            <p:outputLabel value="V.S. Nota Crédito" for="notaCredito" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="notaCredito" onkeypress="focusNextOnEnter(event, 'debito')"
+                                                          required="true"
+                                                          placeholder="SECUENCIA_NOTA_CREDITO_X"
+                                                          value="#{cajerosView.cajero.variableSecuenciaNotaCredito}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup>
+                                            <p:outputLabel value="V.S. Nota Débito" for="debito" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="debito" onkeypress="focusNextOnEnter(event, 'retencion')"
+                                                          required="true"
+                                                          placeholder="SECUENCIA_NOTA_DEBITO_X"
+                                                          value="#{cajerosView.cajero.variableSecuenciaNotaDebito}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup>
+                                            <p:outputLabel value="V.S. Retención" for="retencion" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="retencion" onkeypress="focusNextOnEnter(event, 'guia')"
+                                                          required="true"
+                                                          placeholder="SECUENCIA_RETENCION_X"
+                                                          value="#{cajerosView.cajero.variableSecuenciaRetencion}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                        <h:panelGroup>
+                                            <p:outputLabel value="V.S. Guía Remisión" for="guia" style="width: 100%;"/><br></br><br></br>
+                                            <p:inputText  id="guia" onkeypress="focusNextOnEnter(event, 'fechaCaducidad')"
+                                                          required="true"
+                                                          placeholder="SECUENCIA_GUIA_REMISION_X"
+                                                          value="#{cajerosView.cajero.variableSecuenciaGuiaRemision}"
+                                                          style="text-transform: uppercase" 
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:fieldset legend="Cta. contable" style="margin-top: 10px;margin-bottom: 10px">
+                                        <p:panelGrid columns="3"  layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCtaContable">
+                                            <h:panelGroup>
+                                                <p:commandButton value="Buscar Cta. contable" 
+                                                                 style="width: 100%" process="@this"
+                                                                 icon="ui-icon-search"
+                                                                 actionListener="#{cajerosView.openDlgCuenta(true)}"/>
+                                            </h:panelGroup>
+                                            <h:panelGroup>
+                                                <p:outputLabel value="Cod. Cta. Contable:" for="guia" style="width: 100%;"/><br></br><br></br>
+                                                <p:inputText  id="contCuentascodigo" onkeypress="focusNextOnEnter(event, 'contCuentascodigo')"
+                                                              readonly="true"
+                                                              value="#{cajerosView.cajero.contCuentas.codigo}"
+                                                              style="text-transform: uppercase" 
+                                                              class="panelInput" >
+                                                </p:inputText>
+                                            </h:panelGroup>
+                                            <h:panelGroup>
+                                                <p:outputLabel value="Nom. Cta. Contable:" for="guia" style="width: 100%;"/><br></br><br></br>
+                                                <p:inputText  id="contCuentasdescripcion" onkeypress="focusNextOnEnter(event, 'contCuentasdescripcion')"
+                                                              readonly="true"
+                                                              value="#{cajerosView.cajero.contCuentas.descripcion}"
+                                                              style="text-transform: uppercase" 
+                                                              class="panelInput" >
+                                                </p:inputText>
+                                            </h:panelGroup>
+                                        </p:panelGrid>
+                                    </p:fieldset>
+                                    <br></br>
+                                    <br></br>
+                                    <br></br>
+                                    <br></br>
+                                    <p:outputLabel value="Firma Electrónica" 
+                                                   style="width: 90%;margin-left: 14px"/><br></br>
+                                    <p:panelGrid id="firmaUpload" columns="2"  layout="grid" 
+                                                 styleClass="ui-panelgrid-blank form-group">
+                                        <h:panelGroup>
+                                            <p:outputLabel value="Fecha Caducidad F.E." for="fechaCaducidad" style="width: 100%;"/><br></br><br></br>
+                                            <p:calendar id="fechaCaducidad" readonly="true" onkeypress="focusNextOnEnter(event, 'clave')"
+                                                        value="#{cajerosView.cajero.fechaCaducidad}"
+                                                        required="true" locale="es"
+                                                        placeholder="dd/MM/yyyy" navigator="true"
+                                                        pattern="dd/MM/yyyy"/>
+                                        </h:panelGroup>
+                                        <h:panelGroup>
+                                            <p:outputLabel value="Contraseña F.E." for="clave" /><br></br><br></br>
+                                            <p:inputText  id="clave" onkeypress="focusNextOnEnter(event, 'firma')"
+                                                          required="true"
+                                                          value="#{cajerosView.cajero.clave}"
+                                                          class="panelInput" >
+                                            </p:inputText>
+                                        </h:panelGroup>
+
+                                    </p:panelGrid>
+                                    <br></br>
+                                    <p:outputLabel 
+                                        id="fElecotronica"
+                                        value="#{cajerosView.cajero.archivo}" />
+                                    <br></br>
+                                    <br></br>
+
+                                    <h:panelGroup>
+
+                                        <center>
+                                            <p:fileUpload id="firma" 
+                                                          label="Firma Electrónica"
+                                                          update="fElecotronica"
+                                                          style="width: auto;"                                                                              
+                                                          fileUploadListener="#{cajerosView.upload}"
+                                                          uploadLabel="Subir"
+                                                          cancelLabel="Cancelar"  
+                                                          auto="true"
+                                                          skinSimple="true"
+                                                          fileLimit="1"
+                                                          dragDropSupport="false"  
+                                                          sizeLimit="10000000000"
+                                                          allowTypes="/(\.|\/)(p12)$/"
+                                                          />
+
+                                        </center>
+                                    </h:panelGroup>
+
+
+                                    <br></br>
+                                    <p:panelGrid columns="2"  layout="grid" 
+                                                 styleClass="ui-panelgrid-blank form-group"
+                                                 rendered="#{cajerosView.editar}">
+                                        <h:panelGroup>
+                                            <center>
+                                                <p:commandButton value="Guardar" 
+                                                                 style="width: 70%"
+                                                                 icon="ui-icon-plus"
+                                                                 actionListener="#{cajerosView.guardarCajero()}" 
+                                                                 update="frmMain"/>
+                                            </center>
+                                        </h:panelGroup>
+                                        <h:panelGroup>
+                                            <center>
+                                                <p:commandButton value="Cancelar" 
+                                                                 style="width: 70%"
+                                                                 icon="ui-icon-close"
+                                                                 actionListener="#{cajerosView.cancelar()}" 
+                                                                 update="frmMain"/>
+                                            </center>
+                                        </h:panelGroup>
+
+                                    </p:panelGrid>
+                                    <h:panelGroup>
+                                        <center>
+                                            <p:commandButton value="Guardar" 
+                                                             style="width: 35%"
+                                                             icon="ui-icon-plus"
+                                                             rendered="#{!cajerosView.editar}"
+                                                             actionListener="#{cajerosView.guardarCajero()}" 
+                                                             update="frmMain"/>
+                                        </center>
+                                    </h:panelGroup>
+                                </p:outputPanel>
+                            </p:fieldset>
+                            <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                                <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                                <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                            </p:confirmDialog>
+                        </p:panelGrid>
+                    </p:outputPanel>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="dlgCuentaContable" widgetVar="dlgCuentaContable" width="50%" position="center" height="500"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de Cta. Contable">
+            <h:form prependId="false" id="dlgCuentaContableForm">
+                <p:dataTable  id="contCuentasTable" widgetVar="contCuentasTable" var="contCuentas" 
+                              value="#{cajerosView.contCuentasLazy}"
+                              paginator="true" rows="18" paginatorPosition="bottom" 
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="18,30,40,50,100"
+                              scrollable="true" scrollHeight="auto" lazy="true" style="width: 100%" rowKey="#{contCuentas.id}"
+                              emptyMessage="No existen cuentas con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Listado de Cta. Contable
+                    </f:facet>
+                    <p:column headerText="Código" filterBy="#{contCuentas.codigo}" filterMatchMode="contains" style="width: 15%;text-align: center">
+                        <h:outputText value="#{contCuentas.codigo}" />
+                    </p:column> 
+                    <p:column headerText="Nombre" filterBy="#{contCuentas.descripcion}" filterMatchMode="contains" style="width: 70%;">
+                        <h:outputText value="#{contCuentas.descripcion}" />
+                    </p:column>
+                    <p:column headerText="Seleccionar"  style="width: 15%;text-align: center">
+                        <p:commandLink actionListener="#{cajerosView.closeDlgCuenta(contCuentas)}" title="Seleccionar" process="@this">
+                            <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: #33cc00;"></i>
+                        </p:commandLink>
+                    </p:column>                                
+                </p:dataTable>
+            </h:form>          
+        </p:dialog>
+    </ui:define>
+
+</ui:composition>

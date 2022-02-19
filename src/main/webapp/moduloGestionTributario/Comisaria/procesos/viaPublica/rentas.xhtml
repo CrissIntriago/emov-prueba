@@ -1,0 +1,140 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog">
+
+    <ui:param name="tittle" value="Pre-Liquidaciones" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">         
+                <div class="car card-w-title" style="background: #00796b;">
+                    <comp:ventaComisaria solicitudVentanilla="#{aprobacionRentasMB.solicitud}" task="#{aprobacionRentasMB.tarea}" tramite="#{aprobacionRentasMB.tramite}"/>
+                </div>
+                <h:form id="mainForm" prependId="false">  
+
+                    <p:dataTable id="dtLiquidaciones" reflow="true" paginator="true" lazy="true" rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{aprobacionRentasMB.titulosCredito}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;"
+                                 selectionMode="single" rowKey="#{titulo.id}" selection="#{aprobacionRentasMB.liquidacion}" filterEvent="enter">
+                        <p:ajax event="rowSelect" update="opLiquidacionesEmitidas"/>
+                        <p:column  headerText="ID Liquidación" width="50" filterBy="#{titulo.idLiquidacion}" filterStyle="width: 60%;">
+                            <h:outputText value="#{titulo.idLiquidacion}" />
+                        </p:column>
+                        <p:column  headerText="Liquidacion" width="200" filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains" >
+                            <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                        </p:column>
+                        <p:column headerText="No. Liq." width="70" filterBy="#{titulo.numLiquidacion}" sortBy="#{titulo.numLiquidacion}" filterStyle="width: 80%;">
+                            <h:outputText value="#{titulo.numLiquidacion}" />
+                        </p:column>
+                        <p:column headerText="Anio" width="50" filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" filterStyle="width: 60%;">
+                            <h:outputText value="#{titulo.anio}"/>
+                        </p:column>
+                        <p:column headerText="Predio" width="200" >
+                            <h:outputText value="#{titulo.predio == null ? titulo.localComercial.clavePreial:titulo.predio.claveCat }" />
+                        </p:column>
+                        <p:column headerText="Local" width="200" filterBy="#{titulo.localComercial.numLocal}">
+                            <h:outputText value="#{titulo.localComercial.numLocal}" />
+                        </p:column>
+                        <p:column headerText="Fecha emision" width="200" >
+                            <h:outputText value="#{titulo.fechaIngreso}" >
+                                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Identificacion" width="100" filterBy="#{titulo.comprador.identificacionCompleta}" filterStyle="width: 80%;">
+
+                            <h:outputText  value="#{titulo.comprador.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Solicitante" width="250">
+
+                            <h:outputText  value="#{titulo.comprador.nombreCompleto}"/>
+                        </p:column>
+
+                        <p:column headerText="Valor Emitido" width="60"><h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/></p:column>
+<!--                                <p:column headerText="Saldo" width="60"><h:outputText value="#{titulo.saldo}" style="font-weight: bold;"/></p:column>
+                        <p:column headerText="Interes" width="60"><h:outputText value="#{aprobacionRentasMB.interes(titulo)}" style="font-weight: bold;"/></p:column>
+                        <p:column headerText="Total Pago" width="60"><h:outputText value="#{titulo.totalPago+aprobacionRentasMB.interes(titulo)}" style="font-weight: bold;"/></p:column>-->
+                        <p:column headerText="Estado" width="65"><h:outputText value="#{ !titulo.validada ? 'Sin validar' : titulo.estadoLiquidacion.descripcion}" style="font-weight: bold;"/></p:column>
+
+
+                        <p:column headerText="*******" width="100" >
+                            <p:commandLink actionListener="#{aprobacionRentasMB.imprimir(titulo)}" 
+                                           title="#{titulo.idLiquidacion}" process="@this">
+                                <i class="fa fa-fw fa-print" style="font-size: 1.5em;" />
+                            </p:commandLink>
+                            <p:spacer width="10"/>
+                            <p:commandLink title="Validar" 
+                                           actionListener="#{aprobacionRentasMB.send(true,titulo)}"  oncomplete="PF('dlgObservaciones').show()" 
+                                           update="frmDlgObser"
+                                           process="@this">
+                                <i class="fa fa-check" style="font-size: 1.5em;" />
+                            </p:commandLink>
+                            <p:spacer width="10"/>
+                            <p:commandLink  id="ajax" title="Denegar"  actionListener="#{aprobacionRentasMB.send(false,titulo)}"  oncomplete="PF('dlgObservaciones').show()" 
+                                            update="frmDlgObser"
+                                            process="@this">                                
+                                <i class="fa fa-close" style="font-size: 1.5em;color: red" />
+                                <p:confirm header="Confirmación de Deengacion" message="¿Está seguro de anular esta preliquidación?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+
+                        </p:column>
+
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="SI" type="button" styleClass="ui-confirmdialog-yes" icon="ui-icon-check" />
+                        <p:commandButton value="NO" type="button" styleClass="ui-confirmdialog-no" icon="ui-icon-close" />
+                    </p:confirmDialog>
+                    <p:contextMenu id="opLiquidacionesEmitidas" for="dtLiquidaciones">
+                        <p:menuitem value="Detalle" icon="ui-icon-comment" oncomplete="PF('dlgDetalle').show();" update="formDetEmision"  process="@this" />
+                    </p:contextMenu>
+
+                    <br/> <br/>
+                    <p:panelGrid columns="2" columnClasses="ui-g-6,ui-g-6" styleClass="ui-panelgrid-blank" style="width: 100%; ">
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <p:fileUpload fileUploadListener="#{aprobacionRentasMB.handleFileUpload}"  style="width: 100%" 
+                                          accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                          label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60"  
+                                          update="mainForm"/>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" style="width: 100%;">
+                            <comp:documents id="listDocumentos" entiti="#{aprobacionRentasMB.tramite}" />
+                        </p:panelGrid>
+                    </p:panelGrid>
+
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center" height="400">
+            <h:form id="formDetEmision">
+                <dlg:detalleLiquidacion liquidacion="#{aprobacionRentasMB.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="25%" position="center" draggable="false" header="Observación" height="150"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{aprobacionRentasMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7"
+                                         style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aceptar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{aprobacionRentasMB.completarTarea()}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+
+
+    </ui:define>
+</ui:composition>

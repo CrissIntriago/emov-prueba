@@ -1,0 +1,204 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+    <ui:param name="tittle" value="CERTIFICADO DE NO ADEUDAR"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">          
+                <h:form id="mainForm" prependId="false">
+
+                    <p:fieldset>
+                        <dialog:consultaPredioGeneral predio="#{certificadoNoAdeudarMB.predio}" id="prediosConsulta"
+                                                      consultar="#{certificadoNoAdeudarMB.consultar()}"
+                                                      tipoCons="#{certificadoNoAdeudarMB.tipoCons}"
+                                                      consultarModel="#{certificadoNoAdeudarMB.validarClaveOtroCanton()}"
+                                                      predioModel="#{certificadoNoAdeudarMB.predioModel}"   
+                                                      propietario="#{certificadoNoAdeudarMB.propietarioConsulta}"
+                                                      mostrar="true" local="true"                                                   
+                                                      tipo="#{certificadoNoAdeudarMB.esUrbano}"
+                                                      update="prediosConsulta,mainForm"/>
+                    </p:fieldset>
+
+
+
+                    <br/>
+
+
+                    <p:commandLink  value="Exportar PDF" style="color: red;" actionListener="#{certificadoNoAdeudarMB.exportar('pdf')}">
+                        <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>                      
+                    </p:commandLink>
+
+                    <p:commandLink  value="Exportar Excel" style="color: green;" actionListener="#{certificadoNoAdeudarMB.exportar('xlsx')}">
+                        <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>                      
+                    </p:commandLink>
+
+                    <!--
+                                        <h:commandLink value="Exportar PDF " style="color: red;">
+                                            <i class="fa fa-file-excel-o" style="font-size: 1.5em; margin-right: 8px; color: #ffffff;"></i>
+                                            <p:dataExporter type="pdf" target="dtLiquidaciones" fileName="DEUDAS-"/>                        
+                                        </h:commandLink>-->
+
+
+                    <p:dataTable id="dtLiquidaciones" widgetVar="dtLiquidaciones" reflow="true" paginator="true"  rows="10" rowsPerPageTemplate="10,50,100" paginatorPosition="top"
+                                 paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 value="#{certificadoNoAdeudarMB.listaLiquidaciones}" var="titulo" emptyMessage="No se encontraron elementos..." style="text-align: center;">
+                        <!--                        <p:column headerText="*" width="50">
+                                                    <p:commandButton oncomplete="PF('dlgDetalle').show();" update="formDetEmision" icon="fa fa-eye" 
+                                                            rendered="#{certificadoNoAdeudarMB.liquidacion ne null}" process="@this"
+                                                            actionListener="#{certificadoNoAdeudarMB.calculosAdicionales(titulo)}"/>
+                                                </p:column>-->
+                        <p:column  headerText="ID Liquidación" filterBy="#{titulo.idLiquidacion}" filterMatchMode="contains">
+                            <h:outputText value="#{titulo.idLiquidacion}" />
+                        </p:column>
+                        <p:column  headerText="Liquidacion"  filterBy="#{titulo.tipoLiquidacion.nombreTitulo}" filterMatchMode="contains">
+                            <h:outputText value="#{titulo.tipoLiquidacion.nombreTitulo}" />
+                        </p:column>                        
+                        <p:column headerText="Año"  filterBy="#{titulo.anio}" sortBy="#{titulo.anio}" >
+                            <h:outputText value="#{titulo.anio}"/>
+                        </p:column>
+                        <p:column headerText="Predio"  filterBy="#{titulo.predio.claveCat}">
+                            <h:outputText value="#{titulo.predio.claveCat}" />
+                        </p:column>
+
+                        <p:column headerText="Local"  filterBy="#{titulo.localComercial.numLocal}">
+                            <h:outputText value="#{titulo.localComercial.numLocal}" />
+                        </p:column>
+
+                        <p:column headerText="Fecha emision" >
+                            <h:outputText value="#{titulo.fechaIngreso}" >
+                                <f:convertDateTime type="date" pattern="dd-MM-yyyy HH:mm"/>
+                            </h:outputText>
+                        </p:column>
+                        <p:column  headerText="Identificacion" filterBy="#{titulo.comprador.identificacionCompleta}" >
+
+                            <h:outputText  value="#{titulo.comprador.identificacionCompleta}"/>
+                        </p:column>
+                        <p:column headerText="Solicitante" filterBy="#{titulo.comprador.nombreCompleto}" filterMatchMode="contains">                           
+                            <h:outputText  value="#{titulo.comprador.nombreCompleto}"/>
+                        </p:column>
+
+                        <p:column headerText="Valor Emitido" width="60">
+                            <h:outputText value="#{titulo.totalPago}" style="font-weight: bold;"/>
+                        </p:column>
+                        <p:column headerText="Estado" filterBy="#{titulo.estadoLiquidacion.descripcion}" filterMatchMode="contains">
+                            <p:outputLabel value="#{titulo.estadoLiquidacion.descripcion}"/>
+                        </p:column>
+                    </p:dataTable>
+
+                </h:form>
+            </div>
+        </div>
+
+        <p:dialog header="Detalle Emision" widgetVar="dlgDetalle" resizable="false" closeOnEscape="true" modal="true" width="80%" position="center">
+            <h:form id="formDetEmision">
+                <dialog:detalleLiquidacion liquidacion="#{certificadoNoAdeudarMB.liquidacion}" mostrarCantidad="true" mostrarObservacion="true" />
+                <center><p:commandButton value="Aceptar" oncomplete="PF('dlgDetalle').hide();" styleClass="btnStyle"/></center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="localComaericales" header="Locales" id="localComaericales"
+                  height="500" width="1200" responsive="true" closable="true" closeOnEscape="true"
+                  modal="true"  >
+
+            <h:form id="fmLocales" prependId="false">
+                <p:dataTable id="dtLocales" lazy="true" value="#{certificadoNoAdeudarMB.lazyLcoal}" style="width: 100%;"
+                             var="local" rows="20" paginator="true" paginatorPosition="top" class="MarTop20"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             widgetVar="dtPatentes" >
+                    <f:facet name="header">
+                        LISTADO DE LOCALES COMERCIALES
+                    </f:facet>
+                    <p:column headerText="Id" filterBy="#{local.id}" width="100" filterStyle="width:90%;">
+                        <center><h:outputText value="#{local.id}"/></center>
+                    </p:column>
+                    <p:column headerText="Num Local" filterBy="#{local.numLocal}" width="100" filterStyle="width:90%;">
+                        <center><h:outputText value="#{local.numLocal}"/></center>
+                    </p:column>
+                    <p:column headerText="Identificación" filterBy="#{local.propietario.identificacion}" width="100" filterStyle="width:90%;">
+                        <center><h:outputText value="#{local.propietario.identificacion}"/></center>
+                    </p:column>
+
+                    <p:column headerText="Contribuyente" width="100;">
+                        <h:outputText value="#{local.propietario.nombre} #{local.propietario.apellido}"  style="text-transform: uppercase; font-size: 11px"/>
+                        <h:outputText value="#{local.propietario.razonSocial}" style="text-transform: uppercase; font-size: 11px"/>
+                    </p:column>
+                    <p:column headerText="Nombre Local" width="300" >
+                        <center><h:outputText value="#{local.nombreLocal}"/></center>
+                    </p:column>
+                    <p:column headerText="Matriz" >
+                        <center><h:outputText value="SI" rendered="#{local.matriz}"/></center>
+                        <center><h:outputText value="NO" rendered="#{!local.matriz}"/></center>
+                    </p:column>
+                    <p:column headerText="Actividades" >
+                        <center>
+                            <ui:repeat id="actividadesLocales" value="#{local.renActividadComercialCollection}" var="act">
+                                <p:outputLabel value="#{act.descripcion} ;" style="text-transform: uppercase; font-size: 11px"/>
+                            </ui:repeat>
+                        </center>
+                    </p:column>
+
+                    <p:column headerText="Accesorios" width="200;" >
+                        <center>
+                            <ui:repeat value="#{local.cantidadAccesoriosCollection}" var="acc" >
+                                <center><h:outputText value=" Año:  #{acc.anio} - Tipo: #{acc.tipo.texto} - Cantidad: #{acc.cantidad}" style="text-transform: uppercase; font-size: 11px"/></center>
+                            </ui:repeat>    
+                        </center>
+                    </p:column>
+
+                    <p:column headerText="Categoria" width="200;" >
+                        <center><h:outputText value="#{certificadoNoAdeudarMB.getDetalleCategoria(local)}"/></center>
+                    </p:column>
+
+                    <p:column headerText="***" width="50;" >
+                        <center>
+                            <p:commandLink title="Seleccionar" actionListener="#{certificadoNoAdeudarMB.seleccionarLocal(local)}" styleClass="btnStyle">
+                                <i class="fa fa-check" style="font-size: 1.5em; margin-right: 8px;"></i>
+                            </p:commandLink>
+                        </center>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlogoPpredioPropiestario" widgetVar="dlogoPpredioPropiestario"  position="center" draggable="false" header="Predios" width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="550" >
+            <h:form id="frmPrediosPropiestarios" prependId="false">
+                <p:dataTable id="cuentas" widgetVar="cuentas" var="item" value="#{certificadoNoAdeudarMB.prediosPropiestarios}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowIndexVar="index"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,15,20,30,50,100,150" 
+                             emptyMessage="No existen datos con el criterio de búsqueda especificado" >
+                    <p:column headerText="Clave Catastral" width="200" filterBy="#{item.claveCat}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{item.claveCat}" />
+                        </center>
+                    </p:column>
+                    <p:column headerText="Num Predio" filterBy="#{item.numPredio}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{item.numPredio}"/>    
+                        </center>                        
+                    </p:column>
+                    <p:column headerText="Tipo Predio" >
+                        <center>
+                            <h:outputText value="#{item.tipoPredio eq 'U'?'URBANO':'RURAL'}"/>
+                        </center>                        
+                    </p:column>
+                    <p:column headerText="Avalúo Munnicipal" filterBy="#{item.avaluoMunicipal}" filterMatchMode="exact">
+                        <h:outputText value="#{item.avaluoMunicipal}">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <f:view encoding="UTF-8"></f:view>
+    <ui:define name="title">Archivos MEF</ui:define>
+
+    <ui:define name="content">
+        <h:form id="formMaster" prependId="false">
+            <div class="ui-fluid">
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <center>
+                            <h2>Generación de Archivos MEF</h2>
+                        </center>
+                        <p:separator/>
+                        <div class="card card-w-title">
+                            <center>
+                                <p:fieldset legend="Archivos" id="fieldsetPrestamo"
+                                            style="margin-bottom:20px; width: 70%; height:50%; padding:15px; font-weight: bold; text-align: left">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                            <p:outputLabel value="Tipo de Archivo: " for="@next"/>
+                                            <p:selectOneMenu id="tipoArchivo" value="#{archivoSinafipView.tipoArchivo}" style="width: 100%" required="true">
+                                                <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItem itemLabel="Balance Inicial" itemValue="BI" />
+                                                <f:selectItem itemLabel="Balance De Comprobación Mensual" itemValue="BCM" />
+                                                <f:selectItem itemLabel="Transacciones Recíprocas Mensual" itemValue="TRM"/>
+                                                <p:ajax update="formMaster" listener="#{archivoSinafipView.actualizarDatosView()}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                            <p:outputLabel value="Período" escape="false" for="@next"/>
+                                            <p:selectOneMenu  id="periodo" value="#{archivoSinafipView.opcionBusqueda.anio}" style="width: 100%" required="true"> 
+                                                <f:selectItem value="#{null}" itemLabel="Seleccione un período" noSelectionOption="true"/>
+                                                <f:selectItems value="#{archivoSinafipView.listaPeriodo}" var="p" itemLabel="#{p}" itemValue="#{p}"/>
+                                                <p:ajax update="pnlDiarioGeneral" process="periodo"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{archivoSinafipView.renderedMeses}">
+                                            <p:outputLabel value="Mes: " escape="false" for="@next"/>
+                                            <p:selectOneMenu  id="mes" value="#{archivoSinafipView.mes}" style="width: 100%" required="true">
+                                                <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItems value="#{archivoSinafipView.mesesAnio}" var="m" itemLabel="#{m.texto}" itemValue="#{m.orden}"/>
+                                                <p:ajax update="fldInfoDiarioGeneral" listener="#{archivoSinafipView.formatFecha()}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" rendered="#{archivoSinafipView.renderedMeses}">
+                                            <p:outputLabel value="Tipo: " escape="false" for="@next"/>
+                                            <p:selectOneMenu  id="tipoTransaccione" value="#{archivoSinafipView.tipoDiario}" style="width: 100%" required="true">
+                                                <f:selectItem itemLabel="Seleccione:" itemValue="#{null}" noSelectionOption="true" />
+                                                <f:selectItem itemLabel ="CON transacciones de Cierre" itemValue="CT" />
+                                                <f:selectItem itemLabel ="SIN transacciones de Cierre" itemValue="ST" />
+                                                <p:ajax update="fldInfoDiarioGeneral" listener="#{archivoSinafipView.actualizarDatosDiario()}"/>
+                                            </p:selectOneMenu>
+                                        </p:panelGrid>
+                                    </p:panelGrid>
+                                </p:fieldset>
+
+                                <p:fieldset id="fldInfoDiarioGeneral" legend="Datos A Generar" 
+                                            style="margin-bottom:20px; width: 70%; height:50%; padding:15px; font-weight: bold; text-align: left">
+                                    <p:panelGrid id="pnlDiarioGeneral" columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" style="margin-left: 100px" 
+                                                 rendered="#{!archivoSinafipView.mostrarDatatableTransacccionesR}">
+                                        <h:panelGroup>
+<!--                                            <p:outputLabel value="# {archivoSinafipView.diarioApertura.observacion}" 
+                                                           rendered="# {archivoSinafipView.claseDiarioApertura}"/><br/>-->
+                                            <p:outputLabel value="Clase: #{archivoSinafipView.diarioApertura.clase.texto}" 
+                                                           rendered="#{archivoSinafipView.claseDiarioApertura}"/><br/>
+                                            <p:outputLabel value="Tipo: #{archivoSinafipView.diarioApertura.tipo.texto}" 
+                                                           rendered="#{archivoSinafipView.claseDiarioApertura}"/><br/>
+                                            <p:outputLabel value="Plan de Cuenta Contable Periodo: #{archivoSinafipView.opcionBusqueda.anio}" 
+                                                           rendered="#{archivoSinafipView.mensajeCuentaRendered}"/><br/>
+                                            <p:outputLabel value="Transacciones De Diario General con Tipo Cierre" 
+                                                           rendered="#{archivoSinafipView.mostrarDatosComprobacion}"/><br/>
+                                            <p:outputLabel value="Transacciones De Diario General Sin Cierre" 
+                                                           rendered="#{archivoSinafipView.mostrarDatosComprobacionSinCierre}"/><br/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                    <p:panelGrid id="panelData" rendered="#{archivoSinafipView.mostrarDatatableTransacccionesR}" columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:dataTable id="dtData" 
+                                                     widgetVar="dtData"
+                                                     value="#{archivoSinafipView.listDetalleTransaccionesReciprocas}"
+                                                     var="tran" 
+                                                     paginator="true" 
+                                                     lazy="true" rows="10" 
+                                                     rowsPerPageTemplate="10,50,100" 
+                                                     paginatorPosition="bottom"
+                                                     filterEvent="enter"
+                                                     emptyMessage="No se encontró ningún registro para mostrar."
+                                                     style="font-size: 11px"
+                                                     editable="true" editMode="cell">
+
+                                            <p:column headerText="N° Transacción" style="font-weight: 500;" width="60" filterBy="#{tran.idContDiarioGeneral.numRegistro}">
+                                                <center>
+                                                    <h:outputText value="#{tran.idContDiarioGeneral.numRegistro}"/>   
+                                                </center>
+                                            </p:column>
+                                            <p:column headerText="Fecha" style="font-weight: 500;" sortBy="#{tran.idContDiarioGeneral.fechaRegistro}">
+                                                <center>
+                                                    <h:outputText value="#{tran.idContDiarioGeneral.fechaRegistro}">
+                                                        <f:convertDateTime pattern="yyyy/MM/dd" />
+                                                    </h:outputText>   
+                                                </center>
+                                            </p:column>
+                                            <p:column headerText="Cuenta" style="font-weight: 500;" >
+                                                <center>
+                                                    <h:outputText value="#{tran.idContCuentas.codigo}"/>   
+                                                </center>
+                                            </p:column>
+                                            <p:column headerText="Debe" style="font-weight: 500;" >
+                                                <h:outputText value="#{tran.debe}" style="float: right"/>   
+                                            </p:column>
+                                            <p:column headerText="Haber" style="font-weight: 500;" >
+                                                <h:outputText value="#{tran.haber}" style="float: right"/>   
+                                            </p:column>
+                                            <p:column headerText="Otorgante" style="font-weight: 500;">
+                                                <p:cellEditor>
+                                                    <center>
+                                                        <f:facet name="output"><h:outputText value="#{tran.idContDiarioGeneral.otorgante.identificacionCompleta}" /></f:facet>
+                                                    </center>
+                                                    <f:facet name="input">
+                                                        <p:selectOneMenu value="#{tran.idContDiarioGeneral.otorgante}" converter="#{utilConverter}"
+                                                                         filter="true" filterMatchMode="container">
+                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{archivoSinafipView.proveedores}" var="o" 
+                                                                           itemLabel="#{o.cliente.identificacionCompleta} - #{o.cliente.nombre}" 
+                                                                           itemValue="#{o.cliente}"/>
+                                                        </p:selectOneMenu>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Receptor" style="font-weight: 500;">
+                                                <p:cellEditor disabled="#{not empty tran.idContDiarioGeneral.receptor.identificacionCompleta}">
+                                                    <center>
+                                                        <f:facet name="output"><h:outputText value="#{tran.idContDiarioGeneral.receptor.identificacionCompleta}" /></f:facet>
+                                                    </center>
+                                                    <f:facet name="input">
+                                                        <p:selectOneMenu value="#{tran.idContDiarioGeneral.receptor}" converter="#{utilConverter}"
+                                                                         filter="true" filterMatchMode="container">
+                                                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" noSelectionOption="true" />
+                                                            <f:selectItems value="#{archivoSinafipView.proveedores}" var="p" 
+                                                                           itemLabel="#{p.cliente.identificacionCompleta} - #{p.cliente.nombre}" 
+                                                                           itemValue="#{p.cliente}"/>
+                                                        </p:selectOneMenu>
+                                                    </f:facet>
+                                                </p:cellEditor>
+                                            </p:column>
+                                            <p:column headerText="Cuenta Monetaria" style="font-weight: 500;" width="60">
+                                                <center>
+                                                    <h:outputText value="#{tran.cuentaMonetaria}"/>   
+                                                </center>
+                                            </p:column>
+                                        </p:dataTable>
+                                    </p:panelGrid>
+                                    <p:outputPanel style="margin-top: 25px;">
+                                        <center>
+                                            <p:commandButton value="Generar Archivo" process="formMaster"
+                                                             icon="fa fa-fw fa-file-pdf-o" actionListener="#{archivoSinafipView.generarArchivoPlano()}" style="width: auto; margin-bottom: 15px;margin-left: 15px;"
+                                                             styleClass="Fs16" update="formMaster"/>
+                                            <p:commandButton value="Cancelar Archivo" icon="ui-icon-clear"
+                                                             actionListener="#{archivoSinafipView.loadModel()}" style="width: auto; margin-left: 15px;"
+                                                             styleClass="red-btn" update="formMaster"/>
+                                        </center>
+                                    </p:outputPanel>
+                                </p:fieldset>
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>

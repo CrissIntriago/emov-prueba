@@ -1,0 +1,300 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets" template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://java.sun.com/jsf/html" xmlns:p="http://primefaces.org/ui" xmlns:f="http://java.sun.com/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+
+    <ui:define name="title">
+        Servicios
+    </ui:define>
+    <ui:param name="tittle" value="MANTENIMIENTO DE SERVICIOS" />
+    <ui:define name="content">
+
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="mainForm" prependId="false">
+                    <center>
+                        <h:panelGroup id="dataTable" layout="block">
+                            <div align="left" >
+                                <p:commandButton value="Adicionar Servicio" class="nuevo"
+                                                 icon="ui-icon-plus" actionListener="#{serviciosMB.abrirDlg(null)}"  update="formNuevoItem" 
+                                                 styleClass="Fs16" style="width: 150px;" oncomplete="PF('dlgNuevoServicio').show();"/>
+                                <p:commandButton value="Limpiar filtros"  process="@this" 
+                                                 icon="ui-icon-refresh" onclick="PF('dtDatos').clearFilters()" update="dtDatos"
+                                                 styleClass="Fs16" style="width: 150px;"/>
+
+                                <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                                <p:columnToggler datasource="dtDatos" trigger="mostrarColumnas" />
+                            </div>
+                            <br/>
+                            <p:dataTable id="dtDatos" reflow="true" paginator="true" lazy="true" rows="30"
+                                         rowsPerPageTemplate="10,20,30" filterEvent="enter" rowIndexVar="i"
+                                         paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                         paginatorPosition="bottom" widgetVar="dtDatos" value="#{serviciosMB.lazyServicios}"
+                                         tableStyle="table-layout:auto" var="dato" emptyMessage="No se encontró ningún Item">
+                                <f:facet name="header">
+                                    <h3>SERVICIOS DE LOS DIFERENTES DEPARTAMENTOS</h3>
+                                </f:facet>
+                                <p:column headerText="**" width="30">
+                                    <center>
+                                        <h:outputText value="#{i + 1}" />
+                                    </center>
+                                </p:column>
+                                <p:column headerText="Departamento" filterBy="#{dato.departamento.nombre}" groupRow="true" >
+                                    <f:facet name="filter">
+                                        <p:selectOneMenu onchange="PF('dtDatos').filter()" styleClass="custom-filter"
+                                                         filterMatchMode="contains" filter="true"
+                                                         style="min-width:100% !important; max-width: 0 !important" autoWidth="false">
+                                            <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                            <f:selectItems value="#{serviciosMB.departamentos}" var="depa"
+                                                           itemLabel="#{depa.nombre}" itemValue="#{depa.nombre}" />
+                                        </p:selectOneMenu>
+                                    </f:facet>
+                                    <h:outputText value="#{dato.departamento.nombre}" />
+                                </p:column>
+                                <p:column headerText="Servicio" filterBy="#{dato.nombre}" filterMatchMode="contains">
+                                    <h:outputText value="#{dato.nombre}" />
+                                </p:column>
+                                <p:column headerText="En línea" filterBy="#{dato.nombre}">
+                                    <h:outputText value="#{dato.enLinea ? 'SI':'NO'}" />
+                                </p:column> 
+                                <p:column headerText="Acciones" width="80">
+                                    <center>
+                                        <p:commandLink actionListener="#{serviciosMB.ver(dato)}" title="Ver Servicio" process="@this" class="editar">
+                                            <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                        <p:commandLink title="Editar" actionListener="#{serviciosMB.abrirDlg(dato)}">
+                                            <i class="fa fa-edit" style="font-size: 1.2em; margin-right: 5px;"></i>
+                                        </p:commandLink>
+                                        <p:spacer width="5" />
+                                        <p:commandLink title="Eliminar" actionListener="#{serviciosMB.delete(dato)}" process="@this" class="eliminar">
+                                            <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 5px; color: red;"></i>
+                                            <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el servicio #{dato.nombre} ?" icon="fa fa-exclamation-triangle" />
+                                        </p:commandLink>
+                                    </center>
+                                </p:column>
+                            </p:dataTable>
+
+
+                        </h:panelGroup>
+
+                    </center>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="dlgNuevoServicio" widgetVar="dlgNuevoServicio" width="50%" height="400" closeOnEscape="true"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" position="center">
+            <h:form id="formNuevoItem">
+                <center>
+                    <p:outputLabel value="#{serviciosMB.item.id == null || serviciosMB.view ? 'Datos del Servicio' : 'Editar Servicio'}"
+                                   style="font-weight: bolder; font-size: 16px;" /><br></br> 
+                </center>
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup id="panelDept" rendered="#{!serviciosMB.view}" >
+                        <p:outputLabel value="Departamento:" style="font-weight: bolder" /><br></br>
+                        <p:selectOneMenu value="#{serviciosMB.item.departamento}" converter="dtoConverter"
+                                         style="min-width:100% !important; max-width: 0 !important" autoWidth="false" filter="true"
+                                         filterMatchMode="contains">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                            <f:selectItems value="#{serviciosMB.departamentos}" var="depa" itemLabel="#{depa.nombre}"
+                                           itemValue="#{depa}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{serviciosMB.view}" >
+                        <p:outputLabel value="Departamento:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}"  value="#{serviciosMB.item.departamento.nombre}" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup id="panelTipoLiquidacion" rendered="#{!serviciosMB.view}" >
+                        <p:outputLabel value="Tipo Liquidación" style="font-weight: bolder" /><br></br>
+                        <p:selectOneMenu value="#{serviciosMB.item.tipoLiquidacion}" converter="dtoConverter"
+                                         style="min-width:100% !important; max-width: 0 !important" autoWidth="false" filter="true"
+                                         filterMatchMode="contains">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                            <f:selectItems value="#{serviciosMB.listTipoLiquidacion}" var="tipo" itemLabel="#{tipo.nombreTitulo}"
+                                           itemValue="#{tipo}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{serviciosMB.view}" >
+                        <p:outputLabel value="Tipo Liquidación:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}"  value="#{serviciosMB.item.tipoLiquidacion.nombreTitulo}" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup id="panelTipoTramite" rendered="#{!serviciosMB.view}" >
+                        <p:outputLabel value="Tipo Trámite *:" style="font-weight: bolder" /><br></br>
+                        <p:selectOneMenu value="#{serviciosMB.item.tipoTramite}" converter="dtoConverter"
+                                         style="min-width:100% !important; max-width: 0 !important" autoWidth="false" filter="true"
+                                         filterMatchMode="contains">
+                            <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                            <f:selectItems value="#{serviciosMB.listTipoTramite}" var="tipo" itemLabel="#{tipo.descripcion}"
+                                           itemValue="#{tipo}" />
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{serviciosMB.view}" >
+                        <p:outputLabel value="Tipo Trámite:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}"  value="#{serviciosMB.item.tipoTramite.descripcion}" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Nombre:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}"  value="#{serviciosMB.item.nombre}" style="width: 100%;" />
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Abreviatura:" style="font-weight: bolder" /><br />
+                        <p:inputText  readonly="#{serviciosMB.view}" value="#{serviciosMB.item.abreviatura}" 
+                                      maxlength="6"  style="width: 100%;" onkeyup="toUpperCase(this)"  />
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Días:" style="font-weight: bolder" /><br />
+                        <p:inputText 
+                            class="panelInput" 
+                            style="width: 100%" 
+                            maxlength="4" 
+                            readonly="#{serviciosMB.view}"
+                            value="#{serviciosMB.item.diasRespuesta}" >
+                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                        </p:inputText> 
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Horas:" style="font-weight: bolder" /><br />
+                        <p:inputText 
+                            class="panelInput" 
+                            style="width: 100%" 
+                            maxlength="4" 
+                            readonly="#{serviciosMB.view}"
+                            value="#{serviciosMB.item.horasRespuesta}" >
+                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                        </p:inputText> 
+                    </h:panelGroup>
+                    <h:panelGroup>
+                        <p:outputLabel value="Minutos:" style="font-weight: bolder" /><br />
+                        <p:inputText 
+                            class="panelInput" 
+                            style="width: 100%" 
+                            maxlength="4" 
+                            readonly="#{serviciosMB.view}"
+                            value="#{serviciosMB.item.minutosRespuesta}" >
+                            <p:keyFilter regEx="/[\d]/" preventPaste="false"/>
+                        </p:inputText> 
+                    </h:panelGroup>
+                </p:panelGrid><br/>
+                <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup rendered="#{serviciosMB.item.urlImagen ne null  }">                     
+                        <p:dataTable id="dtDocumentos" value="#{serviciosMB.listDocServicio}"
+                                     var="item"
+                                     paginator="false" rowsPerPageTemplate="10,15" rows="10" style="width: 100%"
+                                     paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     emptyMessage="No existen registros">
+                            <p:column headerText="Nombre Servicio" style="width: 37%">
+                                <p:outputLabel value="#{item.nombre}"/>
+                            </p:column>
+                            <p:column headerText="Nombre Imagen" style="width: 38%;text-align: center;">
+                                <p:outputLabel value="#{item.nombreImagen}"/>
+                            </p:column>
+                            <p:column  headerText="Acciones" style="width: 15%; text-align: center;">
+                                <p:commandLink oncomplete="PF('dowloadDoc').show()" update="formDoc" >
+                                    <i class="fa fa-search" style="font-size: 1.5em"></i>
+                                </p:commandLink>
+
+                                <p:commandLink disabled="#{serviciosMB.view}" actionListener="#{serviciosMB.eliminarDocumento(item)}" update="dtDocumentos"  title="Borrar Archivo">
+                                    <i class="fa fa-trash delete Fs20" />
+                                    <p:confirm header="Confirmación de eliminación" message="Esta seguro de eliminar el archivo" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+
+                            </p:column>
+                        </p:dataTable> 
+                    </h:panelGroup>
+
+                    <h:panelGrid columns="3" style="width: 100%" rendered="#{!serviciosMB.view}" >
+                        <h:panelGroup>
+                            <p:outputLabel for="itemonline" value="En línea:" style="font-weight: bolder" /><br />
+                            <p:selectBooleanCheckbox id="itemonline" value="#{serviciosMB.item.enLinea}"
+                                                     style="width: 100%;" />
+                        </h:panelGroup>
+                        <h:panelGroup>
+                            <p:outputLabel for="itempago" value="Requiere pago:" style="font-weight: bolder" /><br />
+                            <p:selectBooleanCheckbox id="itempago" value="#{serviciosMB.item.requierePago}"
+                                                     style="width: 100%;" />
+                        </h:panelGroup>
+                        <!--                    <h:panelGroup>
+                                                <p:outputLabel for="iteminspeccion" value="Genera inspección:" style="font-weight: bolder" /><br />
+                                                <p:selectBooleanCheckbox id="iteminspeccion" value="# {serviciosMB.item.genInspeccion}"
+                                                                         style="width: 100%;" />
+                                            </h:panelGroup>-->
+
+                        <h:panelGroup>
+                            <p:outputLabel for="itemmasSolicitado" value="Más solicitado:" style="font-weight: bolder" /><br />
+                            <p:selectBooleanCheckbox id="itemmasSolicitado" value="#{serviciosMB.item.masSolicitado}"
+                                                     style="width: 100%;" />
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="1" style="width: 100%" rendered="#{!serviciosMB.view}" >
+                        <h:panelGroup>
+                            <p:outputLabel for="itemTieneAprobacion" value="Tiene aprobación:" style="font-weight: bolder" /><br />
+                            <p:selectBooleanCheckbox id="itemTieneAprobacion" value="#{serviciosMB.item.tieneAprobacion}"
+                                                     style="width: 100%;" />
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGroup rendered="#{serviciosMB.view}">
+                        <p:outputLabel for="itemonline" value="En línea:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}" value="#{serviciosMB.item.enLinea ? 'SI':'NO'}" style="width: 100%;" /><br />
+                        <p:outputLabel for="itempago" value="Requiere pago:" style="font-weight: bolder" /><br />
+                        <p:inputText readonly="#{serviciosMB.view}" value="#{serviciosMB.item.requierePago ? 'SI':'NO'}" style="width: 100%;" /><br />
+                        <p:outputLabel for="iteminspeccion" value="Genera inspección:" style="font-weight: bolder" /><br></br>
+                        <!--<p:inputText readonly="# {serviciosMB.view}" value="# {serviciosMB.item.genInspeccion ? 'SI':'NO'}" style="width: 100%;" /><br />-->
+                        <p:outputLabel for="itemmasSolicitado" value="Más solicitado:" style="font-weight: bolder" /><br></br>
+                        <p:inputText readonly="#{serviciosMB.view}" value="#{serviciosMB.item.masSolicitado ? 'SI':'NO'}" style="width: 100%;" />
+                        <p:outputLabel for="itemTieneSupervision" value="Tiene supervisión:" style="font-weight: bolder" /><br></br>
+                        <p:inputText readonly="#{serviciosMB.view}" value="#{serviciosMB.item.tieneSupervision ? 'SI':'NO'}" style="width: 100%;" />
+                        <p:outputLabel for="itemTieneAprobacion" value="Tiene aprobación:" style="font-weight: bolder" /><br></br>
+                        <p:inputText readonly="#{serviciosMB.view}" value="#{serviciosMB.item.tieneAprobacion ? 'SI':'NO'}" style="width: 100%;" />
+                        <p:outputLabel for="itemTieneAsignacion" value="Tiene asignación:" style="font-weight: bolder" /><br></br>
+                        <!--<p:inputText readonly="# {serviciosMB.view}" value="# {serviciosMB.item.tieneAsignacion ? 'SI':'NO'}" style="width: 100%;" />-->
+                    </h:panelGroup>
+                </p:panelGrid><br/>
+                <h:panelGroup rendered="#{serviciosMB.item.urlImagen eq null }">
+                    <p:outputLabel id="imagen-item" value="Imagen #{serviciosMB.imagenItem} "  
+                                   style="font-weight:bold; font-size: 12px" /> 
+                    <p:outputLabel  value=" La imagen no debe ser mayor a 5 MB" style="font-size: 8px !important" />
+                    <div align="center">
+                        <p:fileUpload  id="imagen-up" label="Imagen"
+                                       update="imagen-item"
+                                       mode="advanced" 
+                                       fileUploadListener="#{serviciosMB.handleFileUploadItem}" 
+                                       dragDropSupport="false"
+                                       multiple="false" 
+                                       sizeLimit="5000000" 
+                                       fileLimit="10" 
+                                       uploadLabel="Subir" cancelLabel="Cancelar"
+                                       style="max-width: 100%"
+                                       allowTypes="/(\.|\/)(jpe?g|png)$/" />
+                    </div>
+                </h:panelGroup><br/>
+                <center>
+                    <p:commandButton  disabled="#{serviciosMB.view}" value="Guardar" actionListener="#{serviciosMB.guardarItem()}" icon="fa fa-save"
+                                      styleClass="p-mr-2 p-mb-2" />
+                    <p:spacer width="5"/>
+                    <p:commandButton value="Cancelar" actionListener="#{serviciosMB.vaciarFormulario()}"
+                                     oncomplete="PF('dlgNuevoServicio').hide();" icon="fa fa-close" styleClass="red-button" />
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog widgetVar="dowloadDoc" header="Imagen"
+                  height="400" width="490" responsive="true" closable="true" closeOnEscape="true"
+                  modal="true"  id="dowloadDoc">
+            <h:form id="formDoc">
+                <center>
+                    <p:fieldset legend="#{serviciosMB.item.nombreImagen}"
+                                rendered="#{serviciosMB.item.urlImagen ne null}">
+                        <iframe  style="width: 100%; height: 390px" src="#{application.contextPath}/images?ruta=#{serviciosMB.item.urlImagen}"/>
+                    </p:fieldset>                  
+                </center>
+            </h:form>
+        </p:dialog>
+
+
+    </ui:define>
+
+</ui:composition>

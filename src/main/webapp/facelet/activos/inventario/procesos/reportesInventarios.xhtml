@@ -1,0 +1,134 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <ui:define name="title">
+        Reporte de Inventarios
+
+    </ui:define>
+    <ui:param name="tittle" value="REPORTES DE INVENTARIOS" />
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <h:form prependId="false" id="formReporteInventario">
+                    <center>
+                        <p:fieldset legend="Parámetros de Consulta" id="fieldsetParametros"
+                                    style="margin-bottom:20px; width: 50%; height:50%; padding:15px; font-weight: bold; text-align: left">
+                            <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                    <p:outputLabel value="TIPO DE REPORTE: " for="@next"/>
+                                    <p:selectOneMenu  value="#{reporteInventarioBeans.valorSelectOneMenu}" id="opcion" required="true">
+                                        <f:selectItem itemLabel="Seleccione..." itemValue="#{null}" noSelectionOption="true"/>
+                                        <f:selectItem itemLabel="Por Periodos" itemValue="periodo" />
+                                        <f:selectItem itemLabel="Por Inventarios" itemValue="inventario" />
+                                        <f:selectItem itemLabel="Por Unidad Administrativa" itemValue="unidad" />
+                                        <f:selectItem itemLabel="Por Solicitante" itemValue="solicitante"/>
+                                        <f:selectItem itemLabel="Por Ítem" itemValue="item5"/>
+                                        <f:selectItem itemLabel="Por cuenta contable" itemValue="cuentaContable"/>
+                                        <p:ajax update="fieldsetdetalle,tipofieldset,gridParametros"  listener="#{reporteInventarioBeans.btn()}" />
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank" id="gridParametros">
+                                <p:fieldset legend="Parámetros de Fecha:" id="fieldsetFecha" style="margin-bottom:20px;">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="desde" value="Fecha Desde:" id="fechadesde"/> 
+                                            <p:calendar id="desde" locale="es" navigator="true" pattern="yyyy-MM-dd" maxdate="#{reporteInventarioBeans.fechahasta}"
+                                                        value="#{reporteInventarioBeans.fechadesde}" required="true">
+                                                <p:ajax event="dateSelect" update="hasta"/>
+                                            </p:calendar>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                            <p:outputLabel for="hasta" value="Fecha Hasta:" id="fechahasta"/> 
+                                            <p:calendar id="hasta" locale="es" navigator="true" pattern="yyyy-MM-dd" mindate="#{reporteInventarioBeans.fechadesde}"
+                                                        value="#{reporteInventarioBeans.fechahasta}" required="true"/>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                
+                                <p:fieldset legend="Parámetros Adicionales:" id="fieldsetdetalle" style="margin-bottom:20px;"
+                                        rendered="#{reporteInventarioBeans.valorSelectOneMenu eq 'unidad' or 
+                                        reporteInventarioBeans.valorSelectOneMenu eq 'solicitante'  or reporteInventarioBeans.valorSelectOneMenu eq 'item5'}">
+                                    
+                                    <p:panelGrid columns="1" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{reporteInventarioBeans.valorSelectOneMenu eq 'unidad'}">
+                                            <p:outputLabel  for="unidad" value="Unidad Administrativa:" /> 
+                                            <p:selectOneMenu id="unidad" value="#{reporteInventarioBeans.unidadAdministrativs}" 
+                                                             style="width: 100%;" panelStyle="width: auto"
+                                                             filter="true" filterMatchMode="contains" required="#{reporteInventarioBeans.variable1}">
+                                                <f:selectItem itemLabel="Seleccione una unidad" itemValue="#{null}" noSelectionOption="true"/>
+                                                <f:selectItems value="#{reporteInventarioBeans.allUnidadesAdministrativas}" var="lis"
+                                                               itemLabel="#{lis.id} #{lis.nombre}" itemValue="#{lis.nombre}" itemLabelEscaped="false"/>
+
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{reporteInventarioBeans.variable2}">
+                                            <p:outputLabel for="soli" value="Solicitante:"/> 
+                                            <p:selectOneMenu id="soli" value="#{reporteInventarioBeans.solicitante}" 
+                                                             filter="true" filterMatchMode="contains"
+                                                             style="width: 100%;" panelStyle="width: auto"
+                                                             required="#{reporteInventarioBeans.valorSelectOneMenu eq 'solicitante'}">
+                                                <f:selectItem itemLabel="Seleccione un solicitante" itemValue="#{null}" noSelectionOption="true"/>
+                                                <f:selectItems value="#{reporteInventarioBeans.listaUsuario}" var="lista"
+                                                               itemLabel="#{lista.persona.identificacion} - #{lista.persona.nombreCompleto}" itemValue="#{lista.id}" itemLabelEscaped="false"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{reporteInventarioBeans.variable3}">
+                                            <p:outputLabel for="detalle" value="Item"/> 
+                                            <p:selectOneMenu id="detalle" value="#{reporteInventarioBeans.detalleItem}"
+                                                             filter="true" filterMatchMode="contains"
+                                                             style="width: 100%;" panelStyle="width: 15%"
+                                                             required="#{reporteInventarioBeans.valorSelectOneMenu eq 'item5'}">
+                                                <f:selectItem itemLabel="Seleccione un Ítem" itemValue="#{null}" noSelectionOption="true"/>
+                                                <f:selectItems value="#{reporteInventarioBeans.detalle}" var="listadetalle"
+                                                               itemLabel="#{listadetalle.codigoAgrupado} - #{listadetalle.descripcion}" itemValue="#{listadetalle.descripcion}" itemLabelEscaped="false"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        
+                                    </p:panelGrid>
+                                </p:fieldset>
+                                <p:fieldset legend="Parámetros Tipo:" id="tipofieldset" style="margin-bottom:20px;">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="form-group ui-panelgrid-blank">
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                                      rendered="#{reporteInventarioBeans.valorSelectOneMenu == 'periodo' or reporteInventarioBeans.valorSelectOneMenu == 'inventario'
+                                                                  or  reporteInventarioBeans.valorSelectOneMenu == 'item5' or reporteInventarioBeans.valorSelectOneMenu == ''
+                                                    or !reporteInventarioBeans.valorSelectOneMenu == 'cuentaContable'  }">
+                                            <p:outputLabel for="tipo" value="Tipo"/> 
+                                            <p:selectOneMenu value="#{reporteInventarioBeans.tipo}" id="tipo" required="#{reporteInventarioBeans.valorSelectOneMenu == 'periodo' or reporteInventarioBeans.valorSelectOneMenu == 'inventario'
+                                                                      or  reporteInventarioBeans.valorSelectOneMenu == 'item5' or reporteInventarioBeans.valorSelectOneMenu == ''   }">
+                                                <f:selectItem itemLabel="Seleccione..." itemValue="seleccione" noSelectionOption="true"/>
+                                                <f:selectItem itemLabel="Ingreso" itemValue="INGRESO" rendered="#{reporteInventarioBeans.valorSelectOneMenu == 'unidad' or reporteInventarioBeans.valorSelectOneMenu == 'solicitante'}"/>
+                                                <f:selectItem itemLabel="Egreso" itemValue="EGRESO"/>
+                                                <f:selectItem itemLabel="Completo" itemValue="COMPLETO" rendered="#{reporteInventarioBeans.valorSelectOneMenu == 'unidad' or reporteInventarioBeans.valorSelectOneMenu == 'solicitante'}"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput"
+                                                      rendered="#{reporteInventarioBeans.valorSelectOneMenu == 'unidad' or reporteInventarioBeans.valorSelectOneMenu == 'solicitante'}">
+                                            <p:outputLabel for="tipo2" value="Tipo"/> 
+                                            <p:selectOneMenu value="#{reporteInventarioBeans.tipo}" id="tipo2" required="#{reporteInventarioBeans.valorSelectOneMenu == 'unidad' or reporteInventarioBeans.valorSelectOneMenu == 'solicitante'}">
+                                                <f:selectItem itemLabel="Seleccione..." itemValue="seleccione" noSelectionOption="true"/>
+                                                <f:selectItem itemLabel="Egreso" itemValue="EGRESO"/>
+                                            </p:selectOneMenu>
+                                        </h:panelGroup>
+                                    </p:panelGrid>
+                                </p:fieldset>
+                            </p:panelGrid>
+                            <p:commandButton style="width: 150px" value="  Generar PDF" update="formReporteInventario"
+                                             icon="fa fa-file-pdf-o" actionListener="#{reporteInventarioBeans.imprimir('pdf')}"/>
+                            <p:commandButton style="width: 150px;margin-left: 10px" value="  Generar EXCEL" update="formReporteInventario"
+                                             icon="fa fa-file-excel-o" actionListener="#{reporteInventarioBeans.imprimir('xlsx')}"/>
+                        </p:fieldset>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+    </ui:define>
+</ui:composition>

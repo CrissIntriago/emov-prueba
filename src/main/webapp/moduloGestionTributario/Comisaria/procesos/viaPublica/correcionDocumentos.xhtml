@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <u:titleTask task="#{comisariaMB.tarea}" tramite="#{comisariaMB.tramite}" />
+                </div>
+            </div>
+            <div class="ui-g-12">          
+                <h:form id="mainForm" prependId="false">
+                     <comp:ventaComisaria solicitudVentanilla="#{comisariaMB.solicitud}" task="#{comisariaMB.tarea}" tramite="#{comisariaMB.tramite}"/>
+                    <p:fieldset legend="Requisitos" style="width: 100%; margin: auto;" >
+                        <p:panelGrid columns="2" styleClass="ui-panelgrid-blank" columnClasses="ui-g-6, ui-g-6" style="width: auto;">
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <p:dataTable  id="data" widgetVar="data" var="datos" 
+                                              value="#{comisariaMB.listRequisitoTasa}" paginator="true" rows="30" style="width: 100%;margin-top: 15px" 
+                                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="30,40,50,100"  
+                                              emptyMessage="No existen datos con el criterio de busqueda especificado"
+                                              rowIndexVar="num">
+                                    <f:facet name="header">
+                                        Requisitos
+                                    </f:facet>
+                                    <p:column headerText="N°" style="width: 3%;text-align: center">
+                                        <h:outputText value="#{num+1}" />
+                                    </p:column>
+                                    <p:column headerText="Descripción" filterBy="#{datos.nombre}" filterMatchMode="contains">
+                                        <h:outputText value="#{datos.nombre.toUpperCase()}" />
+                                    </p:column>
+                                    <p:column headerText="Obligatorio" style="width: 10%;text-align: center">
+                                        <h:outputText value="#{!datos.opcional?'SI':'NO'}" />
+                                    </p:column>
+
+                                    <p:column headerText="Acción" style="width: 30%;">
+                                        <p:fileUpload fileUploadListener="#{correcionDocumentosMB.handleFileUpload}"  style="width: 100%" 
+                                                      accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                                      label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60"  
+                                                      update="mainForm"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" style="width: 100%;">
+                                <u:documents id="listDocumentos" entiti="#{comisariaMB.tramite}" showDelete="true" />
+                            </p:panelGrid>
+                        </p:panelGrid>
+                    </p:fieldset>
+
+                    <center>
+                        <p:commandButton disabled="false" value="Completar Tarea" actionListener="#{correcionDocumentosMB.send()}" style="width: auto;margin-top: 50px;"
+                                         oncomplete="PF('dlgObservaciones').show()" update="frmDlgObser" icon="fa fa-send"/>
+                    </center>
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{correcionDocumentosMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-save" value="Aprobar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{correcionDocumentosMB.completarTareaOthers()}" style="width: 100px;margin: 10px"  />
+
+                            <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                             style="background:green;width:100px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

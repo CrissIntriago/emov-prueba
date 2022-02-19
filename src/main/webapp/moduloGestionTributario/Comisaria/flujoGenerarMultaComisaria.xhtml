@@ -1,0 +1,249 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:comp="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dlg="http://xmlns.jcp.org/jsf/composite/dialog"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp"
+                xmlns:dialog="http://xmlns.jcp.org/jsf/composite/dialog">
+
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12">
+                <div class="car card-w-title" style="background: #00796b;">
+                    <comp:ventaComisaria solicitudVentanilla="#{construccionProcessMB.solicitud}" task="#{construccionProcessMB.tarea}" tramite="#{construccionProcessMB.tramite}"/>
+                </div>
+            </div>
+
+            <h:form id="mainForm" prependId="false" >
+                <center>
+                    <h1 style="color: #00a2d3; margin: 0px">COMISARIA #{construccionProcessMB.comisariaSelect.descripcion}</h1>
+                </center>
+                <p:tabView prependId="false" >
+                    <p:tab title="Registro" > 
+                        <div class="ui-g-6">
+                            <dialog:consultaPredioGeneral predio="#{construccionProcessMB.predio}" id="prediosConsulta"
+                                                          consultar="#{construccionProcessMB.consultar()}"
+                                                          tipoCons="#{construccionProcessMB.tipoCons}"
+                                                          consultarModel="#{construccionProcessMB.validarClaveOtroCanton()}"
+                                                          predioModel="#{construccionProcessMB.predioModel}"                                                      
+                                                          tipo="#{construccionProcessMB.esUrbano}"                                              
+                                                          propietario="#{construccionProcessMB.propietarioConsulta}"
+                                                          mostrar="true"
+                                                          update="prediosConsulta,mainForm"/> 
+                            <p:panelGrid columns="2" layout="grid"  styleClass="ui-panelgrid-blank form-group">
+                                <p:panelGrid columns="1"  style="width: 100%">
+                                    <p:outputLabel value="Avaluo Municipal: " class="FontBold"/>
+                                    <p:inputText style="width: 100%" value="#{construccionProcessMB.predio.avaluoMunicipal}" readonly="true">
+                                        <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                    </p:inputText>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1"  style="width: 100%">
+                                    <p:outputLabel value="Cedula: " class="FontBold"/>
+                                    <p:inputText style="width: 100%" value="#{construccionProcessMB.propietario.identificacion}" readonly="true"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1"  style="width: 100%">
+                                    <p:outputLabel value="Apellidos: " class="FontBold"/>
+                                    <p:inputText style="width: 100%" value="#{construccionProcessMB.propietario.apellido}" readonly="true"/>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1"  style="width: 100%">
+                                    <p:outputLabel value="Nombre: " class="FontBold"/>
+                                    <p:inputText style="width: 100%" value="#{construccionProcessMB.propietario.nombre}" readonly="true"/>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <p:panelGrid columns="1" layout="grid" style="width: auto;">
+                                <p:outputLabel value="Observación: " for="@next" class="FontBold" />                                                                               
+                                <p:inputTextarea  id="observacion" value="#{construccionProcessMB.comisaria.observacion}" 
+                                                  rows="2" cols="12" style="width: 100%; font-weight: bold; font-size: 12px;" />                                      
+                            </p:panelGrid>
+                            <br/>
+                            <center>
+                                <p:commandButton value="Cobrar Multa" actionListener="#{construccionProcessMB.opendialog(1)}"  process="@form"
+                                                 icon="fa fa-save" style="width: auto;"/>
+                                <p:spacer  width="5px"/>
+                                <p:commandButton value="Reagendar Citación"   process="@this" actionListener="#{construccionProcessMB.opendialog(0)}"
+                                                 icon="fa fa-save" style="width: auto; background: red"/>
+                                <p:spacer  width="5px"/>
+                                <p:commandButton value="Terminar Proceso"   process="@this" actionListener="#{construccionProcessMB.opendialog(2)}"
+                                                 icon="fa fa-save" style="width: auto;"/>
+                                <p:spacer  width="5px"/>
+                                <p:commandButton value="Resolver por Resolución" rendered="#{construccionProcessMB.renderConstruccion}"   
+                                                 process="@this" actionListener="#{construccionProcessMB.opendialog(3)}"
+                                                 icon="fa fa-file-text-o" style="width: auto;"/>
+                            </center>                            
+                        </div>
+                        <div class="ui-g-6" >
+                            <center>
+                                <h:panelGroup id="totalPagar" >
+                                    <h2 style="color: blue;">Total a pagar: #{construccionProcessMB.sumaTotal}</h2>
+                                </h:panelGroup>
+                                <h2>TIPO DE LIQUIDACIÓN -> #{construccionProcessMB.tipoLiquidacion.nombreTransaccion.toUpperCase()}</h2>
+                                <p:dataTable id="datosLista" widgetVar="datosLista" var="rubro" value="#{construccionProcessMB.detalleLista}"
+                                             paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom" 
+                                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowIndexVar="index"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             rowsPerPageTemplate="10,15,20,30,50,100,150"  editable="true" editMode="cell"
+                                             emptyMessage="No existen datos con el criterio de búsqueda especificado" >
+                                    <p:column headerText="No." style="width: 50px;">
+                                        <center>
+                                            #{inedx+1}
+                                        </center>                                            
+                                    </p:column>
+                                    <p:column headerText="***" style="width: 50px;">
+                                        <center>
+                                            <p:selectBooleanCheckbox value="#{rubro.cobrar}" itemLabel="Basic">
+                                                <p:ajax listener="#{construccionProcessMB.editarLista(rubro,index)}" update="datosLista, totalPagar"/>
+                                            </p:selectBooleanCheckbox>    
+                                        </center>                                            
+                                    </p:column>
+                                    <p:column headerText="Descripción">
+                                        <h:outputText value="#{rubro.rubro.descripcion.toUpperCase()}"/>
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 130px;" >
+                                        <p:cellEditor >
+                                            <f:facet name="input">
+                                                <p:inputText value="#{rubro.valor}">
+
+                                                    <p:ajax event="change" listener="#{construccionProcessMB.editarLista(rubro,index)}" update="datosLista, totalPagar"/>
+                                                </p:inputText>
+                                            </f:facet>
+                                            <f:facet name="output">
+                                                <p:outputLabel value="#{rubro.valor}" style="float: right">
+                                                    <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                                                </p:outputLabel>
+                                            </f:facet>
+                                        </p:cellEditor>
+                                    </p:column>
+                                </p:dataTable>
+                            </center>                  
+                        </div>
+                    </p:tab>
+                    <p:tab title="Citaciones">
+                        <p:dataTable id="dataTableCitaciones" lazy="true" value="#{construccionProcessMB.lazyCitaciones}" var="x"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowIndexVar="index"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="10,15,20,30,50,100,150" 
+                                     paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                                     emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                            <p:column headerText="N° Citación"  filterMatchMode="contains">
+                                <h:outputText value="#{x.num}" />
+                            </p:column>
+                            <p:column headerText="Motivo"  filterMatchMode="contains">
+                                <h:outputText value="#{x.motivo}" />
+                            </p:column>
+                            <p:column headerText="Veces Citadas"  filterMatchMode="contains">
+                                <h:outputText value="#{x.motivoCitaciones}" />
+                            </p:column>
+                            <p:column headerText="Denunciante"  filterMatchMode="contains">
+                                <h:outputText value="#{x.denuciante.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Denunciado"  filterMatchMode="contains">
+                                <h:outputText value="#{x.denunciado.nombreCompleto}" />
+                            </p:column>
+                            <p:column headerText="Dirección"  filterMatchMode="contains">
+                                <h:outputText value="#{x.direccion}" />
+                            </p:column>
+                            <p:column headerText="Fecha Emisión"  filterMatchMode="contains">
+                                <h:outputText value="#{x.fecha}" >
+                                    <f:convertDateTime type="date" timeZone="CST" pattern="dd-MM-yyyy HH:mm" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Fecha Presentación"  filterMatchMode="contains">
+                                <h:outputText value="#{x.fechaPresentacion}" >
+                                    <f:convertDateTime type="date" timeZone="CST" pattern="dd-MM-yyyy HH:mm" />
+                                </h:outputText>
+                            </p:column>
+                            <p:column headerText="Acciones" width="5%" >
+                                <center>
+                                    <p:commandLink title="Compadecencia" disabled="#{x.acuerdo ne null}" actionListener="#{construccionProcessMB.dialogCitacionesComparecencia(x)}">
+                                        <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px;"></i>
+                                    </p:commandLink>
+                                </center>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                    <p:tab title="Documentos">
+                        <u:documents id="listDocumentos" entiti="#{construccionProcessMB.tramite}"/>
+                    </p:tab>
+                </p:tabView>
+            </h:form>
+        </div>
+
+        <p:dialog id="dlogoPpredioPropiestario" widgetVar="dlogoPpredioPropiestario"  position="center" draggable="false" header="Predios" width="600"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" height="550" >
+            <h:form id="frmPrediosPropiestarios" prependId="false">
+                <p:dataTable id="cuentas" widgetVar="cuentas" var="item" value="#{construccionProcessMB.prediosPropiestarios}" paginator="true" rows="15" style="width: 100%;" paginatorPosition="bottom"
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" rowIndexVar="index"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,15,20,30,50,100,150" 
+                             emptyMessage="No existen datos con el criterio de búsqueda especificado" >
+                    <p:column headerText="Clave Catastral" width="200" filterBy="#{item.claveCat}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{item.claveCat}" />
+                        </center>
+                    </p:column>
+                    <p:column headerText="Num Predio" filterBy="#{item.numPredio}" filterMatchMode="contains">
+                        <center>
+                            <h:outputText value="#{item.numPredio}"/>    
+                        </center>                        
+                    </p:column>
+                    <p:column headerText="Tipo Predio" >
+                        <center>
+                            <h:outputText value="#{item.tipoPredio eq 'U'?'URBANO':'RURAL'}"/>
+                        </center>                        
+                    </p:column>
+                    <p:column headerText="Avalúo Munnicipal" filterBy="#{item.avaluoMunicipal}" filterMatchMode="exact">
+                        <h:outputText value="#{item.avaluoMunicipal}">
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:column>
+                    <p:column headerText="******" width="50">
+                        <p:commandButton icon="fa fa-check" actionListener="#{construccionProcessMB.seleccionarPredio(item)}"  update="frmPrediosPropiestarios,mainForm" 
+                                         oncomplete="PF('dlogoPpredioPropiestario').hide()"/>
+                    </p:column>
+                </p:dataTable>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dialogCompadecencia" widgetVar="dialogCompadecencia"  position="center" 
+                  draggable="false" header="Predios" width="40%" modal="true" showEffect="fade" 
+                  hideEffect="fade" resizable="false" height="30%" >
+            <h:form id="idFormCompadecencia" prependId="false">
+                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                    <p:outputLabel value="ACUERDO:" />
+                    <p:inputTextarea value="#{construccionProcessMB.citacionComparecencia.acuerdo}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                </h:panelGroup> 
+                <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                    <p:outputLabel value="OBSERVACIÓN:" />
+                    <p:inputTextarea value="#{construccionProcessMB.citacionComparecencia.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                </h:panelGroup> 
+                <br/>
+                <center>
+                    <p:commandButton icon="fa fa-check" value="Compadecer" actionListener="#{construccionProcessMB.saveCompadecencia()}"  
+                                     oncomplete="PF('dialogCompadecencia').hide()" update="dataTableCitaciones"/>
+                </center>
+            </h:form>
+        </p:dialog>
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="25%" position="center" draggable="false" header="Observación" height="200"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <h:form id="frmDlgObser" prependId="false">
+                <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:inputTextarea value="#{construccionProcessMB.observacion.observacion}" onkeyup="toUpperCase(this)" rows="7" style="border: 1px solid;border-color: blue;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                    </h:panelGroup> 
+                    <center>
+                        <p:commandButton icon="fa fa-check" value="Aceptar"  title="Culminar Tarea" process="frmDlgObser" update="frmDlgObser"
+                                         actionListener="#{construccionProcessMB.completarTarea()}" style="background:green;width: 100px;margin: 10px"  />
+                        <p:commandButton icon="fa fa-close" value="Cerrar" onclick="PF('dlgObservaciones').hide()"
+                                         style="background:red;width:100px;margin: 10px" />
+                    </center> 
+                </p:outputPanel>
+            </h:form>  
+        </p:dialog>
+    </ui:define>
+</ui:composition>

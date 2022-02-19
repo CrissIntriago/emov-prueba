@@ -1,0 +1,175 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:dialog="http://java.sun.com/jsf/composite/dialog">
+    <ui:param name="tittle" value="NOTAS DE CRÉDITO" /> 
+    <ui:define name="head">
+    </ui:define>
+    <ui:define name="title">Notas de Crédito</ui:define>    
+    <ui:define name="content">  
+               <h:panelGroup layout="block" class="Wid100 Responsive100">
+            <div class="ContainerIndent">
+                <h:form id="registroNotadeCredito" prependId="false" enctype="multipart/form-data">
+                    <h1 class="BigTopic Fs16">Registrar Nueva Nota de Credito</h1>
+                    <p:spacer width="5"/>
+                    <h:panelGrid columns="3" style="width: 100%"  >
+                        <h:panelGroup layout="block" class="Responsive100 Responsive">
+                            <h:outputLabel value="Tipo de Nota:" for="@next" class="DispBlock Wid100 FontBold"/>
+                            <p:selectOneMenu id="tipo_nota" value="#{notaCreditoMB.tipoNota}" disabled="#{bloques.esVer}" 
+                                             style="width: 90%; height: 70%" converter="entityConverter">
+                                <f:selectItems value="#{notaCreditoMB.tipoNotas}" var="ccx" itemLabel="#{ccx.valor}" itemValue="#{ccx}"/>
+                                <p:ajax  listener="#{notaCreditoMB.changeTipoNota()}" update="registroNotadeCredito" />
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" id="data_comun">
+                            <h:panelGroup id="find_liq" layout="block" class="Responsive100 Responsive">
+                                <p:commandButton  value="Buscar Liquidacion" styleClass="btnStyle" style="font-size: 12px;" icon="ui-icon-search" process="@this"
+                                                  actionListener="#{notaCreditoMB.mostrarDialogoLiquidaciones}" rendered="#{notaCreditoMB.pagoIndebido}"/>
+                            </h:panelGroup>
+                            <h:panelGroup id="find_cont" layout="block" class="Responsive100 Responsive">
+                                <p:commandButton  value="Buscar Contribuyente" styleClass="btnStyle" style="font-size: 12px;" icon="ui-icon-search" process="@this"
+                                                  actionListener="#{notaCreditoMB.openDlgConstribuyentes}"  rendered="#{!notaCreditoMB.pagoIndebido}"/>
+                            </h:panelGroup>
+                        </h:panelGroup>
+                        <h:panelGroup id="pago_total" layout="block" class="Responsive100 Responsive">
+                            <h:outputLabel  value="Pago realizado:" class="DispBlock Wid100 FontBold" rendered="#{notaCreditoMB.pagoIndebido}" />
+                            <p:inputText value="#{notaCreditoMB.notaCredito.valorPagado}"  style="width: 90%;" rendered="#{notaCreditoMB.pagoIndebido}" readonly="true" placeholder="$0"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="4" style="width: 100%"  >
+                        <h:panelGroup layout="block">
+                            <h:outputLabel  value="Contribuyente:" class="DispBlock Wid100 FontBold" />
+                            <p:inputText value="#{notaCreditoMB.notaCredito.contribuyente.nombreCompleto}" style="width: 90%;" readonly="true" />
+                        </h:panelGroup>
+
+                        <h:panelGroup layout="block" >
+                            <h:outputLabel  value="CI/RUC:" class="DispBlock Wid100 FontBold" />
+                            <p:inputText value="#{notaCreditoMB.ciRuc}"  style="width: 90%;" readonly="true" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" id="pago_valor">
+                            <h:outputLabel for="@next" value="#{notaCreditoMB.pagoIndebido ? 'Valor real pago' : 'Valor Total'}:" class="DispBlock Wid100 FontBold"  />
+                            <p:inputText id="valor" value="#{notaCreditoMB.notaCredito.valor}"  style="width: 90%;" onkeypress="validateFloatValueAndFocusNext(event, 'observacion')" placeholder="$0">
+                                <p:ajax update="valorpagado" listener="#{notaCreditoMB.checkMayor()}"/>
+                            </p:inputText>
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" >
+                            <h:outputLabel for="@next" value="Saldo:" class="DispBlock Wid100 FontBold" />
+                            <p:inputText id="valorpagado" value="#{notaCreditoMB.notaCredito.saldo}"  style="width: 90%;" readonly="#{notaCreditoMB.pagoIndebido}" placeholder="$0"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <h:panelGrid columns="1" style="width: 100%" >
+                        <h:panelGroup layout="block" class="Responsive100 Responsive" >
+                            <p:outputLabel for="@next" value="Descripciòn:" class="DispBlock Wid100 FontBold"  />
+                            <p:inputTextarea rows="2" cols="200"  id="observacion"   value="#{notaCreditoMB.notaCredito.observacion}" 
+                                             style="text-transform: uppercase; width: 97%;"/>
+                        </h:panelGroup>
+                    </h:panelGrid>
+                    <br></br>
+                    <div>
+                        <p:dataTable value="#{notaCreditoMB.listaCobros}" var="p"
+                                     paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}" emptyMessage="Sin selecciones previas">
+                            <f:facet  name="header"> 
+                                Detalle Nota Crédito    
+                            </f:facet>
+                            <p:column headerText="Comprobante:" width="80">
+                                <h:outputText value="#{p.numComprobante}" style="font-weight: bold;"/>
+                            </p:column>
+                            <p:column headerText="Liquidacion:" width="80">
+                                <h:outputText value="#{p.liquidacion.idLiquidacion}" style="font-weight: bold;"/>
+                            </p:column>
+                            <p:column headerText="Fecha pago" width="80">
+                                <h:outputText value="#{p.fechaPago}" style="font-weight: bold;"/>
+                            </p:column>
+                            <p:column headerText="Estado" width="80">
+                                <h:outputText value="#{p.estado?'PROCESADO':'ANULADO'}" style="font-weight: bold;"/>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                    <br></br>
+                    <div align="center">
+                        <p:commandButton id="btnGuardarNota" value="Guardar" process="@form" icon="fa fa-floppy-o"
+                                         actionListener="#{notaCreditoMB.guardar()}" update="registroNotadeCredito">
+                            <p:confirm icon="ui-icon-info" message="Esta seguro de continuar?"/>
+                        </p:commandButton>
+
+                    </div>
+                </h:form>
+            </div> 
+        </h:panelGroup>
+        <!--DIALOGO LIQUIDACIONES PROCESADAS-->
+        <p:dialog widgetVar="dlgLiquidaciones" header="LISTADO DE LIQUIDACIONES" width="1100" height="90%" resizable="false" closable="true" closeOnEscape="true" modal="true">
+            <h:form id="frmLiquidacionesPagadas">
+                <p:dataTable  reflow="true" paginator="true" lazy="true" rows="10"  paginatorPosition="top" style="text-align: center;"
+                              paginatorTemplate="{FirstPageLink} {PreviousPageLink} {PageLinks} {CurrentPageReport} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              value="#{pagosRealizados.pagos}" var="p" emptyMessage="No se encontraron elementos..." 
+                              selection="#{notaCreditoMB.listaCobros}"
+                              rowKey="#{p.id}" filterEvent="enter">
+                    <p:ajax event="rowSelectCheckbox" listener="#{notaCreditoMB.pagoSeleccionado}" />
+                    <p:column selectionMode="multiple" style="width:30px;text-align:center">
+                    </p:column>
+                    <p:column headerText="Comprobante" width="120" filterBy="#{p.numComprobante}" sortBy="#{p.numComprobante}" filterStyle="width: 90%;">
+                        <h:outputText value="#{p.numComprobante}" style="font-weight: bold; font-size: 13px;"/>
+                    </p:column>
+
+                    <p:column headerText="Id-Liquidacion" width="120" filterBy="#{p.liquidacion.idLiquidacion}"  filterStyle="width: 90%;">
+                        <h:outputText value="#{p.liquidacion.idLiquidacion}" style="font-weight: bold;"/>
+                    </p:column>
+
+                    <p:column headerText="Año" width="120" filterBy="#{p.liquidacion.anio}"  filterStyle="width: 90%;">
+                        <h:outputText value="#{p.liquidacion.anio}"/>
+                    </p:column>
+
+                    <p:column headerText="Contribuyente" filterBy="#{p.nombreContribuyente}" filterStyle="width: 90%;">
+                        <h:outputText  style="font-weight: bold; font-size: 13px;" value="#{p.contribuyente ne null? p.contribuyente.nombreCompleto: p.nombreContribuyente ne null?p.liquidacion.nombreComprador:(p.liquidacion.observacion.contains('|')?p.liquidacion.observacion.substring(0,p.liquidacion.observacion.indexOf('|')):p.liquidacion.observacion)}"/>
+                    </p:column>
+
+                    <p:column headerText="Fecha" width="80"><h:outputText value="#{p.fechaPago}">
+                            <f:convertDateTime pattern="dd-MM-YYYY"/></h:outputText>
+                    </p:column>
+
+                    <p:column headerText="Valor" width="80">
+                        <h:outputText value="#{p.valor}"/>
+                    </p:column>
+
+                    <p:column headerText="Estado" width="80">
+                        <h:outputText style="font-weight: bold;" value="#{p.estado?'PROCESADO':'ANULADO'}"/>
+                    </p:column>
+
+                    <f:facet name="footer">
+                        <p:commandButton value="Seleccionar" icon="ui-icon-plus" actionListener="#{notaCreditoMB.seleccionar()}" style="height: 30px" update="registroNotadeCredito"/>
+                    </f:facet>
+                </p:dataTable>    
+            </h:form>
+        </p:dialog>
+        <p:dialog widgetVar="dlgSolicitante" header="Contribuyentes" width="800" height="90%" resizable="false" closable="true" closeOnEscape="true" modal="true">
+            <h:form id="frmSolicitante">
+                <p:dataTable var="s" value="#{notaCreditoMB.solicitantes}" style="width: 100%;text-align: center;" lazy="true" 
+                             paginator="true" rows="10" filterEvent="enter" paginatorPosition="top"
+                             selectionMode="single" selection="#{notaCreditoMB.ente}" rowKey="#{s.id}">
+                    <p:column headerText="CI/RUC" sortBy="#{s.identificacion}" width="150" filterBy="#{s.identificacion}" filterStyle="width: 90%;">
+                        <h:outputText value="#{s.identificacion}"/>
+                    </p:column>
+                    <p:column headerText="Apellidos" filterBy="#{s.apellido}" sortBy="#{s.apellido}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.apellido}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <p:column headerText="Nombres" filterBy="#{s.nombre}" sortBy="#{s.nombre}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.nombre}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <p:column headerText="Razon Social" filterBy="#{s.razonSocial}" sortBy="#{s.razonSocial}" filterStyle="width: 95%;">
+                        <h:outputText value="#{s.razonSocial}" style="text-transform: uppercase"/>
+                    </p:column>
+                    <f:facet name="footer">
+                        <p:commandButton value="Seleccionar" icon="ui-icon-plus" actionListener="#{notaCreditoMB.seleccionarEnte()}" style="height: 30px"/>
+                    </f:facet>
+                </p:dataTable>    
+            </h:form>
+        </p:dialog>
+    </ui:define>
+</ui:composition>

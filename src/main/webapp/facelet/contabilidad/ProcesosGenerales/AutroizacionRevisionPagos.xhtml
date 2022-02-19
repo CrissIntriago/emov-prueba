@@ -1,0 +1,171 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">
+        Autorización de Pagos
+    </ui:define>
+
+    <ui:define name="content">
+        <style>
+            #completarTask{
+
+                width: 120px;
+                height: 30px;
+                border-radius: 10px 0px 10px 0px;
+                border: 2px double #9CBB05;
+                background: #077DD5;
+
+            }
+            #completarTask:hover{
+                background: rgba(7,125,213,0.8);
+            }
+
+        </style>
+        <div class="ui-g ui-fluid">
+            <u:titleTask task="#{auotrizacionPagosView.tarea}" tramite="#{auotrizacionPagosView.tramite}" />
+
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+
+                    <h:panelGroup id="tableDiarioGeneral" layout="block" rendered="#{auotrizacionPagosView.detalleDiario}">
+                        <p:tabView id="idtabView">
+
+                            <p:tab title="DETALLE DIARIO">
+
+                                <p:dataTable  id="diarioGeneralTable" widgetVar="diarioGeneralTable" var="diarioGeneral" value="#{auotrizacionPagosView.diarioGeneralLazyModel}" 
+                                              paginator="true" rows="50" style="width: 100%;" rowKey="#{diarioGeneral.id}"
+                                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                              rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                              emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                                    <f:facet name="header">
+                                        LISTADO DE TRANSACCIONES
+                                    </f:facet>
+                                    <p:column headerText="Nº de Transacción" style="width: 8%;text-align: center" filterBy="#{diarioGeneral.numeroTransaccion}">
+                                        <h:outputText value="#{diarioGeneral.numeroTransaccion}" />
+                                    </p:column>
+                                    <p:column headerText="Fecha de Transacción" style="width: 8%;text-align: center">
+                                        <h:outputText value="#{diarioGeneral.fechaElaboracion}" >
+                                            <f:convertDateTime pattern="dd-MM-yyyy"/>
+                                        </h:outputText>
+                                    </p:column>
+                                    <p:column headerText="Descripción" style="width: 34%;">
+                                        <h:outputText value="#{diarioGeneral.observacion}" />
+                                    </p:column>
+                                    <p:column headerText="CI/RUC Benficiario" style="width: 10%;text-align: center;">
+                                        <h:outputText value="#{diarioGeneral.beneficiario.identificacion}" />
+                                    </p:column>
+                                    <p:column headerText="Nombre Beneficiario" style="width: 20%;">
+                                        <h:outputText value="#{diarioGeneral.beneficiario.nombreCompleto}" />
+                                    </p:column>
+                                    <p:column headerText="Valor" style="width: 10%;">
+                                        <h:outputText value="#{auotrizacionPagosView.retornaValorComprobantePago(diarioGeneral)}" style="float: right;" >
+                                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                        </h:outputText>
+                                    </p:column>
+
+                                    <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                                        <p:commandLink  actionListener="#{auotrizacionPagosView.imprimirDiarioGeneral(diarioGeneral)}" title="Imprimir" process="@this"  update="formMain">
+                                            <i class="fa fa-file-pdf-o" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+
+                                        <p:commandLink  title="ENVIAR" process="@this" actionListener="#{auotrizacionPagosView.abriDlogo(diarioGeneral)}" >
+                                            <i class="fa fa-send" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                                        </p:commandLink>
+                                    </p:column>
+                                </p:dataTable>
+
+                            </p:tab>
+                            <p:tab title="DOCUMENTOS">
+                                <h:panelGroup id="idPanelGroup" layout="block">
+                                    <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                                        <p:dataTable id="dtRequisitos" value="#{auotrizacionPagosView.requisitosTramite}" rows="5"  paginator="true" 
+                                                     paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                                     var="item" rowStyleClass="#{item.requisitos.obligatorio ? 'old' : null}"
+                                                     emptyMessage="No existen requisitos">
+                                            <p:column headerText="Nombre Requisito" style="width: 60%">
+                                                <p:outputLabel value="#{item.requisitos.idRequisito.nombre}"/>
+                                            </p:column>
+                                            <p:column  headerText="Acciones" style="width: 40%; text-align: center;">
+                                                <p:fileUpload fileUploadListener="#{auotrizacionPagosView.handleFileUploadCertificadoGerente}"  style="width: 100%" accept=".jpeg,.jpg,.gif,.png,.pdf"
+                                                              skinSimple="true" allowTypes="/(\.|\/)(gif|jpe?g|png|pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                                              label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60" onstart="#{auotrizacionPagosView.addReqTramite(item)}" 
+                                                              update="idtabView:idDocumentos:dtArchivosTramites"/>
+                                            </p:column>
+                                        </p:dataTable>
+                                        <u:documents entiti="#{auotrizacionPagosView.tramite}" id="idDocumentos" showDelete="true"/>
+                                    </p:panelGrid>
+                                </h:panelGroup>
+                            </p:tab>
+                        </p:tabView>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="tableRequisitos" layout="block" rendered="#{auotrizacionPagosView.showRequisios}">
+                        <p:tabView id="idtabView2">
+                            <p:tab title="Requisitos">
+                                <p:dataTable id="dtRequisitos2" value="#{auotrizacionPagosView.requisitosTramite}" rows="5" paginator="true" 
+                                             paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                             var="item" rowStyleClass="#{item.requisitos.obligatorio ? 'old' : null}"
+                                             emptyMessage="No existen requisitos">
+                                    <p:column headerText="Nombre Requisito" style="width: 40%">
+                                        <p:outputLabel value="#{item.requisitos.idRequisito.nombre}"/>
+                                    </p:column>
+                                    <p:column  headerText="Acciones" style="width: 50%; text-align: center;">
+                                        <p:fileUpload fileUploadListener="#{auotrizacionPagosView.handleFileUploadCertificadoGerente}"  style="width: 100%" 
+                                                      accept=".pdf" skinSimple="true" allowTypes="/(\.|\/)(pdf)$/i" mode="advanced" dragDropSupport="false" 
+                                                      label="Buscar" uploadLabel="Subir" cancelLabel="Cancelar" previewWidth="60" 
+                                                      onstart="#{auotrizacionPagosView.addReqTramite(item)}" 
+                                                      update="idtabView2:idDocumentos2:dtArchivosTramites"/>
+                                    </p:column>
+                                    <p:column headerText="Obligatorio" style="width: 10%;text-align: center">
+                                        <p:outputLabel value="#{item.requisitos.obligatorio?'SI':'NO'}"/>
+                                    </p:column>
+                                </p:dataTable>
+                            </p:tab>
+                            <p:tab title="Documentos">
+                                <u:documents entiti="#{auotrizacionPagosView.tramite}" id="idDocumentos2" showDelete="true"/>
+                            </p:tab>
+                        </p:tabView>
+                        <center>
+                            <p:commandButton value="Completar Tarea"  actionListener="#{auotrizacionPagosView.abriDlogo(null)}"
+                                             icon="fa fa-external-link" process="@this" style="width: auto; background: #0081cb; margin-top: 2%;"/>
+                        </center>
+                    </h:panelGroup>
+                </h:form>
+            </div>
+        </div>
+
+
+        <p:dialog id="dlgObservaciones" widgetVar="dlgObservaciones" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{auotrizacionPagosView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Autorizar" title="Autorizar Solicitud" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{auotrizacionPagosView.completarTarea()}"
+                                             style="width: 150px;margin: 10px"  />
+                            <p:commandButton icon="fa fa-thumbs-o-down" value="Cerrar" title="Cerrar" process="frmDlgObser" update="frmDlgObser"
+                                             onclick="PF('dlgObservaciones').hide()" 
+                                             style="background: red; width: 150px;margin: 10px" />
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

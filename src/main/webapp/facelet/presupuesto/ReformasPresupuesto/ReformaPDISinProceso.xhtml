@@ -1,0 +1,434 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="./../../../WEB-INF/template/template.xhtml"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:u="http://xmlns.jcp.org/jsf/composite/comp">
+    <ui:define name="title">
+        Reforma Traspaso
+    </ui:define>
+    <ui:param name="tittle" value="REFORMAS TIPO TRASPASOS"/>
+    <ui:define name="content">
+        <style>
+            .condicion1{background-color: #E7C402 !important;}
+            .condicion2{background-color: white !important;}
+            .condicion3{background-color: #E7C402 !important;color:white;}
+            #comboItem{width: 20px;}
+        </style>
+
+        <h:form id="formularioInicial" prependId="false" style="width: 100%;">
+            <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group"
+                         rendered="#{reformaPDISinProcesoView.renderFormularioInicial}">
+                <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <div style="width: 100% !important; display: inline-block;">
+                        <div class="ui-g" style="width: 25% !important; text-align: center; margin-left: 20px">
+                            <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #dbe4ff;"
+                                 onclick="refAprobada();">APROBADAS</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px; background-color: #ffe6f5;"
+                                 onclick="refRegistrada();">REGISTRADAS</div>
+                            <div class="ui-g-12 ui-md-6 ui-lg-3" style="cursor: pointer;border: 0.5px solid gray;border-radius: 5px"
+                                 onclick="refTodas();">TODAS</div>
+                        </div>
+                    </div>
+
+                    <p:commandButton value="Nueva Reforma" actionListener="#{reformaPDISinProcesoView.nuevaReforma()}"
+                                     icon="ui-icon-plus" styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                </p:panelGrid>
+
+                <p:remoteCommand name="refAprobada" actionListener="#{reformaPDISinProcesoView.filtroReformas(1)}" update="tablaInicialReformas"/>
+                <p:remoteCommand name="refRegistrada" actionListener="#{reformaPDISinProcesoView.filtroReformas(2)}" update="tablaInicialReformas"/>
+                <p:remoteCommand name="refTodas" actionListener="#{reformaPDISinProcesoView.filtroReformas(3)}" update="tablaInicialReformas"/>
+                <p:panelGrid columns="1" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:dataTable var="ref" value="#{reformaPDISinProcesoView.reformasLazy}" paginator="true" rows="20"
+                                 currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                 emptyMessage="No existen datos con los parámetros especificados"
+                                 paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                 rowsPerPageTemplate="10,20,50,100" id="tablaInicialReformas" widgetVar="tablaInicialReformas" lazy="true"
+                                 style="width: 100%"
+                                 paginatorPosition="bottom">
+                        <f:facet name="header">
+                            REFORMAS DEL PRESUPUESTO SIN PROCESOS
+                        </f:facet>
+                        <p:column headerText="Periodo" style="width: 5%;text-align: center;" filterBy="#{ref.periodo}" filterMatchMode="contains" sortBy="#{ref.periodo}">
+                            <h:outputText value="#{ref.periodo}"/>
+                        </p:column>
+                        <p:column headerText="Código" style="width: 5%;text-align: center;" filterBy="#{ref.codigo}" filterMatchMode="contains">
+                            <h:outputText value="#{ref.codigo}"/>
+                        </p:column>
+                        <p:column headerText="Fecha Creación" style="width: 5%;text-align: center;">
+                            <h:outputText value="#{ref.fechaCreacion eq null ? ref.fechaModificacion : ref.fechaCreacion}"/>
+                        </p:column>
+                        <p:column headerText="Estado" style="width: 5%;text-align: center;" filterBy="#{ref.estadoReforma.texto}" filterMatchMode="contains">
+                            <h:outputText value="#{ref.estadoReforma.texto}"/>
+                        </p:column>
+                        <p:column headerText="Unidad Requiriente" style="width: 20%;text-align: center;" filterBy="#{ref.unidadRequiriente.nombre}" filterMatchMode="contains">
+                            <h:outputText value="#{ref.unidadRequiriente.nombre}"/>
+                        </p:column>
+                        <p:column style="width: 5%" headerText="Acciones" >
+                            <center>
+                                <p:commandLink actionListener="#{reformaPDISinProcesoView.seleccionReformaAprobacion(ref)}" update="tablaInicialReformas" title="Aprobar Reforma"
+                                               disabled="#{reformaPDISinProcesoView.disableAprobarReforma(ref)}">
+                                    <i class="fa fa-thumbs-o-up newi" style="font-size: 20px"></i>
+                                    <p:confirm header="Confirmación de la Ejecución de la reforma" message="¿Está Seguro de ejecutar la reforma No.#{ref.codigo}?" icon="fa fa-exclamation-triangle" />
+                                </p:commandLink>
+                                <p:spacer width="8"/>
+                                <p:commandLink actionListener="#{reformaPDISinProcesoView.seleccionarReforma(ref)}" 
+                                               update="formularioEncabezado" title="Ver información" >
+                                    <i class="fa fa-search newi" style="font-size: 20px"></i>
+                                </p:commandLink>
+                                <p:spacer width="8"/>
+                                <p:commandLink actionListener="#{reformaPDISinProcesoView.generateReport(ref)}" 
+                                               update="formularioEncabezado,tablaInicialReformas,frmFormularioReforma" title="Formulario de Reforma"
+                                               disabled="#{reformaPDISinProcesoView.disableImprimirFormularioReforma(ref)}">
+                                    <i class="fa fa-file-text newi" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;" ></i>
+                                </p:commandLink>
+                            </center>
+                        </p:column>
+                    </p:dataTable>
+                </p:panelGrid>
+            </p:panelGrid>
+        </h:form>
+
+
+        <h:form id="formularioEncabezado" prependId="false" style="width: 98%;">
+            <div style="width: 100% !important; display: inline-block; height: 35%">
+                <div class="ui-g" style="width: 25% !important; text-align: center; margin-left: 20px; height: 40px">
+                    <p:commandButton icon="fa fa-arrow-circle-left" actionListener="#{reformaPDISinProcesoView.regresarInicio()}"
+                                     rendered="#{reformaPDISinProcesoView.renderRegresarInicio}" update="formularioEncabezado,formularioInicial" process="@this"
+                                     style="border-radius: 0px;width: 50px" title="Regresar"/>
+                </div>
+            </div>
+            <p:fieldset id="fielsetEncabezado" legend="REFORMA" toggleable="true" toggleSpeed="500" collapsed="false" 
+                        style="width:100%; margin-left: 5px" rendered="#{reformaPDISinProcesoView.renderFielEncabezadoReforma}">
+                <p:panelGrid columns="10" style="width: 100%" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="Unidad Administrativa:" style="margin-right: 10px;" />
+                        <p:selectOneMenu filter="true" id="unidAdminis" value="#{reformaPDISinProcesoView.idUnidadA}" styleClass="custom-filter" style="width: 100%;">
+                            <p:ajax update="formularioEncabezado"/>
+                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{reformaPDISinProcesoView.unidades}" var="n" itemLabel="#{n.nombre}" itemValue="#{n.id}"/>
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="Tipo de Traspaso:" style="margin-right: 10px;" />
+                        <p:selectOneMenu filter="true" value="#{reformaPDISinProcesoView.tipoTraspaso}" styleClass="custom-filter" 
+                                         style="width: 100%;" disabled="true">
+                            <p:ajax listener="#{reformaPDISinProcesoView.generarTipoTraspaso()}" 
+                                    update="formularioEncabezado"/>
+                            <f:selectItem itemLabel="Seleccionar" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItem itemLabel="PLAN ANUAL POLÍTICA PÚBLICA" itemValue="PAPP" />
+                            <f:selectItem itemLabel="PARTIDAS DIRECTAS" itemValue="PDI" />
+                        </p:selectOneMenu>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="text-align: center" id="gridBotonesGenerarR">
+                        <p:commandButton value="Generar Reforma PAPP" process="formularioEncabezado" actionListener="#{reformaPDISinProcesoView.generarReforma()}" rendered="#{reformaPDISinProcesoView.renderBtnGenRefPAPP}"
+                                         icon="fa fa-check-square-o" disabled="#{reformaPDISinProcesoView.btnGenerarReforma}"
+                                         styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                        <p:commandButton value="Generar Reforma PDI" process="formularioEncabezado" actionListener="#{reformaPDISinProcesoView.generarReforma()}" rendered="#{reformaPDISinProcesoView.renderBtnGenRefPDI}"
+                                         icon="fa fa-check-square-o" disabled="#{reformaPDISinProcesoView.disBtnGenReformaPDI}"
+                                         styleClass="Fs16" style="width: auto; float: right; margin-top: 5px"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="Código:"/>
+                        <p:inputText value="#{reformaPDISinProcesoView.reformaTraspaso.codigo}" readonly="true"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="Fecha:"/>
+                        <!--<p:calendar value="#{reformaPDISinProcesoView.reformaTraspaso.fechaTraspasoReforma}" pattern="dd-MM-yyyy" navigator="true" disabled="true"/>-->
+                        <p:inputText value="#{reformaPDISinProcesoView.reformaTraspaso.fechaTraspasoReforma}" readonly="true"/>
+                    </p:panelGrid>
+                    <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                        <p:outputLabel value="Estado:"/>
+                        <p:inputText value="#{reformaPDISinProcesoView.reformaTraspaso.estadoReforma.texto}" readonly="true"/>
+                    </p:panelGrid>
+                </p:panelGrid>
+            </p:fieldset>
+        </h:form>
+
+
+        <h:form id="formularioCuerpo" prependId="false" style="width:100%; margin-left: 5px">
+            <p:panel rendered="#{reformaPDISinProcesoView.bolPartidaDirecta}" >         
+                <p:commandButton disabled="#{reformaPDISinProcesoView.btnNuevoPartidaDirecta}" value="Nuevo" icon="fa fa-plus" style="width: auto; margin-top: 1%; margin-bottom: 1%;"
+                                 actionListener="#{reformaPDISinProcesoView.abriDlgPartidas()}"/>
+                <p:dataTable expandableRowGroups="true" value="#{reformaPDISinProcesoView.proformaPresupuestoLazy}" id="proformaEgresos"  widgetVar="proformaEgresos"
+                             paginatorPosition="bottom" var="item" rows="10" paginator="true"  
+                             currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                             paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                             rowsPerPageTemplate="10,20,25,35,50,100,200" lazy="true" rowIndexVar="index" editable="true" editMode="cell"
+                             emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <f:facet name="header">
+                        Partidas Directas
+                    </f:facet>
+                    <p:column headerText="No." style="width: 20px;">
+                        <h:outputText value="#{index+1}" />
+                    </p:column>
+                    <p:column headerText="Estructura Programática"  style="width: 20%;">
+                        <h:outputText value="#{item.estructruaNew.nombre.toUpperCase()}" />
+                    </p:column>
+                    <p:column  headerText="Partida Presupuestaria" style="width: 20%;text-align: center" filterBy="#{item.partidaPresupuestaria}" sortBy="#{item.partidaPresupuestaria}" filterMatchMode="contains">
+                        <p:outputLabel value="#{item.partidaPresupuestaria}" />
+                    </p:column>
+                    <p:column  headerText="Item Presupuestario"  style="width: 30%;">
+                        <h:outputText value="#{item.itemNew.descripcion.toUpperCase()}" />
+                    </p:column>
+                    <p:column  headerText="Tipo" style="width: 10%;text-align: center">
+                        <p:outputLabel value="#{item.codigo}" />
+                    </p:column>
+                    <p:column  headerText="Período" style="width: 7%;text-align: center" >
+                        <p:outputLabel value="#{item.periodo}"/>
+                    </p:column>
+                    <p:column  headerText="Valor Codificado" style="width: 15%;">
+                        <p:outputLabel value="#{item.valor}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column  headerText="Valor Disponible" style="width: 15%;" id="columnaDisponible">
+                        <p:outputLabel value="#{item.valor - reformaPDISinProcesoView.obtieneTotalComprometido(item.partidaPresupuestaria) - reformaPDISinProcesoView.obtieneTotalReservado(item.partidaPresupuestaria)}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Traspaso Incremento" style="width: 15%;">
+                        <p:cellEditor>
+                            <f:facet name="input">
+                                <p:inputNumber id="suplemento"
+                                               value="#{item.traspasoIncremento}" style="width:100%;">
+                                    <p:ajax event="change" listener="#{reformaPDISinProcesoView.calcularPartidaDirecta(item, true)}" update="proformaEgresos"/>
+                                </p:inputNumber>
+                            </f:facet>
+                            <f:facet name="output"> 
+                                <h:outputText value="#{item.traspasoIncremento}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Traspaso Reducción" style="width: 15%;">
+                        <p:cellEditor disabled="#{item.codigoReformaTraspaso!=null and item.codigoReferencia==null?true:false}" >
+                            <f:facet name="input">
+                                <p:inputNumber id="reduccion"
+                                               value="#{item.traspasoReduccion}" style="width:100%;">
+                                    <p:ajax event="change" listener="#{reformaPDISinProcesoView.calcularPartidaDirecta(item, false)}" update="proformaEgresos"/>
+                                </p:inputNumber>
+                            </f:facet>
+                            <f:facet name="output"> 
+                                <h:outputText value="#{item.traspasoReduccion}" style="float: right">
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column  headerText="Reforma codificado" style="width: 15%;">
+                        <p:outputLabel value="#{item.reformaCodificado}" style="float: right" >
+                            <f:convertNumber type="currency" currencySymbol="$ " currencyCode="USD" locale="es_EC"/>
+                        </p:outputLabel>
+                    </p:column>
+                    <p:column headerText="Acciones" style="width: auto;">
+                        <p:commandLink style="width: auto;" title="Editar" process="@this" actionListener="#{reformaPDISinProcesoView.editarPartidaDirectaValor(item)}"
+                                       disabled="#{item.codigoReformaTraspaso!=null and item.codigoReferencia==null?false:true}">
+                            <p:graphicImage value="/resources/icons/editar.png"  width="16" height="15" style="margin-right: 8px;"/>    
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+                <div align="right" style="margin-right: 5px">
+                    <p:panelGrid columns="2" style="margin-top: 1%;text-align: right; font-size: 13px; font-weight: bold;" >
+                        <f:facet name="header">
+                            Información Adicional
+                        </f:facet>
+                        <h:outputText value="Total Traspaso Incremento" />
+                        <h:outputText value="#{reformaPDISinProcesoView.totalTraspasoIncrementoPDirecta}" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                        <h:outputText value="Total Traspaso Reducción" />
+                        <h:outputText value="#{reformaPDISinProcesoView.totalTraspasoReduccionPDirecta}" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                        <h:outputText value="Monto Total Reformado" />
+                        <h:outputText value="#{reformaPDISinProcesoView.totalMontoReformadoPDirecta}" >
+                            <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                        </h:outputText>
+                    </p:panelGrid>
+                </div>
+            </p:panel>
+        </h:form>
+
+        <div class="ui-g-12">
+            <h:form id="botonesReforma">
+                <h:panelGroup layout="block" rendered="#{reformaPDISinProcesoView.btnTraspasos}" id="grupoBotonesReforma">
+                    <center>
+                        <p:commandButton value="Guardar Reforma" actionListener="#{reformaPDISinProcesoView.actualizarReformaTraspaso()}"
+                                         icon="ui-icon-save" update="formularioEncabezado,formularioCuerpo,proformaEgresos" 
+                                         styleClass="Fs16" style="width: 150px; text-align: center;" disabled="#{reformaPDISinProcesoView.disableGuardarReforma}"/>
+                    </center>
+                </h:panelGroup>
+            </h:form>
+        </div>
+
+
+        <p:dialog id="DlgproformaRegistroPartidas" header="Formulario Partida Presupuestaria" widgetVar="DlgproformaRegistroPartidas" 
+                  modal="true" showEffect="fold" hideEffect="fold" resizable="false" position="center">
+            <h:form id="formPresegresoPartidas" prependId="false">  
+                <div class="ui-g">
+                    <div class="ui-g-12">
+                        <div class="card card-w-title">
+                            <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel for="EstructuraProgramatica" value="Estructura Programatica:"/>
+                                    <p:selectOneMenu filter="true" filterMatchMode="contains" id="EstructuraProgramatica" panelStyle="width:22%"
+                                                     var="e" value="#{reformaPDISinProcesoView.proformaPresupuestoPlanificado.estructruaNew}" converter="#{utilConverter}" style="width: 165px;">
+                                        <f:selectItem itemLabel="Seleccione Estructura Programática" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{reformaPDISinProcesoView.listaPresPlanProgramatico}" var="n" itemLabel="#{n.codigo} #{n.descripcion}" itemValue="#{n}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.codigo}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{e.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid">
+                                    <p:outputLabel for="advanced" value="Item Presupuestaria:"/>
+                                    <p:selectOneMenu id="advanced" value="#{reformaPDISinProcesoView.proformaPresupuestoPlanificado.itemNew}" converter="#{utilConverter}" panelStyle="width:22%"
+                                                     effect="fold" var="ta" style="width: 165px;" filter="true" filterMatchMode="contains">
+                                        <f:selectItem itemLabel="Seleccione" itemValue="#{null}" />
+                                        <f:selectItems value="#{reformaPDISinProcesoView.listaPresCataPresupuestario}" var="item" itemLabel="#{item.codigo} #{item.descripcion}" itemValue="#{item}" />
+                                        <p:column style="width:10%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="codigo"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.codigo}" style="font-weight: bold;"/>
+                                        </p:column>
+                                        <p:column style="width: 80%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Nombre"/>
+                                            </f:facet>
+                                            <h:outputText value="#{ta.descripcion}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                                <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid"  >
+                                    <p:outputLabel for="Fuente" value="Fuente:"/>
+                                    <p:selectOneMenu filter="true" filterMatchMode="startsWith"  id="Fuente" value="#{reformaPDISinProcesoView.proformaPresupuestoPlanificado.fuenteNew}" panelStyle="width:22%"
+                                                     style="width: 165px;" var="f"  converter="#{utilConverter}">
+                                        <f:selectItem itemLabel="Selecciones Fuente" itemValue="#{null}" noSelectionOption="true" />
+                                        <f:selectItems value="#{reformaPDISinProcesoView.listaPresFuenteFinanciamiento}" var="n" itemLabel="#{n.tipoFuente.orden}//#{n.nombre}//#{n.tipoFuente.texto}" itemValue="#{n}" />
+                                        <p:column style="width:5%" >
+                                            <f:facet name="header">
+                                                <h:outputText value="Código"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.codFuente}" style="font-weight: bold;" />
+                                        </p:column>
+                                        <p:column style="width: 50%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Tipo Fuente"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.nombre}" />
+                                        </p:column>
+                                        <p:column style="width: 60%;">
+                                            <f:facet name="header">
+                                                <h:outputText value="Fuente"/>
+                                            </f:facet>
+                                            <h:outputText value="#{f.tipoFuente.texto}" />
+                                        </p:column>
+                                    </p:selectOneMenu>
+                                </p:panelGrid>
+                            </p:panelGrid>
+                            <center>
+                                <p:commandButton value="Guardar" actionListener="#{reformaPDISinProcesoView.savePDIReforma()}"
+                                                 icon="fa fa-save" styleClass="Fs16" style="width: auto; margin-bottom: 15px;" />
+                            </center>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+        </p:dialog>
+        
+        <p:dialog id="dialogoObservacion" widgetVar="dialogoObservacion" width="30%" position="center" draggable="false" header="Observación"
+                  modal="true" showEffect="fold" hideEffect="fold" resizable="false" >
+            <div class="ui-g-12" >
+                <h:form id="frmDlgObser">
+                    <p:outputPanel id="panelObsevacion" style="width: 100%;" >
+                        <p:panelGrid  columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" >
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:inputTextarea value="#{reformaPDISinProcesoView.observaciones}" onkeyup="toUpperCase(this)"
+                                                 rows="7" style="border: 1px solid;text-transform: uppercase;width: 100%;border-radius: 5px 5px 5px 5px;"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <center>
+                            <p:commandButton icon="fa fa-thumbs-o-up" value="Aprobar" title="Aprobar" process="frmDlgObser" update="frmDlgObser"
+                                             actionListener="#{reformaPDISinProcesoView.aprobarReforma()}"
+                                             oncomplete="PF('dialogoObservacion').hide()" style="width: 150px;margin: 10px"/>
+                        </center> 
+                    </p:outputPanel>
+                </h:form>  
+            </div>
+        </p:dialog>
+        
+        
+        <p:dialog widgetVar="dlgFormularioReforma" id="dlgFormularioReforma" header="FORMULARIO REFORMA" modal="true" width="700" height="400" >
+            <div class="ui-g-12" >
+                <h:form id="frmFormularioReforma">
+                    <div class="card">
+                        <p:panelGrid columns="2" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="No:" style="font-weight: 500;"/>
+                                <p:spacer width="20" height="0"/>
+                                <p:outputLabel value="#{reformaPDISinProcesoView.reformaTraspaso.codigo}"/>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Fecha Aprobación: " style="font-weight: 500;"/>
+                                <p:spacer width="20" height="0"/>
+                                <p:outputLabel value="#{reformaPDISinProcesoView.reformaTraspaso.fechaAprobacion}"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Unidad Solicitante: " style="font-weight: 500;"/>
+                                <p:spacer width="20" height="0"/>
+                                <p:outputLabel value="#{reformaPDISinProcesoView.reformaTraspaso.unidadRequiriente.nombre}" style="font: bold"/>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                    </div>
+                    <div class="card">
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Referencia: " for="referencia" indicateRequired="true" style="font-weight: 500;"/>
+                                <p:inputText required="true" value="#{reformaPDISinProcesoView.referencia}" id="referencia" style="width: 100%;" requiredMessage="REQUERIDO"/>
+                                <p:message for="referencia"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Motivacion: " for="motivacion" indicateRequired="true" style="font-weight: 500;"/>
+                                <p:inputText required="true" value="#{reformaPDISinProcesoView.motivacion}" id="motivacion" style="width: 100%;" requiredMessage="REQUERIDO"/>
+                                <p:message for="motivacion"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" styleClass="form-group ui-panelgrid-blank" layout="grid" style="width: 100%;">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel value="Autorizado: " for="autorizado" indicateRequired="true" style="font-weight: 500;"/>
+                                <p:inputTextarea required="true" value="#{reformaPDISinProcesoView.autorizado}" id="autorizado" style="width: 100%;" requiredMessage="REQUERIDO" rows="3"/>
+                                <p:message for="autorizado"/>
+                            </h:panelGroup> 
+                        </p:panelGrid>
+                    </div>
+
+                    <center>
+                        <p:commandButton icon="fa fa-file-text" value="Imprimir" title="Formulario Reforma" process="frmFormularioReforma" update="frmFormularioReforma"
+                                         actionListener="#{reformaPDISinProcesoView.imprimirFormularioReforma()}"
+                                         style="width: 150px;margin: 10px"/>
+                    </center>
+
+                </h:form>
+            </div>
+        </p:dialog>
+
+    </ui:define>
+</ui:composition>

@@ -1,0 +1,455 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE composition PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<ui:composition xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:p="http://primefaces.org/ui"
+                xmlns:sigef="http://xmlns.jcp.org/jsf/composite/sigef/components"
+                template="/WEB-INF/template/template.xhtml">
+    <ui:define name="title">
+        Plan de Cuenta Contable
+    </ui:define>
+    <ui:param name="tittle" value="Plan de Cuenta Contable"/>
+    <ui:define name="content">
+        <div class="ui-g ui-fluid">
+            <div class="ui-g-12" >
+                <h:form id="formMain" prependId="false">
+                    <p:commandButton value="Nuevo registro" process="@this"
+                                     icon="fa fa-plus" actionListener="#{contCuentasView.form(null,false)}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Generar reporte" process="@this"
+                                     icon="fa fa-print" actionListener="#{contCuentasView.openDlgReporte()}"
+                                     styleClass="Fs16" style="width: auto;"/>
+                    <p:commandButton value="Limpiar filtros"  process="@this"
+                                     icon="ui-icon-refresh" onclick="PF('cuentaTable').clearFilters()" update="cuentaTable"
+                                     styleClass="Fs16" style="width: auto; "/>
+                    <p:commandButton id="mostrarColumnas" type="button" value="Columnas visibles" style="width: auto; float: right;" icon="fa fa-align-justify" />
+                    <p:columnToggler datasource="cuentaTable" trigger="mostrarColumnas" />
+                    <p:dataTable  id="cuentaTable" widgetVar="cuentaTable" var="cuenta" value="#{contCuentasView.contCuentasLazy}" 
+                                  paginator="true" rows="50" style="width: 100%;margin-top: 15px" rowKey="#{cuenta.id}"
+                                  paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                  paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                  rowsPerPageTemplate="50,60,70,100" lazy="true" selectionMode="single" 
+                                  emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                        <p:column headerText="Código" style="width: 10%;" filterBy="#{cuenta.codigo}">
+                            <h:outputText value="#{cuenta.codigo}" />
+                        </p:column>
+                        <p:column headerText="Descripción" style="width: 25%;" filterBy="#{cuenta.descripcion}" filterMatchMode="contains">
+                            <h:outputText value="#{cuenta.descripcion}" />
+                        </p:column>
+                        <p:column headerText="Nivel" style="width: 10%;text-align: center" filterBy="#{cuenta.confId.id}" filterMatchMode="contains">
+                            <f:facet name="filter">
+                                <p:selectOneMenu id="filtro1" onchange="PF('cuentaTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contCuentasView.confCuentasList}" var="n" itemLabel="#{n.nivel}" itemValue="#{n.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cuenta.confId.nivel}" />
+                        </p:column>
+                        <p:column headerText="Activo" style="width: 10%;text-align: center" filterBy="#{cuenta.activo}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('cuentaTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="ACTIVO" itemValue="true" />
+                                    <f:selectItem itemLabel="INACTIVO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cuenta.activo?'ACTIVO':'INACTIVO'}" />
+                        </p:column>
+                        <p:column headerText="Gobierno" style="width: 10%;text-align: center" filterBy="#{cuenta.gobierno}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('cuentaTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="SI" itemValue="true" />
+                                    <f:selectItem itemLabel="NO" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cuenta.gobierno?'SI':'NO'}" />
+                        </p:column>
+                        <p:column headerText="Movimiento" style="width: 10%;text-align: center" filterBy="#{cuenta.movimiento}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu onchange="PF('cuentaTable').filter()" styleClass="custom-filter">
+                                    <f:converter converterId="javax.faces.Boolean" />
+                                    <f:selectItem itemLabel="Todos" itemValue=""/>
+                                    <f:selectItem itemLabel="Movimiento" itemValue="true" />
+                                    <f:selectItem itemLabel="Agrupación" itemValue="false" />
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cuenta.movimiento?'MOVIMIENTO':'AGRUPACIÓN'}" />
+                        </p:column>
+                        <p:column headerText="Clasificación" style="width: 15%;text-align: center" filterBy="#{cuenta.clasificacion.id}">
+                            <f:facet name="filter">
+                                <p:selectOneMenu id="filtro2" onchange="PF('cuentaTable').filter()" styleClass="custom-filter" style="width: 100%">
+                                    <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contCuentasView.clasificacionList}" var="c" itemLabel="#{c.descripcion}" itemValue="#{c.id}"/>
+                                </p:selectOneMenu>
+                            </f:facet>
+                            <h:outputText value="#{cuenta.clasificacion}" />
+                        </p:column>
+                        <p:column headerText="Acciones" style="width: 10%;text-align: center">
+                            <p:commandLink title="Ver" process="@this" actionListener="#{contCuentasView.form(cuenta,true)}"  
+                                           update="cuentaForm">
+                                <i class="fa fa-eye" style="font-size: 1.5em; margin-right: 8px; color: gray;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Editar" process="@this" actionListener="#{contCuentasView.form(cuenta,false)}"  
+                                           update="cuentaForm">
+                                <i class="fa fa-edit" style="font-size: 1.5em; margin-right: 8px; color: #0D47A1;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Añadir" process="@this" actionListener="#{contCuentasView.insertPadre(cuenta)}"  
+                                           update="cuentaForm" rendered="#{!cuenta.movimiento}">
+                                <i class="fa fa-plus-circle" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                            <p:commandLink title="Eliminar" process="@this" actionListener="#{contCuentasView.deleteCuenta(cuenta)}"  
+                                           update="cuentaTable">
+                                <i class="fa fa-trash" style="font-size: 1.5em; margin-right: 8px; color: red;"></i>
+                                <p:confirm header="Confirmación de eliminación" message="¿Está seguro de eliminar la cuenta #{cuenta.codigo}?" icon="fa fa-exclamation-triangle" />
+                            </p:commandLink>
+                            <p:commandLink title="Saldo iniciales" process="@this" rendered="#{cuenta.movimiento}"
+                                           actionListener="#{contCuentasView.openDlgSaldoInicial(cuenta)}">
+                                <i class="fa fa-dollar" style="font-size: 1.5em; margin-right: 8px; color: green;"></i>
+                            </p:commandLink>
+                        </p:column>                       
+                    </p:dataTable>
+                    <p:confirmDialog global="true" showEffect="fade" hideEffect="fade">
+                        <p:commandButton value="Si" type="button" styleClass="ui-confirmdialog-yes GreenButton" icon="fa fa-check" />
+                        <p:commandButton value="No" type="button" styleClass="ui-confirmdialog-no RedButton" icon="fa fa-times" />
+                    </p:confirmDialog> 
+                </h:form>
+            </div>
+        </div>
+        <p:dialog id="cuentaDlg" widgetVar="cuentaDlg" width="40%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Registrar cuenta contable">
+            <h:form prependId="false" id="cuentaForm">
+                <p:panelGrid columns="#{contCuentasView.contCuentas.padre==null?'3':'4'}" layout="grid" styleClass="ui-panelgrid-blank form-group">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Nivel:" style="font-weight: bold"/>
+                        <p:inputText id="confId" class="panelInput" style="width: 100%" 
+                                     value="#{contCuentasView.contCuentas.confId.nivel}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'confId')">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contCuentasView.contCuentas.padre==null?false:true}">
+                        <p:outputLabel for="@next" value="Código padre:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codigop" class="panelInput" style="width: 100%" 
+                                     value="#{contCuentasView.contCuentas.codPadre}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'codigop')">
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Código:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codIngreso" class="panelInput" style="width: 100%" 
+                                     value="#{contCuentasView.contCuentas.codIngreso}" maxlength="#{contCuentasView.contCuentas.confId.numDigito}"
+                                     onkeypress="focusNextOnEnter(event, 'codIngreso')" readonly="#{contCuentasView.editView}">
+                            <p:ajax event="keyup" update="codigo" process="codIngreso" listener="#{contCuentasView.generarCodigo()}"/>
+                        </p:inputText>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Código generado:" style="font-weight: bold"/><br/>
+                        <p:inputText id="codigo" class="panelInput" style="width: 100%" 
+                                     value="#{contCuentasView.contCuentas.codigo}" 
+                                     readonly="true" onkeypress="focusNextOnEnter(event, 'codigo')">
+                        </p:inputText>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="#{contCuentasView.contCuentas.confId.nivel eq 1?'2':(contCuentasView.contCuentas.confId.nivel eq 2?'3':'4')}" 
+                             layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridCheckBoolean">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Activo:" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="activo" value="#{contCuentasView.contCuentas.activo}" disabled="#{contCuentasView.editView}"/>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Gobierno:" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="gobierno" value="#{contCuentasView.contCuentas.gobierno}" disabled="#{contCuentasView.editView}">
+                            <p:ajax process="gobierno" />
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contCuentasView.contCuentas.confId.nivel eq 1?false:true}">
+                        <p:outputLabel for="@next" value="Movimiento:" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="movimiento" value="#{contCuentasView.contCuentas.movimiento}" disabled="#{contCuentasView.editView}">
+                            <p:ajax update="idGridAsociacion,gridCheckBoolean,exampleeee" />
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" rendered="#{contCuentasView.contCuentas.confId.nivel lt 4?false:(!contCuentasView.contCuentas.movimiento)}">
+                        <p:outputLabel for="@next" value="Cta. Pagar/Cta. Cobrar" style="font-weight: bold"/><br/>
+                        <p:selectBooleanCheckbox id="ctaPagarCobrar" value="#{contCuentasView.contCuentas.ctaPagarCobrar}" disabled="#{contCuentasView.editView}">
+                            <p:ajax update="idGridAsociacion" />
+                        </p:selectBooleanCheckbox>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="exampleeee">
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Clasificación:" style="font-weight: bold"/>
+                        <p:selectOneMenu id="clasificacion" value="#{contCuentasView.contCuentas.clasificacion}" converter="#{utilConverter}" 
+                                         filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{contCuentasView.editView}">
+                            <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                            <f:selectItems value="#{contCuentasView.clasificacionList}" var="item_1" itemLabel="#{item_1.texto}" itemValue="#{item_1}"/>
+                        </p:selectOneMenu>
+                    </h:panelGroup>
+                    <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                        <p:outputLabel for="@next" value="Descripción:" style="font-weight: bold"/><br/>
+                        <p:inputTextarea id="descripcion" class="panelInput" style="width: 100%" 
+                                         value="#{contCuentasView.contCuentas.descripcion}" readonly="#{contCuentasView.editView}">
+                            <p:ajax process="descripcion" />
+                        </p:inputTextarea>
+                    </h:panelGroup>
+                </p:panelGrid>
+                <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="idGridAsociacion" 
+                             rendered="#{contCuentasView.contCuentas.confId.nivel eq 1?false:true}">
+                    <p:fieldset legend="Asociación presupuestaria" rendered="#{(!contCuentasView.contCuentas.movimiento and !contCuentasView.contCuentas.ctaPagarCobrar)?false:true}">
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" 
+                                     rendered="#{contCuentasView.contCuentas.pagadoDevengado?false:contCuentasView.contCuentas.movimiento}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Invertir partidas:" style="font-weight: bold"/><br/>
+                                <p:selectBooleanCheckbox id="invertirCta" value="#{contCuentasView.contCuentas.ctaInvertida}" disabled="#{contCuentasView.editView}">
+                                    <p:ajax update="gridDebitoCredito,idPartida1,idPartida2" listener="#{contCuentasView.invertirCuenta()}" />
+                                </p:selectBooleanCheckbox>
+                            </h:panelGroup>
+                        </p:panelGrid>                        
+                        <p:panelGrid columns="2" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridDebitoCredito" 
+                                     rendered="#{contCuentasView.contCuentas.pagadoDevengado?false:contCuentasView.contCuentas.movimiento}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Débito:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="idPartida1" value="#{contCuentasView.contCuentaPartida.idPartida1}" converter="#{utilConverter}" var="t" panelStyle="width:35%" 
+                                                 filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{contCuentasView.editView}">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contCuentasView.partidasEgreso}" var="item_1" itemLabel="#{item_1.codigo}" itemValue="#{item_1}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Crédito:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="idPartida2" value="#{contCuentasView.contCuentaPartida.idPartida2}" converter="#{utilConverter}" var="t" panelStyle="width:35%" 
+                                                 filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{contCuentasView.editView}">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contCuentasView.partidasIngreso}" var="item_2" itemLabel="#{item_2.codigo}" itemValue="#{item_2}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridPagarCobrar" 
+                                     rendered="#{contCuentasView.contCuentas.ctaPagarCobrar and !contCuentasView.contCuentas.movimiento}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                                <p:outputLabel for="@next" value="Asociación presupuestaria:" style="font-weight: bold"/>
+                                <p:selectOneMenu id="idPartida3" value="#{contCuentasView.contCuentaPartida.idPartida1}" converter="#{utilConverter}" var="t" panelStyle="width:35%" 
+                                                 filter="true" filterMatchMode="contains" style="width: 100%" disabled="#{contCuentasView.editView}">
+                                    <f:selectItem itemLabel="-Seleccionar-" itemValue="#{null}" noSelectionOption="true" />
+                                    <f:selectItems value="#{contCuentasView.partidasPresupuestoNivel}" var="item_3" itemLabel="#{item_3.codigo}-#{item_3.descripcion}" itemValue="#{item_3}"/>
+                                    <p:column style="width:10%" >
+                                        <f:facet name="header">
+                                            <h:outputText value="codigo"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.codigo}" style="font-weight: bold;" />
+                                    </p:column>
+                                    <p:column style="width: 50%;">
+                                        <f:facet name="header">
+                                            <h:outputText value="Nombre"/>
+                                        </f:facet>
+                                        <h:outputText value="#{t.descripcion}" />
+                                    </p:column>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:panelGrid columns="1" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridMovimiento" 
+                                     rendered="#{!contCuentasView.editView and contCuentasView.contCuentas.pagadoDevengado and contCuentasView.contCuentas.movimiento}">
+                            <h:panelGroup layout="block" style="width: 100%;" class="panelInput">
+                                <p:outputLabel for="@next" value="Pagado/Devengado:" style="font-weight: bold"/>
+                                <p:selectCheckboxMenu  id="idPartida4" value="#{contCuentasView.partidasList}" converter="#{utilConverter}" label="Pagado/Devengado"
+                                                       filter="true" filterMatchMode="contains" style="width: 100%" panelStyle="width: 30rem">
+                                    <f:selectItems value="#{contCuentasView.partidasMovimiento}" var="item" 
+                                                   itemLabel="#{item.codigo} - #{item.descripcion}" itemValue="#{item}"/>
+                                </p:selectCheckboxMenu >
+                            </h:panelGroup>
+                        </p:panelGrid>
+                        <p:dataTable var="item" value="#{contCuentasView.partidasList}" paginator="true" rows="7" 
+                                     rendered="#{contCuentasView.editView and contCuentasView.contCuentas.pagadoDevengado and contCuentasView.contCuentas.movimiento}"
+                                     paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                                     paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                                     rowsPerPageTemplate="7">
+                            <p:column headerText="Código" style="width: 25%;text-align: center">
+                                <h:outputText value="#{item.codigo}" />
+                            </p:column>
+                            <p:column headerText="Descripción" style="width: 75%">
+                                <h:outputText value="#{item.descripcion}" />
+                            </p:column>
+                        </p:dataTable>
+                    </p:fieldset> 
+                </p:panelGrid>                
+                <center>
+                    <p:commandButton value="Guardar" update="cuentaTable" rendered="#{!contCuentasView.editView}"
+                                     icon="fa fa-save" actionListener="#{contCuentasView.save()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                    <p:commandButton value="Cerrar" update="cuentaTable"
+                                     icon="fa fa-save" actionListener="#{contCuentasView.closeForm()}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px;background: #ff3333"/>
+                </center>
+            </h:form>       
+        </p:dialog>
+        <p:dialog id="reporteDlg" widgetVar="reporteDlg" width="30%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Parametros del reporte">
+            <h:form prependId="false" id="reporteForm">
+                <p:fieldset legend="Parámetros">
+                    <p:selectOneRadio id="customRadio"  layout="custom" value="#{contCuentasView.pActivo}">
+                        <f:selectItem itemLabel="todo" itemValue="#{1}" />
+                        <f:selectItem itemLabel="parametro1" itemValue="#{2}" />
+                        <f:selectItem itemLabel="parametro2" itemValue="#{3}" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio1"  layout="custom" value="#{contCuentasView.pMovimiento}">
+                        <f:selectItem itemLabel="todo" itemValue="#{1}" />
+                        <f:selectItem itemLabel="parametro1" itemValue="#{2}" />
+                        <f:selectItem itemLabel="parametro2" itemValue="#{3}" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio2"  layout="custom" value="#{contCuentasView.bCodigo}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="gridCodigo" event="valueChange" />
+                    </p:selectOneRadio>
+                    <p:selectOneRadio id="customRadio3"  layout="custom" value="#{contCuentasView.bNivel}">
+                        <f:selectItem itemLabel="todo" itemValue="#{true}" />
+                        <f:selectItem itemLabel="parametros" itemValue="#{false}" />
+                        <p:ajax update="gridNivel" event="valueChange" />
+                    </p:selectOneRadio>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridActivo">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt1" for="customRadio" itemIndex="0" />
+                            <h:outputLabel for="opt1" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt2" for="customRadio" itemIndex="1" />
+                            <h:outputLabel for="opt2" value="Activo" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt3" for="customRadio" itemIndex="3" />
+                            <h:outputLabel for="opt3" value="Inactivo" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" id="gridMovimientoP">
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt4" for="customRadio1" itemIndex="0" />
+                            <h:outputLabel for="opt4" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt5" for="customRadio1" itemIndex="1" />
+                            <h:outputLabel for="opt5" value="Movimiento" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt6" for="customRadio1" itemIndex="3" />
+                            <h:outputLabel for="opt6" value="Agrupamiento" />
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt7" for="customRadio2" itemIndex="0" />
+                            <h:outputLabel for="opt7" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt8" for="customRadio2" itemIndex="1" />
+                            <h:outputLabel for="opt8" value="Por código:" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridCodigo">
+                            <p:outputLabel for="@next" value="Ingrese código:" style="font-weight: bold"/>
+                            <p:inputText id="bqCodigo" class="panelInput" style="width: 100%" onkeypress="focusNextOnEnter(event, 'bqCodigo')"
+                                         value="#{contCuentasView.pCodigo}" readonly="#{contCuentasView.bCodigo}">
+                            </p:inputText>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                    <p:panelGrid columns="3" layout="grid" styleClass="ui-panelgrid-blank form-group" >
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt9" for="customRadio3" itemIndex="0" />
+                            <h:outputLabel for="opt9" value="Todos" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" >
+                            <p:radioButton id="opt10" for="customRadio3" itemIndex="1" />
+                            <h:outputLabel for="opt10" value="Por código:" />
+                        </h:panelGroup>
+                        <h:panelGroup layout="block" style="width: 100%;" class="panelInput" id="gridNivel">
+                            <p:outputLabel for="@next" value="Seleccione nivel:" style="font-weight: bold"/>
+                            <p:selectOneMenu id="selectNivel" style="width: 100%" value="#{contCuentasView.pNivel}" converter="#{utilConverter}" disabled="#{contCuentasView.bNivel}">
+                                <f:selectItem itemLabel="Todos" itemValue="#{null}" noSelectionOption="true" />
+                                <f:selectItems value="#{contCuentasView.confCuentasList}" var="n" itemLabel="#{n.nivel}" itemValue="#{n}"/>
+                            </p:selectOneMenu>
+                        </h:panelGroup>
+                    </p:panelGrid>
+                </p:fieldset>
+                <center>
+                    <p:commandButton value="PDF" update="cuentaTable"
+                                     icon="fa fa-file-pdf-o" actionListener="#{contCuentasView.printReporte('pdf')}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                    <p:commandButton value="EXCEL" update="cuentaTable"
+                                     icon="fa fa-file-excel-o" actionListener="#{contCuentasView.printReporte('xlsx')}"
+                                     styleClass="Fs16" style="width: auto;margin: 10px"/>
+                </center>
+            </h:form>       
+        </p:dialog>
+        <p:dialog id="saldoInicialDlg" widgetVar="saldoInicialDlg" width="40%" position="center" 
+                  modal="true" showEffect="fade" hideEffect="fade" resizable="false" header="Listado de saldo iniciales">
+            <h:form prependId="false" id="saldoInicialForm">
+                <p:commandButton value="Guardar" id="btnGuardarSaldos" style="background: green;margin-bottom: 20px" 
+                                 update="saldoInicialTable" icon="fa fa-save"
+                                 actionListener="#{contCuentasView.openDlgSaldoInicial()}" styleClass="Fs16" >
+                </p:commandButton>
+                <p:dataTable  id="saldoInicialTable" widgetVar="saldoInicialTable" var="saldoInicial" value="#{contCuentasView.contSaldoInicialList}" 
+                              paginator="true" rows="50" style="width: 100%;" rowKey="#{saldoInicial.id}" editable="true" editMode="cell"
+                              paginatorPosition="bottom" currentPageReportTemplate="Mostrando {startRecord}-{endRecord} de {totalRecords}"
+                              paginatorTemplate="{CurrentPageReport}  {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                              rowsPerPageTemplate="50,60,70,100" lazy="false" selectionMode="single" 
+                              emptyMessage="No existen datos con el criterio de búsqueda especificado">
+                    <p:column headerText="Periodo" style="width: 10%;text-align: center" >
+                        <h:outputText value="#{saldoInicial.periodo}" />
+                    </p:column>
+                    <p:column headerText="Saldo debe" style="width: 9%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{saldoInicial.saldoDebe}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber value="#{saldoInicial.saldoDebe}" style="text-align: right;width: 100%"
+                                               disabled="#{!saldoInicial.periodoCerrado}">
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                    <p:column headerText="Saldo haber" style="width: 9%;text-align: center">
+                        <p:cellEditor>
+                            <f:facet name="output">
+                                <h:outputText value="#{saldoInicial.saldoHaber}" style="float: right"> 
+                                    <f:convertNumber type="currency" currencySymbol="$" currencyCode="USD" locale="es_EC"/>
+                                </h:outputText>
+                            </f:facet>
+                            <f:facet name="input">
+                                <p:inputNumber value="#{saldoInicial.saldoHaber}" style="text-align: right;width: 100%"
+                                               disabled="#{!saldoInicial.periodoCerrado}">
+                                </p:inputNumber>
+                            </f:facet>
+                        </p:cellEditor>
+                    </p:column>
+                </p:dataTable>
+            </h:form>       
+        </p:dialog>
+    </ui:define>
+</ui:composition>
